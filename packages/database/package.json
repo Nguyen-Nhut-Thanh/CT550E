@@ -1,0 +1,32 @@
+{
+  "name": "database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./mongodb": {
+      "types": "./dist/mongodb.d.ts",
+      "default": "./dist/mongodb.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "mongoose": "^8.18.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.15.0"
+  }
+}

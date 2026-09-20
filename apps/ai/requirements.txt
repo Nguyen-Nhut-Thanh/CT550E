@@ -1,0 +1,1 @@
+# Add FastAPI, vector database, and AI dependencies during the AI implementation phase.

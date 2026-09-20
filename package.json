@@ -1,0 +1,31 @@
+{
+  "name": "travel-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "npm run prisma:generate --workspace=database",
+    "db:push": "npm run prisma:push --workspace=database",
+    "db:import:banners": "tsx scripts/import-data/import-banners.ts",
+    "db:import:tours": "tsx scripts/import-data/import-tours.ts"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2",
+    "tsx": "^4.20.5"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  },
+  "packageManager": "npm@11.5.2"
+}
