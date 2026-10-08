@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
 
 :root {
   --background: #ffffff;
@@ -40,3 +46,173 @@ h5,
 h6 {
   letter-spacing: -0.02em;
 }
+
+/* ── SeasonalShowcase animations ── */
+@keyframes tk-row-reveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tk-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tk-snowfall {
+  0%   { opacity: 0; transform: translate3d(0, -10px, 0); }
+  12%  { opacity: 0.85; }
+  100% { opacity: 0; transform: translate3d(35px, 720px, 0); }
+}
+
+.animate-tk-row-reveal {
+  animation: tk-row-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-tk-fade-up {
+  animation: tk-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-tk-snowfall {
+  animation-name: tk-snowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tk-row-reveal,
+  .animate-tk-fade-up,
+  .animate-tk-snowfall {
+    animation: none;
+  }
+}
+
+/* ── FlashDeals slider ── */
+.flash-deals-slider::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Shared utility ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── HeroBanner slide items ── */
+
+/* Overlay gradient cho thumbnail nhỏ */
+.hero-banner-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+  transition: 0.7s ease;
+  z-index: 1;
+}
+
+/* 2 item đầu (background + tiếp theo hiện tại) chiếm full màn hình */
+.slide .hero-banner-item:nth-child(1),
+.slide .hero-banner-item:nth-child(2) {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  z-index: 1;
+  cursor: default;
+}
+
+/* Gradient overlay riêng cho 2 item full-screen */
+.slide .hero-banner-item:nth-child(1)::before,
+.slide .hero-banner-item:nth-child(2)::before {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.65) 0%,
+      rgba(0, 0, 0, 0.2) 55%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      transparent 30%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+}
+
+/* Vị trí ngang của các thumbnail phụ (desktop) */
+.slide .hero-banner-item:nth-child(3) { left: calc(50% + 50px); }
+.slide .hero-banner-item:nth-child(4) { left: calc(50% + 248px); }
+.slide .hero-banner-item:nth-child(5) { left: calc(50% + 446px); }
+.slide .hero-banner-item:nth-child(n + 6) {
+  left: calc(50% + 644px);
+  opacity: 0;
+}
+
+/* Ẩn thumb-content trên 2 item full-screen */
+.slide .hero-banner-item:nth-child(1) .thumb-content,
+.slide .hero-banner-item:nth-child(2) .thumb-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── HeroBanner content animation ── */
+.animate-hero-content .hero-meta,
+.animate-hero-content .hero-title,
+.animate-hero-content .hero-desc,
+.animate-hero-content .hero-action {
+  animation: fadeInText 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-hero-content .hero-title  { animation-delay: 0.15s; }
+.animate-hero-content .hero-desc   { animation-delay: 0.3s; }
+.animate-hero-content .hero-action { animation-delay: 0.45s; }
+
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ── HeroBanner responsive ── */
+@media (max-width: 991px) {
+  .slide .hero-banner-item:nth-child(3) { left: 24px; }
+  .slide .hero-banner-item:nth-child(4) { left: 222px; }
+  .slide .hero-banner-item:nth-child(5) { left: 420px; }
+  .slide .hero-banner-item:nth-child(n + 6) { left: 618px; }
+}
+
+@media (max-width: 640px) {
+  .slide .hero-banner-item {
+    width: 130px;
+    height: 190px;
+    top: calc(100% - 310px);
+  }
+
+  .slide .hero-banner-item:nth-child(3) { left: 16px; }
+  .slide .hero-banner-item:nth-child(4) { left: 162px; }
+  .slide .hero-banner-item:nth-child(5) { left: 308px; }
+}
+

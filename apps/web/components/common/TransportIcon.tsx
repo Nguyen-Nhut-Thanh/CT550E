@@ -1,7 +1,7 @@
 "use client";
 
 import { Bus, Plane, Train } from "lucide-react";
-import { getTransportCategory } from "@/lib/client/tourDisplay";
+import { getTransportCategory } from "@/lib/client/utils/tourDisplay";
 
 type Props = {
   type?: string | null;

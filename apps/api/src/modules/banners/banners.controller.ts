@@ -7,7 +7,7 @@ export class BannersController {
   async getPublicBanners() {
     return prisma.banners.findMany({
       where: { status: 1 },
-      orderBy: { banner_id: "asc" }
+      orderBy: { banner_id: "asc" },
     });
   }
 }

@@ -20,3 +20,11 @@ export type CreateBannerInput = {
 };
 
 export type UpdateBannerInput = Partial<CreateBannerInput>;
+
+export type BannerPayload = {
+  location_name?: string;
+  header?: string;
+  description?: string;
+  image_url?: string;
+  status?: number | string;
+};

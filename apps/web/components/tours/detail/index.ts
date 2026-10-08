@@ -1,0 +1,10 @@
+export { default as TourDetailHero } from "./TourDetailHero";
+export { default as TourBookingCard } from "./TourBookingCard";
+export { default as TourVideoHighlights } from "./TourVideoHighlights";
+export { default as TourDepartureCalendar } from "./TourDepartureCalendar";
+export { default as TourAmenities } from "./TourAmenities";
+export { default as TourHighlightsList } from "./TourHighlightsList";
+export { default as TourItineraryTimeline } from "./TourItineraryTimeline";
+export { default as TourSmartMap } from "./TourSmartMap";
+export { default as TourRecommendedList } from "./TourRecommendedList";
+export { default as TourReviewsSection } from "../reviews/TourReviewsSection";

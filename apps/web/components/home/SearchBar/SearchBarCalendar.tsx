@@ -1,13 +1,13 @@
 "use client";
 
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import type { CalendarDay } from "@/lib/client/searchBar.types";
+import type { CalendarDay } from "shared";
 import {
   isSameDate,
   MONTH_LABELS,
   formatSearchDate,
   WEEKDAY_HEADERS,
-} from "@/lib/client/searchBar.utils";
+} from "@/lib/client/utils/searchBar.utils";
 
 type Props = {
   selectedDate: Date;

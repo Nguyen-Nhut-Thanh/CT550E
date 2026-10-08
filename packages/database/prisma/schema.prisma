@@ -69,6 +69,23 @@ model banners {
   @@index([status], map: "idx_banners_status")
 }
 
+model seasonal_showcases {
+  showcase_id  Int      @id @default(autoincrement())
+  slug         String   @unique @db.VarChar(150)
+  eyebrow      String   @db.VarChar(255)
+  title        String   @db.VarChar(255)
+  subtitle     String?  @db.VarChar(255)
+  description  String   @db.Text
+  image_urls   Json
+  link_to      String?  @db.VarChar(255)
+  status       Int      @default(1) @db.SmallInt
+  display_order Int     @default(0)
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt @db.Timestamp(6)
+
+  @@index([status, display_order], map: "idx_seasonal_showcases_status_order")
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model booking_travelers {
   traveler_id   Int       @id @default(autoincrement())
@@ -107,6 +124,7 @@ model bookings {
   users             users               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   vouchers          vouchers?           @relation(fields: [voucher_id], references: [voucher_id], onDelete: NoAction, onUpdate: NoAction)
   payments          payments[]
+  reviews           reviews[]
 
   @@index([tour_schedule_id], map: "idx_bookings_schedule")
   @@index([user_id], map: "idx_bookings_user")
@@ -290,18 +308,52 @@ model providers {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model reviews {
-  review_id  Int      @id @default(autoincrement())
-  user_id    Int
-  tour_id    Int
-  rating     Int      @default(5) @db.SmallInt
-  comment    String?
-  status     Int      @default(1) @db.SmallInt
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  tours      tours    @relation(fields: [tour_id], references: [tour_id], onDelete: NoAction, onUpdate: NoAction)
-  users      users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  review_id   Int              @id @default(autoincrement())
+  user_id     Int
+  tour_id     Int
+  booking_id  Int?
+  rating      Int              @default(5) @db.SmallInt
+  title       String?          @db.VarChar(255)
+  comment     String?
+  images      Json?
+  likes_count Int              @default(0)
+  status      Int              @default(0) @db.SmallInt
+  admin_note  String?
+  created_at  DateTime         @default(now()) @db.Timestamp(6)
+  updated_at  DateTime         @default(now()) @updatedAt @db.Timestamp(6)
+  bookings    bookings?        @relation(fields: [booking_id], references: [booking_id], onDelete: SetNull, onUpdate: NoAction)
+  tours       tours            @relation(fields: [tour_id], references: [tour_id], onDelete: NoAction, onUpdate: NoAction)
+  users       users            @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  review_replies review_replies[]
+  review_likes   review_likes[]
 
   @@index([tour_id], map: "idx_reviews_tour")
   @@index([user_id], map: "idx_reviews_user")
+  @@index([status], map: "idx_reviews_status")
+}
+
+model review_replies {
+  reply_id   Int      @id @default(autoincrement())
+  review_id  Int
+  user_id    Int
+  content    String
+  status     Int      @default(1) @db.SmallInt
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  reviews    reviews  @relation(fields: [review_id], references: [review_id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([review_id], map: "idx_review_replies_review")
+}
+
+model review_likes {
+  review_id  Int
+  user_id    Int
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  reviews    reviews  @relation(fields: [review_id], references: [review_id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([review_id, user_id])
 }
 
 model role_users {
@@ -477,6 +529,8 @@ model tours {
   transport_info      String?
   promotion_info      String?
   cut_off_hours       Int                 @default(24)
+  rating_avg          Decimal             @default(0) @db.Decimal(3, 2)
+  rating_count        Int                 @default(0)
   favorites           favorites[]
   reviews             reviews[]
   tour_destinations   tour_destinations[]
@@ -522,6 +576,8 @@ model users {
   recommendation_profiles recommendation_profiles?
   recommendation_events   recommendation_events[]
   reviews           reviews[]
+  review_replies    review_replies[]
+  review_likes      review_likes[]
   role_users        role_users[]
   staff_profiles    staff_profiles[]
   posts             posts[]

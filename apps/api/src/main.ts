@@ -4,14 +4,29 @@ import { resolve } from "node:path";
 
 config({ path: resolve(__dirname, "../../../.env") });
 
-import { Logger, Module } from "@nestjs/common";
+import { Logger, Module, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { connectMongo, disconnectMongo, prisma } from "database";
 import { BannersModule } from "./modules/banners/banners.module";
 import { FlashDealsModule } from "./modules/flash-deals/flash-deals.module";
+import { ToursModule } from "./modules/tours/tours.module";
+import { FeaturedToursModule } from "./modules/featured-tours/featured-tours.module";
+import { LocationsModule } from "./modules/locations/locations.module";
+import { MailModule } from "./modules/mail/mail.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { ReviewsModule } from "./modules/reviews/reviews.module";
 
 @Module({
-  imports: [BannersModule, FlashDealsModule]
+  imports: [
+    MailModule,
+    AuthModule,
+    BannersModule,
+    FlashDealsModule,
+    ToursModule,
+    FeaturedToursModule,
+    LocationsModule,
+    ReviewsModule,
+  ]
 })
 class AppModule {}
 
@@ -37,6 +52,12 @@ async function bootstrap(): Promise<void> {
 
   try {
     const app = await NestFactory.create(AppModule);
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+      })
+    );
     app.enableCors({
       origin: ["http://localhost:3000"],
       credentials: true
