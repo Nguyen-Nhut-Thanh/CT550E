@@ -2,11 +2,7 @@
 
 import Image from "next/image";
 import { BadgeCheck, Camera, MapPin, UserRound } from "lucide-react";
-import type { UserProfile } from "shared";
-
-interface AccountProfileHeaderProps {
-  user: UserProfile | null;
-}
+import type { AccountProfileHeaderProps } from "shared";
 
 export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
   const displayName = user?.full_name || "Nguyễn Nhựt Thanh";

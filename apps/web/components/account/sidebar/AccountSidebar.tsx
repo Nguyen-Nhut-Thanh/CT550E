@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   CalendarDays,
@@ -13,26 +13,21 @@ import {
   Wallet,
 } from "lucide-react";
 import { removeToken } from "@/lib/client/utils/auth";
-import type { UserProfile } from "shared";
-
-interface AccountSidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  user: UserProfile | null;
-}
+import type { AccountSidebarProps } from "shared";
 
 const menuItems = [
-  { id: "overview", label: "Trang cá nhân", icon: User },
-  { id: "favorites", label: "Tour yêu thích", icon: Heart },
-  { id: "bookings", label: "Lịch sử đặt tour", icon: CalendarDays },
-  { id: "reviews", label: "Bài đánh giá", icon: Star },
-  { id: "wallet", label: "Ví & thanh toán", icon: Wallet },
-  { id: "notifications", label: "Thông báo", icon: Bell, badge: true },
-  { id: "settings", label: "Cài đặt", icon: Settings },
+  { id: "overview", label: "Trang cá nhân", icon: User, href: "/account" },
+  { id: "favorites", label: "Tour yêu thích", icon: Heart, href: "/account/favorites" },
+  { id: "bookings", label: "Lịch sử đặt tour", icon: CalendarDays, href: "/account/bookings" },
+  { id: "reviews", label: "Bài đánh giá", icon: Star, href: "/account/reviews" },
+  { id: "wallet", label: "Ví & thanh toán", icon: Wallet, href: "/account/wallet" },
+  { id: "notifications", label: "Thông báo", icon: Bell, badge: true, href: "/account/notifications" },
+  { id: "settings", label: "Cài đặt", icon: Settings, href: "/account/settings" },
 ];
 
 export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     removeToken();
@@ -62,13 +57,16 @@ export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps)
         <div className="space-y-1.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive =
+              activeTab === item.id ||
+              pathname === item.href ||
+              (item.href !== "/account" && pathname?.startsWith(item.href));
 
             return (
-              <button
+              <Link
                 key={item.id}
-                type="button"
-                onClick={() => setActiveTab(item.id)}
+                href={item.href}
+                onClick={() => setActiveTab?.(item.id)}
                 className={`group flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-left text-sm transition-all ${
                   isActive
                     ? "bg-[#eef6ff] font-semibold text-[#1766c2]"
@@ -82,7 +80,7 @@ export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps)
                 />
                 <span className="flex-1">{item.label}</span>
                 {item.badge && <span className="h-2 w-2 rounded-full bg-rose-500" />}
-              </button>
+              </Link>
             );
           })}
         </div>

@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ToggleFavoriteResult } from "shared";
 import { getToken } from "../utils/auth";
 import {
   addFavoriteTour,
   getFavoriteIds,
   removeFavoriteTour,
 } from "../api/authApi";
-
-type ToggleFavoriteResult =
-  | { ok: true; action: "added" | "removed" }
-  | { ok: false; reason: "unauthenticated" | "error"; message: string };
 
 export function useFavoriteTours() {
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);

@@ -1,34 +1,21 @@
 import { CreditCard, ShieldCheck, Wallet } from "lucide-react";
-import type { TourSchedule } from "shared";
+import type {
+  PaymentMethod,
+  TourSchedule,
+  TravelerForm,
+  TravelerType,
+  UserProfileLite,
+  VoucherValidationApiResponse,
+  VoucherValidationResult,
+} from "shared";
 
-export type TravelerType = "adult" | "child" | "infant";
-export type PaymentMethod = "vnpay" | "momo" | "bank_transfer";
-
-export type TravelerForm = {
-  fullName: string;
-  gender: "male" | "female";
-  type: TravelerType;
-  birthday: string;
-};
-
-export type VoucherValidationResult = {
-  voucher_id: number;
-  code: string;
-  discountAmount: number;
-  finalAmount?: number;
-};
-
-export type VoucherValidationApiResponse = {
-  voucher_id: number;
-  code: string;
-  discount_amount: number;
-  final_amount?: number;
-};
-
-export type UserProfileLite = {
-  full_name?: string | null;
-  email?: string | null;
-  phone?: string | null;
+export type {
+  PaymentMethod,
+  TravelerForm,
+  TravelerType,
+  UserProfileLite,
+  VoucherValidationApiResponse,
+  VoucherValidationResult,
 };
 
 export const PAYMENT_METHODS: Array<{

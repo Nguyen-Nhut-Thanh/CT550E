@@ -1,13 +1,5 @@
-export interface NavItem {
-  title: string;
-  href: string;
-  isMega?: boolean;
-  children?: {
-    title: string;
-    href: string;
-    subItems?: { title: string; href: string }[];
-  }[];
-}
+import type { NavItem } from "shared";
+export type { NavItem };
 
 export const navData: NavItem[] = [
   { title: "Trang chủ", href: "/" },

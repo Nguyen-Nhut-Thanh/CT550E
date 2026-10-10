@@ -3,16 +3,10 @@ import type {
   AccountBooking,
   AccountStats,
   FavoriteTourItem,
+  LoginResponse,
   RecommendationProfile,
+  UploadResponse,
 } from "shared";
-
-type LoginResponse = {
-  access_token: string;
-};
-
-type UploadResponse = {
-  url: string;
-};
 
 type JsonInit = Omit<RequestInit, "body"> & {
   body?: unknown;

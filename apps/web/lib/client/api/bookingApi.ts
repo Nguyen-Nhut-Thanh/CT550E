@@ -1,28 +1,7 @@
 import { API_BASE, getToken } from "@/lib/client/utils/auth";
-import type { VoucherValidationApiResponse } from "@/lib/client/utils/booking";
 import { publicFetch } from "@/lib/client/api/publicFetch";
-import type { PublicTourDetail } from "shared";
-
-export type BookingPayload = {
-  tour_schedule_id: number;
-  contact_name: string;
-  contact_phone: string;
-  contact_email: string;
-  adult_count: number;
-  child_count: number;
-  infant_count: number;
-  travelers: Array<{
-    fullName: string;
-    gender: string;
-    birthday: string;
-    type: string;
-  }>;
-  note?: string;
-  voucher_code?: string;
-  payment_method: string;
-  room_type?: "shared" | "single";
-  single_room_surcharge?: number;
-};
+import type { BookingPayload, PublicTourDetail, VoucherValidationApiResponse } from "shared";
+export type { BookingPayload };
 
 async function requestWithToken<T>(path: string, init: RequestInit = {}) {
   const token = getToken();

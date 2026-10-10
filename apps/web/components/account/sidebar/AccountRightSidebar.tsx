@@ -4,13 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone, User, CalendarDays, Loader2 } from "lucide-react";
-import type { UserProfile, FeaturedDestinationItem } from "shared";
+import type { AccountRightSidebarProps, FeaturedDestinationItem } from "shared";
 import { getFeaturedDestinations } from "@/lib/client/api/featuredDestinations";
-
-interface AccountRightSidebarProps {
-  user: UserProfile | null;
-  setActiveTab: (tab: string) => void;
-}
 
 export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarProps) {
   const [destinations, setDestinations] = useState<FeaturedDestinationItem[]>([]);
@@ -95,7 +90,7 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
 
         <button
           type="button"
-          onClick={() => setActiveTab("settings")}
+          onClick={() => setActiveTab?.("settings")}
           className="mt-5 w-full rounded-lg bg-[#eef6ff] py-2.5 text-[12px] font-semibold text-[#1766c2] transition hover:bg-blue-100"
         >
           Chỉnh sửa thông tin
@@ -110,7 +105,7 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
           </div>
           <button
             type="button"
-            onClick={() => setActiveTab("favorites")}
+            onClick={() => setActiveTab?.("favorites")}
             className="text-[10px] font-semibold text-[#1766c2]"
           >
             Xem tất cả →

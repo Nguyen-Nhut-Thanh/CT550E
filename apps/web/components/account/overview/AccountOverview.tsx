@@ -11,17 +11,8 @@ import {
   MapPin,
   Star,
 } from "lucide-react";
-import type { AccountBooking, AccountStats, FavoriteTourItem, UserProfile } from "shared";
 import { formatVND } from "@/lib/client/utils/utils";
-
-interface AccountOverviewProps {
-  user: UserProfile | null;
-  stats: AccountStats | null;
-  bookings: AccountBooking[];
-  favorites: FavoriteTourItem[];
-  loading: boolean;
-  setActiveTab: (tab: string) => void;
-}
+import type { AccountOverviewProps } from "shared";
 
 export function AccountOverview({ stats, bookings = [], favorites = [], loading, setActiveTab }: AccountOverviewProps) {
   const statItems = [

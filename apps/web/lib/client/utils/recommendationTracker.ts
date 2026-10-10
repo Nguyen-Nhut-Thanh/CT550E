@@ -1,16 +1,9 @@
 import { getToken } from "./auth";
+import type { RecommendationEventPayload } from "shared";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
   "http://localhost:4000";
-
-type RecommendationEventPayload = {
-  event_type: string;
-  source?: string;
-  tour_id?: number;
-  destination?: string;
-  metadata?: Record<string, unknown>;
-};
 
 export async function trackRecommendationEvent(
   payload: RecommendationEventPayload,

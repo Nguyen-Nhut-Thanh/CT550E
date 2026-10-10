@@ -1,6 +1,7 @@
 export * from "./account";
 export * from "./auth";
 export * from "./banner";
+export * from "./booking";
 export * from "./featured-tour";
 export * from "./flash-deal";
 export * from "./hero-banner";

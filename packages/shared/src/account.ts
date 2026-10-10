@@ -71,3 +71,90 @@ export type RecommendationProfile = {
   allow_behavior_tracking?: boolean;
   allow_chat_signals?: boolean;
 };
+
+export interface AccountSidebarProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  user?: UserProfile | null;
+}
+
+export interface AccountRightSidebarProps {
+  user: UserProfile | null;
+  setActiveTab?: (tab: string) => void;
+}
+
+export interface AccountOverviewProps {
+  user: UserProfile | null;
+  stats: AccountStats | null;
+  bookings: AccountBooking[];
+  favorites: FavoriteTourItem[];
+  loading: boolean;
+  setActiveTab: (tab: string) => void;
+}
+
+export interface AccountOverviewTabProps {
+  user: UserProfile | null;
+  stats: AccountStats | null;
+  bookings: AccountBooking[];
+  favorites: FavoriteTourItem[];
+  loading: boolean;
+  setActiveTab?: (tab: string) => void;
+}
+
+export interface AccountProfileHeaderProps {
+  user: UserProfile | null;
+}
+
+export interface AccountFavoritesTabProps {
+  favorites?: FavoriteTourItem[];
+}
+
+export type FavItem = {
+  tour_id: number;
+  name: string;
+  location: string;
+  rating: number;
+  reviewsCount: number;
+  price: number;
+  duration: string;
+  type: "domestic" | "international";
+  image: string;
+};
+
+export type FavFilterType = "all" | "domestic" | "international";
+export type FavSortType = "newest" | "price-asc" | "price-desc" | "rating";
+
+export interface AccountBookingsTabProps {
+  bookings?: AccountBooking[];
+}
+
+export type BookingItemUI = {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  passengers: string;
+  status: "completed" | "upcoming" | "cancelled";
+  statusText: string;
+  price: number;
+  image: string;
+};
+
+export type BookingStatusFilter = "all" | "upcoming" | "completed" | "cancelled";
+
+export interface AccountSettingsTabProps {
+  user: UserProfile | null;
+}
+
+export type RecommendationEventPayload = {
+  event_type: string;
+  source?: string;
+  tour_id?: number;
+  destination?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type ToggleFavoriteResult =
+  | { ok: true; action: "added" | "removed" }
+  | { ok: false; reason: "unauthenticated" | "error"; message: string };
+
