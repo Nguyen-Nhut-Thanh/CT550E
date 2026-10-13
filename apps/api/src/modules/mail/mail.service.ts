@@ -42,7 +42,7 @@ export class MailService {
         <div style="border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff;">
           <div style="padding: 24px 24px 8px;">
             <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b;">
-              Travol
+              JourniTrip
             </p>
             <h2 style="margin: 0 0 12px; font-size: 24px; color: #0f172a;">${title}</h2>
             <p style="margin: 0; color: #334155;">${intro}</p>
@@ -50,7 +50,7 @@ export class MailService {
           <div style="padding: 16px 24px 8px;">${body}</div>
           <div style="padding: 8px 24px 24px; color: #475569; font-size: 14px;">
             <p style="margin: 0;">
-              ${footer || 'Nếu cần hỗ trợ thêm, vui lòng phản hồi email này hoặc liên hệ đội ngũ Travol.'}
+              ${footer || 'Nếu cần hỗ trợ thêm, vui lòng phản hồi email này hoặc liên hệ đội ngũ JourniTrip.'}
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export class MailService {
     html: string;
   }) {
     const mailOptions = {
-      from: `"${process.env.MAIL_FROM_NAME || 'Travol'}" <${process.env.MAIL_FROM_EMAIL || process.env.MAIL_USER}>`,
+      from: `"${process.env.MAIL_FROM_NAME || 'JourniTrip'}" <${process.env.MAIL_FROM_EMAIL || process.env.MAIL_USER}>`,
       ...options,
     };
 
@@ -102,7 +102,7 @@ export class MailService {
   async sendVerificationEmail(email: string, code: string) {
     await this.sendMail({
       to: email,
-      subject: 'Xác thực tài khoản Travol',
+      subject: 'Xác thực tài khoản JourniTrip',
       html: this.renderLayout(
         'Xác thực tài khoản',
         'Cảm ơn bạn đã đăng ký. Vui lòng nhập mã xác thực bên dưới để hoàn tất tạo tài khoản.',

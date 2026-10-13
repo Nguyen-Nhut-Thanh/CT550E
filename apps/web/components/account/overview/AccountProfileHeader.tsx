@@ -17,7 +17,7 @@ export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
           <Image
             src={
               user?.avatar_url ||
-              "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400"
+              "/images/account/avata.png"
             }
             alt={displayName}
             fill

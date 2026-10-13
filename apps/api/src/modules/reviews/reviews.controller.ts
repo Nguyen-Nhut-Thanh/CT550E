@@ -23,6 +23,22 @@ import type {
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get("account/reviews")
+  getMyReviews(@Req() req: any) {
+    return this.reviewsService.getMyReviews(req.user.accountId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("account/reviews/:reviewId")
+  updateMyReview(
+    @Req() req: any,
+    @Param("reviewId", ParseIntPipe) reviewId: number,
+    @Body() dto: { rating: number; comment: string },
+  ) {
+    return this.reviewsService.updateMyReview(req.user.accountId, reviewId, dto);
+  }
+
   // 1. Lấy danh sách đánh giá công khai (Đã duyệt) của 1 Tour
   @Get("tours/:tourId/reviews")
   async getTourReviews(

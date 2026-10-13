@@ -37,7 +37,7 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
           t?.tour_type === "international" ? "international" : "domestic";
         const image =
           t?.tour_images?.[0]?.image_url ||
-          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800";
+          "/images/account/cover-images.png";
 
         return {
           tour_id: tourId,

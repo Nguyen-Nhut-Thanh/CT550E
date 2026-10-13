@@ -15,6 +15,55 @@ import type {
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getMyReviews(accountId: number) {
+    const userId = await this.getUserIdFromAccountId(accountId);
+    const reviews = await this.prisma.reviews.findMany({
+      where: { user_id: userId },
+      orderBy: [{ created_at: "desc" }, { review_id: "desc" }],
+      include: { tours: { select: { name: true, tour_images: {
+        orderBy: [{ is_cover: "desc" }, { sort_order: "asc" }], take: 1,
+        select: { image_url: true },
+      } } } },
+    });
+    return reviews.map((review: {
+      review_id: number; tour_id: number; rating: number; title: string | null;
+      comment: string | null; status: number; created_at: Date; images: unknown;
+      tours: { name: string; tour_images: { image_url: string }[] };
+    }) => ({
+      review_id: review.review_id, tour_id: review.tour_id,
+      tour_name: review.tours.name,
+      tour_image: review.tours.tour_images[0]?.image_url ?? null,
+      rating: review.rating, title: review.title, comment: review.comment,
+      status: review.status, created_at: review.created_at.toISOString(),
+      images: Array.isArray(review.images)
+        ? review.images.filter((image): image is string => typeof image === "string") : [],
+    }));
+  }
+
+  async updateMyReview(accountId: number, reviewId: number, dto: { rating: number; comment: string }) {
+    const userId = await this.getUserIdFromAccountId(accountId);
+    if (!Number.isInteger(dto.rating) || dto.rating < 1 || dto.rating > 5) {
+      throw new BadRequestException("Số sao đánh giá phải là số nguyên từ 1 đến 5.");
+    }
+    if (typeof dto.comment !== "string" || !dto.comment.trim() || dto.comment.length > 5000) {
+      throw new BadRequestException("Nội dung đánh giá phải từ 1 đến 5000 ký tự.");
+    }
+    const review = await this.prisma.reviews.findFirst({ where: { review_id: reviewId, user_id: userId } });
+    if (!review) throw new NotFoundException("Không tìm thấy đánh giá của bạn.");
+    await this.prisma.$transaction(async (tx: PrismaService) => {
+      await tx.reviews.update({ where: { review_id: reviewId }, data: {
+        rating: dto.rating, comment: dto.comment.trim(), status: 0, admin_note: null,
+      } });
+      const aggregate = await tx.reviews.aggregate({
+        where: { tour_id: review.tour_id, status: 1 }, _avg: { rating: true }, _count: { rating: true },
+      });
+      await tx.tours.update({ where: { tour_id: review.tour_id }, data: {
+        rating_avg: Number((aggregate._avg.rating ?? 0).toFixed(2)), rating_count: aggregate._count.rating,
+      } });
+    });
+    return { message: "Đã lưu đánh giá. Nội dung mới đang chờ duyệt." };
+  }
+
   private async getUserIdFromAccountId(accountId: number): Promise<number> {
     const user = await this.prisma.users.findUnique({
       where: { account_id: accountId },

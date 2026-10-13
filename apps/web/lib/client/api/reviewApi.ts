@@ -77,6 +77,27 @@ export async function submitReviewReply(
 }
 
 // Admin APIs
+export interface AccountReviewItem {
+  review_id: number;
+  tour_id: number;
+  tour_name: string;
+  tour_image: string | null;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  images: string[];
+  status: number;
+  created_at: string;
+}
+
+export function getMyReviews(): Promise<AccountReviewItem[]> {
+  return authFetch("/account/reviews", { cache: "no-store" });
+}
+
+export function updateMyReview(reviewId: number, payload: { rating: number; comment: string }): Promise<{ message: string }> {
+  return authFetch(`/account/reviews/${reviewId}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
 export async function adminGetReviews(query: AdminReviewQuery = {}): Promise<{
   items: TourReviewItem[];
   total: number;

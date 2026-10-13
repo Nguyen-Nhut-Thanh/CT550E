@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "Về chúng tôi - VietExplore",
+  title: "Về chúng tôi - JourniTrip",
   description:
-    "VietExplore là đơn vị chuyên cung cấp các tour du lịch trong nước và quốc tế, mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn.",
+    "JourniTrip là đơn vị chuyên cung cấp các tour du lịch trong nước và quốc tế, mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn.",
 };
 
 const values = [
@@ -56,8 +56,8 @@ export default function AboutPage() {
       {/* HERO */}
       <section className="relative min-h-[330px] overflow-hidden sm:min-h-[390px] lg:min-h-[410px]">
         <Image
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=85&w=1800"
-          alt="Khám phá thế giới cùng VietExplore"
+          src="/images/about-us/cover-image-1.png"
+          alt="Khám phá thế giới cùng JourniTrip"
           fill
           priority
           className="object-cover object-[68%_54%]"
@@ -79,7 +79,7 @@ export default function AboutPage() {
             </h1>
 
             <p className="mt-4 max-w-[410px] text-[14px] leading-6 text-slate-700 sm:text-[15px]">
-              Chúng tôi là <strong className="font-extrabold text-[#0b2c3d]">VietExplore</strong> – đơn vị chuyên cung cấp
+              Chúng tôi là <strong className="font-extrabold text-[#0b2c3d]">JourniTrip</strong> – đơn vị chuyên cung cấp
               các tour du lịch trong nước và quốc tế, mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn cho mọi
               hành trình của bạn.
             </p>
@@ -106,8 +106,8 @@ export default function AboutPage() {
             <div className="absolute left-0 top-0 w-[76%] -rotate-[5deg] bg-white p-2.5 shadow-[0_14px_35px_rgba(15,23,42,0.14)] ring-1 ring-slate-200/70">
               <div className="relative aspect-[1.45/1] overflow-hidden">
                 <Image
-                  src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=85&w=900"
-                  alt="Đội ngũ VietExplore"
+                  src="/images/about-us/our-story-1.png"
+                  alt="Đội ngũ JourniTrip"
                   fill
                   className="object-cover"
                   sizes="520px"
@@ -118,7 +118,7 @@ export default function AboutPage() {
             <div className="absolute bottom-8 right-0 z-20 w-[52%] rotate-[5deg] bg-white p-2.5 shadow-[0_14px_35px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
               <div className="relative aspect-[1.45/1] overflow-hidden">
                 <Image
-                  src="https://images.unsplash.com/photo-1528127269322-539801943592?q=85&w=700"
+                  src="/images/about-us/our-story-2.png"
                   alt="Vịnh Hạ Long"
                   fill
                   className="object-cover"
@@ -154,7 +154,7 @@ export default function AboutPage() {
 
             <div className="mt-5 space-y-4 text-[14px] leading-6 text-slate-600">
               <p>
-                VietExplore được thành lập bởi những người trẻ yêu thích du lịch, luôn tin rằng: mỗi chuyến đi không chỉ
+                JourniTrip được thành lập bởi những người trẻ yêu thích du lịch, luôn tin rằng: mỗi chuyến đi không chỉ
                 là điểm đến, mà còn là cơ hội để khám phá văn hóa, con người và chính bản thân mình.
               </p>
               <p>
@@ -180,7 +180,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-[1220px] px-5 sm:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
-              VÌ SAO CHỌN VIETEXPLORE
+              VÌ SAO CHỌN JourniTrip
             </p>
             <h2 className="mt-2 text-[28px] font-black tracking-[-0.03em] text-[#0b2c3d] sm:text-[32px]">
               Giá trị chúng tôi mang lại
@@ -206,7 +206,7 @@ export default function AboutPage() {
         <div className="mx-auto grid max-w-[1220px] items-stretch lg:grid-cols-[36%_64%]">
           <div className="relative min-h-[240px] sm:min-h-[290px] lg:min-h-[220px]">
             <Image
-              src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=85&w=900"
+              src="/images/about-us/cover-image-2.png"
               alt="Hành trình khám phá"
               fill
               className="object-cover object-center"
@@ -235,7 +235,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="relative min-h-[260px] overflow-hidden text-white sm:min-h-[285px]">
         <Image
-          src="https://images.unsplash.com/photo-1528127269322-539801943592?q=85&w=1800"
+          src="/images/about-us/cover-image-3.png"
           alt="Biến những ước mơ du lịch thành hiện thực"
           fill
           className="object-cover object-center"
@@ -252,7 +252,7 @@ export default function AboutPage() {
               thành hiện thực
             </h2>
             <p className="mt-3 max-w-[475px] text-[12px] leading-5 text-white/90 sm:text-[13px]">
-              Dù bạn muốn khám phá thiên nhiên, trải nghiệm văn hóa hay đơn giản là tìm một nơi để thư giãn – VietExplore
+              Dù bạn muốn khám phá thiên nhiên, trải nghiệm văn hóa hay đơn giản là tìm một nơi để thư giãn – JourniTrip
               luôn sẵn sàng đồng hành cùng bạn.
             </p>
             <Link

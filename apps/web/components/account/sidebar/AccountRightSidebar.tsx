@@ -52,7 +52,7 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
     <div className="space-y-3.5">
       <section className="relative h-[156px] overflow-hidden rounded-[13px] border border-sky-100 bg-[#dff5ff]">
         <Image
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=700"
+          src="/images/account/cover-images.png"
           alt="Travel quote"
           fill
           className="object-cover opacity-45"

@@ -47,7 +47,7 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         const price = b.total_amount ? Number(b.total_amount) : 2890000;
         const image =
           b.tour_schedules?.tours?.tour_images?.[0]?.image_url ||
-          "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=600";
+          "/images/account/cover-images.png";
 
         return {
           id,
