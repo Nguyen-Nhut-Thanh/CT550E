@@ -47,4 +47,14 @@ export type BookingPayload = {
   payment_method: string;
   room_type?: "shared" | "single";
   single_room_surcharge?: number;
+  single_room_count?: number;
+  additional_service_ids?: string[];
+};
+
+export type BookingExtraService = {
+  id: string;
+  name: string;
+  description: string;
+  unit_price: number;
+  pricing_unit: "guest" | "group" | "booking";
 };

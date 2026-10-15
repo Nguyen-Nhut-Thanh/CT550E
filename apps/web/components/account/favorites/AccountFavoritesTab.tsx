@@ -92,8 +92,12 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
   const handleToggleFavorite = async (e: React.MouseEvent, tourId: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setRemovedIds((prev) => [...prev, tourId]);
-    await toggleFavorite(tourId);
+    const result = await toggleFavorite(tourId);
+    if (result.ok && result.action === "removed") {
+      setRemovedIds((prev) => [...prev, tourId]);
+    } else if (!result.ok) {
+      window.alert(result.message);
+    }
   };
 
   return (

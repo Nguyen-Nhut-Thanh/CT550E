@@ -1,7 +1,11 @@
 import { API_BASE, getToken } from "@/lib/client/utils/auth";
 import { publicFetch } from "@/lib/client/api/publicFetch";
-import type { BookingPayload, PublicTourDetail, VoucherValidationApiResponse } from "shared";
+import type { BookingExtraService, BookingPayload, PublicTourDetail, VoucherValidationApiResponse } from "shared";
 export type { BookingPayload };
+
+export function getBookingExtraServices() {
+  return publicFetch<BookingExtraService[]>("/public/booking-services", { cache: "no-store" });
+}
 
 async function requestWithToken<T>(path: string, init: RequestInit = {}) {
   const token = getToken();

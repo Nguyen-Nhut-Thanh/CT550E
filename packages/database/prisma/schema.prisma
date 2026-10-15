@@ -119,6 +119,8 @@ model bookings {
   created_at        DateTime            @default(now()) @db.Timestamp(6)
   discount_amount   Decimal             @default(0) @db.Decimal(12, 2)
   voucher_id        Int?
+  additional_services Json?
+  services_total    Decimal             @default(0) @db.Decimal(12, 2)
   booking_travelers booking_travelers[]
   tour_schedules    tour_schedules      @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
   users             users               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)

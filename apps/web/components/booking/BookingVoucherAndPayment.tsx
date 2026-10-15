@@ -77,7 +77,7 @@ export function BookingVoucherAndPayment({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-3">
           <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <TicketPercent className="h-4 w-4 text-sky-600" />
+            <TicketPercent className="h-4 w-4 text-blue-600" />
             Mã ưu đãi
           </label>
           <div className="flex gap-3">
@@ -85,7 +85,7 @@ export function BookingVoucherAndPayment({
               value={voucherCode}
               onChange={(event) => onVoucherCodeChange(event.target.value)}
               placeholder="Nhập mã voucher"
-              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:bg-white"
+              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
             />
             <button
               type="button"
@@ -110,7 +110,7 @@ export function BookingVoucherAndPayment({
 
         <div className="space-y-3">
           <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <CalendarDays className="h-4 w-4 text-sky-600" />
+            <CalendarDays className="h-4 w-4 text-blue-600" />
             Phương thức thanh toán
           </label>
           <div className="space-y-3">
@@ -121,7 +121,7 @@ export function BookingVoucherAndPayment({
                   key={method.id}
                   className={`flex items-start gap-3 rounded-xl border p-4 transition ${
                     paymentMethod === method.id
-                      ? "border-sky-300 bg-sky-50/70"
+                      ? "border-blue-300 bg-blue-50/70"
                       : "border-slate-200 bg-slate-50"
                   } ${
                     method.enabled
@@ -139,7 +139,7 @@ export function BookingVoucherAndPayment({
                     }
                     disabled={!method.enabled}
                   />
-                  <Icon className="mt-0.5 h-5 w-5 text-sky-700" />
+                  <Icon className="mt-0.5 h-5 w-5 text-blue-700" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-slate-900">

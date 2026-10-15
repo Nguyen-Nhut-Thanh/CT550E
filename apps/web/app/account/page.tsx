@@ -25,6 +25,21 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const navigateToTab = useCallback((tab: string) => {
+    const routes: Record<string, string> = {
+      overview: "/account",
+      bookings: "/account/bookings",
+      favorites: "/account/favorites",
+      reviews: "/account/reviews",
+      photos: "/account/reviews",
+      wallet: "/account/wallet",
+      notifications: "/account/notifications",
+      settings: "/account/settings",
+      destinations: "/tours",
+    };
+    const route = routes[tab];
+    if (route) router.push(route);
+  }, [router]);
 
   const initData = useCallback(async () => {
     const token = getToken();
@@ -102,6 +117,7 @@ export default function AccountPage() {
           bookings={bookings}
           favorites={favorites}
           loading={loading}
+          setActiveTab={navigateToTab}
         />
       </main>
     </div>

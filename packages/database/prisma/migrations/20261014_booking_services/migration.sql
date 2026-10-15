@@ -1,0 +1,2 @@
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "additional_services" JSONB;
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "services_total" DECIMAL(12,2) NOT NULL DEFAULT 0;

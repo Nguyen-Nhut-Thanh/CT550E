@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import InlineNotice from "@/components/common/InlineNotice";
+import { BookingExtraServices } from "@/components/booking/BookingExtraServices";
 import {
   BookingContactForm,
   BookingOrderSummary,
@@ -27,10 +28,12 @@ import {
   createBooking,
   createPaymentUrl,
   getBookingTourDetail,
+  getBookingExtraServices,
   validatePublicVoucher,
 } from "@/lib/client/api/bookingApi";
 import { getSingleRoomSurchargeTotal } from "@/lib/client/utils/tourPricing";
-import type { PublicTourDetail, TourSchedule } from "shared";
+import { parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import type { BookingExtraService, PublicTourDetail, TourSchedule } from "shared";
 
 function getUnitPrice(schedule: TourSchedule | null, type: TravelerType) {
   const passengerTypeMap = {
@@ -137,6 +140,17 @@ function BookingContent() {
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitTone, setSubmitTone] = useState<"error" | "success">("success");
   const [submitting, setSubmitting] = useState(false);
+  const [extraServices, setExtraServices] = useState<BookingExtraService[]>([]);
+  const [selectedExtraIds, setSelectedExtraIds] = useState<string[]>([]);
+  const [extrasLoading, setExtrasLoading] = useState(true);
+  const [extrasError, setExtrasError] = useState(false);
+  async function loadExtras() {
+    setExtrasLoading(true); setExtrasError(false);
+    try { setExtraServices(await getBookingExtraServices()); }
+    catch { setExtrasError(true); }
+    finally { setExtrasLoading(false); }
+  }
+  useEffect(() => { void loadExtras(); }, []);
 
   useEffect(() => {
     if (!tourId) {
@@ -215,7 +229,9 @@ function BookingContent() {
       childUnitPrice * childCount +
       infantUnitPrice * infantCount;
     const discount = voucherResult?.discountAmount || 0;
-    const total = Math.max(subtotal + singleRoomSurcharge - discount, 0);
+    const servicesTotal = extraServices.filter(service => selectedExtraIds.includes(service.id))
+      .reduce((total, service) => total + service.unit_price * (service.pricing_unit === "guest" ? adultCount + childCount + infantCount : 1), 0);
+    const total = Math.max(subtotal + singleRoomSurcharge + servicesTotal - discount, 0);
 
     return {
       adultUnitPrice,
@@ -227,6 +243,7 @@ function BookingContent() {
       subtotal,
       discount,
       total,
+      servicesTotal,
     };
   }, [
     adultCount,
@@ -235,6 +252,8 @@ function BookingContent() {
     selectedSchedule,
     singleRoomSelections,
     voucherResult,
+    extraServices,
+    selectedExtraIds,
   ]);
 
   const seatsLeft = useMemo(() => {
@@ -320,6 +339,13 @@ function BookingContent() {
   const handleSubmitBooking = async () => {
     if (!selectedSchedule || !tour) return;
 
+    const invalidBirthday = travelers.findIndex(traveler => parseBirthday(traveler.birthday) === null);
+    if (invalidBirthday !== -1) {
+      setSubmitTone("error");
+      setSubmitMessage(`Ngày sinh hành khách ${invalidBirthday + 1} không hợp lệ. Vui lòng nhập dd/mm/yyyy.`);
+      return;
+    }
+
     if (seatsLeft < totalGuests) {
       setSubmitTone("error");
       setSubmitMessage(
@@ -358,12 +384,14 @@ function BookingContent() {
         adult_count: adultCount,
         child_count: childCount,
         infant_count: infantCount,
-        travelers,
+        travelers: travelers.map(traveler => ({ ...traveler, birthday: parseBirthday(traveler.birthday) || "" })),
         note,
         voucher_code: voucherResult?.code,
         payment_method: paymentMethod,
         room_type: pricing.singleRoomCount > 0 ? "single" : "shared",
         single_room_surcharge: pricing.singleRoomSurcharge,
+        single_room_count: pricing.singleRoomCount,
+        additional_service_ids: selectedExtraIds,
       });
 
       if (data) {
@@ -438,7 +466,8 @@ function BookingContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] pb-16">
+    <main className="min-h-screen bg-[#f5fbfc] pb-16">
+      <div className="bg-[#f5fbfc]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 flex min-w-0 items-center gap-2 overflow-hidden text-sm font-medium text-slate-500">
           <Link href="/" className="shrink-0 transition hover:text-sky-700">
@@ -462,9 +491,10 @@ function BookingContent() {
           <span className="shrink-0 text-slate-800">Booking</span>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section className="space-y-6">
             <BookingTourInfoCard
+              adultUnitPrice={pricing.adultUnitPrice}
               tour={tour}
               selectedSchedule={selectedSchedule}
               seatsLeft={seatsLeft}
@@ -482,6 +512,14 @@ function BookingContent() {
             )}
 
             <BookingPassengerCounts
+              schedules={tour.tour_schedules || []}
+              selectedSchedule={selectedSchedule}
+              onScheduleChange={(schedule) => {
+                setSelectedSchedule(schedule);
+                setVoucherResult(null);
+                setVoucherError(null);
+                setSubmitMessage(null);
+              }}
               adultCount={adultCount}
               childCount={childCount}
               infantCount={infantCount}
@@ -513,6 +551,9 @@ function BookingContent() {
               onUpdateSingleRoomSelection={updateSingleRoomSelection}
             />
 
+            <BookingExtraServices services={extraServices} selectedIds={selectedExtraIds} onChange={setSelectedExtraIds}
+              loading={extrasLoading} error={extrasError} onRetry={() => void loadExtras()} />
+
             <BookingVoucherAndPayment
               voucherCode={voucherCode}
               voucherLoading={voucherLoading}
@@ -541,6 +582,7 @@ function BookingContent() {
             onSubmitBooking={handleSubmitBooking}
           />
         </div>
+      </div>
       </div>
     </main>
   );

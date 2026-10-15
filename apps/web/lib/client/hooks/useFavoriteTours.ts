@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToggleFavoriteResult } from "shared";
 import { getToken } from "../utils/auth";
 import {
@@ -12,6 +12,7 @@ import {
 export function useFavoriteTours() {
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
+  const pendingIds = useRef(new Set<number>());
 
   const loadFavoriteIds = useCallback(async () => {
     const token = getToken();
@@ -30,6 +31,16 @@ export function useFavoriteTours() {
 
   useEffect(() => {
     loadFavoriteIds();
+    window.addEventListener("auth-change", loadFavoriteIds);
+    const sync = (event: Event) => {
+      const { tourId, favorite } = (event as CustomEvent<{ tourId: number; favorite: boolean }>).detail;
+      setFavoriteIds((prev) => favorite ? (prev.includes(tourId) ? prev : [...prev, tourId]) : prev.filter(id => id !== tourId));
+    };
+    window.addEventListener("favorites-change", sync);
+    return () => {
+      window.removeEventListener("auth-change", loadFavoriteIds);
+      window.removeEventListener("favorites-change", sync);
+    };
   }, [loadFavoriteIds]);
 
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
@@ -57,6 +68,10 @@ export function useFavoriteTours() {
       }
 
       const currentlyFavorite = favoriteIdSet.has(tourId);
+      if (pendingIds.current.has(tourId)) {
+        return { ok: false, reason: "error", message: "Đang cập nhật tour yêu thích." };
+      }
+      pendingIds.current.add(tourId);
       setLoadingIds((prev) => [...prev, tourId]);
 
       try {
@@ -73,18 +88,20 @@ export function useFavoriteTours() {
 
           return prev.includes(tourId) ? prev : [...prev, tourId];
         });
+        window.dispatchEvent(new CustomEvent("favorites-change", { detail: { tourId, favorite: !currentlyFavorite } }));
 
         return {
           ok: true,
           action: currentlyFavorite ? "removed" : "added",
         };
-      } catch {
+      } catch (error) {
         return {
           ok: false,
           reason: "error",
-          message: "Không thể cập nhật danh sách yêu thích.",
+          message: error instanceof Error ? error.message : "Không thể cập nhật danh sách yêu thích.",
         };
       } finally {
+        pendingIds.current.delete(tourId);
         setLoadingIds((prev) => prev.filter((id) => id !== tourId));
       }
     },

@@ -105,7 +105,7 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
           </div>
           <button
             type="button"
-            onClick={() => setActiveTab?.("favorites")}
+            onClick={() => setActiveTab?.("destinations")}
             className="text-[10px] font-semibold text-[#1766c2]"
           >
             Xem tất cả →

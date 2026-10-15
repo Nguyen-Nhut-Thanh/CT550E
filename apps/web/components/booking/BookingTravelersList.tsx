@@ -1,5 +1,6 @@
 import { UserRound } from "lucide-react";
-import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
+import { BookingGenderSelect } from "./BookingGenderSelect";
+import { displayBirthday, formatBirthdayInput, parseBirthday } from "@/lib/client/utils/bookingBirthday";
 import { formatVND } from "@/lib/client/utils/utils";
 import type { TravelerForm, TravelerType } from "@/lib/client/utils/booking";
 import type { TourSchedule } from "shared";
@@ -66,7 +67,7 @@ export function BookingTravelersList({
             >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-700">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-700">
                     <UserRound className="h-5 w-5" />
                   </div>
                   <div>
@@ -96,41 +97,35 @@ export function BookingTravelersList({
                     onUpdateTraveler(index, "fullName", event.target.value)
                   }
                   placeholder="Họ và tên"
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:bg-white"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
                 />
-                <select
+                <BookingGenderSelect
                   value={traveler.gender}
-                  onChange={(event) =>
-                    onUpdateTraveler(
-                      index,
-                      "gender",
-                      event.target.value as TravelerForm["gender"],
-                    )
-                  }
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:bg-white"
-                >
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                </select>
-                <AdminDatePicker
-                  value={traveler.birthday}
-                  onChange={(date) =>
-                    onUpdateTraveler(index, "birthday", date)
-                  }
-                  placeholder="Chọn ngày sinh"
-                  allowManualInput
+                  label={`Giới tính hành khách ${index + 1}`}
+                  onChange={(gender) => onUpdateTraveler(index, "gender", gender)}
                 />
+                <div className="min-w-0">
+                  <input type="text" inputMode="numeric" maxLength={10}
+                    aria-label={`Ngày sinh hành khách ${index + 1}, dd/mm/yyyy`}
+                    aria-invalid={traveler.birthday.length === 10 && parseBirthday(traveler.birthday) === null}
+                    value={displayBirthday(traveler.birthday)}
+                    onChange={event => onUpdateTraveler(index, "birthday", formatBirthdayInput(event.target.value))}
+                    placeholder="dd/mm/yyyy"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  />
+                  {traveler.birthday.length === 10 && parseBirthday(traveler.birthday) === null && <p className="mt-1 text-xs text-rose-600">Ngày sinh không hợp lệ.</p>}
+                </div>
                 {traveler.type === "adult" ? (
                   <label
                     className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-1.5 transition min-h-[46px] ${
                       singleRoomSelections[adultIndex]
-                        ? "border-sky-300 bg-sky-50/70"
+                        ? "border-blue-300 bg-blue-50/70"
                         : "border-slate-200 bg-slate-50"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       checked={singleRoomSelections[adultIndex] ?? false}
                       onChange={(event) =>
                         onUpdateSingleRoomSelection(

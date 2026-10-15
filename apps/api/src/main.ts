@@ -15,6 +15,9 @@ import { LocationsModule } from "./modules/locations/locations.module";
 import { MailModule } from "./modules/mail/mail.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
+import { FavoritesModule } from "./modules/favorites/favorites.module";
+import { BookingsModule } from "./modules/bookings/bookings.module";
+import { PaymentModule } from "./modules/payment/payment.module";
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { ReviewsModule } from "./modules/reviews/reviews.module";
     FeaturedToursModule,
     LocationsModule,
     ReviewsModule,
+    FavoritesModule,
+    BookingsModule,
+    PaymentModule,
   ]
 })
 class AppModule {}
