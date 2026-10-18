@@ -466,7 +466,7 @@ export class ToursPublicService {
       .map((t: any) =>
         this.formatTourCard(t, { onlyFlashDeal: params.deal === 'flash' }),
       )
-      .filter((t: any) => t !== null);
+      .filter((t): t is NonNullable<typeof t> => t !== null);
 
     const resolvedItems =
       params.collection === 'bestseller'

@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, MoreHorizontal, Pencil, Star, X } from "lucide-react";
 import { getMyReviews, updateMyReview, type AccountReviewItem } from "@/lib/client/api/reviewApi";
+import { useAccountResource } from "../useAccountResource";
 
 export function AccountReviewsTab() {
-  const [reviews, setReviews] = useState<AccountReviewItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: reviews = [], loading, error, refresh: load, update: setReviews } = useAccountResource("reviews", getMyReviews);
   const [approvedOnly, setApprovedOnly] = useState(false);
   const [editing, setEditing] = useState<AccountReviewItem | null>(null);
   const [rating, setRating] = useState(5);
@@ -18,13 +17,6 @@ export function AccountReviewsTab() {
   const [notice, setNotice] = useState("");
   const [gallery, setGallery] = useState<{ images: string[]; index: number } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
-  async function load() {
-    setLoading(true); setError("");
-    try { setReviews(await getMyReviews()); }
-    catch { setError("Không thể tải bài đánh giá. Vui lòng thử lại."); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { void load(); }, []);
   useEffect(() => {
     if (!editing && !gallery) return;
     const handler = (event: KeyboardEvent) => {
@@ -51,7 +43,7 @@ export function AccountReviewsTab() {
   const approved = reviews.filter(review => review.status === 1);
   const visible = approvedOnly ? approved : reviews;
   return (
-    <div className="mx-auto max-w-6xl space-y-5 pt-1">
+    <div className="w-full space-y-5 pt-1">
       <header><h1 className="text-[26px] font-extrabold tracking-tight text-slate-900">Bài đánh giá</h1><p className="mt-1 text-sm text-slate-500">Những đánh giá bạn đã viết về các tour</p></header>
       <div className="flex gap-2" aria-label="Lọc bài đánh giá">
         {[false, true].map(value => <button key={String(value)} aria-pressed={approvedOnly === value} onClick={() => setApprovedOnly(value)} className={`rounded-full px-6 py-2 text-sm font-semibold transition ${approvedOnly === value ? "bg-[#2094d3] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>

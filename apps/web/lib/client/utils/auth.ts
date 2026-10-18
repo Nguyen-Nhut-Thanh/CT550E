@@ -40,7 +40,7 @@ export const fetchMe = async () => {
       },
     });
     if (!res.ok) {
-      removeToken();
+      if (res.status === 401 || res.status === 403) removeToken();
       return null;
     }
     return await res.json();

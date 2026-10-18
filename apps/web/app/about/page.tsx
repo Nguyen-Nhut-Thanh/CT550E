@@ -174,33 +174,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* VALUES */}
-      <section className="bg-[#edf9fb] py-12 sm:py-14">
-        <div className="mx-auto max-w-[1220px] px-5 sm:px-8 lg:px-10">
-          <div className="text-center">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
-              VÌ SAO CHỌN JourniTrip
-            </p>
-            <h2 className="mt-2 text-[28px] font-black tracking-[-0.03em] text-[#0b2c3d] sm:text-[32px]">
-              Giá trị chúng tôi mang lại
-            </h2>
-          </div>
-
-          <div className="mt-8 grid gap-y-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-            {values.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="px-5 text-center lg:border-r lg:border-[#d9ecef] lg:last:border-r-0">
-                <div className="mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#dff3f4] text-[#0c8d91]">
-                  <Icon className="h-7 w-7 stroke-[1.7]" />
-                </div>
-                <h3 className="mt-4 text-[13px] font-extrabold text-[#0b2c3d]">{title}</h3>
-                <p className="mx-auto mt-2 max-w-[175px] text-[11px] leading-[1.7] text-slate-600">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      
       {/* STATS */}
       <section className="bg-white">
         <div className="mx-auto grid max-w-[1220px] items-stretch lg:grid-cols-[36%_64%]">
@@ -228,6 +202,32 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* VALUES */}
+      <section className="bg-[#edf9fb] py-12 sm:py-14">
+        <div className="mx-auto max-w-[1220px] px-5 sm:px-8 lg:px-10">
+          <div className="text-center">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
+              VÌ SAO CHỌN JourniTrip
+            </p>
+            <h2 className="mt-2 text-[28px] font-black tracking-[-0.03em] text-[#0b2c3d] sm:text-[32px]">
+              Giá trị chúng tôi mang lại
+            </h2>
+          </div>
+
+          <div className="mt-8 grid gap-y-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+            {values.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="px-5 text-center lg:border-r lg:border-[#d9ecef] lg:last:border-r-0">
+                <div className="mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#dff3f4] text-[#0c8d91]">
+                  <Icon className="h-7 w-7 stroke-[1.7]" />
+                </div>
+                <h3 className="mt-4 text-[13px] font-extrabold text-[#0b2c3d]">{title}</h3>
+                <p className="mx-auto mt-2 max-w-[175px] text-[11px] leading-[1.7] text-slate-600">{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

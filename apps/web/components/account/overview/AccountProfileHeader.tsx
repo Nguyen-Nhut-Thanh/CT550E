@@ -1,12 +1,13 @@
 "use client";
 
-import Image from "next/image";
+import { AccountAvatar } from "../AccountAvatar";
+import Link from "next/link";
 import { BadgeCheck, Camera, MapPin, UserRound } from "lucide-react";
 import type { AccountProfileHeaderProps } from "shared";
 
 export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
-  const displayName = user?.full_name || "Nguyễn Nhựt Thanh";
-  const email = user?.accounts?.email || "nguyennhutthanh25.2005@gmail.com";
+  const displayName = user?.full_name?.trim() || "Người dùng";
+  const email = user?.accounts?.email || "";
   const bio = user?.bio || '"Đi nhiều hơn, trải nghiệm nhiều hơn" ⛰️';
   const nationality = user?.nationality || "Việt Nam";
 
@@ -14,24 +15,15 @@ export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
     <section className="relative flex min-h-[138px] items-start pl-[168px] pr-3 pt-4 sm:pl-[180px]">
       <div className="absolute -top-[46px] left-5 z-10 sm:left-8">
         <div className="relative h-[138px] w-[138px] overflow-hidden rounded-full border-[5px] border-white bg-slate-100 shadow-sm">
-          <Image
-            src={
-              user?.avatar_url ||
-              "/images/account/avata.png"
-            }
-            alt={displayName}
-            fill
-            className="object-cover"
-            sizes="138px"
-          />
+          <AccountAvatar source={user?.avatar_url} name={displayName} />
         </div>
-        <button
-          type="button"
+        <Link
+          href="/account/settings"
           aria-label="Đổi ảnh đại diện"
           className="absolute bottom-1 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#1766c2] text-white shadow-md transition hover:bg-blue-700"
         >
           <Camera className="h-4 w-4" />
-        </button>
+        </Link>
       </div>
 
       <div className="min-w-0 pt-1">

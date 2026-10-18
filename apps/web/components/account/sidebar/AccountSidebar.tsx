@@ -66,6 +66,7 @@ export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps)
               <Link
                 key={item.id}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setActiveTab?.(item.id)}
                 className={`group flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-left text-sm transition-all ${
                   isActive

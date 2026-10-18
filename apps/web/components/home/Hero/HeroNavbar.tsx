@@ -15,6 +15,7 @@ import {
 import { getToken } from "@/lib/client/utils/auth";
 import { navData } from "@/lib/client/constants/nav-data";
 import { useNavLocationData } from "@/lib/client/hooks";
+import NavItemLabel from "@/components/layout/NavItemLabel";
 
 export default function HeroNavbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -51,12 +52,12 @@ export default function HeroNavbar() {
         </Link>
 
         <div className="flex items-center gap-[42px]">
-          <nav className="flex items-center gap-[32px] max-[1024px]:hidden h-full">
+          <nav className="hidden items-center gap-5 xl:gap-8 lg:flex h-full">
             {navData.map((item) => (
               <div key={item.title} className="group relative flex items-center">
                 {item.isMega ? (
                   <button className="flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[1px] text-[rgba(255,255,255,0.85)] no-underline hover:text-white transition-colors py-2 outline-none">
-                    {item.title}
+                    <NavItemLabel item={item} />
                     <ChevronDown
                       size={14}
                       className="group-hover:rotate-180 transition-transform"
@@ -71,7 +72,7 @@ export default function HeroNavbar() {
                         : "text-[rgba(255,255,255,0.85)] hover:text-white"
                     }`}
                   >
-                    {item.title}
+                    <NavItemLabel item={item} />
                   </Link>
                 )}
 
@@ -209,7 +210,7 @@ export default function HeroNavbar() {
                         onClick={() => toggleExpand(item.title)}
                         className="w-full flex items-center justify-between p-4 text-sm font-bold uppercase tracking-wider text-gray-800"
                       >
-                        {item.title}
+                        <NavItemLabel item={item} />
                         <ChevronDown
                           size={18}
                           className={`transition-transform duration-300 ${expandedItems.includes(item.title) ? "rotate-180" : ""}`}
@@ -307,7 +308,7 @@ export default function HeroNavbar() {
                       className="block p-4 text-sm font-bold uppercase tracking-wider text-gray-800"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {item.title}
+                      <NavItemLabel item={item} />
                     </Link>
                   )}
                 </div>

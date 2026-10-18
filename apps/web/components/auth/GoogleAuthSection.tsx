@@ -31,7 +31,8 @@ export function GoogleAuthSection({
       <GoogleLogin
         onSuccess={onSuccess}
         onError={onError}
-        useOneTap
+        useOneTap={false}
+        ux_mode="popup"
         shape="pill"
         theme="outline"
       />

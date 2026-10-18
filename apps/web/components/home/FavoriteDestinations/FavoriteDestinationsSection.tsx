@@ -80,7 +80,7 @@ export default function FavoriteDestinationsSection() {
   }, [regions, activeRegionKey]);
 
   return (
-    <section className="bg-white px-4 py-16 sm:px-6 lg:px-16">
+    <section id="favorite-destinations" className="scroll-mt-24 bg-white px-4 py-16 sm:px-6 lg:px-16">
       <div className="mb-10 space-y-3 text-center">
         <h2 className="text-3xl font-bold uppercase tracking-wide text-[#1a2b48]">
           Điểm Đến Yêu Thích

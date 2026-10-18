@@ -1,9 +1,10 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { prisma } from 'database';
+import { prisma, PrismaClient } from 'database';
+
+export interface PrismaService extends PrismaClient {}
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  [key: string]: any;
 
   constructor() {
     return new Proxy(this, {

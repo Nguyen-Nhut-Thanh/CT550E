@@ -40,7 +40,7 @@ export function RegisterForm() {
           Đăng ký tài khoản
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          Trở thành thành viên của Travol
+          Trở thành thành viên của JourniTrip
         </p>
       </div>
 

@@ -18,6 +18,8 @@ import { ReviewsModule } from "./modules/reviews/reviews.module";
 import { FavoritesModule } from "./modules/favorites/favorites.module";
 import { BookingsModule } from "./modules/bookings/bookings.module";
 import { PaymentModule } from "./modules/payment/payment.module";
+import { AdminModule } from "./modules/admin/admin.module";
+import { ChatModule } from "./modules/chat/chat.module";
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { PaymentModule } from "./modules/payment/payment.module";
     FavoritesModule,
     BookingsModule,
     PaymentModule,
+    AdminModule,
+    ChatModule,
   ]
 })
 class AppModule {}

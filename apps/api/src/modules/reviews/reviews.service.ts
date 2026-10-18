@@ -50,7 +50,7 @@ export class ReviewsService {
     }
     const review = await this.prisma.reviews.findFirst({ where: { review_id: reviewId, user_id: userId } });
     if (!review) throw new NotFoundException("Không tìm thấy đánh giá của bạn.");
-    await this.prisma.$transaction(async (tx: PrismaService) => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.reviews.update({ where: { review_id: reviewId }, data: {
         rating: dto.rating, comment: dto.comment.trim(), status: 0, admin_note: null,
       } });
@@ -215,7 +215,7 @@ export class ReviewsService {
         rating: Math.min(5, Math.max(1, dto.rating)),
         title: dto.title || null,
         comment: dto.comment || null,
-        images: dto.images && dto.images.length > 0 ? dto.images : null,
+        images: dto.images && dto.images.length > 0 ? dto.images : undefined,
         status: 0, // Chờ Admin duyệt
       },
       include: {

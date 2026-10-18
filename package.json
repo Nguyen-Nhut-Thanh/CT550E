@@ -13,8 +13,10 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "npm run prisma:generate --workspace=database",
     "db:push": "npm run prisma:push --workspace=database",
+    "db:import:provinces": "tsx scripts/import-data/import-provinces.ts",
     "db:import:banners": "tsx scripts/import-data/import-banners.ts",
-    "db:import:tours": "tsx scripts/import-data/import-tours.ts"
+    "db:import:tours": "tsx scripts/import-data/import-tours.ts",
+    "grant-admin": "tsx scripts/grant-admin.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

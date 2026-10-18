@@ -561,6 +561,7 @@ model transports {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
+  birthday          DateTime?        @db.Date
   user_id           Int              @id @default(autoincrement())
   account_id        Int              @unique
   number_id         String?          @unique @db.VarChar(12)

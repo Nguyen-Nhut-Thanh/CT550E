@@ -11,3 +11,4 @@ export * from "./search-bar";
 export * from "./seasonal-showcase";
 export * from "./tour";
 export * from "./review";
+export * from "./dashboard";

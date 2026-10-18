@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Mail, MapPin, Phone, User, CalendarDays, Loader2 } from "lucide-react";
 import type { AccountRightSidebarProps, FeaturedDestinationItem } from "shared";
 import { getFeaturedDestinations } from "@/lib/client/api/featuredDestinations";
+import { displayBirthday } from "@/lib/client/utils/bookingBirthday";
 
 export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarProps) {
   const [destinations, setDestinations] = useState<FeaturedDestinationItem[]>([]);
@@ -37,7 +38,7 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
   const displayName = user?.full_name || "Khách hàng";
   const email = user?.accounts?.email || "Chưa cập nhật";
   const phone = user?.phone || "Chưa cập nhật";
-  const birthday = user?.birthday || "Chưa cập nhật";
+  const birthday = user?.birthday ? displayBirthday(user.birthday.slice(0, 10)) : "Chưa cập nhật";
   const gender = user?.gender === "female" ? "Nữ" : user?.gender === "male" ? "Nam" : "Chưa cập nhật";
 
   const infoItems = [
@@ -103,13 +104,12 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
             <MapPin className="h-5 w-5 text-[#1766c2]" />
             <h3 className="text-[14px] font-bold text-slate-800">Điểm đến nổi bật</h3>
           </div>
-          <button
-            type="button"
-            onClick={() => setActiveTab?.("destinations")}
+          <Link
+            href="/#favorite-destinations"
             className="text-[10px] font-semibold text-[#1766c2]"
           >
             Xem tất cả →
-          </button>
+          </Link>
         </div>
 
         {loadingDestinations ? (

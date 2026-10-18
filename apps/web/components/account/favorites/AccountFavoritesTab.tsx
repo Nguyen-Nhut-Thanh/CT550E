@@ -7,6 +7,7 @@ import { Clock, Heart, MapPin, Star } from "lucide-react";
 import type { FavoriteTourItem } from "shared";
 import { formatVND } from "@/lib/client/utils/utils";
 import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
+import CustomDropdown from "@/components/common/CustomDropdown";
 import type {
   AccountFavoritesTabProps,
   FavFilterType,
@@ -153,16 +154,12 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
 
         {/* Sort Select Dropdown */}
         <div className="flex items-center gap-2">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition focus:border-sky-500"
-          >
-            <option value="newest">Mới nhất</option>
-            <option value="price-asc">Giá thấp đến cao</option>
-            <option value="price-desc">Giá cao đến thấp</option>
-            <option value="rating">Đánh giá cao nhất</option>
-          </select>
+          <CustomDropdown selectedValue={sortBy} onSelect={(value) => setSortBy(value as FavSortType)} variant="compact" placeholder="Sắp xếp tour" options={[
+            { value: "newest", label: "Mới nhất" },
+            { value: "price-asc", label: "Giá thấp đến cao" },
+            { value: "price-desc", label: "Giá cao đến thấp" },
+            { value: "rating", label: "Đánh giá cao nhất" },
+          ]} />
         </div>
       </div>
 

@@ -1,10 +1,13 @@
-import type { NavItem } from "shared";
-export type { NavItem };
+import type { NavItem as SharedNavItem } from "shared";
+import { House, Compass, MapPin, Newspaper, Info, type LucideIcon } from "lucide-react";
+export type NavItem = SharedNavItem & { icon: LucideIcon };
 
 export const navData: NavItem[] = [
-  { title: "Trang chủ", href: "/" },
+  { title: "Trang chủ", href: "/", icon: House },
+  { title: "Tour du lịch", href: "/tours", icon: Compass },
   {
     title: "Điểm đến",
+    icon: MapPin,
     href: "/tours",
     isMega: true,
     children: [
@@ -33,6 +36,6 @@ export const navData: NavItem[] = [
       }
     ]
   },
-  { title: "Bài viết", href: "/blog" },
-  { title: "Về chúng tôi", href: "/about" }
+  { title: "Bài viết", href: "/blog", icon: Newspaper },
+  { title: "Về chúng tôi", href: "/about", icon: Info }
 ];

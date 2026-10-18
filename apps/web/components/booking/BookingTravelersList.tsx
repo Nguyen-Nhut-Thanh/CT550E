@@ -1,6 +1,6 @@
 import { UserRound } from "lucide-react";
 import { BookingGenderSelect } from "./BookingGenderSelect";
-import { displayBirthday, formatBirthdayInput, parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import { BirthdayInput } from "@/components/common/BirthdayInput";
 import { formatVND } from "@/lib/client/utils/utils";
 import type { TravelerForm, TravelerType } from "@/lib/client/utils/booking";
 import type { TourSchedule } from "shared";
@@ -104,17 +104,7 @@ export function BookingTravelersList({
                   label={`Giới tính hành khách ${index + 1}`}
                   onChange={(gender) => onUpdateTraveler(index, "gender", gender)}
                 />
-                <div className="min-w-0">
-                  <input type="text" inputMode="numeric" maxLength={10}
-                    aria-label={`Ngày sinh hành khách ${index + 1}, dd/mm/yyyy`}
-                    aria-invalid={traveler.birthday.length === 10 && parseBirthday(traveler.birthday) === null}
-                    value={displayBirthday(traveler.birthday)}
-                    onChange={event => onUpdateTraveler(index, "birthday", formatBirthdayInput(event.target.value))}
-                    placeholder="dd/mm/yyyy"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  />
-                  {traveler.birthday.length === 10 && parseBirthday(traveler.birthday) === null && <p className="mt-1 text-xs text-rose-600">Ngày sinh không hợp lệ.</p>}
-                </div>
+                <BirthdayInput value={traveler.birthday} label={`Ngày sinh hành khách ${index + 1}`} onChange={(value) => onUpdateTraveler(index, "birthday", value)} />
                 {traveler.type === "adult" ? (
                   <label
                     className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-1.5 transition min-h-[46px] ${

@@ -7,6 +7,7 @@ import { User, ChevronDown, Menu, X, MapPin, Globe, Loader2 } from "lucide-react
 import { getToken } from "@/lib/client/utils/auth";
 import { navData, type NavItem } from "@/lib/client/constants/nav-data";
 import { useNavLocationData } from "@/lib/client/hooks/useNavLocationData";
+import NavItemLabel from "./NavItemLabel";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -36,7 +37,7 @@ export default function Header() {
   };
 
   const NavLink = ({ item }: { item: NavItem }) => {
-    const isActive = pathname === item.href;
+    const isActive = !item.isMega && (pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`)));
 
     if (item.isMega) {
       return (
@@ -49,7 +50,7 @@ export default function Header() {
                 : "text-gray-700 hover:text-blue-600"
             }`}
           >
-            {item.title}
+            <NavItemLabel item={item} />
             <ChevronDown
               size={14}
               className="transition-transform group-hover:rotate-180"
@@ -138,7 +139,7 @@ export default function Header() {
             : "text-gray-700 hover:text-blue-600"
         }`}
       >
-        {item.title}
+        <NavItemLabel item={item} />
       </Link>
     );
   };
@@ -154,7 +155,7 @@ export default function Header() {
             JourniTrip<span className="text-amber-400">.</span>
           </Link>
 
-          <nav className="hidden h-full items-center gap-8 lg:flex">
+          <nav className="hidden h-full items-center gap-5 xl:gap-8 lg:flex">
             {navData.map((item) => (
               <NavLink key={item.title} item={item} />
             ))}
@@ -232,7 +233,7 @@ export default function Header() {
                         onClick={() => toggleExpand(item.title)}
                         className="flex w-full items-center justify-between p-4 text-sm font-bold uppercase tracking-wider text-gray-800"
                       >
-                        {item.title}
+                        <NavItemLabel item={item} />
                         <ChevronDown
                           size={18}
                           className={`transition-transform duration-300 ${
@@ -340,7 +341,7 @@ export default function Header() {
                       className="block p-4 text-sm font-bold uppercase tracking-wider text-gray-800"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {item.title}
+                      <NavItemLabel item={item} />
                     </Link>
                   )}
                 </div>

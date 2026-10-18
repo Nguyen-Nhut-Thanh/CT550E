@@ -53,9 +53,18 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('auth/upload-avatar')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    fileFilter: (_req, file, callback) => {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+        return callback(new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP'), false);
+      }
+      callback(null, true);
+    },
+  }))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
-    if (!file) {
+    if (!file || !file.size) {
       throw new BadRequestException('Không tìm thấy file để upload');
     }
 

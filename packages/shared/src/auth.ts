@@ -13,6 +13,7 @@ export type JwtPayload = {
 };
 
 export type UpdateProfilePayload = {
+  birthday?: string | null;
   full_name?: string;
   phone?: string | null;
   address?: string | null;

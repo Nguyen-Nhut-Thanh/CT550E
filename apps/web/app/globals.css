@@ -1,8 +1,101 @@
 @import "tailwindcss";
+@source "../components/admin";
+@source "./admin";
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
 
 .font-handwriting {
   font-family: 'Caveat', cursive;
+}
+
+.dashboard-welcome {
+  background-image: linear-gradient(90deg, #e8f3ff 0%, #e8f3fff2 42%, #e8f3ff66 75%, #e8f3ff11 100%), url('/images/account/cover-images.png');
+  background-position: center, right 55%;
+  background-size: cover;
+}
+
+.dashboard-kpi {
+  min-height: 112px;
+}
+
+.dashboard-kpi-copy {
+  margin-top: -48px;
+  padding-left: 64px;
+  padding-top: 4px;
+  padding-right: 4px;
+}
+
+.dashboard-kpi > .flex > div:last-child {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.dashboard-kpi-copy > p:first-child {
+  padding-right: 48px;
+}
+
+.admin-dashboard {
+  color: #0b1c45;
+}
+
+.admin-navigation {
+  background-image: linear-gradient(180deg, #00112bf7 25%, #001b40c9 75%, #00112bf0), url('/images/account/cover-images.png');
+  background-position: center, center bottom;
+  background-size: cover;
+}
+
+@media (min-width: 1024px) and (max-width: 1350px) {
+  .dashboard-kpi-copy {
+    margin-top: 12px;
+    padding-left: 0;
+  }
+}
+
+.admin-content-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
+}
+
+.admin-sidebar-scroll {
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: #293449 transparent;
+}
+
+/* Use a narrow thumb without native arrow buttons in Chromium browsers. */
+@supports selector(::-webkit-scrollbar) {
+  .admin-sidebar-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  .admin-sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .admin-sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .admin-sidebar-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #293449;
+  }
+
+  .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+
+  .admin-sidebar-scroll::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 

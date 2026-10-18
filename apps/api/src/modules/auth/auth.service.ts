@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -22,6 +24,7 @@ import type {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
   constructor(
@@ -120,15 +123,46 @@ export class AuthService {
   }
 
   async updateProfile(userId: number, data: UpdateProfilePayload) {
+    let birthday: Date | null | undefined;
+    if (data.birthday !== undefined) {
+      birthday = null;
+      if (data.birthday !== null && data.birthday !== '') {
+        if (typeof data.birthday !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.birthday)) {
+          throw new BadRequestException('Ngày sinh không hợp lệ');
+        }
+        birthday = new Date(`${data.birthday}T00:00:00Z`);
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+        if (Number.isNaN(birthday.getTime()) || birthday.toISOString().slice(0, 10) !== data.birthday || data.birthday < '1900-01-01' || data.birthday > today) {
+          throw new BadRequestException('Ngày sinh không hợp lệ hoặc sau hôm nay');
+        }
+      }
+    }
+    if (data.full_name !== undefined && (typeof data.full_name !== 'string' || !data.full_name.trim() || data.full_name.trim().length > 150)) {
+      throw new BadRequestException('Họ và tên phải có từ 1 đến 150 ký tự');
+    }
+    if (data.gender !== undefined && !['', 'male', 'female', 'other'].includes(data.gender)) {
+      throw new BadRequestException('Giới tính không hợp lệ');
+    }
+    if (data.avatar_url !== undefined) {
+      if (typeof data.avatar_url !== 'string') throw new BadRequestException('Link ảnh không hợp lệ');
+      data.avatar_url = data.avatar_url.trim();
+      if (data.avatar_url) {
+        try {
+          const url = new URL(data.avatar_url);
+          if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) throw new Error();
+        } catch { throw new BadRequestException('Link ảnh phải là URL http:// hoặc https:// hợp lệ'); }
+      }
+    }
     try {
       return await this.prisma.users.update({
         where: { user_id: userId },
         data: {
-          full_name: data.full_name || undefined,
+          full_name: data.full_name?.trim() || undefined,
+          birthday,
           phone: data.phone === '' ? null : data.phone || undefined,
           address: data.address === '' ? null : data.address || undefined,
-          avatar_url: data.avatar_url || undefined,
-          gender: data.gender || undefined,
+          avatar_url: data.avatar_url === '' ? null : data.avatar_url,
+          gender: data.gender === '' ? null : data.gender,
           number_id: data.number_id === '' ? null : data.number_id || undefined,
           profile_completed: true,
         },
@@ -168,6 +202,12 @@ export class AuthService {
   }
 
   async changePassword(userId: number, dto: ChangePasswordPayload) {
+    if (typeof dto.newPassword !== 'string' || dto.newPassword.length < 8 || dto.newPassword.length > 128) {
+      throw new BadRequestException('Mật khẩu mới phải có từ 8 đến 128 ký tự');
+    }
+    if (dto.oldPassword !== undefined && typeof dto.oldPassword !== 'string') {
+      throw new BadRequestException('Mật khẩu hiện tại không hợp lệ');
+    }
     const account = await this.prisma.accounts.findFirst({
       where: { users: { user_id: userId } },
     });
@@ -186,6 +226,9 @@ export class AuthService {
       );
       if (!isMatch) {
         throw new BadRequestException('Mật khẩu cũ không chính xác');
+      }
+      if (await bcrypt.compare(dto.newPassword, account.password_hash)) {
+        throw new BadRequestException('Mật khẩu mới phải khác mật khẩu hiện tại');
       }
     }
 
@@ -325,8 +368,13 @@ export class AuthService {
 
       return this.generateTokens(account);
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
         throw error;
+      }
+      const code = (error as { code?: unknown } | null)?.code;
+      if (typeof code === 'string' && /^P\d{4}$/.test(code)) {
+        this.logger.error(`Đăng nhập Google gặp lỗi cơ sở dữ liệu (${code})`);
+        throw new InternalServerErrorException('Không thể truy cập dữ liệu tài khoản. Vui lòng thử lại sau.');
       }
       throw new UnauthorizedException('Xác thực Google thất bại');
     }
