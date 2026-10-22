@@ -1,17 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { TOUR_POLICY_DEFINITIONS } from "@/lib/tourPolicyDefinitions";
 import { ChevronDown, Info } from "lucide-react";
-import {
-  TOUR_POLICY_DEFINITIONS,
-  type TourPolicyContentMap,
-  type TourPolicyKey,
-} from "@/lib/tourPolicyDefinitions";
-
-type Props = {
-  value: TourPolicyContentMap | undefined;
-  onChange: (next: TourPolicyContentMap) => void;
-};
+import { useState } from "react";
+import type { TourPoliciesAccordionEditorProps as Props, TourPolicyKey } from "shared";
 
 export function TourPoliciesAccordionEditor({ value, onChange }: Props) {
   const policyContents = value || {};

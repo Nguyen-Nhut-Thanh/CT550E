@@ -1,38 +1,20 @@
-﻿"use client";
+"use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Filter, Layers, MapPin, Star, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { AdminTable } from "@/components/admin/AdminTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/components/common/Toast";
+import { getLocationLevelLabel } from "@/lib/admin/locationDetail";
 import {
   deleteAdminLocation,
   getAdminLocationLevels,
   getAdminLocations,
 } from "@/lib/admin/locationsApi";
-import { getLocationLevelLabel } from "@/lib/admin/locationDetail";
-
-type LocationLevel = {
-  level_id: number;
-  name: string;
-};
-
-type LocationItem = {
-  location_id: number;
-  name: string;
-  slug: string;
-  level_id: number;
-  is_featured?: boolean;
-  geographic_levels?: {
-    name?: string | null;
-  } | null;
-  locations?: {
-    name?: string | null;
-  } | null;
-};
+import { Filter, Layers, MapPin, Star, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import type { LocationItem, LocationLevel } from 'shared';
 
 export default function AdminLocationsPage() {
   const router = useRouter();

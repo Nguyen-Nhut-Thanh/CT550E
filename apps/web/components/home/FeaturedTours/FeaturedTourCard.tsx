@@ -1,20 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Calendar, Hash, Hotel } from "lucide-react";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import { useToast } from "@/components/common/Toast";
 import TransportIcon from "@/components/common/TransportIcon";
 import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
 import { getTransportLabel } from "@/lib/client/utils/tourDisplay";
 import { formatDate, formatVND, normalizeImageSrc } from "@/lib/client/utils/utils";
-import type { FeaturedTourItem } from "shared";
-
-type FeaturedTourCardProps = {
-  item: FeaturedTourItem;
-};
+import { Calendar, Hash, Hotel } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { FeaturedTourCardProps } from 'shared';
 
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";

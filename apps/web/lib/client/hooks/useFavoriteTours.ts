@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToggleFavoriteResult } from "shared";
-import { getToken } from "../utils/auth";
 import {
   addFavoriteTour,
   getFavoriteIds,
   removeFavoriteTour,
 } from "../api/authApi";
+import { getToken } from "../utils/auth";
 
 export function useFavoriteTours() {
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);

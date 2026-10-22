@@ -1,19 +1,4 @@
-export type TourLike = {
-  code?: string | null;
-  name?: string | null;
-  status: number;
-  tour_type?: string | null;
-};
-
-export type ScheduleLike = {
-  start_date: string;
-  quota: number;
-  status: number;
-  _count?: {
-    bookings?: number;
-  };
-};
-
+import type { ScheduleLike, TourLike } from 'shared';
 export const TOUR_TYPE_OPTIONS = [
   { id: "all", label: "Tất cả" },
   { id: "domestic", label: "Trong nước" },

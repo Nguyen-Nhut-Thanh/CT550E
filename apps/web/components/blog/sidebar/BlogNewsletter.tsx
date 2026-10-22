@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Mail, Send } from "lucide-react";
+import { useState } from "react";
 
 export function BlogNewsletter() {
   const [email, setEmail] = useState("");

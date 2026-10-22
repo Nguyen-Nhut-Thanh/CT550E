@@ -1,21 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Calendar, Clock, Hotel, MapPin, Star } from "lucide-react";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import { useToast } from "@/components/common/Toast";
 import TransportIcon from "@/components/common/TransportIcon";
 import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
 import { getTourPriceValue, getTransportLabel } from "@/lib/client/utils/tourDisplay";
 import { formatVND, normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/client/utils/utils";
-import type { PublicTourCard, TourSchedule } from "shared";
-
-type TourCardProps = {
-  tour: PublicTourCard;
-  onTourClick?: (tour: PublicTourCard) => void;
-};
+import { Calendar, Clock, Hotel, MapPin, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { TourCardProps, TourSchedule } from 'shared';
 
 export default function TourCard({ tour, onTourClick }: TourCardProps) {
   const router = useRouter();

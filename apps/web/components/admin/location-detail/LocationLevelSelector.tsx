@@ -1,12 +1,8 @@
 "use client";
 
+import { LOCATION_LEVEL_DESCRIPTIONS, LOCATION_LEVEL_LABELS } from "@/lib/admin/locationDetail";
 import { CheckCircle2, Layers } from "lucide-react";
-import { LOCATION_LEVEL_DESCRIPTIONS, LOCATION_LEVEL_LABELS, type LocationDetailForm } from "@/lib/admin/locationDetail";
-
-type Props = {
-  form: LocationDetailForm;
-  onLevelChange: (level: number) => void;
-};
+import type { LocationLevelSelectorProps as Props } from 'shared';
 
 export function LocationLevelSelector({ form, onLevelChange }: Props) {
   return (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowRight, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 function ResultContent() {
   const searchParams = useSearchParams();

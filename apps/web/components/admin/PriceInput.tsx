@@ -1,18 +1,8 @@
 "use client";
 
-import { Banknote, LucideIcon } from "lucide-react";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
-
-interface PriceInputProps {
-  label: string;
-  value: number | string;
-  onChange: (value: number) => void;
-  placeholder?: string;
-  icon?: LucideIcon;
-  suffix?: string;
-  error?: string;
-  disabled?: boolean;
-}
+import { Banknote } from "lucide-react";
+import type { PriceInputProps } from 'shared';
 
 export function PriceInput({
   label,

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { BannerPayload } from 'shared';
 import { PrismaService } from '../../prisma.service';
-import { BannerPayload } from 'shared';
 
 @Injectable()
 export class BannersService {

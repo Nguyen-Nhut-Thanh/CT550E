@@ -1,11 +1,11 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
+import type { FlashDealItem, FlashDealPayload, FlashDealTourRecord } from 'shared';
+import { slugify, toNumber } from '../../common/utils';
 import { PrismaService } from '../../prisma.service';
-import { toNumber, slugify } from '../../common/utils';
-import type { FlashDealPayload, FlashDealItem, FlashDealTourRecord } from 'shared';
 
 @Injectable()
 export class FlashDealsService {
@@ -142,7 +142,7 @@ export class FlashDealsService {
       take: limit,
     });
 
-    const items: FlashDealItem[] = deals.map((deal: any) => {
+    const items: FlashDealItem[] = deals.map((deal) => {
       const schedule = deal.tour_schedules;
       const tour = schedule.tours as FlashDealTourRecord;
 

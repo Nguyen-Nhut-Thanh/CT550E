@@ -1,8 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
   Compass,
@@ -10,11 +7,14 @@ import {
   Info,
   Mail,
   MapPin,
-  Plane,
   Phone,
+  Plane,
   Send,
   ShieldCheck,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FaFacebookF, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
 import { SiZalo } from "react-icons/si";
 

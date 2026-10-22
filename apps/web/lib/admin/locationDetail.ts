@@ -1,5 +1,4 @@
-import type { AdminLocationItem } from "@/types/admin-location";
-
+import type { AdminLocationFetcher, AdminLocationItem, LocationDetailForm, LocationHierarchyState } from 'shared';
 export const LOCATION_LEVEL_LABELS: Record<number, string> = {
   1: "Toàn cầu",
   2: "Nhóm Châu lục",
@@ -20,19 +19,6 @@ export const LOCATION_LEVEL_DESCRIPTIONS: Record<number, string> = {
   5: "Các tỉnh thành trực thuộc trung ương hoặc tương đương",
   6: "Các thành phố du lịch, quận huyện trọng điểm",
   7: "Các điểm dừng chân, thắng cảnh, di tích cụ thể",
-};
-
-export type LocationDetailForm = {
-  name: string;
-  slug: string;
-  location_type: string;
-  level_id: number;
-  parent_id: string | number;
-  country_code: string;
-  note: string;
-  image_url: string;
-  is_featured: boolean;
-  featured_order: number | null;
 };
 
 export function createDefaultLocationDetailForm(): LocationDetailForm {
@@ -90,18 +76,6 @@ export function getLocationHierarchyPreview(params: {
     level7: form.name || "Điểm tham quan mới",
   };
 }
-
-type AdminLocationFetcher = (path: string) => Promise<Response>;
-
-type LocationHierarchyState = {
-  level3Id: string;
-  level4Id: string;
-  level5Id: string;
-  level6Id: string;
-  level4List: AdminLocationItem[];
-  level5List: AdminLocationItem[];
-  level6List: AdminLocationItem[];
-};
 
 async function fetchLocationById(
   fetcher: AdminLocationFetcher,

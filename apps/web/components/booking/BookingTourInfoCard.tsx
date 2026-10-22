@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { Clock, MapPin, Star } from "lucide-react";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import { formatDate, formatVND } from "@/lib/client/utils/utils";
-import type { PublicTourDetail, TourSchedule } from "shared";
-
-interface BookingTourInfoCardProps { tour: PublicTourDetail; selectedSchedule: TourSchedule; seatsLeft: number; adultUnitPrice: number; }
+import { Clock, MapPin, Star } from "lucide-react";
+import Link from "next/link";
+import type { BookingTourInfoCardProps } from 'shared';
 export function BookingTourInfoCard({ tour, selectedSchedule, seatsLeft, adultUnitPrice }: BookingTourInfoCardProps) {
   const rating = tour.rating_avg != null ? Number(tour.rating_avg) : tour.reviews?.length
     ? tour.reviews.reduce((sum, review) => sum + Number(review.rating), 0) / tour.reviews.length : 0;

@@ -1,28 +1,8 @@
 "use client";
 
+import { getLocationHierarchyPreview } from "@/lib/admin/locationDetail";
 import { ChevronRight, Loader2, MapPin } from "lucide-react";
-import type { AdminLocationItem } from "@/types/admin-location";
-import { getLocationHierarchyPreview, type LocationDetailForm } from "@/lib/admin/locationDetail";
-
-type Props = {
-  form: LocationDetailForm;
-  level3Id: string;
-  level4Id: string;
-  level5Id: string;
-  level6Id: string;
-  level3List: AdminLocationItem[];
-  level4List: AdminLocationItem[];
-  level5List: AdminLocationItem[];
-  level6List: AdminLocationItem[];
-  loadingL3: boolean;
-  loadingL4: boolean;
-  loadingL5: boolean;
-  loadingL6: boolean;
-  onLevel3Change: (value: string) => void;
-  onLevel4Change: (value: string) => void;
-  onLevel5Change: (value: string) => void;
-  onLevel6Change: (value: string) => void;
-};
+import type { AdminLocationItem, LocationHierarchyCardProps as Props } from 'shared';
 
 function SelectField({
   label,

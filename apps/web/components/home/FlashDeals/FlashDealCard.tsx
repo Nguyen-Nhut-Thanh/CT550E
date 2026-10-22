@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import FavoriteButton from "@/components/common/FavoriteButton";
+import { useToast } from "@/components/common/Toast";
+import TransportIcon from "@/components/common/TransportIcon";
+import { useCountdown, useFavoriteTours } from "@/lib/client/hooks";
+import { formatDate, formatVND, getTransportLabel, normalizeImageSrc } from "@/lib/client/utils";
 import {
   Calendar,
   Clock,
@@ -10,11 +12,9 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
-import FavoriteButton from "@/components/common/FavoriteButton";
-import { useToast } from "@/components/common/Toast";
-import TransportIcon from "@/components/common/TransportIcon";
-import { useCountdown, useFavoriteTours } from "@/lib/client/hooks";
-import { formatDate, formatVND, normalizeImageSrc, getTransportLabel } from "@/lib/client/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import type { FlashDealItem } from "shared";
 
 const brandRed = "text-red-600";

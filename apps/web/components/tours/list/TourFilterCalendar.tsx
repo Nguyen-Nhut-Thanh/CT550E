@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   buildCalendarDays,
   fromDateValue,
@@ -11,12 +9,9 @@ import {
   toDateValue,
   WEEKDAY_HEADERS,
 } from "@/lib/client/utils/searchBar.utils";
-
-type TourFilterCalendarProps = {
-  dateValue: string;
-  onSelectDate: (value: string) => void;
-  label?: string;
-};
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { TourFilterCalendarProps } from 'shared';
 
 export default function TourFilterCalendar({
   dateValue,

@@ -1,23 +1,8 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, type LucideIcon } from "lucide-react";
-
-type DropdownOption = {
-  label: string;
-  value: string;
-};
-
-type CustomDropdownProps = {
-  label?: string;
-  placeholder?: string;
-  options: DropdownOption[];
-  selectedValue: string;
-  onSelect: (value: string) => void;
-  icon?: LucideIcon;
-  className?: string;
-  variant?: "default" | "minimal" | "compact";
-};
+import type { CustomDropdownProps } from 'shared';
 
 export default function CustomDropdown({
   label,
@@ -28,6 +13,7 @@ export default function CustomDropdown({
   icon: Icon,
   className = "",
   variant = "default",
+  matchTriggerWidth = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -116,7 +102,9 @@ export default function CustomDropdown({
         {isOpen ? (
           <div
             className={`absolute z-50 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-2 shadow-2xl ${
-              isCompact
+              matchTriggerWidth
+                ? "left-0 right-0 top-[calc(100%+8px)]"
+                : isCompact
                 ? "right-0 top-[calc(100%+8px)] min-w-[230px] rounded-[18px] border-slate-100 p-1.5 shadow-xl ring-1 ring-slate-900/5"
                 : isDefault
                 ? "left-0 right-0 top-[calc(100%+10px)]"
@@ -155,4 +143,3 @@ export default function CustomDropdown({
     </div>
   );
 }
-

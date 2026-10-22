@@ -1,18 +1,8 @@
 "use client";
 
-import { Loader2, Save } from "lucide-react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import type { PostCategory, PostEditorForm } from "@/lib/admin/posts";
-
-type Props = {
-  isNew: boolean;
-  saving: boolean;
-  categories: PostCategory[];
-  form: PostEditorForm;
-  onSave: () => void;
-  onCancel: () => void;
-  onFormChange: (updater: (prev: PostEditorForm) => PostEditorForm) => void;
-};
+import { Loader2, Save } from "lucide-react";
+import type { PostEditorSidebarProps as Props } from 'shared';
 
 export function PostEditorSidebar({
   isNew,

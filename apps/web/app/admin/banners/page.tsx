@@ -1,8 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { AdminTable } from "@/components/admin/AdminTable";
@@ -10,7 +7,10 @@ import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import { useToast } from "@/components/common/Toast";
 import { deleteAdminBanner, fetchAdminBanners } from "@/lib/admin/banners";
 import { confirmAction } from "@/lib/admin/confirm";
-import type { Banner as BannerItem } from "@/types/banner";
+import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import type { Banner as BannerItem } from "shared";
 
 export default function AdminBannersPage() {
   const router = useRouter();

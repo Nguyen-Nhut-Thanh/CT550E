@@ -1,22 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { UserPlus } from "lucide-react";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { CreateStaffModal } from "@/components/admin/users/CreateStaffModal";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { useToast } from "@/components/common/Toast";
-import {
-  createDefaultStaffForm,
-  matchesUserSearch,
-  type StaffFormData,
-  type UserItem,
-} from "@/lib/admin/users";
+import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users";
 import {
   createAdminStaff,
   getAdminUsers,
   updateAdminUserStatus,
 } from "@/lib/admin/usersApi";
+import { UserPlus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { StaffFormData, UserItem } from "shared";
 
 export default function AdminUsersPage() {
   const pageSize = 10;

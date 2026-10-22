@@ -1,10 +1,7 @@
 "use client";
 
-import { CheckCircle2, Award } from "lucide-react";
-
-type TourHighlightsListProps = {
-  highlights?: string[];
-};
+import { Award, CheckCircle2 } from "lucide-react";
+import type { TourHighlightsListProps } from 'shared';
 
 export default function TourHighlightsList({ highlights = [] }: TourHighlightsListProps) {
   if (!highlights || highlights.length === 0) {

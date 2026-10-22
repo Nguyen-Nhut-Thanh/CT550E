@@ -1,23 +1,8 @@
-import { UserRound } from "lucide-react";
-import { BookingGenderSelect } from "./BookingGenderSelect";
 import { BirthdayInput } from "@/components/common/BirthdayInput";
 import { formatVND } from "@/lib/client/utils/utils";
-import type { TravelerForm, TravelerType } from "@/lib/client/utils/booking";
-import type { TourSchedule } from "shared";
-
-interface BookingTravelersListProps {
-  travelers: TravelerForm[];
-  selectedSchedule: TourSchedule;
-  singleRoomSelections: boolean[];
-  singleRoomUnitPrice: number;
-  getUnitPrice: (schedule: TourSchedule | null, type: TravelerType) => number;
-  onUpdateTraveler: (
-    index: number,
-    field: keyof TravelerForm,
-    value: string,
-  ) => void;
-  onUpdateSingleRoomSelection: (adultIndex: number, checked: boolean) => void;
-}
+import { UserRound } from "lucide-react";
+import type { BookingTravelersListProps, TravelerType } from "shared";
+import { BookingGenderSelect } from "./BookingGenderSelect";
 
 export function BookingTravelersList({
   travelers,

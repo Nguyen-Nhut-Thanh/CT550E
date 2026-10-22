@@ -1,26 +1,25 @@
 import {
-  Injectable,
-  UnauthorizedException,
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
-import {
-  RegisterDto,
-  LoginDto,
-  VerifyEmailDto,
-  GoogleLoginDto,
-} from './dto/auth.dto';
-import { MailService } from '../mail/mail.service';
 import type {
-  ChangePasswordPayload,
-  UpdateProfilePayload,
-  AuthAccountWithUser,
+  AuthAccountWithUser, ChangePasswordPayload,
+  UpdateProfilePayload
 } from 'shared';
+import { PrismaService } from '../../prisma.service';
+import { MailService } from '../mail/mail.service';
+import {
+  GoogleLoginDto,
+  LoginDto,
+  RegisterDto,
+  VerifyEmailDto,
+} from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {

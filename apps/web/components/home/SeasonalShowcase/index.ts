@@ -1,2 +1,1 @@
-export { default } from "./SeasonalShowcase";
-export { default as SeasonalShowcase } from "./SeasonalShowcase";
+export { default as SeasonalShowcase, default } from "./SeasonalShowcase";

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatLocalDate, formatShortDate, parseDateOnly } from "@/lib/client/utils/dateTime";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { AdminDatePickerProps } from 'shared';
 
 const WEEKDAY_LABELS = ["TH2", "TH3", "TH4", "TH5", "TH6", "TH7", "CN"];
 const MONTH_LABELS = [
@@ -38,16 +39,6 @@ function buildCalendarDays(monthDate: Date) {
 
   return days;
 }
-
-type AdminDatePickerProps = {
-  label?: string;
-  value: string;
-  minDate?: string;
-  disabled?: boolean;
-  placeholder?: string;
-  allowManualInput?: boolean;
-  onChange: (date: string) => void;
-};
 
 export function AdminDatePicker({
   label,

@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import CustomDropdown from "@/components/common/CustomDropdown";
+import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
+import { formatVND } from "@/lib/client/utils/utils";
+import { Clock, Heart, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Heart, MapPin, Star } from "lucide-react";
-import type { FavoriteTourItem } from "shared";
-import { formatVND } from "@/lib/client/utils/utils";
-import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
-import CustomDropdown from "@/components/common/CustomDropdown";
+import { useMemo, useState } from "react";
 import type {
   AccountFavoritesTabProps,
   FavFilterType,

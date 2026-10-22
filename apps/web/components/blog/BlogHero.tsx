@@ -1,15 +1,6 @@
-import Image from "next/image";
 import { Calendar, Clock, User } from "lucide-react";
-
-interface BlogHeroProps {
-  title: string;
-  summary: string;
-  category: string;
-  author: string;
-  date: string;
-  readTime: string;
-  heroImage: string;
-}
+import Image from "next/image";
+import type { BlogHeroProps } from 'shared';
 
 export function BlogHero({
   title,

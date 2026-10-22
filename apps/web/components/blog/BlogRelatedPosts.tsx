@@ -1,13 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
-type RelatedPost = {
-  id: number;
-  title: string;
-  date: string;
-  image: string;
-  slug: string;
-};
+import type { RelatedPost } from 'shared';
 
 const RELATED_POSTS: RelatedPost[] = [
   {

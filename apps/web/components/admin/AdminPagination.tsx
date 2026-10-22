@@ -1,14 +1,6 @@
 "use client";
 
-type AdminPaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  itemLabel?: string;
-  onPageChange: (page: number) => void;
-};
-
+import type { AdminPaginationProps } from 'shared';
 export function AdminPagination({
   currentPage,
   totalPages,

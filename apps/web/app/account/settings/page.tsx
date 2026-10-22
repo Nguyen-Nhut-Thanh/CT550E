@@ -1,8 +1,8 @@
 "use client";
 
 import { AccountSettingsTab } from "@/components/account";
-import { useAccount } from "@/components/account/AccountShell";
 import { AccountContent } from "@/components/account/AccountContent";
+import { useAccount } from "@/components/account/AccountShell";
 
 export default function SettingsAccountPage() {
   const { user, updateUser } = useAccount();

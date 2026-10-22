@@ -1,15 +1,6 @@
 import { adminFetch } from "@/lib/adminFetch";
 import { API_BASE, getToken } from "@/lib/auth";
-import type { Banner } from "@/types/banner";
-
-export type AdminBannerPayload = {
-  location_name: string;
-  header: string;
-  description: string;
-  image_url: string;
-  link_to: string;
-  status: number;
-};
+import type { AdminBannerPayload, Banner } from 'shared';
 
 async function parseJsonResponse<T>(response: Response) {
   return (await response.json()) as T;

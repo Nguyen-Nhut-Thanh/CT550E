@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Layers, Loader2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
 import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
 import { LocationDetailsCard } from "@/components/admin/location-detail/LocationDetailsCard";
 import { LocationHierarchyCard } from "@/components/admin/location-detail/LocationHierarchyCard";
@@ -10,22 +7,24 @@ import { LocationImageSidebar } from "@/components/admin/location-detail/Locatio
 import { LocationLevelSelector } from "@/components/admin/location-detail/LocationLevelSelector";
 import InlineNotice from "@/components/common/InlineNotice";
 import { useToast } from "@/components/common/Toast";
-import { uploadAuthenticatedFile } from "@/lib/uploadApi";
-import { adminFetch } from "@/lib/adminFetch";
-import { API_BASE, getToken } from "@/lib/auth";
-import {
-  getAdminLocationDetail,
-  saveAdminLocation,
-} from "@/lib/admin/locationsApi";
 import {
   LOCATION_LEVEL_LABELS,
   buildLocationHierarchyState,
   createDefaultLocationDetailForm,
   fetchLocationOptionsByLevel,
   slugifyLocationName,
-  type LocationDetailForm,
 } from "@/lib/admin/locationDetail";
-import type { AdminLocationItem } from "@/types/admin-location";
+import {
+  getAdminLocationDetail,
+  saveAdminLocation,
+} from "@/lib/admin/locationsApi";
+import { adminFetch } from "@/lib/adminFetch";
+import { API_BASE, getToken } from "@/lib/auth";
+import { uploadAuthenticatedFile } from "@/lib/uploadApi";
+import { Layers, Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import type { AdminLocationItem, LocationDetailForm } from "shared";
 
 export default function AdminLocationDetailPage() {
   const { id } = useParams();

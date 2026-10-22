@@ -2,11 +2,10 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { useAccountResource } from "@/components/account/useAccountResource";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { getMyBookings } from "@/lib/client/api/authApi";
 import { AccountBookingsTab } from "@/components/account";
-import type { AccountBooking } from "shared";
+import { useAccountResource } from "@/components/account/useAccountResource";
+import { getMyBookings } from "@/lib/client/api/authApi";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function BookingsHistoryAccountPage() {
   const { data: bookings = [], loading, error } = useAccountResource("bookings", getMyBookings);

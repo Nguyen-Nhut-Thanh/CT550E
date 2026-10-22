@@ -1,9 +1,6 @@
-import { API_BASE } from "@/lib/auth";
 import { adminFetch } from "@/lib/adminFetch";
-
-type AdminLoginResponse = {
-  access_token: string;
-};
+import { API_BASE } from "@/lib/auth";
+import type { LoginResponse as AdminLoginResponse } from 'shared';
 
 export async function loginAdmin(email: string, password: string) {
   const response = await fetch(`${API_BASE}/admin/auth/login`, {

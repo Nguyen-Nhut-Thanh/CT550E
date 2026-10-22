@@ -1,14 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-
-type AdminSearchInputProps = {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  roundedClassName?: string;
-  className?: string;
-};
+import type { AdminSearchInputProps } from 'shared';
 
 export function AdminSearchInput({
   value,

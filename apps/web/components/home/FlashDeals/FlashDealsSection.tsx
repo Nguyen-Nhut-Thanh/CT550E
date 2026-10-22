@@ -1,9 +1,9 @@
 "use client";
 
+import { getFlashDeals } from "@/lib/client/api/flashDeals";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getFlashDeals } from "@/lib/client/api/flashDeals";
 import type { FlashDealItem } from "shared";
 import FlashDealCard from "./FlashDealCard";
 import FlashDealCardSkeleton from "./FlashDealCardSkeleton";

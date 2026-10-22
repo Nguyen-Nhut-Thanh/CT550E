@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import InlineNotice from "@/components/common/InlineNotice";
 import { resendVerificationCode, verifyEmailCode } from "@/lib/client/api/authApi";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function VerifyForm() {
   const [code, setCode] = useState("");

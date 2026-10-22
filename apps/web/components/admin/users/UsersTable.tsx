@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import {
   BadgeCheck,
   Loader2,
@@ -11,19 +12,7 @@ import {
   Unlock,
   Users,
 } from "lucide-react";
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import type { UserItem } from "@/lib/admin/users";
-
-type Props = {
-  users: UserItem[];
-  loading: boolean;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  onToggleStatus: (user: UserItem) => void;
-  onPageChange: (page: number) => void;
-};
+import type { UsersTableProps as Props } from 'shared';
 
 export function UsersTable({
   users,

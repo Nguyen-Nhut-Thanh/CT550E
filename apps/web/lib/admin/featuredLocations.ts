@@ -1,11 +1,6 @@
-import type { AdminLocationItem } from "@/types/admin-location";
-
+import type { AdminLocationItem } from 'shared';
 export const FEATURED_LIMIT = 9;
 const FEATURED_FALLBACK_ORDER = 99;
-
-export type LocationListResponse = {
-  items?: AdminLocationItem[];
-};
 
 export function sortFeaturedLocations(items: AdminLocationItem[]) {
   return [...items].sort(

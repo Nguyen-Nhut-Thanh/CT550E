@@ -1,18 +1,8 @@
 "use client";
 
-import { Calendar } from "lucide-react";
 import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
-
-type Props = {
-  dateValue: string;
-  minDate: string;
-  disabled?: boolean;
-  onDateChange: (value: string) => void;
-  timeValue?: string;
-  onTimeChange?: (value: string) => void;
-  dateLabel?: string;
-  timeLabel?: string;
-};
+import { Calendar } from "lucide-react";
+import type { ScheduleStartFieldsProps as Props } from 'shared';
 
 export function ScheduleStartFields({
   dateValue,

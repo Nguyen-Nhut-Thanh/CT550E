@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Camera, Upload, Link2 } from "lucide-react";
-import { AccountAvatar } from "../AccountAvatar";
 import { useToast } from "@/components/common/Toast";
+import { Camera, Link2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AccountAvatar } from "../AccountAvatar";
 
 export function AccountAvatarEditor({ url, onUrlChange, file, onFileChange }: {
   url: string; onUrlChange: (url: string) => void; file: File | null; onFileChange: (file: File | null) => void;

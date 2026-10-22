@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Calendar, Zap } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
@@ -9,19 +7,20 @@ import { AdminTable } from "@/components/admin/AdminTable";
 import { FlashDealModal } from "@/components/admin/flash-deals/FlashDealModal";
 import { useToast } from "@/components/common/Toast";
 import {
-  getAdminFlashDeals,
-  saveAdminFlashDeal,
-} from "@/lib/admin/marketing";
-import {
   buildFlashDealForm,
   buildFlashDealPayload,
   createDefaultFlashDealForm,
   filterFlashDealSchedules,
-  FlashDealForm,
-  FlashDealSchedule,
   previewFlashDealPrice,
 } from "@/lib/admin/flashDeals";
+import {
+  getAdminFlashDeals,
+  saveAdminFlashDeal,
+} from "@/lib/admin/marketing";
 import { formatVND } from "@/lib/utils";
+import { Calendar, Zap } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FlashDealForm, FlashDealSchedule } from "shared";
 
 export default function AdminFlashDealsPage() {
   const [loading, setLoading] = useState(true);

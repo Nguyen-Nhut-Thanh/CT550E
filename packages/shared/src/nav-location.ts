@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+
 export interface NavLocationData {
   domestic: {
     region: string;
@@ -17,3 +19,4 @@ export interface NavItem {
   }[];
 }
 
+export type NavigationItemWithIcon = NavItem & { icon: LucideIcon };

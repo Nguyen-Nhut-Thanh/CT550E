@@ -1,15 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
 import { ScheduleBasicInfoCard } from "@/components/admin/schedule-detail/ScheduleBasicInfoCard";
 import { ScheduleItinerarySection } from "@/components/admin/schedule-detail/ScheduleItinerarySection";
 import { ScheduleSidebar } from "@/components/admin/schedule-detail/ScheduleSidebar";
 import { useToast } from "@/components/common/Toast";
-import { uploadAuthenticatedFile } from "@/lib/uploadApi";
-import { API_BASE, getToken } from "@/lib/auth";
 import {
   getAdminCatalogTransports,
   getAdminHotels,
@@ -22,14 +17,13 @@ import {
   ensureItineraryDays,
 } from "@/lib/admin/scheduleEditor";
 import { getAdminScheduleDetail, saveAdminSchedule } from "@/lib/admin/schedulesApi";
-import type {
-  HotelItem,
-  RoomTypeItem,
-  ScheduleDetailResponse,
-  TourInfo,
-  TransportItem,
-} from "@/lib/admin/scheduleDetail";
 import { getAdminTourDetail } from "@/lib/admin/toursApi";
+import { API_BASE, getToken } from "@/lib/auth";
+import { uploadAuthenticatedFile } from "@/lib/uploadApi";
+import { Loader2 } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { HotelItem, RoomTypeItem, ScheduleDetailResponse, TourInfo, TransportItem } from 'shared';
 
 export default function AdminScheduleDetailPage() {
   const { id } = useParams();

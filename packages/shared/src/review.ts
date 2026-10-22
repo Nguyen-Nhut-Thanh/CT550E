@@ -58,3 +58,16 @@ export type AdminUpdateReviewStatusPayload = {
   status: number; // 0: pending, 1: approved, 2: rejected
   admin_note?: string;
 };
+
+export interface AccountReviewItem {
+  review_id: number;
+  tour_id: number;
+  tour_name: string;
+  tour_image: string | null;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  images: string[];
+  status: number;
+  created_at: string;
+}

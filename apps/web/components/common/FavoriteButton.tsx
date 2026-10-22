@@ -1,16 +1,7 @@
 "use client";
 
-import type { MouseEventHandler } from "react";
 import { Heart, Loader2 } from "lucide-react";
-
-type FavoriteButtonProps = {
-  active: boolean;
-  loading?: boolean;
-  onClick: MouseEventHandler<HTMLButtonElement>;
-  className?: string;
-  iconClassName?: string;
-  label?: string;
-};
+import type { FavoriteButtonProps } from 'shared';
 
 export default function FavoriteButton({
   active,

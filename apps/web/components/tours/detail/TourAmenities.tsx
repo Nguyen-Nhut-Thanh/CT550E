@@ -1,6 +1,6 @@
 "use client";
 
-import { Bus, Hotel, Utensils, UserCheck, ShieldCheck, Droplet, Sparkles } from "lucide-react";
+import { Bus, Droplet, Hotel, ShieldCheck, Sparkles, UserCheck, Utensils } from "lucide-react";
 
 const AMENITIES = [
   { icon: Bus, label: "Xe đưa đón đời mới" },

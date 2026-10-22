@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle, Compass, Loader2, Lock, Mail } from "lucide-react";
-import { setToken } from "@/lib/auth";
 import { loginAdmin } from "@/lib/admin/adminAuthApi";
+import { setToken } from "@/lib/auth";
+import { AlertCircle, Compass, Loader2, Lock, Mail } from "lucide-react";
+import { useState } from "react";
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;

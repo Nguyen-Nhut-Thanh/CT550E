@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Save, UserRound, LockKeyhole, Mail, Phone, MapPin, CalendarDays, Info, ContactRound, Plane, Camera, Home } from "lucide-react";
-import Link from "next/link";
+import { BirthdayInput } from "@/components/common/BirthdayInput";
+import CustomDropdown from "@/components/common/CustomDropdown";
 import { useToast } from "@/components/common/Toast";
-import type { AccountSettingsTabProps, UserProfile } from "shared";
 import { updateUserProfile, uploadUserAvatar } from "@/lib/client/api/authApi";
+import { displayBirthday, parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import {
+  CalendarDays,
+  Camera,
+  ContactRound,
+  Home,
+  Info,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Phone,
+  Plane,
+  Save,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import type { AccountUserProps as AccountSettingsTabProps, UserProfile } from "shared";
 import { AccountAvatarEditor } from "./AccountAvatarEditor";
 import { AccountPasswordForm } from "./AccountPasswordForm";
-import CustomDropdown from "@/components/common/CustomDropdown";
-import { BirthdayInput } from "@/components/common/BirthdayInput";
-import { displayBirthday, parseBirthday } from "@/lib/client/utils/bookingBirthday";
 
 export function AccountSettingsTab({ user, onProfileSaved }: AccountSettingsTabProps & { onProfileSaved?: (updates: Partial<UserProfile>) => void }) {
   const [tab, setTab] = useState<"profile" | "password">("profile");

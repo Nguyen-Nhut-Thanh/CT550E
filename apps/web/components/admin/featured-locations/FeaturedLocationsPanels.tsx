@@ -1,5 +1,8 @@
 "use client";
 
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { FEATURED_LIMIT } from "@/lib/admin/featuredLocations";
 import {
   AlertCircle,
   Check,
@@ -10,10 +13,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { FEATURED_LIMIT } from "@/lib/admin/featuredLocations";
-import type { AdminLocationItem } from "@/types/admin-location";
+import type { AdminLocationItem } from 'shared';
 
 function VisualGrid({ items }: { items: AdminLocationItem[] }) {
   const getGridClass = (index: number) => {

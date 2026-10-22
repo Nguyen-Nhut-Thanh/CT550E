@@ -1,22 +1,6 @@
+import { formatDate, formatVND } from "@/lib/client/utils/utils";
 import { CalendarDays, Minus, Plus, Users } from "lucide-react";
-import type { TourSchedule } from "shared";
-import { formatDate } from "@/lib/client/utils/utils";
-import { formatVND } from "@/lib/client/utils/utils";
-import type { TravelerType } from "@/lib/client/utils/booking";
-
-interface BookingPassengerCountsProps {
-  schedules: TourSchedule[];
-  selectedSchedule: TourSchedule;
-  onScheduleChange: (schedule: TourSchedule) => void;
-  adultCount: number;
-  childCount: number;
-  infantCount: number;
-  totalGuests: number;
-  adultUnitPrice: number;
-  childUnitPrice: number;
-  infantUnitPrice: number;
-  onCountChange: (type: TravelerType, delta: number) => void;
-}
+import type { BookingPassengerCountsProps, TravelerType } from "shared";
 
 export function BookingPassengerCounts({
   schedules, selectedSchedule, onScheduleChange,
@@ -74,14 +58,22 @@ export function BookingPassengerCounts({
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
-        <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">Ngày khởi hành
-          <select value={selectedSchedule.tour_schedule_id} onChange={(event) => {
-            const schedule = schedules.find(item => item.tour_schedule_id === Number(event.target.value));
-            if (schedule) onScheduleChange(schedule);
-          }} className="mt-2 block w-full rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
-            {schedules.map(schedule => <option key={schedule.tour_schedule_id} value={schedule.tour_schedule_id}>{formatDate(schedule.start_date)} · Còn {Math.max(schedule.quota - schedule.booked_count, 0)} chỗ</option>)}
-          </select>
-        </label>
+        <div className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">Ngày khởi hành
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            className="mt-2"
+            selectedValue={String(selectedSchedule.tour_schedule_id)}
+            options={schedules.map(schedule => ({
+              value: String(schedule.tour_schedule_id),
+              label: `${formatDate(schedule.start_date)} · Còn ${Math.max(schedule.quota - schedule.booked_count, 0)} chỗ`,
+            }))}
+            onSelect={(value) => {
+              const schedule = schedules.find(item => item.tour_schedule_id === Number(value));
+              if (schedule) onScheduleChange(schedule);
+            }}
+          />
+        </div>
         <div className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">Số lượng khách<div className="mt-2 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-900"><Users className="h-4 w-4 text-blue-700" />{totalGuests} người</div></div>
       </div>
 
@@ -133,3 +125,4 @@ export function BookingPassengerCounts({
     </div>
   );
 }
+import CustomDropdown from "@/components/common/CustomDropdown";

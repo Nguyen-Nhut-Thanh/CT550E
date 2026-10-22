@@ -1,9 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
-
-type Entry = { data: unknown; loaded: boolean; updatedAt: number; pending?: Promise<unknown> };
-type Cache = Map<string, Entry>;
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import type { AccountResourceCache as Cache } from 'shared';
 const ResourceContext = createContext<Cache | null>(null);
 
 export function AccountResourceProvider({ children }: { children: ReactNode }) {

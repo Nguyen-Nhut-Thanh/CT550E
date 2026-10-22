@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  Banner,
   ActiveBannerState,
   BannerItem,
   UseHeroBannerSliderParams,
-  UseHeroBannerSliderReturn,
+  UseHeroBannerSliderReturn
 } from "shared";
 import { normalizeImageSrc } from "../utils/utils";
 

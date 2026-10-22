@@ -586,6 +586,7 @@ model users {
   posts             posts[]
   accounts          accounts         @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
   conversations     conversations[]
+  assigned_conversations conversations[] @relation("ConversationAssignee")
 }
 
 model recommendation_profiles {
@@ -626,15 +627,20 @@ model recommendation_events {
 model conversations {
   conversation_id   Int        @id @default(autoincrement())
   user_id           Int
-  status            String     @default("OPEN") @db.VarChar(50)
+  status            String     @default("WAITING") @db.VarChar(50)
+  assigned_staff_id Int?
+  resolved_at       DateTime?  @db.Timestamp(6)
   last_message      String?    @db.Text
   last_message_at   DateTime   @default(now()) @db.Timestamp(6)
   created_at        DateTime   @default(now()) @db.Timestamp(6)
   updated_at        DateTime   @updatedAt @db.Timestamp(6)
   messages          messages[]
   users             users      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  assigned_staff    users?     @relation("ConversationAssignee", fields: [assigned_staff_id], references: [user_id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([user_id], map: "idx_conversations_user")
+  @@index([status, last_message_at], map: "idx_conversations_status_time")
+  @@index([assigned_staff_id], map: "idx_conversations_assignee")
 }
 
 model messages {
@@ -644,9 +650,12 @@ model messages {
   sender_role     String        @db.VarChar(20) // 'USER', 'ADMIN', 'STAFF'
   message_type    String        @default("TEXT") @db.VarChar(10) // 'TEXT', 'IMAGE'
   content         String        @db.Text
+  client_message_id String?     @db.VarChar(64)
+  context         Json?
   is_read         Boolean       @default(false)
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   conversations   conversations @relation(fields: [conversation_id], references: [conversation_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([conversation_id], map: "idx_messages_conversation")
+  @@unique([conversation_id, client_message_id], map: "idx_messages_client_id")
 }

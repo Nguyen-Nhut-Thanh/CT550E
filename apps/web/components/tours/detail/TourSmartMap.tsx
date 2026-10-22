@@ -1,61 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
   ExternalLink,
   MapPin,
   Route as RouteIcon,
 } from "lucide-react";
-import type { PublicTourDetail } from "shared";
-
-type LocationDetailLite = {
-  latitude?: number | string | null;
-  longitude?: number | string | null;
-};
-
-type LocationLite = {
-  location_id?: number | null;
-  name?: string | null;
-  latitude?: number | string | null;
-  longitude?: number | string | null;
-  destinations_detail?: LocationDetailLite | null;
-};
-
-type TourDestinationLite = {
-  visit_order?: number | null;
-  note?: string | null;
-  name?: string | null;
-  location_id?: number | null;
-  latitude?: number | string | null;
-  longitude?: number | string | null;
-  locations?: LocationLite | null;
-};
-
-type TourWithMapData = PublicTourDetail & {
-  departure_locations?: LocationLite | null;
-  tour_destinations?: TourDestinationLite[] | null;
-};
-
-type TourSmartMapProps = {
-  tour?: TourWithMapData | null;
-};
-
-type RouteStop = {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  note?: string | null;
-  isDeparture?: boolean;
-};
-
-declare global {
-  interface Window {
-    google?: any;
-    __journiTripGoogleMapsPromise?: Promise<void>;
-  }
-}
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  LocationLite,
+  RouteStop,
+  TourDestinationLite,
+  TourSmartMapProps,
+  TourWithMapData,
+} from 'shared';
 
 const FALLBACK_COORDINATES: Record<
   string,

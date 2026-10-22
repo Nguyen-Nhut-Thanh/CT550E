@@ -1,24 +1,11 @@
 "use client";
 
-import { Clock, Loader2, Percent, Save, Zap } from "lucide-react";
 import { AdminModalShell } from "@/components/admin/AdminModalShell";
 import { PriceInput } from "@/components/admin/PriceInput";
-import {
-  FlashDealForm,
-  FlashDealSchedule,
-  previewFlashDealPrice,
-} from "@/lib/admin/flashDeals";
+import { previewFlashDealPrice } from "@/lib/admin/flashDeals";
 import { formatVND } from "@/lib/utils";
-
-type FlashDealModalProps = {
-  open: boolean;
-  saving: boolean;
-  schedule: FlashDealSchedule | null;
-  form: FlashDealForm;
-  onClose: () => void;
-  onChange: (updater: (current: FlashDealForm) => FlashDealForm) => void;
-  onSave: () => void;
-};
+import { Clock, Loader2, Percent, Save, Zap } from "lucide-react";
+import type { FlashDealModalProps } from 'shared';
 
 export function FlashDealModal({
   open,

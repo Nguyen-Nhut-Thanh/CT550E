@@ -1,10 +1,10 @@
 "use client";
 
-import { Search } from "lucide-react";
 import CustomDropdown from "@/components/common/CustomDropdown";
-import SearchBarCalendar from "./SearchBarCalendar";
-import { BUDGET_OPTIONS } from "@/lib/client/utils/searchBar.utils";
 import { useSearchBar } from "@/lib/client/hooks/useSearchBar";
+import { BUDGET_OPTIONS } from "@/lib/client/utils/searchBar.utils";
+import { Search } from "lucide-react";
+import SearchBarCalendar from "./SearchBarCalendar";
 
 export default function SearchBar() {
   const { state, actions } = useSearchBar();

@@ -1,55 +1,6 @@
-import { API_BASE, getToken } from "@/lib/auth";
-import type { VoucherValidationApiResponse } from "@/lib/booking";
 import { publicFetch } from "@/lib/publicFetch";
-import type { PublicTourDetail } from "@/types/tour";
-
-export type BookingPayload = {
-  tour_schedule_id: number;
-  contact_name: string;
-  contact_phone: string;
-  contact_email: string;
-  adult_count: number;
-  child_count: number;
-  infant_count: number;
-  travelers: Array<{
-    fullName: string;
-    gender: string;
-    birthday: string;
-    type: string;
-  }>;
-  note?: string;
-  voucher_code?: string;
-  payment_method: string;
-  room_type?: "shared" | "single";
-  single_room_surcharge?: number;
-};
-
-async function requestWithToken<T>(path: string, init: RequestInit = {}) {
-  const token = getToken();
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      ...(init.headers || {}),
-      Authorization: `Bearer ${token || ""}`,
-    },
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      data &&
-      typeof data === "object" &&
-      "message" in data &&
-      typeof data.message === "string"
-        ? data.message
-        : "Yêu cầu không thành công.";
-
-    throw new Error(message);
-  }
-
-  return data as T;
-}
+import { requestWithToken } from "@/lib/requestWithToken";
+import type { BookingBasePayload as BookingPayload, PublicTourDetail, VoucherValidationApiResponse } from "shared";
 
 export function getBookingTourDetail(tourId: string | number) {
   return publicFetch<PublicTourDetail>(`/tours/public/${tourId}`);

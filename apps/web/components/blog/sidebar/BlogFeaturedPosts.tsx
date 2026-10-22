@@ -1,14 +1,7 @@
+import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-
-type FeaturedPost = {
-  id: number;
-  title: string;
-  date: string;
-  image: string;
-  slug: string;
-};
+import type { RelatedPost as FeaturedPost } from 'shared';
 
 const FEATURED_POSTS: FeaturedPost[] = [
   {

@@ -15,7 +15,7 @@ export type {
   TravelerType,
   UserProfileLite,
   VoucherValidationApiResponse,
-  VoucherValidationResult,
+  VoucherValidationResult
 };
 
 export const PAYMENT_METHODS: Array<{

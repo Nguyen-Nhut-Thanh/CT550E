@@ -2,21 +2,16 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useAccountResource } from "@/components/account/useAccountResource";
+import { AccountOverviewTab } from "@/components/account";
 import { useAccount } from "@/components/account/AccountShell";
+import { useAccountResource } from "@/components/account/useAccountResource";
 import {
   getAccountStats,
   getMyBookings,
   getMyFavoriteTours,
 } from "@/lib/client/api/authApi";
-import { AccountOverviewTab } from "@/components/account";
-import type {
-  AccountBooking,
-  AccountStats,
-  FavoriteTourItem,
-} from "shared";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export default function AccountPage() {
   const { user } = useAccount();

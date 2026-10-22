@@ -1,5 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowRight,
   Globe2,
@@ -8,6 +6,8 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata = {
   title: "Về chúng tôi - JourniTrip",

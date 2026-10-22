@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { getFeaturedTours } from "@/lib/client/api/featuredTours";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { FeaturedTourItem } from "shared";
 import FeaturedTourCard from "./FeaturedTourCard";
 import FeaturedTourCardSkeleton from "./FeaturedTourCardSkeleton";

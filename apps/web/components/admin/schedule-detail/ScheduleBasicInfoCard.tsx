@@ -1,27 +1,14 @@
-﻿"use client";
+"use client";
 
-import { Calendar, DollarSign, Users } from "lucide-react";
 import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
 import { AdminFormCard } from "@/components/admin/AdminFormCard";
 import {
   formatDateString,
   getTodayDate,
 } from "@/components/home/SearchBar/useSearchBar";
-import type { ScheduleFormState } from "@/lib/admin/scheduleEditor";
-import type { TourInfo } from "@/lib/admin/scheduleDetail";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
-
-type Props = {
-  form: ScheduleFormState;
-  isPast: boolean;
-  hasBookings: boolean;
-  bookedCount: number;
-  originalQuota: number;
-  tourInfo: TourInfo | null;
-  onFormChange: (
-    updater: (prev: ScheduleFormState) => ScheduleFormState,
-  ) => void;
-};
+import { Calendar, DollarSign, Users } from "lucide-react";
+import type { ScheduleBasicInfoCardProps as Props } from 'shared';
 
 export function ScheduleBasicInfoCard({
   form,

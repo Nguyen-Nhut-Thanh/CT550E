@@ -1,9 +1,9 @@
 "use client";
 
-import { AccountAvatar } from "../AccountAvatar";
-import Link from "next/link";
 import { BadgeCheck, Camera, MapPin, UserRound } from "lucide-react";
-import type { AccountProfileHeaderProps } from "shared";
+import Link from "next/link";
+import type { AccountUserProps as AccountProfileHeaderProps } from "shared";
+import { AccountAvatar } from "../AccountAvatar";
 
 export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
   const displayName = user?.full_name?.trim() || "Người dùng";

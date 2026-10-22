@@ -32,8 +32,6 @@ export type RankedTourCandidate = {
   bestsellerScore: number;
 };
 
-export type BestSellerStat = {
-  tour_id: number;
-  booking_count: number;
-  passenger_count: number;
+export type FeaturedTourCardProps = {
+  item: FeaturedTourItem;
 };

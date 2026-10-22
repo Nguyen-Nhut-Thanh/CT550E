@@ -1,12 +1,8 @@
 "use client";
 
-import { Bus, Plane, Train } from "lucide-react";
 import { getTransportCategory } from "@/lib/client/utils/tourDisplay";
-
-type Props = {
-  type?: string | null;
-  className?: string;
-};
+import { Bus, Plane, Train } from "lucide-react";
+import type { TransportIconProps as Props } from 'shared';
 
 export default function TransportIcon({ type, className }: Props) {
   const category = getTransportCategory(type);

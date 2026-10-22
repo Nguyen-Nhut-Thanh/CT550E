@@ -1,15 +1,21 @@
 "use client";
 
+import { formatDate, formatVND } from "@/lib/client/utils/utils";
+import { openSupportChat } from '@/lib/supportChat';
+import {
+  Calendar,
+  Clock,
+  CreditCard,
+  Hash,
+  MapPin,
+  MessageCircle,
+  RefreshCw,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Hash, MapPin, Calendar, Clock, Users, ShieldCheck, CreditCard, RefreshCw, MessageCircle } from "lucide-react";
-import type { PublicTourDetail, TourSchedule } from "shared";
-import { formatVND, formatDate } from "@/lib/client/utils/utils";
-
-type TourBookingCardProps = {
-  tour: PublicTourDetail;
-  selectedSchedule?: TourSchedule | null;
-};
+import type { TourBookingCardProps } from 'shared';
 
 export default function TourBookingCard({
   tour,
@@ -37,8 +43,8 @@ export default function TourBookingCard({
     }
   };
 
-  const handleZaloConsult = () => {
-    window.open("https://zalo.me", "_blank");
+  const handleChatConsult = () => {
+    openSupportChat({ tour_id: tour.tour_id });
   };
 
   return (
@@ -136,11 +142,11 @@ export default function TourBookingCard({
 
         <button
           type="button"
-          onClick={handleZaloConsult}
+          onClick={handleChatConsult}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 text-center text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100"
         >
           <MessageCircle className="h-4 w-4 text-sky-600" />
-          <span>Tư vấn qua Zalo</span>
+          <span>Chat tư vấn</span>
         </button>
       </div>
 

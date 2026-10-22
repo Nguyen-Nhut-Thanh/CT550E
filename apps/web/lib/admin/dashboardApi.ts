@@ -1,24 +1,17 @@
-import { adminFetch } from "../adminFetch";
 import type {
-  DashboardStats,
-  DashboardTimeRange,
-  DashboardReportRow,
-  DashboardKpi,
-  DashboardChartPoint,
   DashboardBookingItem,
-  DashboardTopTour,
+  DashboardChartPoint,
+  DashboardKpi,
+  DashboardReportRow,
+  DashboardStats,
   DashboardStatusBreakdown,
+  DashboardTimeRange,
+  DashboardTopTour,
 } from "shared";
+import { adminFetch } from "../adminFetch";
 
 export type {
-  DashboardStats,
-  DashboardTimeRange,
-  DashboardReportRow,
-  DashboardKpi,
-  DashboardChartPoint,
-  DashboardBookingItem,
-  DashboardTopTour,
-  DashboardStatusBreakdown,
+  DashboardBookingItem, DashboardChartPoint, DashboardKpi, DashboardReportRow, DashboardStats, DashboardStatusBreakdown, DashboardTimeRange, DashboardTopTour
 };
 
 export async function getDashboardStats(

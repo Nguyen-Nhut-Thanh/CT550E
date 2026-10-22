@@ -1,12 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import type {
+  PaymentMethod,
+  TravelerForm,
+  TravelerType,
+  UserProfileLite,
+  VoucherValidationResult,
+} from "shared";
 
-import InlineNotice from "@/components/common/InlineNotice";
-import { BookingExtraServices } from "@/components/booking/BookingExtraServices";
 import {
   BookingContactForm,
   BookingOrderSummary,
@@ -15,96 +20,24 @@ import {
   BookingTravelersList,
   BookingVoucherAndPayment,
 } from "@/components/booking";
+import { BookingExtraServices } from "@/components/booking/BookingExtraServices";
+import InlineNotice from "@/components/common/InlineNotice";
 
-import { fetchMe, getToken } from "@/lib/client/utils/auth";
-import type {
-  PaymentMethod,
-  TravelerForm,
-  TravelerType,
-  UserProfileLite,
-  VoucherValidationResult,
-} from "@/lib/client/utils/booking";
 import {
   createBooking,
   createPaymentUrl,
-  getBookingTourDetail,
   getBookingExtraServices,
+  getBookingTourDetail,
   validatePublicVoucher,
 } from "@/lib/client/api/bookingApi";
-import { getSingleRoomSurchargeTotal } from "@/lib/client/utils/tourPricing";
+import { fetchMe, getToken } from "@/lib/client/utils/auth";
+import { buildTravelers, getUnitPrice, syncTravelers } from "@/lib/client/utils/booking";
 import { parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import { getSingleRoomSurchargeTotal } from "@/lib/client/utils/tourPricing";
 import type { BookingExtraService, PublicTourDetail, TourSchedule } from "shared";
-
-function getUnitPrice(schedule: TourSchedule | null, type: TravelerType) {
-  const passengerTypeMap = {
-    adult: ["ADULT", "adult"],
-    child: ["CHILD", "child"],
-    infant: ["INFANT", "infant"],
-  } as const;
-  const matchedPrice = schedule?.tour_schedule_prices?.find((item) =>
-    passengerTypeMap[type].includes(item.passenger_type as never),
-  );
-
-  if (matchedPrice) {
-    return Number(matchedPrice.price);
-  }
-
-  if (type === "adult") {
-    return Number(schedule?.price ?? 0);
-  }
-
-  return 0;
-}
 
 function getSingleRoomSurcharge(schedule: TourSchedule | null) {
   return getSingleRoomSurchargeTotal(schedule);
-}
-
-function createEmptyTraveler(type: TravelerType): TravelerForm {
-  return {
-    fullName: "",
-    gender: "male",
-    type,
-    birthday: "",
-  };
-}
-
-function buildTravelers(
-  adultCount: number,
-  childCount: number,
-  infantCount: number,
-) {
-  return [
-    ...Array.from({ length: adultCount }, () => createEmptyTraveler("adult")),
-    ...Array.from({ length: childCount }, () => createEmptyTraveler("child")),
-    ...Array.from({ length: infantCount }, () => createEmptyTraveler("infant")),
-  ];
-}
-
-function syncTravelers(
-  current: TravelerForm[],
-  adultCount: number,
-  childCount: number,
-  infantCount: number,
-) {
-  const adults = current.filter((traveler) => traveler.type === "adult");
-  const children = current.filter((traveler) => traveler.type === "child");
-  const infants = current.filter((traveler) => traveler.type === "infant");
-
-  return [
-    ...Array.from(
-      { length: adultCount },
-      (_, index) => adults[index] ?? createEmptyTraveler("adult"),
-    ),
-    ...Array.from(
-      { length: childCount },
-      (_, index) => children[index] ?? createEmptyTraveler("child"),
-    ),
-    ...Array.from(
-      { length: infantCount },
-      (_, index) => infants[index] ?? createEmptyTraveler("infant"),
-    ),
-  ];
 }
 
 function BookingContent() {

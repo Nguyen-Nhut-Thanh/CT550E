@@ -1,3 +1,5 @@
+import InlineNotice from "@/components/common/InlineNotice";
+import { formatVND } from "@/lib/client/utils/utils";
 import {
   CalendarDays,
   CreditCard,
@@ -5,9 +7,7 @@ import {
   TicketPercent,
   Wallet,
 } from "lucide-react";
-import InlineNotice from "@/components/common/InlineNotice";
-import { formatVND } from "@/lib/client/utils/utils";
-import type { PaymentMethod, VoucherValidationResult } from "@/lib/client/utils/booking";
+import type { BookingVoucherAndPaymentProps, PaymentMethod } from "shared";
 
 const PAYMENT_METHODS: Array<{
   id: PaymentMethod;
@@ -41,17 +41,6 @@ const PAYMENT_METHODS: Array<{
     badge: "Sắp có",
   },
 ];
-
-interface BookingVoucherAndPaymentProps {
-  voucherCode: string;
-  voucherLoading: boolean;
-  voucherResult: VoucherValidationResult | null;
-  voucherError: string | null;
-  paymentMethod: PaymentMethod;
-  onVoucherCodeChange: (code: string) => void;
-  onApplyVoucher: () => void;
-  onPaymentMethodChange: (method: PaymentMethod) => void;
-}
 
 export function BookingVoucherAndPayment({
   voucherCode,

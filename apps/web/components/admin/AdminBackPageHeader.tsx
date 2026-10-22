@@ -1,15 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
-
-type AdminBackPageHeaderProps = {
-  title: string;
-  description?: string;
-  onBack: () => void;
-  meta?: ReactNode;
-  actions?: ReactNode;
-};
+import type { AdminBackPageHeaderProps } from 'shared';
 
 export function AdminBackPageHeader({
   title,

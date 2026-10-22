@@ -1,20 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type Tone = "success" | "warning" | "muted";
+import type { AdminStatusBadgeProps, AdminStatusBadgeTone as Tone } from 'shared';
 
 const toneClassMap: Record<Tone, string> = {
   success: "border-emerald-100 bg-emerald-50 text-emerald-600",
   warning: "border-amber-100 bg-amber-50 text-amber-600",
   muted: "border-slate-200 bg-slate-100 text-slate-500",
-};
-
-type AdminStatusBadgeProps = {
-  tone: Tone;
-  icon?: ReactNode;
-  children: ReactNode;
-  className?: string;
 };
 
 export function AdminStatusBadge({

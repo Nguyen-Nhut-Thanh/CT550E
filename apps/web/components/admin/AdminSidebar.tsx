@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { removeToken } from "@/lib/auth";
 import {
   ArrowLeft,
   Briefcase,
@@ -14,13 +13,13 @@ import {
   Map,
   MapPin,
   MessageSquare,
-  Settings,
   Star,
   Ticket,
   Users,
   Zap,
 } from "lucide-react";
-import { removeToken } from "@/lib/auth";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 const menuItems = [
   {

@@ -2,11 +2,10 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { useAccountResource } from "@/components/account/useAccountResource";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { getMyFavoriteTours } from "@/lib/client/api/authApi";
 import { AccountFavoritesTab } from "@/components/account";
-import type { FavoriteTourItem } from "shared";
+import { useAccountResource } from "@/components/account/useAccountResource";
+import { getMyFavoriteTours } from "@/lib/client/api/authApi";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function FavoritesAccountPage() {
   const { data: favorites = [], loading, error } = useAccountResource("favorites", getMyFavoriteTours);

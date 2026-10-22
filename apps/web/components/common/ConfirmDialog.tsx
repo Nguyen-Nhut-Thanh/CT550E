@@ -1,18 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type ConfirmDialogProps = {
-  open: boolean;
-  icon: ReactNode;
-  title: string;
-  description: string;
-  confirmLabel: string;
-  cancelLabel: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  confirmClassName?: string;
-};
+import type { ConfirmDialogProps } from 'shared';
 
 export function ConfirmDialog({
   open,

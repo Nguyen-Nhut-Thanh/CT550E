@@ -1,7 +1,18 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import { PrismaService } from "../../prisma.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { PaymentService } from "./payment.service";
-import { PrismaService } from "../../prisma.service";
 
 @Controller("payment")
 export class PaymentController {

@@ -1,16 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { X } from "lucide-react";
-
-type AdminModalShellProps = {
-  title: string;
-  icon?: ReactNode;
-  onClose: () => void;
-  children: ReactNode;
-  footer?: ReactNode;
-  maxWidthClassName?: string;
-};
+import type { AdminModalShellProps } from 'shared';
 
 export function AdminModalShell({
   title,

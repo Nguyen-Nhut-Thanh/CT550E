@@ -1,5 +1,8 @@
 "use client";
 
+import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
+import { AdminModalShell } from "@/components/admin/AdminModalShell";
+import { PriceInput } from "@/components/admin/PriceInput";
 import {
   Calendar,
   Clock,
@@ -9,27 +12,7 @@ import {
   Save,
   Ticket,
 } from "lucide-react";
-import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
-import { AdminModalShell } from "@/components/admin/AdminModalShell";
-import { PriceInput } from "@/components/admin/PriceInput";
-import { VoucherForm } from "@/lib/admin/vouchers";
-
-type VoucherModalProps = {
-  open: boolean;
-  saving: boolean;
-  readonly: boolean;
-  form: VoucherForm;
-  minDate: string;
-  minTime: string;
-  startDateValue: string;
-  startTimeValue: string;
-  title: string;
-  onClose: () => void;
-  onSave: () => void;
-  onChange: (updater: (current: VoucherForm) => VoucherForm) => void;
-  onStartDateChange: (value: string) => void;
-  onStartTimeChange: (value: string) => void;
-};
+import type { VoucherModalProps } from 'shared';
 
 export function VoucherModal({
   open,

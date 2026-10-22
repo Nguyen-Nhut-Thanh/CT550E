@@ -1,45 +1,11 @@
 "use client";
 
-import { AlertCircle, Calendar, Edit, Eye, EyeOff, Plus, Trash2, Users } from "lucide-react";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
-import { formatVND } from "@/lib/utils";
 import { getScheduleBookedCount, getScheduleStatusMeta } from "@/lib/admin/tourManagement";
-
-type Tour = {
-  tour_id: number;
-  status: number;
-};
-
-type Schedule = {
-  tour_schedule_id: number;
-  start_date: string;
-  end_date: string;
-  price: string | number;
-  quota: number;
-  status: number;
-  _count?: {
-    bookings: number;
-  };
-};
-
-type Props = {
-  selectedTourId: number;
-  selectedTour?: Tour;
-  schedules: Schedule[];
-  loading: boolean;
-  scheduleStatusFilter: string;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  onFilterChange: (value: string) => void;
-  onCreate: () => void;
-  onEdit: (scheduleId: number) => void;
-  onDelete: (scheduleId: number) => void;
-  onToggleStatus: (scheduleId: number, currentStatus: number, bookedCount: number) => void;
-  onPageChange: (page: number) => void;
-};
+import { formatVND } from "@/lib/utils";
+import { AlertCircle, Calendar, Edit, Eye, EyeOff, Plus, Trash2, Users } from "lucide-react";
+import type { ScheduleTablePanelProps as Props } from 'shared';
 
 function ScheduleTableSkeleton() {
   return (

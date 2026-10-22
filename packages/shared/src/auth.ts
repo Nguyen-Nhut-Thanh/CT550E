@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+
 export type AuthRequestUser = {
   sub: number;
   email?: string;
@@ -32,6 +34,18 @@ export type AdminLoginPayload = {
   password: string;
 };
 
+export type LoginResponse = {
+  access_token: string;
+};
+
+export type AuthRequest = Request & {
+  user: AuthRequestUser;
+};
+
+export type JwtRequest = Request & {
+  cookies?: Record<string, string | undefined>;
+};
+
 export type AuthAccountWithUser = {
   account_id: number;
   email: string;
@@ -49,11 +63,12 @@ export type AuthAccountWithUser = {
   };
 };
 
-export type LoginResponse = {
-  access_token: string;
+export type GoogleCredentialResponse = {
+  credential?: string;
 };
 
-export type UploadResponse = {
-  url: string;
+export type GoogleAuthSectionProps = {
+  enabled: boolean;
+  onSuccess: (response: GoogleCredentialResponse) => void;
+  onError: () => void;
 };
-

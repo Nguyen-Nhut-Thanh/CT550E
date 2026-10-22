@@ -1,18 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type Tone = "neutral" | "primary" | "danger";
-
-type AdminIconActionButtonProps = {
-  icon: ReactNode;
-  title: string;
-  tone?: Tone;
-  onClick?: () => void;
-  href?: string;
-  target?: string;
-  rel?: string;
-};
+import type { AdminIconActionButtonProps, AdminIconActionTone as Tone } from 'shared';
 
 const toneClassMap: Record<Tone, string> = {
   neutral: "text-slate-400 hover:bg-slate-100",

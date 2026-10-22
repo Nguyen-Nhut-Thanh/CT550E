@@ -1,12 +1,12 @@
+import { getToken } from "@/lib/client/utils/auth";
 import type {
-  AdminReviewQuery,
+  AccountReviewItem, AdminReviewQuery,
   AdminUpdateReviewStatusPayload,
   CreateReplyPayload,
   CreateReviewPayload,
-  TourReviewItem,
-} from "shared";
+  TourReviewItem
+} from 'shared';
 import { publicFetch } from "./publicFetch";
-import { getToken } from "@/lib/client/utils/auth";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
@@ -74,20 +74,6 @@ export async function submitReviewReply(
     method: "POST",
     body: JSON.stringify(payload),
   });
-}
-
-// Admin APIs
-export interface AccountReviewItem {
-  review_id: number;
-  tour_id: number;
-  tour_name: string;
-  tour_image: string | null;
-  rating: number;
-  title: string | null;
-  comment: string | null;
-  images: string[];
-  status: number;
-  created_at: string;
 }
 
 export function getMyReviews(): Promise<AccountReviewItem[]> {

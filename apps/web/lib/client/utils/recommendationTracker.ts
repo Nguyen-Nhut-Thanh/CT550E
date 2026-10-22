@@ -1,5 +1,5 @@
-import { getToken } from "./auth";
 import type { RecommendationEventPayload } from "shared";
+import { getToken } from "./auth";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||

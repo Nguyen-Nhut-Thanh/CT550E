@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "node build.mjs",
     "dev": "node --watch-path=dist dist/main.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"

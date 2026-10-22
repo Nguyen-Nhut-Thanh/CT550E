@@ -1,7 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { AdminIconActionButton } from "@/components/admin/AdminIconActionButton";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
+import { AdminTable } from "@/components/admin/AdminTable";
+import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
+import { useToast } from "@/components/common/Toast";
+import { confirmAction } from "@/lib/admin/confirm";
+import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts";
+import {
+  createAdminPostCategory,
+  deleteAdminPost,
+  getAdminPostCategories,
+  getAdminPosts,
+} from "@/lib/admin/postsApi";
 import {
   Calendar,
   Edit,
@@ -12,26 +24,9 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
-import { AdminIconActionButton } from "@/components/admin/AdminIconActionButton";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminTable } from "@/components/admin/AdminTable";
-import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
-import { useToast } from "@/components/common/Toast";
-import { confirmAction } from "@/lib/admin/confirm";
-import {
-  createDefaultPostCategoryDraft,
-  matchesPostSearch,
-  PostCategory,
-  PostCategoryDraft,
-  PostItem,
-} from "@/lib/admin/posts";
-import {
-  createAdminPostCategory,
-  deleteAdminPost,
-  getAdminPostCategories,
-  getAdminPosts,
-} from "@/lib/admin/postsApi";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { PostCategory, PostCategoryDraft, PostItem } from "shared";
 
 export default function AdminPostsPage() {
   const [loading, setLoading] = useState(true);

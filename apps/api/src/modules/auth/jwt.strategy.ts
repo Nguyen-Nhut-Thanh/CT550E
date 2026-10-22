@@ -1,12 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import type { Request } from 'express';
-import type { JwtPayload } from 'shared';
-
-type JwtRequest = Request & {
-  cookies?: Record<string, string | undefined>;
-};
+import type { JwtPayload, JwtRequest } from 'shared';
 
 function cookieExtractor(req: JwtRequest): string | null {
   return req?.cookies?.admin_token || null;

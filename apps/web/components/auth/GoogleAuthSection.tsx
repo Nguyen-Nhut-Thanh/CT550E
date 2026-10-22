@@ -1,17 +1,8 @@
 "use client";
 
-import { GoogleLogin } from "@react-oauth/google";
 import InlineNotice from "@/components/common/InlineNotice";
-
-type GoogleCredentialResponse = {
-  credential?: string;
-};
-
-type GoogleAuthSectionProps = {
-  enabled: boolean;
-  onSuccess: (response: GoogleCredentialResponse) => void;
-  onError: () => void;
-};
+import { GoogleLogin } from "@react-oauth/google";
+import type { GoogleAuthSectionProps } from 'shared';
 
 export function GoogleAuthSection({
   enabled,

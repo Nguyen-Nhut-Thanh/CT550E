@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Home, Loader2, LogIn, ShieldAlert } from "lucide-react";
 import { getAdminMe } from "@/lib/admin/adminAuthApi";
-
-type GuardStatus = "loading" | "authorized" | "unauthorized" | "error";
-
-type GuardCache = {
-  status: GuardStatus;
-  message: string;
-};
+import { Home, Loader2, LogIn, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { GuardCache, GuardStatus } from 'shared';
 
 const AUTH_STATUS_KEY = "admin_auth_status";
 const AUTH_MESSAGE_KEY = "admin_auth_message";

@@ -1,28 +1,7 @@
 "use client";
 
 import { ChevronRight, Star } from "lucide-react";
-
-type ReviewItem = {
-  id: number | string;
-  name: string;
-  rating: number;
-  content: string;
-  timeAgo?: string;
-  avatarUrl?: string;
-};
-
-type RatingBreakdownItem = {
-  stars: 1 | 2 | 3 | 4 | 5;
-  percent: number;
-};
-
-type TourReviewsSectionProps = {
-  averageRating?: number;
-  totalReviews?: number;
-  breakdown?: RatingBreakdownItem[];
-  reviews?: ReviewItem[];
-  onViewAll?: () => void;
-};
+import type { ReviewItem, TourReviewsSectionProps } from 'shared';
 function StarRow({
   rating,
   size = "h-4 w-4",

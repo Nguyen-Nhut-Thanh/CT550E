@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import InlineNotice from "@/components/common/InlineNotice";
 import { registerUser } from "@/lib/client/api/authApi";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({

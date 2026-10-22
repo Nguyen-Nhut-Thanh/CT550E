@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { FeaturedDestinationItem } from "shared";
+import type { DestinationCardProps } from 'shared';
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";
@@ -21,11 +21,6 @@ export function getDestinationCardClassName(index: number): string {
     layouts[index] || "relative group overflow-hidden rounded-2xl cursor-pointer"
   );
 }
-
-type DestinationCardProps = {
-  item: FeaturedDestinationItem;
-  index: number;
-};
 
 export default function DestinationCard({ item, index }: DestinationCardProps) {
   // Làm sạch tên: xóa "Tỉnh", "Thành phố", "TP.", "TP", "Thủ đô"
@@ -55,4 +50,3 @@ export default function DestinationCard({ item, index }: DestinationCardProps) {
     </Link>
   );
 }
-

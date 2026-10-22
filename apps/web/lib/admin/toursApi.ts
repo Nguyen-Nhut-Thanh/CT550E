@@ -1,33 +1,8 @@
-import { adminFetch } from "@/lib/adminFetch";
-
-type ToursListResponse<T> = {
-  items?: T[];
-};
-
-async function requestAdminTours<T>(
-  path: string,
-  init: RequestInit,
-  fallbackMessage: string,
-): Promise<T> {
-  const response = await adminFetch(path, init);
-  const data = (await response.json().catch(() => null)) as
-    | { message?: string }
-    | T
-    | null;
-
-  if (!response.ok) {
-    throw new Error(
-      data && typeof data === "object" && "message" in data && typeof data.message === "string"
-        ? data.message
-        : fallbackMessage,
-    );
-  }
-
-  return data as T;
-}
+import type { ListResponse as ToursListResponse } from 'shared';
+import { requestAdminJson } from "./requestAdminJson";
 
 export function getAdminTours<T>() {
-  return requestAdminTours<ToursListResponse<T>>(
+  return requestAdminJson<ToursListResponse<T>>(
     "/admin/tours",
     { method: "GET" },
     "Không thể tải danh sách tour.",
@@ -35,7 +10,7 @@ export function getAdminTours<T>() {
 }
 
 export function getAdminTourDetail<T>(tourId: string | number) {
-  return requestAdminTours<{ tour: T }>(
+  return requestAdminJson<{ tour: T }>(
     `/admin/tours/${tourId}`,
     { method: "GET" },
     "Không thể tải thông tin tour.",
@@ -43,7 +18,7 @@ export function getAdminTourDetail<T>(tourId: string | number) {
 }
 
 export function toggleAdminTourStatus(tourId: number) {
-  return requestAdminTours(
+  return requestAdminJson(
     `/admin/tours/${tourId}/status`,
     { method: "PATCH" },
     "Không thể cập nhật trạng thái tour.",
@@ -51,7 +26,7 @@ export function toggleAdminTourStatus(tourId: number) {
 }
 
 export function deleteAdminTour(tourId: number) {
-  return requestAdminTours(
+  return requestAdminJson(
     `/admin/tours/${tourId}`,
     { method: "DELETE" },
     "Không thể xóa tour.",
@@ -59,7 +34,7 @@ export function deleteAdminTour(tourId: number) {
 }
 
 export function createAdminTour(body: Record<string, unknown>) {
-  return requestAdminTours(
+  return requestAdminJson(
     "/admin/tours",
     {
       method: "POST",
@@ -73,7 +48,7 @@ export function updateAdminTour(
   tourId: string | number,
   body: Record<string, unknown>,
 ) {
-  return requestAdminTours(
+  return requestAdminJson(
     `/admin/tours/${tourId}`,
     {
       method: "PATCH",

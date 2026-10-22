@@ -1,11 +1,36 @@
 import * as common_1 from "@nestjs/common";
+import { BOOKING_EXTRAS } from "shared";
+import type { BookingPayload } from "shared";
 import { PrismaService } from "../../prisma.service";
 import { MailService } from "../mail/mail.service";
-import { priceBookingExtras } from "./booking-extras";
-import type { BookingPayload } from "shared";
 
 @common_1.Injectable()
 export class BookingsService {
+    getExtraServices() {
+        return BOOKING_EXTRAS;
+    }
+
+    private priceBookingExtras(ids: unknown, guests: number) {
+        if (ids === undefined) return { items: [], total: 0 };
+        if (
+            !Array.isArray(ids) ||
+            ids.length > BOOKING_EXTRAS.length ||
+            ids.some((id) => typeof id !== "string") ||
+            new Set(ids).size !== ids.length
+        ) {
+            throw new common_1.BadRequestException("Danh sách dịch vụ bổ sung không hợp lệ.");
+        }
+        const items = ids.map((id: string) => {
+            const service = BOOKING_EXTRAS.find((item) => item.id === id);
+            if (!service) {
+                throw new common_1.BadRequestException("Dịch vụ bổ sung không tồn tại.");
+            }
+            const quantity = service.pricing_unit === "guest" ? guests : 1;
+            return { ...service, quantity, amount: service.unit_price * quantity };
+        });
+        return { items, total: items.reduce((sum, item) => sum + item.amount, 0) };
+    }
+
     private async accountUserId(accountId: number): Promise<number> {
         const user = await this.prisma.users.findUnique({ where: { account_id: accountId }, select: { user_id: true } });
         if (!user) throw new common_1.NotFoundException("Không tìm thấy người dùng.");
@@ -161,7 +186,7 @@ export class BookingsService {
             const hotelSurcharge = schedule.tour_schedule_hotels.reduce((sum: number, hotel: any) => sum + Number(hotel.hotel_room_types?.base_price || 0) * Math.max(Number(hotel.nights || 1), 1), 0);
             const singleRoomUnit = hotelSurcharge > 0 ? hotelSurcharge : Number(schedule.tour_schedule_prices.find((p: any) => ["SINGLE_ROOM", "single_room"].includes(p.passenger_type))?.price ?? 0);
             const singleRoomSurcharge = singleRoomUnit * singleRoomCount;
-            const extras = priceBookingExtras(dto.additional_service_ids, totalGuests);
+            const extras = this.priceBookingExtras(dto.additional_service_ids, totalGuests);
             let discountAmount = 0;
             let voucherId = null;
             let voucherUsageLimit = 0;

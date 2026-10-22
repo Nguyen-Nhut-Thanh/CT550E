@@ -1,9 +1,5 @@
 import { UserRound } from "lucide-react";
-interface BookingContactFormProps {
-  contactName: string; contactPhone: string; contactEmail: string; note: string;
-  onContactNameChange: (value: string) => void; onContactPhoneChange: (value: string) => void;
-  onContactEmailChange: (value: string) => void; onNoteChange: (value: string) => void;
-}
+import type { BookingContactFormProps } from 'shared';
 export function BookingContactForm({ contactName, contactPhone, contactEmail, note, onContactNameChange, onContactPhoneChange, onContactEmailChange, onNoteChange }: BookingContactFormProps) {
   const inputClass = "mt-2 block w-full rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-50";
   return (

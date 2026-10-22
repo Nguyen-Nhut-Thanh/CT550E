@@ -1,24 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import type { CalendarDay } from "shared";
 import {
+  formatSearchDate,
   isSameDate,
   MONTH_LABELS,
-  formatSearchDate,
   WEEKDAY_HEADERS,
 } from "@/lib/client/utils/searchBar.utils";
-
-type Props = {
-  selectedDate: Date;
-  calendarMonth: Date;
-  calendarDays: CalendarDay[];
-  today: Date;
-  isOpen: boolean;
-  onToggle: () => void;
-  onSelect: (date: Date) => void;
-  onMonthChange: (date: Date) => void;
-};
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import type { SearchBarCalendarProps as Props } from 'shared';
 
 export default function SearchBarCalendar({
   selectedDate,

@@ -1,24 +1,19 @@
 "use client";
 
+import { formatVND } from "@/lib/utils";
 import {
-  DollarSign,
-  Briefcase,
-  Users,
-  Compass,
-  ArrowUpRight,
   ArrowDownRight,
+  ArrowUpRight,
+  Briefcase,
   CheckCircle2,
   Clock,
+  Compass,
   CreditCard,
+  DollarSign,
   Percent,
+  Users,
 } from "lucide-react";
-import type { DashboardKpi, DashboardTimeRange } from "@/lib/admin/dashboardApi";
-import { formatVND } from "@/lib/utils";
-
-interface DashboardKpiCardsProps {
-  kpis: DashboardKpi;
-  timeRange: DashboardTimeRange;
-}
+import type { DashboardKpiCardsProps, DashboardTimeRange } from "shared";
 
 export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
   const rangeLabels: Record<DashboardTimeRange, string> = {

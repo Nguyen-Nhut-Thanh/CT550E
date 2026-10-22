@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
 import { VerifyForm } from "@/components/auth";
+import { Suspense } from "react";
 
 export default function VerifyPage() {
   return (

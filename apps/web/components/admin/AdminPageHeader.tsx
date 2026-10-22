@@ -1,19 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-
-interface AdminPageHeaderProps {
-  title: string;
-  description?: string;
-  actions?: ReactNode;
-  primaryAction?: {
-    label: string;
-    onClick: () => void;
-    icon?: ReactNode;
-  };
-}
+import type { AdminPageHeaderProps } from 'shared';
 
 export function AdminPageHeader({ title, description, actions, primaryAction }: AdminPageHeaderProps) {
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ImageWithFallbackProps } from 'shared';
 
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";
@@ -11,10 +12,6 @@ function normalizeImageSrc(src?: string): string | undefined {
     return src;
   }
   return `/${src}`;
-}
-
-interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  fallback?: string;
 }
 
 export function ImageWithFallback({ 

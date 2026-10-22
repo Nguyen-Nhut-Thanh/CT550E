@@ -1,22 +1,22 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import Link from "next/link";
-import { Loader2 } from "lucide-react";
-import { getPublicTourDetail } from "@/lib/client/api/tourApi";
-import type { PublicTourDetail } from "shared";
 import {
-  TourDetailHero,
-  TourBookingCard,
-  TourVideoHighlights,
-  TourDepartureCalendar,
   TourAmenities,
+  TourBookingCard,
+  TourDepartureCalendar,
+  TourDetailHero,
   TourHighlightsList,
   TourItineraryTimeline,
-  TourSmartMap,
   TourRecommendedList,
   TourReviewsSection,
+  TourSmartMap,
+  TourVideoHighlights,
 } from "@/components/tours/detail";
+import { getPublicTourDetail } from "@/lib/client/api/tourApi";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { use, useEffect, useState } from "react";
+import type { PublicTourDetail } from "shared";
 
 export default function TourDetailPage({
   params,

@@ -1,13 +1,8 @@
 "use client";
 
-import { CloudSun, MapPin, Ticket, Utensils } from "lucide-react";
 import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import type { TourDetailForm } from "@/lib/admin/tourDetail";
-
-type Props = {
-  tour: TourDetailForm;
-  onTourChange: (updater: (prev: TourDetailForm) => TourDetailForm) => void;
-};
+import { CloudSun, MapPin, Ticket, Utensils } from "lucide-react";
+import type { TourDetailsCardProps as Props } from 'shared';
 
 export function TourDetailsCard({ tour, onTourChange }: Props) {
   return (

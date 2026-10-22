@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import type { BestSellerStat, RankedTourCandidate } from 'shared';
+import { slugify, startOfToday, toNumber } from '../../common/utils';
 import { PrismaService } from '../../prisma.service';
-import { toNumber, slugify, startOfToday } from '../../common/utils';
 
-import type { FeaturedTourItem, RankedTourCandidate, BestSellerStat } from 'shared';
+import type {
+  FeaturedTourItem,
+} from 'shared';
 
 @Injectable()
 export class FeaturedToursService {

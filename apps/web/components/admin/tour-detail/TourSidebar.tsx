@@ -1,5 +1,8 @@
 "use client";
 
+import { AdminFormCard } from "@/components/admin/AdminFormCard";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { PriceInput } from "@/components/admin/PriceInput";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,19 +11,7 @@ import {
   Loader2,
   Save,
 } from "lucide-react";
-import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { PriceInput } from "@/components/admin/PriceInput";
-import type { TourDetailForm } from "@/lib/admin/tourDetail";
-
-type Props = {
-  tour: TourDetailForm;
-  saving: boolean;
-  success: boolean;
-  lockCoreFields?: boolean;
-  onSave: () => void;
-  onTourChange: (updater: (prev: TourDetailForm) => TourDetailForm) => void;
-};
+import type { TourSidebarProps as Props } from 'shared';
 
 export function TourSidebar({
   tour,

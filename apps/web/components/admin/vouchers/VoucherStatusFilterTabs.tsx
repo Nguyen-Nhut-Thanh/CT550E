@@ -1,11 +1,6 @@
 "use client";
 
-import { VoucherStatusFilter } from "@/lib/admin/vouchers";
-
-type VoucherStatusFilterTabsProps = {
-  value: VoucherStatusFilter;
-  onChange: (value: VoucherStatusFilter) => void;
-};
+import type { VoucherStatusFilterTabsProps } from 'shared';
 
 export function VoucherStatusFilterTabs({
   value,

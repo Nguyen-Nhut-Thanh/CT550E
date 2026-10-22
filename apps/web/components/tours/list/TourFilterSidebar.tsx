@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import CustomDropdown from "@/components/common/CustomDropdown";
+import { BUDGET_OPTIONS } from "@/lib/client/utils/searchBar.utils";
 import {
   ArrowRight,
   Clock,
@@ -10,28 +11,9 @@ import {
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
-import CustomDropdown from "@/components/common/CustomDropdown";
-import { BUDGET_OPTIONS } from "@/lib/client/utils/searchBar.utils";
+import Link from "next/link";
+import type { TourFilterSidebarProps } from 'shared';
 import TourFilterCalendar from "./TourFilterCalendar";
-
-type TourFilterSidebarProps = {
-  keyword: string;
-  setKeyword: (val: string) => void;
-  destination: string;
-  setDestination: (val: string) => void;
-  dateFrom: string;
-  setDateFrom: (val: string) => void;
-  minPrice: string;
-  setMinPrice: (val: string) => void;
-  maxPrice: string;
-  setMaxPrice: (val: string) => void;
-  tourType: string;
-  setTourType: (val: string) => void;
-  duration: string;
-  setDuration: (val: string) => void;
-  onApplyFilters: () => void;
-  totalResults: number;
-};
 
 const DESTINATION_OPTIONS = [
   { label: "Tất cả điểm đến", value: "" },
@@ -111,7 +93,7 @@ export default function TourFilterSidebar({
   };
 
   return (
-    <aside className="w-full flex-shrink-0 space-y-4 lg:sticky lg:top-20 lg:w-[260px] xl:w-[280px]">
+    <aside className="no-scrollbar w-full flex-shrink-0 space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:w-[260px] lg:overflow-y-auto lg:overscroll-y-contain xl:w-[280px]">
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)]">
         {/* Header */}
         <div className="mb-5 flex items-center gap-2.5 border-b border-slate-100 pb-3.5">

@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import InlineNotice from "@/components/common/InlineNotice";
 import { GoogleAuthSection } from "@/components/auth/GoogleAuthSection";
-import { setToken } from "@/lib/client/utils/auth";
+import InlineNotice from "@/components/common/InlineNotice";
 import { loginUser, loginWithGoogle } from "@/lib/client/api/authApi";
-
-type GoogleCredentialResponse = {
-  credential?: string;
-};
+import { setToken } from "@/lib/client/utils/auth";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import type { GoogleCredentialResponse } from 'shared';
 
 export function LoginForm() {
   const [email, setEmail] = useState("");

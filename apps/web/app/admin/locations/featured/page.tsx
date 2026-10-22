@@ -1,22 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Info, Loader2, Save, Settings } from "lucide-react";
-import { FeaturedLocationsLeftPanel, FeaturedLocationsRightPanel } from "@/components/admin/featured-locations/FeaturedLocationsPanels";
-import { useToast } from "@/components/common/Toast";
 import {
-  getAdminLocations,
-  updateAdminLocation,
-} from "@/lib/admin/locationsApi";
+  FeaturedLocationsLeftPanel,
+  FeaturedLocationsRightPanel,
+} from "@/components/admin/featured-locations/FeaturedLocationsPanels";
+import { useToast } from "@/components/common/Toast";
 import {
   FEATURED_LIMIT,
   filterFeaturedTabs,
   filterRegionChildren,
   getCurrentFeatured,
-  type LocationListResponse,
 } from "@/lib/admin/featuredLocations";
-import type { AdminLocationItem } from "@/types/admin-location";
+import {
+  getAdminLocations,
+  updateAdminLocation,
+} from "@/lib/admin/locationsApi";
+import { ArrowLeft, Info, Loader2, Save, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import type { AdminLocationItem, LocationListResponse } from "shared";
 
 export default function AdminFeaturedLocationsPage() {
   const router = useRouter();

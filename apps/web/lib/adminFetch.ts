@@ -1,5 +1,5 @@
 // apps/web/lib/adminFetch.ts
-import { getToken, API_BASE } from "./auth";
+import { API_BASE, getToken } from "./auth";
 
 export async function adminFetch(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);

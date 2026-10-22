@@ -1,6 +1,5 @@
-import type { NavItem as SharedNavItem } from "shared";
-import { House, Compass, MapPin, Newspaper, Info, type LucideIcon } from "lucide-react";
-export type NavItem = SharedNavItem & { icon: LucideIcon };
+import { Compass, House, Info, MapPin, Newspaper } from "lucide-react";
+import type { NavigationItemWithIcon as NavItem } from 'shared';
 
 export const navData: NavItem[] = [
   { title: "Trang chủ", href: "/", icon: House },

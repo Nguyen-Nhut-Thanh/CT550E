@@ -1,3 +1,5 @@
+export { slugify } from "shared";
+
 /**
  * Định dạng số thành chuỗi phân cách hàng nghìn, dùng cho ô nhập liệu.
  * Ví dụ: 1000000 -> 1.000.000
@@ -75,22 +77,6 @@ export function stripVietnamese(str: string): string {
     .replace(/[đĐ]/g, "d")
     .replace(/[^a-zA-Z0-9 ]/g, "")
     .toLowerCase();
-}
-
-/**
- * Tạo slug từ chuỗi. Ví dụ: Hà Nội -> ha-noi
- */
-export function slugify(str: string): string {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/([^0-9a-z-\s])/g, "")
-    .replace(/(\s+)/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 /**

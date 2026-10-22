@@ -1,16 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma.service';
-
 import type {
-  PublicListParams,
   BestSellerStat,
-  PublicFlashDealRecord,
-  PublicItineraryRecord,
-  PublicScheduleRecord,
   PublicDestinationRecord,
+  PublicItineraryRecord,
+  PublicListParams,
+  PublicScheduleRecord,
   PublicTourCardRecord,
 } from 'shared';
+import { startOfToday } from '../../common/utils';
+import { PrismaService } from '../../prisma.service';
 
 @Injectable()
 export class ToursPublicService {
@@ -30,17 +29,11 @@ export class ToursPublicService {
     }
   }
 
-  private startOfToday() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
   private normalizeDate(dateFrom?: string) {
-    if (!dateFrom) return this.startOfToday();
+    if (!dateFrom) return startOfToday();
 
     const parsed = new Date(dateFrom);
-    if (Number.isNaN(parsed.getTime())) return this.startOfToday();
+    if (Number.isNaN(parsed.getTime())) return startOfToday();
 
     parsed.setHours(0, 0, 0, 0);
     return parsed;

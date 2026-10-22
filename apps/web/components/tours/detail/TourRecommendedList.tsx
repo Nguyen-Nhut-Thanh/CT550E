@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Compass, Loader2 } from "lucide-react";
 import FeaturedTourCard from "@/components/home/FeaturedTours/FeaturedTourCard";
 import { getFeaturedTours } from "@/lib/client/api/featuredTours";
+import { Compass, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { FeaturedTourItem } from "shared";
 
 export default function TourRecommendedList() {

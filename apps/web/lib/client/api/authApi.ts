@@ -2,17 +2,10 @@ import { API_BASE, getToken } from "@/lib/client/utils/auth";
 import type {
   AccountBooking,
   AccountStats,
-  FavoriteTourItem,
-  LoginResponse,
+  FavoriteTourItem, AuthJsonRequestOptions as JsonInit, LoginResponse,
   RecommendationProfile,
-  UploadResponse,
-} from "shared";
-
-type JsonInit = Omit<RequestInit, "body"> & {
-  body?: unknown;
-  requireAuth?: boolean;
-  fallbackMessage: string;
-};
+  UploadResponse
+} from 'shared';
 
 function buildHeaders(
   headers: HeadersInit | undefined,

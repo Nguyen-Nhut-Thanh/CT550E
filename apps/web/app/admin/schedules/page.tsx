@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
 import { ScheduleEmptyState } from "@/components/admin/schedule-overview/ScheduleEmptyState";
 import { ScheduleTablePanel } from "@/components/admin/schedule-overview/ScheduleTablePanel";
 import { TourListPanel } from "@/components/admin/schedule-overview/TourListPanel";
@@ -20,27 +17,10 @@ import {
   matchesTourStatusFilter,
 } from "@/lib/admin/tourManagement";
 import { getAdminTours } from "@/lib/admin/toursApi";
-
-type Tour = {
-  tour_id: number;
-  code: string;
-  name: string;
-  duration_days: number;
-  base_price: string | number;
-  status: number;
-};
-
-type Schedule = {
-  tour_schedule_id: number;
-  start_date: string;
-  end_date: string;
-  price: string | number;
-  quota: number;
-  status: number;
-  _count?: {
-    bookings: number;
-  };
-};
+import { AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { AdminSchedule as Schedule, ScheduleOverviewTour as Tour } from "shared";
 
 export default function AdminSchedulesPage() {
   const pageSize = 10;

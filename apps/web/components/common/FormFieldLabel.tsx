@@ -1,12 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type FormFieldLabelProps = {
-  children: ReactNode;
-  icon?: ReactNode;
-  className?: string;
-};
+import type { FormFieldLabelProps } from 'shared';
 
 export default function FormFieldLabel({
   children,

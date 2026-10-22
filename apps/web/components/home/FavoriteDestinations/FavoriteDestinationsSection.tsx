@@ -1,11 +1,11 @@
 "use client";
 
+import { getFeaturedDestinations } from "@/lib/client/api/featuredDestinations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   FeaturedDestinationGroup,
   FeaturedDestinationsResponse,
 } from "shared";
-import { getFeaturedDestinations } from "@/lib/client/api/featuredDestinations";
 import DestinationCard from "./DestinationCard";
 import DestinationGridSkeleton from "./DestinationGridSkeleton";
 

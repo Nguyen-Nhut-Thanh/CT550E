@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export function BookingGenderSelect({
   value,

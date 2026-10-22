@@ -1,13 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-
-export type BudgetOption = {
-  label: string;
-  min_price?: string;
-  max_price?: string;
-};
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import type {
+  UseSearchBarBudgetOption as BudgetOption,
+  UseSearchBarCalendarDay as CalendarDay,
+  UseSearchBarProps,
+} from 'shared';
 
 export const BUDGET_OPTIONS: BudgetOption[] = [
   { label: "Chọn mức giá" },
@@ -23,13 +22,6 @@ export const MONTH_LABELS = [
   "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
   "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12",
 ];
-
-export type CalendarDay = {
-  key: string;
-  date: Date | null;
-  dayNumber: number | null;
-  isCurrentMonth: boolean;
-};
 
 export function formatDateString(date: Date) {
   const yyyy = date.getFullYear();
@@ -114,11 +106,6 @@ export function buildCalendarDays(monthDate: Date) {
   }
 
   return cells;
-}
-
-interface UseSearchBarProps {
-  budgetDropdownRef: React.RefObject<HTMLDivElement | null>;
-  calendarDropdownRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useSearchBar({ budgetDropdownRef, calendarDropdownRef }: UseSearchBarProps) {

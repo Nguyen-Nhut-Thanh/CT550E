@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { getMyReviews, updateMyReview } from "@/lib/client/api/reviewApi";
 import { Loader2, MoreHorizontal, Pencil, Star, X } from "lucide-react";
-import { getMyReviews, updateMyReview, type AccountReviewItem } from "@/lib/client/api/reviewApi";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { AccountReviewItem } from "shared";
 import { useAccountResource } from "../useAccountResource";
 
 export function AccountReviewsTab() {

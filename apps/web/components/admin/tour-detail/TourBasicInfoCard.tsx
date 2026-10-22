@@ -1,21 +1,9 @@
 "use client";
 
-import { Info } from "lucide-react";
 import { AdminFormCard } from "@/components/admin/AdminFormCard";
 import FormFieldLabel from "@/components/common/FormFieldLabel";
-import type {
-  LocationOption,
-  TourDetailForm,
-  TransportOption,
-} from "@/lib/admin/tourDetail";
-
-type Props = {
-  tour: TourDetailForm;
-  locations: LocationOption[];
-  transports: TransportOption[];
-  lockCoreFields?: boolean;
-  onTourChange: (updater: (prev: TourDetailForm) => TourDetailForm) => void;
-};
+import { Info } from "lucide-react";
+import type { TourBasicInfoCardProps as Props } from 'shared';
 
 export function TourBasicInfoCard({
   tour,

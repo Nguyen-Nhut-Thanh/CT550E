@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import {
-  getDashboardStats,
-  downloadDashboardCsvReport,
-  type DashboardStats,
-  type DashboardTimeRange,
-} from "@/lib/admin/dashboardApi";
-import { useToast } from "@/components/common/Toast";
+import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardAnalyticsChart";
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards";
-import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardAnalyticsChart";
+import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
 import { DashboardStatusBreakdownWidget } from "@/components/admin/dashboard/DashboardStatusBreakdown";
 import { DashboardTopTours } from "@/components/admin/dashboard/DashboardTopTours";
-import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
+import { useToast } from "@/components/common/Toast";
+import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboardApi";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { DashboardStats, DashboardTimeRange } from "shared";
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardStats | null>(null);

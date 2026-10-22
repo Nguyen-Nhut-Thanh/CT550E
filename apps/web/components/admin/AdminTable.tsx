@@ -1,36 +1,10 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
-import { Edit, Trash2 } from "lucide-react";
 import { AdminIconActionButton } from "@/components/admin/AdminIconActionButton";
 import { AdminPagination } from "@/components/admin/AdminPagination";
-
-interface Column<T> {
-  header: string;
-  render: (item: T, index: number) => ReactNode;
-  className?: string;
-  align?: "left" | "center" | "right";
-}
-
-interface TableAction<T> {
-  icon: ReactNode | ((item: T) => ReactNode);
-  title: string | ((item: T) => string);
-  tone?: "neutral" | "primary" | "danger";
-  onClick: (item: T) => void;
-}
-
-interface AdminTableProps<T> {
-  items: T[];
-  columns: Column<T>[];
-  loading?: boolean;
-  emptyMessage?: string;
-  onEdit?: (item: T) => void;
-  onDelete?: (item: T) => void;
-  rowKey: (item: T) => string | number;
-  pageSize?: number;
-  itemLabel?: string;
-  extraActions?: TableAction<T>[];
-}
+import { Edit, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { AdminTableProps } from 'shared';
 
 function AdminTableSkeleton({
   columnCount,

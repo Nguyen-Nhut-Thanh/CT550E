@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Mail, MapPin, Phone, User, CalendarDays, Loader2 } from "lucide-react";
-import type { AccountRightSidebarProps, FeaturedDestinationItem } from "shared";
 import { getFeaturedDestinations } from "@/lib/client/api/featuredDestinations";
 import { displayBirthday } from "@/lib/client/utils/bookingBirthday";
+import { CalendarDays, Loader2, Mail, MapPin, Phone, User } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { AccountRightSidebarProps, FeaturedDestinationItem } from "shared";
 
 export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarProps) {
   const [destinations, setDestinations] = useState<FeaturedDestinationItem[]>([]);

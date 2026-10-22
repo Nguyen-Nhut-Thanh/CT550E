@@ -1,16 +1,7 @@
 "use client";
 
 import { Loader2, Save, X } from "lucide-react";
-import type { StaffFormData } from "@/lib/admin/users";
-
-type Props = {
-  open: boolean;
-  saving: boolean;
-  formData: StaffFormData;
-  onClose: () => void;
-  onSubmit: (event: React.FormEvent) => void;
-  onFormChange: (updater: (prev: StaffFormData) => StaffFormData) => void;
-};
+import type { CreateStaffModalProps as Props } from 'shared';
 
 export function CreateStaffModal({
   open,

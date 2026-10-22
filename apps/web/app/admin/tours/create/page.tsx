@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/admin/AdminFormCard";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { PriceInput } from "@/components/admin/PriceInput";
+import FormFieldLabel from "@/components/common/FormFieldLabel";
+import { useToast } from "@/components/common/Toast";
+import { getAdminTransports } from "@/lib/admin/catalogsApi";
+import { getAdminLocations } from "@/lib/admin/locationsApi";
+import { createAdminTour } from "@/lib/admin/toursApi";
 import {
   AlertTriangle,
   Clock,
@@ -14,27 +21,9 @@ import {
   Ticket,
   Utensils,
 } from "lucide-react";
-import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { PriceInput } from "@/components/admin/PriceInput";
-import { useToast } from "@/components/common/Toast";
-import FormFieldLabel from "@/components/common/FormFieldLabel";
-import { getAdminTransports } from "@/lib/admin/catalogsApi";
-import { getAdminLocations } from "@/lib/admin/locationsApi";
-import { createAdminTour } from "@/lib/admin/toursApi";
-
-type LocationOption = {
-  location_id: number;
-  name: string;
-  country_code?: string | null;
-};
-
-type TransportOption = {
-  transport_id: number;
-  name: string;
-  transport_type: string;
-};
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { LocationOption, TransportOption } from 'shared';
 
 export default function AdminTourCreatePage() {
   const router = useRouter();

@@ -1,5 +1,5 @@
 import { adminFetch } from "@/lib/adminFetch";
-import type { StaffFormData, UserItem } from "@/lib/admin/users";
+import type { StaffFormData, UserItem } from "shared";
 
 async function requestAdminUsers<T>(
   path: string,

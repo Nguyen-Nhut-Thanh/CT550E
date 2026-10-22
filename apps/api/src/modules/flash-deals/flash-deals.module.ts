@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
 import { PrismaService } from "../../prisma.service";
-import { FlashDealsController } from "./flash-deals.controller";
+import { FlashDealsAdminController } from "./flash-deals-admin.controller";
+import { FlashDealsPublicController } from "./flash-deals-public.controller";
 import { FlashDealsService } from "./flash-deals.service";
 
 @Module({
-  controllers: [FlashDealsController],
+  controllers: [FlashDealsPublicController, FlashDealsAdminController],
   providers: [PrismaService, FlashDealsService],
   exports: [FlashDealsService],
 })

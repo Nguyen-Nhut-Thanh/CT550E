@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { UploadApiOptions, UploadApiResponse } from 'cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
-
 
 @Injectable()
 export class CloudinaryService {
@@ -12,4 +12,15 @@ export class CloudinaryService {
     });
   }
 
+  uploadBuffer(buffer: Buffer, options: UploadApiOptions): Promise<UploadApiResponse> {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+        if (error || !result) {
+          return reject(error ?? new Error('Upload image failed'));
+        }
+        resolve(result);
+      });
+      stream.end(buffer);
+    });
+  }
 }

@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+import type { LocationLite } from './location';
+
 export type TourDestinationItem = {
   visit_order: number;
   location_id: number | null;
@@ -169,6 +172,12 @@ export type PublicToursQuery = {
   skip?: number | string;
 };
 
+export type BestSellerStat = {
+  tour_id: number;
+  booking_count: number;
+  passenger_count: number;
+};
+
 export type TourListParams = {
   search?: string;
   status?: string;
@@ -320,4 +329,145 @@ export type PublicTourCardRecord = {
   } | null;
   rating_avg?: number | string | null;
   rating_count?: number | string | null;
+};
+
+export type TourBookingCardProps = {
+  tour: PublicTourDetail;
+  selectedSchedule?: TourSchedule | null;
+};
+
+export type TourDepartureCalendarProps = {
+  schedules: TourSchedule[];
+  selectedScheduleId: number | null;
+  onSelect: (scheduleId: number) => void;
+  onReset: () => void;
+};
+
+export type TourDetailHeroProps = {
+  tour: PublicTourDetail;
+};
+
+export type TourHighlightsListProps = {
+  highlights?: string[];
+};
+
+export type TourItineraryTimelineProps = {
+  itineraries?: TourItinerary[];
+  durationDays?: number;
+};
+
+export type TourDestinationLite = {
+  visit_order?: number | null;
+  note?: string | null;
+  name?: string | null;
+  location_id?: number | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  locations?: LocationLite | null;
+};
+
+export type TourWithMapData = PublicTourDetail & {
+  departure_locations?: LocationLite | null;
+  tour_destinations?: TourDestinationLite[] | null;
+};
+
+export type TourSmartMapProps = {
+  tour?: TourWithMapData | null;
+};
+
+export type RouteStop = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  note?: string | null;
+  isDeparture?: boolean;
+};
+
+export type VideoItem = {
+  id: number;
+  title: string;
+  thumbnail: string;
+  videoUrl: string;
+};
+
+export type TourVideoHighlightsProps = {
+  videos?: VideoItem[];
+};
+
+export type TourCardProps = {
+  tour: PublicTourCard;
+  onTourClick?: (tour: PublicTourCard) => void;
+};
+
+export type TourEmptyStateProps = {
+  message?: string;
+};
+
+export type TourFilterCalendarProps = {
+  dateValue: string;
+  onSelectDate: (value: string) => void;
+  label?: string;
+};
+
+export type TourFilterSidebarProps = {
+  keyword: string;
+  setKeyword: (val: string) => void;
+  destination: string;
+  setDestination: (val: string) => void;
+  dateFrom: string;
+  setDateFrom: (val: string) => void;
+  minPrice: string;
+  setMinPrice: (val: string) => void;
+  maxPrice: string;
+  setMaxPrice: (val: string) => void;
+  tourType: string;
+  setTourType: (val: string) => void;
+  duration: string;
+  setDuration: (val: string) => void;
+  onApplyFilters: () => void;
+  totalResults: number;
+};
+
+export type TourMetaItemProps = {
+  icon: ReactNode;
+  label?: string;
+  value: ReactNode;
+  labelClassName?: string;
+  valueClassName?: string;
+  className?: string;
+};
+
+export type TourSortControlProps = {
+  totalResults: number;
+  sortBy: string;
+  setSortBy: (val: string) => void;
+  showBestsellerOption?: boolean;
+};
+
+export type ReviewItem = {
+  id: number | string;
+  name: string;
+  rating: number;
+  content: string;
+  timeAgo?: string;
+  avatarUrl?: string;
+};
+
+export type RatingBreakdownItem = {
+  stars: 1 | 2 | 3 | 4 | 5;
+  percent: number;
+};
+
+export type TourReviewsSectionProps = {
+  averageRating?: number;
+  totalReviews?: number;
+  breakdown?: RatingBreakdownItem[];
+  reviews?: ReviewItem[];
+  onViewAll?: () => void;
+};
+
+export type GetPublicToursParams = Omit<PublicToursQuery, 'min_price' | 'max_price' | 'deal'> & {
+  min_price?: string | number;
+  max_price?: string | number;
 };

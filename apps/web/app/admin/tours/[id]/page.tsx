@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
 import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
 import { AdminFormCard } from "@/components/admin/AdminFormCard";
 import { ScheduleManagement } from "@/components/admin/ScheduleManagement";
@@ -12,14 +9,12 @@ import { TourSidebar } from "@/components/admin/tour-detail/TourSidebar";
 import { useToast } from "@/components/common/Toast";
 import { getAdminTransports } from "@/lib/admin/catalogsApi";
 import { getAdminLocations } from "@/lib/admin/locationsApi";
-import {
-  getTotalTourBookings,
-  normalizeTourDetailForm,
-  type LocationOption,
-  type TourDetailForm,
-  type TransportOption,
-} from "@/lib/admin/tourDetail";
+import { getTotalTourBookings, normalizeTourDetailForm } from "@/lib/admin/tourDetail";
 import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/toursApi";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { LocationOption, TourDetailForm, TransportOption } from "shared";
 
 export default function AdminTourDetailPage() {
   const { id } = useParams();

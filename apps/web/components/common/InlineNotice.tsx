@@ -1,12 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type InlineNoticeProps = {
-  tone: "error" | "success";
-  children: ReactNode;
-  className?: string;
-};
+import type { InlineNoticeProps } from 'shared';
 
 const toneClassMap = {
   error: "bg-red-50 border border-red-100 text-red-600",

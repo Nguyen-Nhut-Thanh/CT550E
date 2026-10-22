@@ -1,20 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import FavoriteButton from "@/components/common/FavoriteButton";
+import { useToast } from "@/components/common/Toast";
+import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
+import { Check, ChevronLeft, ChevronRight, Image as ImageIcon, MapPin, Share2, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Share2, Star, MapPin, X, ChevronLeft, ChevronRight, Check, Image as ImageIcon } from "lucide-react";
-import type { PublicTourDetail } from "shared";
-import FavoriteButton from "@/components/common/FavoriteButton";
-import { useFavoriteTours } from "@/lib/client/hooks/useFavoriteTours";
-import { useToast } from "@/components/common/Toast";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import type { TourDetailHeroProps } from 'shared';
 
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";
-
-type TourDetailHeroProps = {
-  tour: PublicTourDetail;
-};
 
 export default function TourDetailHero({ tour }: TourDetailHeroProps) {
   const router = useRouter();

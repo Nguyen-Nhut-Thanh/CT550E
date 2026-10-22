@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
 import { displayBirthday, formatBirthdayInput, parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import { useId, useState } from "react";
 
 export function BirthdayInput({ value, onChange, label, id }: {
   value: string; onChange: (value: string) => void; label: string; id?: string;

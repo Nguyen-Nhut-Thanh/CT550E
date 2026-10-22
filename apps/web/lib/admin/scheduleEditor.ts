@@ -1,54 +1,5 @@
-﻿import { formatDateString } from "@/components/home/SearchBar/useSearchBar";
-
-export type SchedulePriceItem = {
-  passenger_type: "adult" | "child" | "infant";
-  price: number;
-  currency: string;
-  note: string;
-};
-
-export type ItineraryFormItem = {
-  day_number: number;
-  title: string;
-  content: string;
-  meals: string;
-  transport_id: string | number;
-  hotel_id: string | number;
-  room_type_id: string | number;
-};
-
-export type ScheduleFormState = {
-  start_date: string;
-  start_time: string;
-  end_date: string;
-  end_time: string;
-  price: number;
-  quota: number;
-  status: number;
-  cover_image_url: string;
-  note: string;
-  prices: SchedulePriceItem[];
-  itinerary: ItineraryFormItem[];
-};
-
-type ScheduleDetailResponse = {
-  start_date?: string | null;
-  end_date?: string | null;
-  price?: number | null;
-  quota?: number | null;
-  status?: number | null;
-  cover_image_url?: string | null;
-  note?: string | null;
-  tour_schedule_prices?: SchedulePriceItem[] | null;
-  tour_itineraries?: Array<Partial<ItineraryFormItem> & { hotel_id?: number | null }> | null;
-  tour_schedule_hotels?: Array<{
-    day_from?: number | null;
-    day_to?: number | null;
-    hotel_id?: number | null;
-    room_type_id?: number | null;
-    nights?: number | null;
-  }> | null;
-};
+import { formatDateString } from "@/components/home/SearchBar/useSearchBar";
+import type { ItineraryFormItem, ScheduleEditorScheduleDetailResponse as ScheduleDetailResponse, ScheduleFormState, SchedulePriceItem } from 'shared';
 
 export const DEFAULT_SCHEDULE_PRICES: SchedulePriceItem[] = [
   { passenger_type: "adult", price: 0, currency: "VND", note: "Giá người lớn" },

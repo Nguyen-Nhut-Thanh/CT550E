@@ -1,4 +1,4 @@
-import type { PublicToursQuery, PublicToursResponse, PublicTourDetail } from "shared";
+import type { PublicTourDetail, PublicToursQuery, PublicToursResponse } from "shared";
 import { publicFetch } from "./publicFetch";
 
 export async function getPublicTours(

@@ -10,14 +10,14 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/jwt.guard";
-import { ReviewsService } from "./reviews.service";
 import type {
   AdminReviewQuery,
   AdminUpdateReviewStatusPayload,
   CreateReplyPayload,
   CreateReviewPayload,
 } from "shared";
+import { JwtAuthGuard } from "../auth/jwt.guard";
+import { ReviewsService } from "./reviews.service";
 
 @Controller()
 export class ReviewsController {

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { removeToken } from "@/lib/client/utils/auth";
 import {
   Bell,
   CalendarDays,
@@ -12,7 +11,8 @@ import {
   User,
   Wallet,
 } from "lucide-react";
-import { removeToken } from "@/lib/client/utils/auth";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import type { AccountSidebarProps } from "shared";
 
 const menuItems = [

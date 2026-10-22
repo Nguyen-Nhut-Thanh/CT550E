@@ -1,10 +1,4 @@
-type WhyChooseCardProps = {
-  title: string;
-  description: string;
-  icon: string;
-  rotate?: string;
-};
-
+import type { WhyChooseCardProps } from 'shared';
 export default function WhyChooseCard({
   title,
   description,

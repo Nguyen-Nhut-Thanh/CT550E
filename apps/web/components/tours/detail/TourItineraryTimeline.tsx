@@ -1,14 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import { CalendarDays, Clock } from "lucide-react";
-import type { TourItinerary } from "shared";
-
-type TourItineraryTimelineProps = {
-  itineraries?: TourItinerary[];
-  durationDays?: number;
-};
+import Image from "next/image";
+import { useState } from "react";
+import type { TourItineraryTimelineProps } from 'shared';
 
 export default function TourItineraryTimeline({ itineraries }: TourItineraryTimelineProps) {
   const [activeDay, setActiveDay] = useState(1);

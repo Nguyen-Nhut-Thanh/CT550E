@@ -1,10 +1,8 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Banner } from "shared";
-import type { HeroBannerProps } from "shared";
 import { useHeroBannerSlider } from "@/lib/client/hooks";
-import HeroNavbar from "./HeroNavbar";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { HeroBannerProps } from "shared";
 import SlideItems from "./SlideItems";
 
 export default function HeroBanner({ banners }: HeroBannerProps) {
@@ -52,7 +50,6 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
           <SlideItems items={normalizedBanners} />
         </div>
 
-        <HeroNavbar />
 
         <div
           key={animateKey}

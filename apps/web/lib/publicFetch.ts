@@ -1,20 +1,7 @@
+import type { GetPublicToursParams, PublicFetchOptions } from 'shared';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
   "https://api.nhutthanh.id.vn";
-
-type PublicFetchOptions = RequestInit;
-
-export type GetPublicToursParams = {
-  search?: string;
-  destination?: string;
-  departure_location?: string;
-  date_from?: string;
-  min_price?: string | number;
-  max_price?: string | number;
-  collection?: string;
-  take?: string | number;
-  skip?: string | number;
-};
 
 function buildUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;

@@ -101,7 +101,7 @@ export interface AccountOverviewTabProps {
   setActiveTab?: (tab: string) => void;
 }
 
-export interface AccountProfileHeaderProps {
+export interface AccountUserProps {
   user: UserProfile | null;
 }
 
@@ -142,10 +142,6 @@ export type BookingItemUI = {
 
 export type BookingStatusFilter = "all" | "upcoming" | "completed" | "cancelled";
 
-export interface AccountSettingsTabProps {
-  user: UserProfile | null;
-}
-
 export type RecommendationEventPayload = {
   event_type: string;
   source?: string;
@@ -158,3 +154,12 @@ export type ToggleFavoriteResult =
   | { ok: true; action: "added" | "removed" }
   | { ok: false; reason: "unauthenticated" | "error"; message: string };
 
+export type AccountResourceEntry = { data: unknown; loaded: boolean; updatedAt: number; pending?: Promise<unknown> };
+
+export type AccountResourceCache = Map<string, AccountResourceEntry>;
+
+export type UserProfileLite = {
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};

@@ -1,20 +1,9 @@
-﻿"use client";
+"use client";
 
+import { AdminFormCard } from "@/components/admin/AdminFormCard";
 import { Camera, Clock, Info, Loader2, Save, Upload } from "lucide-react";
 import Image from "next/image";
-import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import type { ScheduleFormState } from "@/lib/admin/scheduleEditor";
-
-type Props = {
-  form: ScheduleFormState;
-  isPast: boolean;
-  saving: boolean;
-  uploading: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onSave: () => void;
-  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
-};
+import type { ScheduleSidebarProps as Props } from 'shared';
 
 export function ScheduleSidebar({
   form,

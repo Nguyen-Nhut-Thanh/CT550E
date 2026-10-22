@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { FeaturedDestinationGroup, FeaturedDestinationItem, RegionConfig } from 'shared';
 import { PrismaService } from '../../prisma.service';
-
-import type { RegionConfig, FeaturedDestinationItem, FeaturedDestinationGroup } from 'shared';
 
 @Injectable()
 export class LocationsPublicService {

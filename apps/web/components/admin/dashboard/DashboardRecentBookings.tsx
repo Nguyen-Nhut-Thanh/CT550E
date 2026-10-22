@@ -1,13 +1,9 @@
 "use client";
 
+import { formatDate, formatVND } from "@/lib/utils";
+import { ArrowRight, Briefcase, Calendar, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { ArrowRight, Briefcase, Calendar, User, Phone, Mail, ExternalLink } from "lucide-react";
-import type { DashboardBookingItem } from "@/lib/admin/dashboardApi";
-import { formatVND, formatDate } from "@/lib/utils";
-
-interface DashboardRecentBookingsProps {
-  bookings: DashboardBookingItem[];
-}
+import type { DashboardRecentBookingsProps } from 'shared';
 
 export function DashboardRecentBookings({ bookings }: DashboardRecentBookingsProps) {
   const statusConfig: Record<

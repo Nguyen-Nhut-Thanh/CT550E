@@ -1,6 +1,5 @@
 "use client";
 
-import { use } from "react";
 import {
   BlogArticleContent,
   BlogFeaturedPosts,
@@ -10,6 +9,7 @@ import {
   BlogRelatedPosts,
   BlogSocialLinks,
 } from "@/components/blog";
+import { use } from "react";
 
 export default function BlogDetailPage({
   params,

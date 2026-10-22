@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
-import { formatVND } from "@/lib/client/utils/utils";
 import { getSingleRoomSurchargeTotal } from "@/lib/client/utils/tourPricing";
-import type { TourSchedule } from "shared";
-
-type Props = {
-  schedules: TourSchedule[];
-  selectedScheduleId: number | null;
-  onSelect: (scheduleId: number) => void;
-  onReset: () => void;
-};
+import { formatVND } from "@/lib/client/utils/utils";
+import { ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import type { TourDepartureCalendarProps as Props, TourSchedule } from 'shared';
 
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 

@@ -1,5 +1,5 @@
-import { io, Socket } from "socket.io-client";
 import { API_BASE_URL } from "@/lib/chat";
+import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 let currentToken: string | null = null;
@@ -21,6 +21,7 @@ export const getSocket = (token: string) => {
 };
 
 export const disconnectSocket = () => {
+  currentToken = null;
   if (socket) {
     socket.disconnect();
     socket = null;

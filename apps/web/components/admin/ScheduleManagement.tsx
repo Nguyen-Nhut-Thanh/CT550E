@@ -1,6 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
+import { ScheduleStartFields } from "@/components/admin/schedule-shared/ScheduleStartFields";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import InlineNotice from "@/components/common/InlineNotice";
+import { useToast } from "@/components/common/Toast";
+import {
+  createTourSchedule,
+  deleteTourSchedule,
+  getTourSchedules,
+} from "@/lib/admin/schedulesApi";
+import { formatVND } from "@/lib/utils";
 import {
   AlertTriangle,
   ArrowRight,
@@ -11,31 +22,9 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import InlineNotice from "@/components/common/InlineNotice";
-import { useToast } from "@/components/common/Toast";
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
-import { ScheduleStartFields } from "@/components/admin/schedule-shared/ScheduleStartFields";
-import {
-  createTourSchedule,
-  deleteTourSchedule,
-  getTourSchedules,
-} from "@/lib/admin/schedulesApi";
-import { formatVND } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ScheduleManagementItem as Schedule } from 'shared';
 import { PriceInput } from "./PriceInput";
-
-interface Schedule {
-  tour_schedule_id: number;
-  start_date: string;
-  end_date: string;
-  price: number;
-  quota: number;
-  status: number;
-  _count?: {
-    bookings?: number;
-  };
-}
 
 function getBookedCount(schedule: Schedule) {
   return schedule._count?.bookings || 0;

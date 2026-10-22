@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Loader2, LockKeyhole } from "lucide-react";
-import { changeUserPassword } from "@/lib/client/api/authApi";
 import { useToast } from "@/components/common/Toast";
+import { changeUserPassword } from "@/lib/client/api/authApi";
+import { Loader2, LockKeyhole } from "lucide-react";
+import { useState, type FormEvent } from "react";
 
 export function AccountPasswordForm({ hasPassword, onSaved }: { hasPassword: boolean; onSaved: () => void }) {
   const [oldPassword, setOldPassword] = useState("");

@@ -1,8 +1,4 @@
-type VoucherLike = {
-  expiry_date: string;
-  used_count?: number;
-};
-
+import type { VoucherLike } from 'shared';
 export function isVoucherExpired(voucher: VoucherLike) {
   return new Date(voucher.expiry_date).getTime() < Date.now();
 }

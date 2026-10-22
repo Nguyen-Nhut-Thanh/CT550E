@@ -1,21 +1,8 @@
 "use client";
 
+import { Camera, Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { Camera, Info, Loader2, X } from "lucide-react";
-import type { LocationDetailForm } from "@/lib/admin/locationDetail";
-
-type Props = {
-  form: LocationDetailForm;
-  uploading: boolean;
-  saving: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onFormChange: (
-    updater: (prev: LocationDetailForm) => LocationDetailForm,
-  ) => void;
-  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onCancel: () => void;
-  onSave: () => void;
-};
+import type { LocationImageSidebarProps as Props } from 'shared';
 
 export function LocationImageSidebar({
   form,

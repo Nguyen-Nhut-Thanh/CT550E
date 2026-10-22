@@ -1,18 +1,7 @@
 "use client";
 
-import { Edit3, Globe, Lock, Star, CheckCircle2 } from "lucide-react";
-import type { AdminLocationItem } from "@/types/admin-location";
-import { type LocationDetailForm } from "@/lib/admin/locationDetail";
-
-type Props = {
-  form: LocationDetailForm;
-  isNew: boolean;
-  level3Id: string;
-  level3List: AdminLocationItem[];
-  onFormChange: (
-    updater: (prev: LocationDetailForm) => LocationDetailForm,
-  ) => void;
-};
+import { CheckCircle2, Edit3, Globe, Lock, Star } from "lucide-react";
+import type { LocationDetailsCardProps as Props } from 'shared';
 
 export function LocationDetailsCard({
   form,

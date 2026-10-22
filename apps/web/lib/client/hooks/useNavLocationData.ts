@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { publicFetch } from "../api/publicFetch";
 import type { NavLocationData } from "shared";
+import { publicFetch } from "../api/publicFetch";
 
 export function useNavLocationData() {
   const [navLocationData, setNavLocationData] = useState<NavLocationData | null>(null);

@@ -1,44 +1,13 @@
-import "reflect-metadata";
 import { config } from "dotenv";
 import { resolve } from "node:path";
+import "reflect-metadata";
 
 config({ path: resolve(__dirname, "../../../.env") });
 
-import { Logger, Module, ValidationPipe } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { connectMongo, disconnectMongo, prisma } from "database";
-import { BannersModule } from "./modules/banners/banners.module";
-import { FlashDealsModule } from "./modules/flash-deals/flash-deals.module";
-import { ToursModule } from "./modules/tours/tours.module";
-import { FeaturedToursModule } from "./modules/featured-tours/featured-tours.module";
-import { LocationsModule } from "./modules/locations/locations.module";
-import { MailModule } from "./modules/mail/mail.module";
-import { AuthModule } from "./modules/auth/auth.module";
-import { ReviewsModule } from "./modules/reviews/reviews.module";
-import { FavoritesModule } from "./modules/favorites/favorites.module";
-import { BookingsModule } from "./modules/bookings/bookings.module";
-import { PaymentModule } from "./modules/payment/payment.module";
-import { AdminModule } from "./modules/admin/admin.module";
-import { ChatModule } from "./modules/chat/chat.module";
-
-@Module({
-  imports: [
-    MailModule,
-    AuthModule,
-    BannersModule,
-    FlashDealsModule,
-    ToursModule,
-    FeaturedToursModule,
-    LocationsModule,
-    ReviewsModule,
-    FavoritesModule,
-    BookingsModule,
-    PaymentModule,
-    AdminModule,
-    ChatModule,
-  ]
-})
-class AppModule {}
+import { AppModule } from "./app.module";
 
 const logger = new Logger("Startup");
 

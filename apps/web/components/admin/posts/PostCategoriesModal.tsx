@@ -1,18 +1,8 @@
 "use client";
 
-import { Loader2, Save, Tag } from "lucide-react";
 import { AdminModalShell } from "@/components/admin/AdminModalShell";
-import type { PostCategory, PostCategoryDraft } from "@/lib/admin/posts";
-
-type Props = {
-  open: boolean;
-  categories: PostCategory[];
-  newCategory: PostCategoryDraft;
-  saving: boolean;
-  onClose: () => void;
-  onCreate: () => void;
-  onDraftChange: (draft: PostCategoryDraft) => void;
-};
+import { Loader2, Save, Tag } from "lucide-react";
+import type { PostCategoriesModalProps as Props } from 'shared';
 
 export function PostCategoriesModal({
   open,

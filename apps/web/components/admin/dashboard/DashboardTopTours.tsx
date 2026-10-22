@@ -1,14 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { Award, ArrowUpRight, Star, ShoppingBag, DollarSign } from "lucide-react";
-import type { DashboardTopTour } from "@/lib/admin/dashboardApi";
 import { formatVND, normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils";
-
-interface DashboardTopToursProps {
-  topTours: DashboardTopTour[];
-}
+import { Award, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import type { DashboardTopToursProps } from 'shared';
 
 export function DashboardTopTours({ topTours }: DashboardTopToursProps) {
   if (!topTours || topTours.length === 0) {

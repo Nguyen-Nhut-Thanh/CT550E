@@ -1,10 +1,6 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { SeasonalShowcase as SeasonalShowcaseData } from "shared";
-
-type SeasonalShowcaseProps = {
-  showcase: SeasonalShowcaseData;
-};
+import Link from "next/link";
+import type { SeasonalShowcaseProps } from 'shared';
 
 const cardLabels = [
   "Hồ Kanas",
@@ -179,4 +175,3 @@ export default function SeasonalShowcase({
     </section>
   );
 }
-

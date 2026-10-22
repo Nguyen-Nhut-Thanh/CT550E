@@ -1,21 +1,7 @@
-﻿"use client";
+"use client";
 
 import { Car, ChevronDown, Hotel, MapPin, Utensils } from "lucide-react";
-import type { ScheduleFormState } from "@/lib/admin/scheduleEditor";
-import type { HotelItem, RoomTypeItem, TourInfo, TransportItem } from "@/lib/admin/scheduleDetail";
-
-type Props = {
-  form: ScheduleFormState;
-  isPast: boolean;
-  expandedDay: number | null;
-  tourInfo: TourInfo | null;
-  hotels: HotelItem[];
-  transports: TransportItem[];
-  roomTypesMap: Record<number, RoomTypeItem[]>;
-  onExpandedDayChange: (value: number | null) => void;
-  onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
-  onHotelSelect: (hotelId: number) => void;
-};
+import type { ScheduleItinerarySectionProps as Props } from 'shared';
 
 export function ScheduleItinerarySection({
   form,

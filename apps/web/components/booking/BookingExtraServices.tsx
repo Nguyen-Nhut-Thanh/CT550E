@@ -1,6 +1,6 @@
+import { formatVND } from "@/lib/client/utils/utils";
 import { Camera, Check, Luggage, ShieldCheck, UserRound } from "lucide-react";
 import type { BookingExtraService } from "shared";
-import { formatVND } from "@/lib/client/utils/utils";
 
 export function BookingExtraServices({ services, selectedIds, onChange, loading, error, onRetry }: {
   services: BookingExtraService[]; selectedIds: string[]; onChange: (ids: string[]) => void;

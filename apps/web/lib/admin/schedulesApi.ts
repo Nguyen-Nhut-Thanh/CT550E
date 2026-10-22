@@ -1,29 +1,7 @@
-import { adminFetch } from "@/lib/adminFetch";
-
-async function requestAdminSchedules<T>(
-  path: string,
-  init: RequestInit,
-  fallbackMessage: string,
-): Promise<T> {
-  const response = await adminFetch(path, init);
-  const data = (await response.json().catch(() => null)) as
-    | { message?: string }
-    | T
-    | null;
-
-  if (!response.ok) {
-    throw new Error(
-      data && typeof data === "object" && "message" in data && typeof data.message === "string"
-        ? data.message
-        : fallbackMessage,
-    );
-  }
-
-  return data as T;
-}
+import { requestAdminJson } from "./requestAdminJson";
 
 export function getTourSchedules<T>(tourId: number) {
-  return requestAdminSchedules<T[]>(
+  return requestAdminJson<T[]>(
     `/admin/tours/${tourId}/schedules`,
     { method: "GET" },
     "Không thể tải lịch trình.",
@@ -34,7 +12,7 @@ export function createTourSchedule(
   tourId: number,
   body: Record<string, unknown>,
 ) {
-  return requestAdminSchedules(
+  return requestAdminJson(
     `/admin/tours/${tourId}/schedules`,
     {
       method: "POST",
@@ -45,7 +23,7 @@ export function createTourSchedule(
 }
 
 export function deleteTourSchedule(scheduleId: number) {
-  return requestAdminSchedules(
+  return requestAdminJson(
     `/admin/tours/schedules/${scheduleId}/delete`,
     { method: "POST" },
     "Không thể xóa lịch trình.",
@@ -53,7 +31,7 @@ export function deleteTourSchedule(scheduleId: number) {
 }
 
 export function getAdminScheduleDetail<T>(scheduleId: string | number) {
-  return requestAdminSchedules<T>(
+  return requestAdminJson<T>(
     `/admin/tours/schedules/${scheduleId}`,
     { method: "GET" },
     "Không thể tải chi tiết lịch khởi hành.",
@@ -65,7 +43,7 @@ export function saveAdminSchedule(
   method: "POST" | "PATCH",
   body: Record<string, unknown>,
 ) {
-  return requestAdminSchedules(
+  return requestAdminJson(
     path,
     {
       method,
@@ -76,7 +54,7 @@ export function saveAdminSchedule(
 }
 
 export function deleteAdminSchedule(scheduleId: number) {
-  return requestAdminSchedules(
+  return requestAdminJson(
     `/admin/tours/schedules/${scheduleId}`,
     { method: "DELETE" },
     "Không thể xóa lịch khởi hành.",
@@ -84,7 +62,7 @@ export function deleteAdminSchedule(scheduleId: number) {
 }
 
 export function updateAdminScheduleStatus(scheduleId: number, status: number) {
-  return requestAdminSchedules(
+  return requestAdminJson(
     `/admin/tours/schedules/${scheduleId}`,
     {
       method: "PATCH",

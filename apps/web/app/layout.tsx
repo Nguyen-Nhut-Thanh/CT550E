@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
-import { Manrope, Sora } from "next/font/google";
-import { Header, Footer } from "@/components/layout";
 import { ToastProvider } from "@/components/common/Toast";
+import { SupportChat } from "@/components/chat/SupportChat";
+import { Footer, Header } from "@/components/layout";
+import { Manrope, Sora } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <SupportChat />
         </ToastProvider>
       </body>
     </html>

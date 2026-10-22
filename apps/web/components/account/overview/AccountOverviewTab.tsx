@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { Settings } from "lucide-react";
-import { AccountProfileHeader } from "./AccountProfileHeader";
-import { AccountOverview } from "./AccountOverview";
-import { AccountRightSidebar } from "../sidebar/AccountRightSidebar";
+import Image from "next/image";
 import type { AccountOverviewTabProps } from "shared";
+import { AccountRightSidebar } from "../sidebar/AccountRightSidebar";
+import { AccountOverview } from "./AccountOverview";
+import { AccountProfileHeader } from "./AccountProfileHeader";
 
 export function AccountOverviewTab({
   user,

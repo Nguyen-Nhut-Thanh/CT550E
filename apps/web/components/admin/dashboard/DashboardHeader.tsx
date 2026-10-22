@@ -1,16 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
-import type { DashboardTimeRange } from "@/lib/admin/dashboardApi";
-
-interface DashboardHeaderProps {
-  timeRange: DashboardTimeRange;
-  onTimeRangeChange: (range: DashboardTimeRange) => void;
-  onRefresh: () => void;
-  onExportCsv: () => Promise<void>;
-  isRefreshing?: boolean;
-}
+import { useState } from "react";
+import type { DashboardHeaderProps, DashboardTimeRange } from "shared";
 
 export function DashboardHeader({
   timeRange,

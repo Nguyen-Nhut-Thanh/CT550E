@@ -1,33 +1,9 @@
 "use client";
 
-import { ChevronRight, EyeOff } from "lucide-react";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-
-type Tour = {
-  tour_id: number;
-  code: string;
-  name: string;
-  duration_days: number;
-  base_price: string | number;
-  status: number;
-};
-
-type Props = {
-  loading: boolean;
-  tours: Tour[];
-  selectedTourId: number | null;
-  searchTerm: string;
-  tourStatusFilter: string;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  onSearchChange: (value: string) => void;
-  onFilterChange: (value: string) => void;
-  onSelectTour: (tourId: number) => void;
-  onPageChange: (page: number) => void;
-};
+import { ChevronRight, EyeOff } from "lucide-react";
+import type { TourListPanelProps as Props } from 'shared';
 
 function TourListSkeleton() {
   return (

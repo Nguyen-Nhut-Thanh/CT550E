@@ -1,14 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  AlertTriangle,
-  Clock,
-  Eye,
-  EyeOff,
-  ScrollText,
-} from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
@@ -31,18 +22,16 @@ import {
   toggleAdminTourStatus,
 } from "@/lib/admin/toursApi";
 import { formatVND } from "@/lib/utils";
-
-type Tour = {
-  tour_id: number;
-  code: string;
-  name: string;
-  duration_days: number;
-  duration_nights: number;
-  base_price: string | number;
-  status: number;
-  tour_type: string | null;
-  tour_images?: { image_url: string; is_cover: number }[];
-};
+import {
+  AlertTriangle,
+  Clock,
+  Eye,
+  EyeOff,
+  ScrollText,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ToursPageTour as Tour } from 'shared';
 
 export default function AdminToursPage() {
   const router = useRouter();

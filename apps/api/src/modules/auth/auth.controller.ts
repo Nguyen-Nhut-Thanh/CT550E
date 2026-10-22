@@ -1,43 +1,35 @@
 import {
+  BadRequestException,
   Body,
   Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
   ForbiddenException,
-  UseInterceptors,
-  UploadedFile,
-  BadRequestException,
+  Get,
   InternalServerErrorException,
   Logger,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import { memoryStorage } from 'multer';
-import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt.guard';
-import {
-  RegisterDto,
-  LoginDto,
-  VerifyEmailDto,
-  GoogleLoginDto,
-} from './dto/auth.dto';
 import type {
   AdminLoginPayload,
-  AuthRequestUser,
+  AuthRequest,
   ChangePasswordPayload,
+  CloudinaryUploadResult,
   UpdateProfilePayload,
 } from 'shared';
-
-type AuthRequest = Request & {
-  user: AuthRequestUser;
-};
-
-type CloudinaryUploadResult = {
-  secure_url: string;
-};
+import { AuthService } from './auth.service';
+import {
+  GoogleLoginDto,
+  LoginDto,
+  RegisterDto,
+  VerifyEmailDto,
+} from './dto/auth.dto';
+import { JwtAuthGuard } from './jwt.guard';
 
 @Controller()
 export class AuthController {

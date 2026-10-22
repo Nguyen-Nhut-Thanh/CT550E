@@ -1,11 +1,7 @@
 "use client";
 
-import { PieChart, CheckCircle2, Clock, CreditCard, XCircle, Award } from "lucide-react";
-import type { DashboardStatusBreakdown } from "@/lib/admin/dashboardApi";
-
-interface DashboardStatusBreakdownProps {
-  statusBreakdown: DashboardStatusBreakdown;
-}
+import { Award, CheckCircle2, Clock, CreditCard, PieChart, XCircle } from "lucide-react";
+import type { DashboardStatusBreakdownProps } from 'shared';
 
 export function DashboardStatusBreakdownWidget({
   statusBreakdown,

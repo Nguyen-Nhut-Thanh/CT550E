@@ -1,19 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import { Play, Video, X } from "lucide-react";
-
-export type VideoItem = {
-  id: number;
-  title: string;
-  thumbnail: string;
-  videoUrl: string;
-};
-
-type TourVideoHighlightsProps = {
-  videos?: VideoItem[];
-};
+import Image from "next/image";
+import { useState } from "react";
+import type { TourVideoHighlightsProps, VideoItem } from 'shared';
 
 export default function TourVideoHighlights({ videos = [] }: TourVideoHighlightsProps) {
   const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
@@ -93,4 +83,3 @@ export default function TourVideoHighlights({ videos = [] }: TourVideoHighlights
     </div>
   );
 }
-

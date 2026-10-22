@@ -1,18 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Loader2, UploadCloud, X } from "lucide-react";
 import { API_BASE, getToken } from "@/lib/auth";
 import { uploadAuthenticatedFile } from "@/lib/uploadApi";
-
-interface ImageUploadProps {
-  value?: string | string[];
-  onChange: (url: string | string[]) => void;
-  multiple?: boolean;
-  endpoint?: string;
-  label?: string;
-  maxFiles?: number;
-}
+import { Loader2, UploadCloud, X } from "lucide-react";
+import { useRef, useState } from "react";
+import type { ImageUploadProps } from 'shared';
 
 export const ImageUpload = ({
   value,

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { formatVND } from "@/lib/client/utils/utils";
+import { CalendarDays, MessageCircle, User } from "lucide-react";
+import { openSupportChat } from '@/lib/supportChat';
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, MoreHorizontal, User } from "lucide-react";
-import { formatVND } from "@/lib/client/utils/utils";
+import { useMemo, useState } from "react";
 import type {
   AccountBookingsTabProps,
   BookingItemUI,
@@ -225,10 +226,12 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
 
                   <button
                     type="button"
-                    aria-label="Tùy chọn khác"
+                    aria-label="Liên hệ nhân viên về đơn đặt tour"
+                    title="Liên hệ nhân viên"
+                    onClick={() => openSupportChat({ booking_id: item.id })}
                     className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MessageCircle className="h-4 w-4" />
                   </button>
                 </div>
               </div>

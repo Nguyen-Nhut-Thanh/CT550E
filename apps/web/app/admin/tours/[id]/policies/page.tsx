@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, Save, ScrollText } from "lucide-react";
 import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
 import { AdminFormCard } from "@/components/admin/AdminFormCard";
 import { TourPoliciesAccordionEditor } from "@/components/admin/tour-detail/TourPoliciesAccordionEditor";
 import { useToast } from "@/components/common/Toast";
-import {
-  normalizeTourDetailForm,
-  type TourDetailForm,
-} from "@/lib/admin/tourDetail";
+import { normalizeTourDetailForm } from "@/lib/admin/tourDetail";
 import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/toursApi";
+import { CheckCircle2, Loader2, Save, ScrollText } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { TourDetailForm } from "shared";
 
 export default function AdminTourPoliciesPage() {
   const { id } = useParams();

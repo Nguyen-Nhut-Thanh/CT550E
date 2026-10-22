@@ -1,6 +1,6 @@
+import { Camera, Lightbulb, Navigation, Send, Utensils } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Camera, Lightbulb, Navigation, Send, Utensils } from "lucide-react";
 
 export function BlogArticleContent() {
   return (

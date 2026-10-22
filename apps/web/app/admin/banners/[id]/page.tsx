@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useToast } from "@/components/common/Toast";
 import {
   fetchAdminBannerDetail,
   saveAdminBanner,
   uploadAdminBannerImage,
 } from "@/lib/admin/banners";
-import { useToast } from "@/components/common/Toast";
 import {
-  ArrowLeft,
-  Save,
-  Loader2,
-  Camera,
-  X,
-  Globe,
-  Type,
   AlignLeft,
+  ArrowLeft,
+  Camera,
+  Globe,
+  Loader2,
+  Save,
   ToggleLeft,
+  Type,
+  X,
 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export default function AdminBannerDetailPage() {
   const { id } = useParams();

@@ -1,16 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-type AdminFormCardProps = {
-  title?: string;
-  icon?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  bodyClassName?: string;
-  headerClassName?: string;
-  titleClassName?: string;
-};
+import type { AdminFormCardProps } from 'shared';
 
 export function AdminFormCard({
   title,

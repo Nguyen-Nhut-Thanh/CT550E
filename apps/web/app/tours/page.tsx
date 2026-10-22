@@ -1,11 +1,5 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { getPublicTours } from "@/lib/client/api/tourApi";
-import { trackRecommendationEvent } from "@/lib/client/utils/recommendationTracker";
-import { getTourPriceValue } from "@/lib/client/utils/tourDisplay";
-import type { PublicTourCard, PublicToursResponse } from "shared";
 import {
   TourCard,
   TourEmptyState,
@@ -13,6 +7,12 @@ import {
   TourListSkeleton,
   TourSortControl,
 } from "@/components/tours";
+import { getPublicTours } from "@/lib/client/api/tourApi";
+import { trackRecommendationEvent } from "@/lib/client/utils/recommendationTracker";
+import { getTourPriceValue } from "@/lib/client/utils/tourDisplay";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import type { PublicTourCard, PublicToursResponse } from "shared";
 
 function getTourPrice(tour: PublicTourCard) {
   return getTourPriceValue(tour.base_price, tour.next_schedule?.price);

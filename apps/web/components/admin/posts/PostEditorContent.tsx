@@ -1,12 +1,7 @@
 "use client";
 
 import { AlignLeft, Type } from "lucide-react";
-import type { PostEditorForm } from "@/lib/admin/posts";
-
-type Props = {
-  form: PostEditorForm;
-  onFormChange: (updater: (prev: PostEditorForm) => PostEditorForm) => void;
-};
+import type { PostEditorContentProps as Props } from 'shared';
 
 export function PostEditorContent({ form, onFormChange }: Props) {
   return (

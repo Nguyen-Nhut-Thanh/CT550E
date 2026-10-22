@@ -3,13 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "../../prisma.service";
 import type {
   AdminReviewQuery,
   AdminUpdateReviewStatusPayload,
   CreateReplyPayload,
   CreateReviewPayload,
 } from "shared";
+import { PrismaService } from "../../prisma.service";
 
 @Injectable()
 export class ReviewsService {

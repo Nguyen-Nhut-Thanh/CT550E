@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCircle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import {
   createContext,
   ReactNode,
@@ -10,25 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle, CheckCircle2, Info, X, XCircle } from "lucide-react";
-
-type ToastType = "success" | "error" | "info" | "warning";
-
-interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-}
-
-interface ToastContextType {
-  showToast: (message: string, type?: ToastType) => void;
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
-  warning: (message: string) => void;
-}
-
-type ToastListener = (toasts: Toast[]) => void;
+import type { Toast, ToastContextType, ToastListener, ToastType } from 'shared';
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 

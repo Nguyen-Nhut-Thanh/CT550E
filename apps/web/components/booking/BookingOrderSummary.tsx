@@ -1,32 +1,7 @@
-import { BadgeCheck, Loader2, Luggage } from "lucide-react";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import { formatDate, formatVND } from "@/lib/client/utils/utils";
-import type { PublicTourDetail, TourSchedule } from "shared";
-
-interface PricingSummary {
-  adultUnitPrice: number;
-  childUnitPrice: number;
-  infantUnitPrice: number;
-  singleRoomUnitPrice: number;
-  singleRoomCount: number;
-  singleRoomSurcharge: number;
-  subtotal: number;
-  discount: number;
-  total: number;
-  servicesTotal: number;
-}
-
-interface BookingOrderSummaryProps {
-  tour: PublicTourDetail;
-  selectedSchedule: TourSchedule;
-  adultCount: number;
-  childCount: number;
-  infantCount: number;
-  totalGuests: number;
-  pricing: PricingSummary;
-  submitting: boolean;
-  onSubmitBooking: () => void;
-}
+import { BadgeCheck, Loader2, Luggage } from "lucide-react";
+import type { BookingOrderSummaryProps } from 'shared';
 
 export function BookingOrderSummary({
   tour,
@@ -48,15 +23,6 @@ export function BookingOrderSummary({
           <p className="mt-2 text-sm font-bold text-slate-900">{tour.name}</p>
           <p className="mt-1 text-xs text-slate-500">{tour.duration_days} ngày {tour.duration_nights} đêm</p>
           <div className="mt-3 space-y-2.5 [&_span:first-child]:font-medium">
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-sm text-slate-500">Tour</span>
-              <span
-                title={tour.name}
-                className="max-w-[190px] text-right text-sm font-semibold text-slate-900 line-clamp-2 break-words"
-              >
-                {tour.name}
-              </span>
-            </div>
             <div className="flex items-start justify-between gap-4">
               <span className="text-sm text-slate-500">Khởi hành</span>
               <span className="text-right text-sm font-semibold text-blue-700">

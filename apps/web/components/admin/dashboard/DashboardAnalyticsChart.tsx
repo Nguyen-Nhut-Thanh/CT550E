@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { TrendingUp, BarChart2, DollarSign, Calendar } from "lucide-react";
-import type { DashboardChartPoint } from "@/lib/admin/dashboardApi";
 import { formatVND } from "@/lib/utils";
-
-interface DashboardAnalyticsChartProps {
-  chart: DashboardChartPoint[];
-}
+import { BarChart2, Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import type { DashboardAnalyticsChartProps } from 'shared';
 
 export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps) {
   const [activeTab, setActiveTab] = useState<"revenue" | "bookings">("revenue");

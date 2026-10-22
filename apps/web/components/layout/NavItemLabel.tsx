@@ -1,5 +1,4 @@
-import type { NavItem } from "@/lib/client/constants/nav-data";
-
+import type { NavigationItemWithIcon as NavItem } from "shared";
 export default function NavItemLabel({ item }: { item: NavItem }) {
   const Icon = item.icon;
   return (

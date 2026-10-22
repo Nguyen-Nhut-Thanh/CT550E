@@ -27,3 +27,7 @@ export type CreateSeasonalShowcaseInput = {
 
 export type UpdateSeasonalShowcaseInput =
   Partial<CreateSeasonalShowcaseInput>;
+
+export type SeasonalShowcaseProps = {
+  showcase: SeasonalShowcase;
+};

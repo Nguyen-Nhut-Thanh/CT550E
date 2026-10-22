@@ -1,13 +1,7 @@
 "use client";
 
 import CustomDropdown from "@/components/common/CustomDropdown";
-
-type TourSortControlProps = {
-  totalResults: number;
-  sortBy: string;
-  setSortBy: (val: string) => void;
-  showBestsellerOption?: boolean;
-};
+import type { TourSortControlProps } from 'shared';
 
 export default function TourSortControl({
   totalResults,

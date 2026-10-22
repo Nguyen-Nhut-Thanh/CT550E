@@ -1,13 +1,4 @@
-import type { ReactNode } from "react";
-
-type TourMetaItemProps = {
-  icon: ReactNode;
-  label?: string;
-  value: ReactNode;
-  labelClassName?: string;
-  valueClassName?: string;
-  className?: string;
-};
+import type { TourMetaItemProps } from 'shared';
 
 export default function TourMetaItem({
   icon,

@@ -1,24 +1,19 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { ChevronLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PostEditorContent } from "@/components/admin/posts/PostEditorContent";
 import { PostEditorSidebar } from "@/components/admin/posts/PostEditorSidebar";
 import { useToast } from "@/components/common/Toast";
-import {
-  buildPostEditorForm,
-  createDefaultPostEditorForm,
-  type PostCategory,
-  type PostEditorForm,
-  type PostItem,
-} from "@/lib/admin/posts";
+import { buildPostEditorForm, createDefaultPostEditorForm } from "@/lib/admin/posts";
 import {
   getAdminPostCategories,
   getAdminPosts,
   saveAdminPost,
 } from "@/lib/admin/postsApi";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
+import type { PostCategory, PostEditorForm } from "shared";
 
 export default function AdminPostEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

@@ -4,34 +4,7 @@ import {
   formatLocalTime,
 } from "@/lib/dateTime";
 import { isVoucherExpired } from "@/lib/vouchers";
-
-export type Voucher = {
-  voucher_id: number;
-  code: string;
-  discount_type: string;
-  discount_value: number | string;
-  min_order_value: number | string;
-  max_discount_amount: number | string | null;
-  usage_limit: number;
-  used_count: number;
-  start_date: string;
-  expiry_date: string;
-  status: number;
-};
-
-export type VoucherForm = {
-  code: string;
-  discount_type: string;
-  discount_value: number;
-  min_order_value: number;
-  max_discount_amount: number | null;
-  usage_limit: number;
-  start_date: string;
-  duration_hours: number;
-  status: number;
-};
-
-export type VoucherStatusFilter = "all" | "active" | "expired";
+import type { Voucher, VoucherForm, VoucherStatusFilter } from 'shared';
 
 export function createDefaultVoucherForm(now = new Date()): VoucherForm {
   return {

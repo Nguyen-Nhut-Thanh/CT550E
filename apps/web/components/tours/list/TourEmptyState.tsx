@@ -1,7 +1,4 @@
-type TourEmptyStateProps = {
-  message?: string;
-};
-
+import type { TourEmptyStateProps } from 'shared';
 export default function TourEmptyState({
   message = "Không tìm thấy tour phù hợp với điều kiện bạn đã chọn.",
 }: TourEmptyStateProps) {
