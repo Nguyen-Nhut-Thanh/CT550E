@@ -1,6 +1,7 @@
 "use client";
 
-import { formatDate, formatVND } from "@/lib/utils";
+import { formatVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import { ArrowRight, Briefcase, Calendar, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import type { DashboardRecentBookingsProps } from 'shared';

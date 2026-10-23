@@ -1,8 +1,10 @@
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../prisma.service";
-import { MailModule } from "../mail/mail.module";
-import { BookingServicesController, BookingsController } from "./bookings.controller";
+import { MailModule } from "../../infrastructure/mail/mail.module";
+import { BookingServicesController } from "./booking-services-public.controller";
+import { BookingsAdminController } from './bookings-admin.controller';
+import { BookingsController } from "./bookings.controller";
+import { BookingsAdminService } from './bookings-admin.service';
 import { BookingsService } from "./bookings.service";
-
-@Module({ imports: [MailModule], controllers: [BookingServicesController, BookingsController], providers: [PrismaService, BookingsService] })
-export class BookingsModule {}
+@Module({ imports: [MailModule], controllers: [BookingServicesController, BookingsController, BookingsAdminController], providers: [BookingsService, BookingsAdminService] })
+export class BookingsModule {
+}

@@ -1,5 +1,6 @@
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { formatDate, formatVND } from "@/lib/client/utils/utils";
+import { formatVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import { Clock, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import type { BookingTourInfoCardProps } from 'shared';

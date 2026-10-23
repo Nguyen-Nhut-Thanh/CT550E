@@ -1,12 +1,12 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminTable } from "@/components/admin/AdminTable";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminTable } from "@/components/common/AdminTable";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { useToast } from "@/components/common/Toast";
-import { deleteAdminBanner, fetchAdminBanners } from "@/lib/admin/banners";
-import { confirmAction } from "@/lib/admin/confirm";
+import { deleteAdminBanner, fetchAdminBanners } from "@/lib/admin/banners/api";
+import { useToast } from "@/lib/notifications/useToast";
+import { confirmAction } from "@/lib/utils/confirm";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";

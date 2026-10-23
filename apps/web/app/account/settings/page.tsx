@@ -1,7 +1,7 @@
 "use client";
 
-import { AccountSettingsTab } from "@/components/account";
 import { AccountContent } from "@/components/account/AccountContent";
+import { AccountSettingsTab } from "@/components/account/AccountSettingsTab";
 import { useAccount } from "@/components/account/AccountShell";
 
 export default function SettingsAccountPage() {

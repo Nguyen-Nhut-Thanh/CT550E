@@ -1,6 +1,6 @@
 "use client";
 
-import { getAdminMe } from "@/lib/admin/adminAuthApi";
+import { getAdminMe } from "@/lib/admin/auth/api";
 import { Home, Loader2, LogIn, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";

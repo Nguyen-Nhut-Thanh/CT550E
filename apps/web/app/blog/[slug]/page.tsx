@@ -1,14 +1,12 @@
 "use client";
 
-import {
-  BlogArticleContent,
-  BlogFeaturedPosts,
-  BlogHero,
-  BlogNewsletter,
-  BlogPromoBanner,
-  BlogRelatedPosts,
-  BlogSocialLinks,
-} from "@/components/blog";
+import { BlogArticleContent } from "@/components/blog/BlogArticleContent";
+import { BlogFeaturedPosts } from "@/components/blog/BlogFeaturedPosts";
+import { BlogHero } from "@/components/blog/BlogHero";
+import { BlogNewsletter } from "@/components/blog/BlogNewsletter";
+import { BlogPromoBanner } from "@/components/blog/BlogPromoBanner";
+import { BlogRelatedPosts } from "@/components/blog/BlogRelatedPosts";
+import { BlogSocialLinks } from "@/components/blog/BlogSocialLinks";
 import { use } from "react";
 
 export default function BlogDetailPage({

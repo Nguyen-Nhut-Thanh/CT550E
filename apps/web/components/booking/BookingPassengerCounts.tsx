@@ -1,4 +1,6 @@
-import { formatDate, formatVND } from "@/lib/client/utils/utils";
+import CustomDropdown from "@/components/common/CustomDropdown";
+import { formatVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import { CalendarDays, Minus, Plus, Users } from "lucide-react";
 import type { BookingPassengerCountsProps, TravelerType } from "shared";
 
@@ -125,4 +127,3 @@ export function BookingPassengerCounts({
     </div>
   );
 }
-import CustomDropdown from "@/components/common/CustomDropdown";

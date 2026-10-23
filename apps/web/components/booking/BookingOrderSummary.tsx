@@ -1,5 +1,6 @@
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { formatDate, formatVND } from "@/lib/client/utils/utils";
+import { formatVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import { BadgeCheck, Loader2, Luggage } from "lucide-react";
 import type { BookingOrderSummaryProps } from 'shared';
 

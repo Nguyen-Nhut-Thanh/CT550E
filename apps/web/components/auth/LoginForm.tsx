@@ -2,8 +2,8 @@
 
 import { GoogleAuthSection } from "@/components/auth/GoogleAuthSection";
 import InlineNotice from "@/components/common/InlineNotice";
-import { loginUser, loginWithGoogle } from "@/lib/client/api/authApi";
-import { setToken } from "@/lib/client/utils/auth";
+import { loginUser, loginWithGoogle } from "@/lib/auth/api";
+import { setToken } from "@/lib/auth/session";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminModalShell } from "@/components/admin/AdminModalShell";
+import { AdminModalShell } from "@/components/common/AdminModalShell";
 import { Loader2, Save, Tag } from "lucide-react";
 import type { PostCategoriesModalProps as Props } from 'shared';
 

@@ -1,16 +1,12 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminTable } from "@/components/admin/AdminTable";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminTable } from "@/components/common/AdminTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { useToast } from "@/components/common/Toast";
-import { getLocationLevelLabel } from "@/lib/admin/locationDetail";
-import {
-  deleteAdminLocation,
-  getAdminLocationLevels,
-  getAdminLocations,
-} from "@/lib/admin/locationsApi";
+import { deleteAdminLocation, getAdminLocationLevels, getAdminLocations } from "@/lib/admin/locations/api";
+import { getLocationLevelLabel } from "@/lib/admin/locations/hierarchy";
+import { useToast } from "@/lib/notifications/useToast";
 import { Filter, Layers, MapPin, Star, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";

@@ -4,36 +4,22 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import type {
-  PaymentMethod,
-  TravelerForm,
-  TravelerType,
-  UserProfileLite,
-  VoucherValidationResult,
-} from "shared";
+import type { PaymentMethod, TravelerForm, TravelerType, UserProfileLite, VoucherValidationResult, } from "shared";
 
-import {
-  BookingContactForm,
-  BookingOrderSummary,
-  BookingPassengerCounts,
-  BookingTourInfoCard,
-  BookingTravelersList,
-  BookingVoucherAndPayment,
-} from "@/components/booking";
+import { BookingContactForm } from "@/components/booking/BookingContactForm";
 import { BookingExtraServices } from "@/components/booking/BookingExtraServices";
+import { BookingOrderSummary } from "@/components/booking/BookingOrderSummary";
+import { BookingPassengerCounts } from "@/components/booking/BookingPassengerCounts";
+import { BookingTourInfoCard } from "@/components/booking/BookingTourInfoCard";
+import { BookingTravelersList } from "@/components/booking/BookingTravelersList";
+import { BookingVoucherAndPayment } from "@/components/booking/BookingVoucherAndPayment";
 import InlineNotice from "@/components/common/InlineNotice";
 
-import {
-  createBooking,
-  createPaymentUrl,
-  getBookingExtraServices,
-  getBookingTourDetail,
-  validatePublicVoucher,
-} from "@/lib/client/api/bookingApi";
-import { fetchMe, getToken } from "@/lib/client/utils/auth";
-import { buildTravelers, getUnitPrice, syncTravelers } from "@/lib/client/utils/booking";
-import { parseBirthday } from "@/lib/client/utils/bookingBirthday";
-import { getSingleRoomSurchargeTotal } from "@/lib/client/utils/tourPricing";
+import { fetchMe, getToken } from "@/lib/auth/session";
+import { createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher } from "@/lib/booking/api";
+import { parseBirthday } from "@/lib/booking/birthday";
+import { getSingleRoomSurchargeTotal, getUnitPrice } from "@/lib/booking/pricing";
+import { buildTravelers, syncTravelers } from "@/lib/booking/travelers";
 import type { BookingExtraService, PublicTourDetail, TourSchedule } from "shared";
 
 function getSingleRoomSurcharge(schedule: TourSchedule | null) {

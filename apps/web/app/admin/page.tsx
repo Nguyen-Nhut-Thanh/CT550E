@@ -4,10 +4,10 @@ import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardA
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards";
 import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
-import { DashboardStatusBreakdownWidget } from "@/components/admin/dashboard/DashboardStatusBreakdown";
+import { DashboardStatusBreakdown } from "@/components/admin/dashboard/DashboardStatusBreakdown";
 import { DashboardTopTours } from "@/components/admin/dashboard/DashboardTopTours";
-import { useToast } from "@/components/common/Toast";
-import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboardApi";
+import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboard/api";
+import { useToast } from "@/lib/notifications/useToast";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { DashboardStats, DashboardTimeRange } from "shared";
@@ -173,7 +173,7 @@ export default function AdminDashboardPage() {
 
             {/* Right Column (1 Col): Status Breakdown & Top Tours */}
             <div className="min-w-0 space-y-4">
-              <DashboardStatusBreakdownWidget
+              <DashboardStatusBreakdown
                 statusBreakdown={data.statusBreakdown}
               />
               <DashboardTopTours topTours={data.topTours} />

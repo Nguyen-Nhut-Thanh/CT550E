@@ -1,17 +1,7 @@
 "use client";
 
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import {
-  BadgeCheck,
-  Loader2,
-  Lock,
-  Mail,
-  Phone,
-  ShieldAlert,
-  ShieldCheck,
-  Unlock,
-  Users,
-} from "lucide-react";
+import { AdminPagination } from "@/components/common/AdminPagination";
+import { BadgeCheck, Loader2, Lock, Mail, Phone, ShieldAlert, ShieldCheck, Unlock, Users, } from "lucide-react";
 import type { UsersTableProps as Props } from 'shared';
 
 export function UsersTable({

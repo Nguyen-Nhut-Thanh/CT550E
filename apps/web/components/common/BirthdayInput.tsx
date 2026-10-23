@@ -1,8 +1,9 @@
 "use client";
 
-import { displayBirthday, formatBirthdayInput, parseBirthday } from "@/lib/client/utils/bookingBirthday";
+import { displayBirthday, formatBirthdayInput, parseBirthday } from "@/lib/booking/birthday";
 import { useId, useState } from "react";
 
+/** Hiển thị ô nhập ngày sinh và kiểm tra ngày hợp lệ. */
 export function BirthdayInput({ value, onChange, label, id }: {
   value: string; onChange: (value: string) => void; label: string; id?: string;
 }) {

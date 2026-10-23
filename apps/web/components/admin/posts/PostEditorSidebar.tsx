@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageUpload } from "@/components/admin/ImageUpload";
+import { ImageUpload } from "@/components/common/ImageUpload";
 import { Loader2, Save } from "lucide-react";
 import type { PostEditorSidebarProps as Props } from 'shared';
 

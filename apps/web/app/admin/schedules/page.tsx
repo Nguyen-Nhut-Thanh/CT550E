@@ -1,22 +1,15 @@
 "use client";
 
-import { ScheduleEmptyState } from "@/components/admin/schedule-overview/ScheduleEmptyState";
-import { ScheduleTablePanel } from "@/components/admin/schedule-overview/ScheduleTablePanel";
-import { TourListPanel } from "@/components/admin/schedule-overview/TourListPanel";
+import { ScheduleEmptyState } from "@/components/admin/schedules/ScheduleEmptyState";
+import { ScheduleTablePanel } from "@/components/admin/schedules/ScheduleTablePanel";
+import { TourListPanel } from "@/components/admin/schedules/TourListPanel";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { useToast } from "@/components/common/Toast";
-import { confirmAction } from "@/lib/admin/confirm";
-import {
-  deleteAdminSchedule,
-  getTourSchedules,
-  updateAdminScheduleStatus,
-} from "@/lib/admin/schedulesApi";
-import {
-  matchesScheduleStatusFilter,
-  matchesTourSearch,
-  matchesTourStatusFilter,
-} from "@/lib/admin/tourManagement";
-import { getAdminTours } from "@/lib/admin/toursApi";
+import { deleteAdminSchedule, getTourSchedules, updateAdminScheduleStatus } from "@/lib/admin/schedules/api";
+import { matchesScheduleStatusFilter } from "@/lib/admin/schedules/status";
+import { getAdminTours } from "@/lib/admin/tours/api";
+import { matchesTourSearch, matchesTourStatusFilter } from "@/lib/admin/tours/filters";
+import { useToast } from "@/lib/notifications/useToast";
+import { confirmAction } from "@/lib/utils/confirm";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

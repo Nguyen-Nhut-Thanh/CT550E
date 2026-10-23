@@ -1,0 +1,75 @@
+import type { TimestampedListResponse } from "../common/http";
+export type FeaturedDestinationItem = {
+    location_id: number;
+    name: string;
+    slug: string;
+    image_url: string | null;
+    alt_text: string;
+    total_tours: number;
+};
+export type FeaturedDestinationGroup = {
+    key: string;
+    label: string;
+    items: FeaturedDestinationItem[];
+};
+export type FeaturedDestinationsResponse = {
+    regions: FeaturedDestinationGroup[];
+};
+export type FeaturedTourItem = {
+    schedule_id: number;
+    tour_id: number;
+    code: string;
+    name: string;
+    route_text: string;
+    departure_name: string;
+    destination_name: string;
+    start_date: string;
+    hotel_name: string | null;
+    transport_name: string | null;
+    transport_type: string | null;
+    price: number;
+    cover_image_url: string | null;
+    image_url: string | null;
+    link: string;
+};
+export type FeaturedTourResponse = TimestampedListResponse<FeaturedTourItem>;
+export type FlashDealItem = {
+    schedule_id: number;
+    tour_id: number;
+    code: string;
+    name: string;
+    slug: string;
+    image_url: string | null;
+    departure_name: string;
+    start_date: string;
+    end_date: string;
+    duration_text: string;
+    original_price: number;
+    sale_price: number;
+    seats_left: number;
+    discount_percent: number | null;
+    countdown_to: string;
+    link: string;
+    transport_name?: string | null;
+    transport_type?: string | null;
+    promotion_info: string | null;
+    cover_image_url: string | null;
+    deal_id?: number;
+    discount_value?: number;
+    discount_type?: string;
+};
+export type FlashDealResponse = TimestampedListResponse<FlashDealItem>;
+export type SeasonalShowcase = {
+    showcase_id: number;
+    slug: string;
+    eyebrow: string;
+    title: string;
+    subtitle: string | null;
+    description: string;
+    image_urls: string[];
+    link_to: string | null;
+    status: number;
+    display_order: number;
+    created_at: string;
+    updated_at: string;
+};

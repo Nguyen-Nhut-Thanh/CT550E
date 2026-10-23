@@ -1,7 +1,7 @@
 "use client";
 
-import { loginAdmin } from "@/lib/admin/adminAuthApi";
-import { setToken } from "@/lib/auth";
+import { loginAdmin } from "@/lib/admin/auth/api";
+import { setToken } from "@/lib/auth/session";
 import { AlertCircle, Compass, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 

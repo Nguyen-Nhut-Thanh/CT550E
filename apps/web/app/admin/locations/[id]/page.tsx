@@ -1,30 +1,22 @@
 "use client";
 
-import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
-import { LocationDetailsCard } from "@/components/admin/location-detail/LocationDetailsCard";
-import { LocationHierarchyCard } from "@/components/admin/location-detail/LocationHierarchyCard";
-import { LocationImageSidebar } from "@/components/admin/location-detail/LocationImageSidebar";
-import { LocationLevelSelector } from "@/components/admin/location-detail/LocationLevelSelector";
+import { LocationDetailsCard } from "@/components/admin/locations/LocationDetailsCard";
+import { LocationHierarchyCard } from "@/components/admin/locations/LocationHierarchyCard";
+import { LocationImageSidebar } from "@/components/admin/locations/LocationImageSidebar";
+import { LocationLevelSelector } from "@/components/admin/locations/LocationLevelSelector";
+import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
 import InlineNotice from "@/components/common/InlineNotice";
-import { useToast } from "@/components/common/Toast";
-import {
-  LOCATION_LEVEL_LABELS,
-  buildLocationHierarchyState,
-  createDefaultLocationDetailForm,
-  fetchLocationOptionsByLevel,
-  slugifyLocationName,
-} from "@/lib/admin/locationDetail";
-import {
-  getAdminLocationDetail,
-  saveAdminLocation,
-} from "@/lib/admin/locationsApi";
-import { adminFetch } from "@/lib/adminFetch";
-import { API_BASE, getToken } from "@/lib/auth";
-import { uploadAuthenticatedFile } from "@/lib/uploadApi";
+import { getAdminLocationDetail, saveAdminLocation } from "@/lib/admin/locations/api";
+import { LOCATION_LEVEL_LABELS, buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/admin/locations/hierarchy";
+import { getToken } from "@/lib/auth/session";
+import { adminFetch } from "@/lib/http/adminFetch";
+import { API_BASE } from "@/lib/http/config";
+import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
+import { useToast } from "@/lib/notifications/useToast";
 import { Layers, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { AdminLocationItem, LocationDetailForm } from "shared";
+import { LOCATION_TYPE_BY_LEVEL, type AdminLocationItem, type LocationDetailForm } from "shared";
 
 export default function AdminLocationDetailPage() {
   const { id } = useParams();
@@ -42,15 +34,12 @@ export default function AdminLocationDetailPage() {
   const [level3Id, setLevel3Id] = useState("");
   const [level4Id, setLevel4Id] = useState("");
   const [level5Id, setLevel5Id] = useState("");
-  const [level6Id, setLevel6Id] = useState("");
   const [level3List, setLevel3List] = useState<AdminLocationItem[]>([]);
   const [level4List, setLevel4List] = useState<AdminLocationItem[]>([]);
   const [level5List, setLevel5List] = useState<AdminLocationItem[]>([]);
-  const [level6List, setLevel6List] = useState<AdminLocationItem[]>([]);
   const [loadingL3, setLoadingL3] = useState(false);
   const [loadingL4, setLoadingL4] = useState(false);
   const [loadingL5, setLoadingL5] = useState(false);
-  const [loadingL6, setLoadingL6] = useState(false);
   const [usageSummary, setUsageSummary] =
     useState<AdminLocationItem["usage_summary"]>(null);
 
@@ -84,10 +73,8 @@ export default function AdminLocationDetailPage() {
     setLevel3Id(state.level3Id);
     setLevel4Id(state.level4Id);
     setLevel5Id(state.level5Id);
-    setLevel6Id(state.level6Id);
     setLevel4List(state.level4List);
     setLevel5List(state.level5List);
-    setLevel6List(state.level6List);
   };
 
   useEffect(() => {
@@ -115,7 +102,7 @@ export default function AdminLocationDetailPage() {
           setForm({
             name: data.name || "",
             slug: data.slug || "",
-            location_type: data.location_type || "city_destination",
+            location_type: data.location_type || "country",
             level_id: data.level_id || 3,
             parent_id: data.parent_id || "",
             country_code: data.country_code || "VN",
@@ -171,19 +158,6 @@ export default function AdminLocationDetailPage() {
   }, [level4Id, form.level_id]);
 
   useEffect(() => {
-    if (level5Id && form.level_id >= 7) {
-      setLoadingL6(true);
-      void fetchByLevel(6, level5Id).then((items) => {
-        setLevel6List(items);
-        setLoadingL6(false);
-      });
-    } else if (form.level_id !== 6) {
-      setLevel6List([]);
-      setLevel6Id("");
-    }
-  }, [level5Id, form.level_id]);
-
-  useEffect(() => {
     if (form.level_id === 3) setForm((prev) => ({ ...prev, parent_id: "" }));
     else if (form.level_id === 4)
       setForm((prev) => ({ ...prev, parent_id: level3Id }));
@@ -191,9 +165,7 @@ export default function AdminLocationDetailPage() {
       setForm((prev) => ({ ...prev, parent_id: level4Id }));
     else if (form.level_id === 6)
       setForm((prev) => ({ ...prev, parent_id: level5Id }));
-    else if (form.level_id === 7)
-      setForm((prev) => ({ ...prev, parent_id: level6Id }));
-  }, [form.level_id, level3Id, level4Id, level5Id, level6Id]);
+  }, [form.level_id, level3Id, level4Id, level5Id]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -239,10 +211,6 @@ export default function AdminLocationDetailPage() {
       }
       if (form.level_id >= 6 && !level5Id) {
         showError("Vui lòng chọn Tỉnh / Thành phố");
-        return false;
-      }
-      if (form.level_id >= 7 && !level6Id) {
-        showError("Vui lòng chọn Thành phố / Điểm đến");
         return false;
       }
     }
@@ -309,11 +277,10 @@ export default function AdminLocationDetailPage() {
           <LocationLevelSelector
             form={form}
             onLevelChange={(level) => {
-              setForm((prev) => ({ ...prev, level_id: level, parent_id: "" }));
+              setForm((prev) => ({ ...prev, level_id: level, location_type: LOCATION_TYPE_BY_LEVEL[level], parent_id: "" }));
               setLevel3Id("");
               setLevel4Id("");
               setLevel5Id("");
-              setLevel6Id("");
             }}
           />
 
@@ -323,19 +290,15 @@ export default function AdminLocationDetailPage() {
               level3Id={level3Id}
               level4Id={level4Id}
               level5Id={level5Id}
-              level6Id={level6Id}
               level3List={level3List}
               level4List={level4List}
               level5List={level5List}
-              level6List={level6List}
               loadingL3={loadingL3}
               loadingL4={loadingL4}
               loadingL5={loadingL5}
-              loadingL6={loadingL6}
               onLevel3Change={setLevel3Id}
               onLevel4Change={setLevel4Id}
               onLevel5Change={setLevel5Id}
-              onLevel6Change={setLevel6Id}
             />
           )}
 

@@ -3,7 +3,7 @@
 import { Award, CheckCircle2, Clock, CreditCard, PieChart, XCircle } from "lucide-react";
 import type { DashboardStatusBreakdownProps } from 'shared';
 
-export function DashboardStatusBreakdownWidget({
+export function DashboardStatusBreakdown({
   statusBreakdown,
 }: DashboardStatusBreakdownProps) {
   const total =
@@ -102,7 +102,6 @@ export function DashboardStatusBreakdownWidget({
       {/* Breakdown detail list */}
       <div className="mt-3 space-y-1">
         {items.map((item) => {
-          const Icon = item.icon;
           return (
             <div
               key={item.label}

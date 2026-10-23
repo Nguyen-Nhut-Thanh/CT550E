@@ -1,12 +1,12 @@
 "use client";
 
-import { useChatConversation } from '@/lib/client/hooks/useChatConversation';
-import { useChatSession } from '@/lib/client/hooks/useChatSession';
-import { chatApi } from '@/lib/chatApi';
+import { ChatWorkspace } from '@/components/admin/chats/ChatWorkspace';
+import { ConversationSidebar } from '@/components/admin/chats/ConversationSidebar';
+import { chatApi } from "@/lib/chat/api";
+import { useChatConversation } from "@/lib/chat/useChatConversation";
+import { useChatSession } from "@/lib/chat/useChatSession";
 import { useEffect, useMemo, useState } from 'react';
 import type { ChatManageInput, ChatStaff } from 'shared';
-import { ChatWorkspace } from './ChatWorkspace';
-import { ConversationSidebar } from './ConversationSidebar';
 
 export default function AdminChatsPage() {
   const session = useChatSession();

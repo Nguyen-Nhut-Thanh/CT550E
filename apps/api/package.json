@@ -6,7 +6,9 @@
     "build": "node build.mjs",
     "dev": "node --watch-path=dist dist/main.js",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:locations": "tsx --tsconfig tsconfig.json --test tests/locations.test.ts",
+    "test": "npm run build && node --test tests/refactor.test.cjs && npm run test:locations"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",

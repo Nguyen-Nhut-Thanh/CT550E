@@ -1,6 +1,8 @@
 "use client";
 
 import { Loader2, Save, X } from "lucide-react";
+import { useId } from "react";
+import { Dialog } from "@/components/common/Dialog";
 import type { CreateStaffModalProps as Props } from 'shared';
 
 export function CreateStaffModal({
@@ -11,14 +13,15 @@ export function CreateStaffModal({
   onSubmit,
   onFormChange,
 }: Props) {
+  const titleId = useId();
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <Dialog onClose={onClose} labelledBy={titleId}>
       <div className="relative w-full max-w-lg animate-in zoom-in fade-in overflow-hidden rounded-2xl bg-white shadow-xl duration-200">
         <div className="flex items-center justify-between border-b border-slate-100 p-6">
-          <h3 className="text-lg font-bold text-slate-900">Thêm nhân viên mới</h3>
-          <button onClick={onClose} className="text-slate-400 transition-colors hover:text-slate-600">
+          <h3 id={titleId} className="text-lg font-bold text-slate-900">Thêm nhân viên mới</h3>
+          <button type="button" aria-label="Đóng popup" onClick={onClose} className="text-slate-400 transition-colors hover:text-slate-600">
             <X size={20} />
           </button>
         </div>
@@ -127,6 +130,6 @@ export function CreateStaffModal({
           </div>
         </form>
       </div>
-    </div>
+    </Dialog>
   );
 }

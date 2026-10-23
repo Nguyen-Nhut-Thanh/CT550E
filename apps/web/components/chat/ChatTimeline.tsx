@@ -1,6 +1,6 @@
 "use client";
 
-import { formatMessageTime } from '@/lib/chat';
+import { formatMessageTime } from "@/lib/chat/format";
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { ChatTimelineProps } from 'shared';
 

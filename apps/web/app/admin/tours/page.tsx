@@ -1,34 +1,16 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
-import { AdminTable } from "@/components/admin/AdminTable";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminStatusBadge } from "@/components/common/AdminStatusBadge";
+import { AdminTable } from "@/components/common/AdminTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { useToast } from "@/components/common/Toast";
-import {
-  TOUR_STATUS_OPTIONS,
-  TOUR_TYPE_OPTIONS,
-  getTourTypeBadgeClass,
-  getTourTypeLabel,
-  matchesTourSearch,
-  matchesTourStatusFilter,
-  matchesTourTypeFilter,
-} from "@/lib/admin/tourManagement";
-import {
-  deleteAdminTour,
-  getAdminTours,
-  toggleAdminTourStatus,
-} from "@/lib/admin/toursApi";
-import { formatVND } from "@/lib/utils";
-import {
-  AlertTriangle,
-  Clock,
-  Eye,
-  EyeOff,
-  ScrollText,
-} from "lucide-react";
+import { deleteAdminTour, getAdminTours, toggleAdminTourStatus } from "@/lib/admin/tours/api";
+import { TOUR_STATUS_OPTIONS, TOUR_TYPE_OPTIONS, getTourTypeBadgeClass, getTourTypeLabel, matchesTourSearch, matchesTourStatusFilter, matchesTourTypeFilter } from "@/lib/admin/tours/filters";
+import { useToast } from "@/lib/notifications/useToast";
+import { formatVND } from "@/lib/utils/currency";
+import { AlertTriangle, Clock, Eye, EyeOff, ScrollText, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ToursPageTour as Tour } from 'shared';

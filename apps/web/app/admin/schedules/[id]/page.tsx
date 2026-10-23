@@ -1,25 +1,17 @@
 "use client";
 
-import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
-import { ScheduleBasicInfoCard } from "@/components/admin/schedule-detail/ScheduleBasicInfoCard";
-import { ScheduleItinerarySection } from "@/components/admin/schedule-detail/ScheduleItinerarySection";
-import { ScheduleSidebar } from "@/components/admin/schedule-detail/ScheduleSidebar";
-import { useToast } from "@/components/common/Toast";
-import {
-  getAdminCatalogTransports,
-  getAdminHotels,
-  getHotelRoomTypes,
-} from "@/lib/admin/catalogsApi";
-import {
-  buildScheduleFormFromResponse,
-  buildSchedulePayload,
-  createDefaultScheduleForm,
-  ensureItineraryDays,
-} from "@/lib/admin/scheduleEditor";
-import { getAdminScheduleDetail, saveAdminSchedule } from "@/lib/admin/schedulesApi";
-import { getAdminTourDetail } from "@/lib/admin/toursApi";
-import { API_BASE, getToken } from "@/lib/auth";
-import { uploadAuthenticatedFile } from "@/lib/uploadApi";
+import { ScheduleBasicInfoCard } from "@/components/admin/schedules/ScheduleBasicInfoCard";
+import { ScheduleItinerarySection } from "@/components/admin/schedules/ScheduleItinerarySection";
+import { ScheduleSidebar } from "@/components/admin/schedules/ScheduleSidebar";
+import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
+import { getAdminCatalogTransports, getAdminHotels, getHotelRoomTypes } from "@/lib/admin/catalogs/api";
+import { getAdminScheduleDetail, saveAdminSchedule } from "@/lib/admin/schedules/api";
+import { buildScheduleFormFromResponse, buildSchedulePayload, createDefaultScheduleForm, ensureItineraryDays } from "@/lib/admin/schedules/forms";
+import { getAdminTourDetail } from "@/lib/admin/tours/api";
+import { getToken } from "@/lib/auth/session";
+import { API_BASE } from "@/lib/http/config";
+import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
+import { useToast } from "@/lib/notifications/useToast";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

@@ -1,7 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import type { ConfirmDialogProps } from 'shared';
+import { Dialog } from "./Dialog";
 
+/** Hiển thị popup yêu cầu xác nhận hoặc hủy thao tác. */
 export function ConfirmDialog({
   open,
   icon,
@@ -13,19 +16,21 @@ export function ConfirmDialog({
   onCancel,
   confirmClassName = "bg-rose-600 hover:bg-rose-700 shadow-rose-200",
 }: ConfirmDialogProps) {
+  const titleId = useId();
+  const descriptionId = useId();
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <Dialog onClose={onCancel} labelledBy={titleId} describedBy={descriptionId}>
       <div className="w-full max-w-sm rounded-[32px] border border-slate-100 bg-white p-8 shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="flex flex-col items-center text-center">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
             {icon}
           </div>
-          <h3 className="text-xl font-black tracking-tight text-slate-900">
+          <h3 id={titleId} className="text-xl font-black tracking-tight text-slate-900">
             {title}
           </h3>
-          <p className="mt-3 px-2 text-sm font-medium leading-relaxed text-slate-500">
+          <p id={descriptionId} className="mt-3 px-2 text-sm font-medium leading-relaxed text-slate-500">
             {description}
           </p>
 
@@ -47,6 +52,6 @@ export function ConfirmDialog({
           </div>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

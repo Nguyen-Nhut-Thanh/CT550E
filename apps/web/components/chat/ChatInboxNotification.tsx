@@ -1,8 +1,8 @@
 "use client";
 
-import { useToast } from '@/components/common/Toast';
-import { useChatSession } from '@/lib/client/hooks/useChatSession';
-import { getSocket } from '@/lib/socket';
+import { getSocket } from "@/lib/chat/socket";
+import { useChatSession } from "@/lib/chat/useChatSession";
+import { useToast } from "@/lib/notifications/useToast";
 import { MessageCircle, Volume2, VolumeX } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';

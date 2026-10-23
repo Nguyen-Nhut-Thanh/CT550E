@@ -1,157 +1,100 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  ForbiddenException,
-  Get,
-  InternalServerErrorException,
-  Logger,
-  Post,
-  Req,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Logger, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { v2 as cloudinary } from 'cloudinary';
 import { memoryStorage } from 'multer';
-import type {
-  AdminLoginPayload,
-  AuthRequest,
-  ChangePasswordPayload,
-  CloudinaryUploadResult,
-  UpdateProfilePayload,
-} from 'shared';
-import { AuthService } from './auth.service';
-import {
-  GoogleLoginDto,
-  LoginDto,
-  RegisterDto,
-  VerifyEmailDto,
-} from './dto/auth.dto';
+import type { AuthRequest, ChangePasswordPayload, UpdateProfilePayload } from 'shared';
+import { CloudinaryService } from '../../infrastructure/storage/cloudinary.service';
+import { GoogleLoginDto, LoginDto, RegisterDto, VerifyEmailDto, } from './auth.dto';
 import { JwtAuthGuard } from './jwt.guard';
-
+import { AuthService } from './auth.service';
 @Controller()
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
-  constructor(private readonly authService: AuthService) {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_NAME,
-      api_key: process.env.CLOUDINARY_KEY,
-      api_secret: process.env.CLOUDINARY_SECRET,
-    });
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('auth/upload-avatar')
-  @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
-    fileFilter: (_req, file, callback) => {
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
-        return callback(new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP'), false);
-      }
-      callback(null, true);
-    },
-  }))
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
-    if (!file || !file.size) {
-      throw new BadRequestException('Không tìm thấy file để upload');
+    private readonly logger = new Logger(AuthController.name);
+    constructor(private readonly authService: AuthService, private readonly cloudinaryService: CloudinaryService) { }
+    @UseGuards(JwtAuthGuard)
+    @Post('auth/upload-avatar')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+        fileFilter: (_req, file, callback) => {
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+                return callback(new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP'), false);
+            }
+            callback(null, true);
+        },
+    }))
+    async uploadAvatar(
+    @UploadedFile()
+    file: Express.Multer.File) {
+        if (!file || !file.size) {
+            throw new BadRequestException('Không tìm thấy file để upload');
+        }
+        try {
+            const result = await this.cloudinaryService.uploadBuffer(file.buffer, {
+                folder: 'JourniTrip/avatars',
+                allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+                transformation: [{ width: 500, height: 500, crop: 'limit' }],
+            });
+            return { url: result.secure_url };
+        }
+        catch (error) {
+            const uploadError = error as Error;
+            this.logger.error('[Avatar Upload Error]', uploadError);
+            throw new InternalServerErrorException(`Lỗi khi upload avatar lên Cloudinary: ${uploadError.message}`);
+        }
     }
-
-    try {
-      const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'JourniTrip/avatars',
-            allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-            transformation: [{ width: 500, height: 500, crop: 'limit' }],
-          },
-          (error, uploadResult) => {
-            if (error || !uploadResult) return reject(error);
-            resolve(uploadResult as CloudinaryUploadResult);
-          },
-        );
-        uploadStream.end(file.buffer);
-      });
-
-      return { url: result.secure_url };
-    } catch (error) {
-      const uploadError = error as Error;
-      this.logger.error('[Avatar Upload Error]', uploadError);
-      throw new InternalServerErrorException(
-        `Lỗi khi upload avatar lên Cloudinary: ${uploadError.message}`,
-      );
+    @Post('auth/register')
+    async register(
+    @Body()
+    dto: RegisterDto) {
+        return this.authService.register(dto);
     }
-  }
-
-  @Post('auth/register')
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
-  }
-
-  @Post('auth/verify-email')
-  async verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto);
-  }
-
-  @Post('auth/resend-verification')
-  async resendVerification(@Body('email') email: string) {
-    return this.authService.resendVerificationCode(email);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('auth/update-profile')
-  async updateProfile(
-    @Req() req: AuthRequest,
-    @Body() data: UpdateProfilePayload,
-  ) {
-    return this.authService.updateProfile(req.user.sub, data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('auth/change-password')
-  async changePassword(
-    @Req() req: AuthRequest,
-    @Body() dto: ChangePasswordPayload,
-  ) {
-    return this.authService.changePassword(req.user.sub, dto);
-  }
-
-  @Post('auth/login')
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
-  }
-
-  @Post('auth/google')
-  async googleLogin(@Body() dto: GoogleLoginDto) {
-    return this.authService.googleLogin(dto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('auth/me')
-  async getMe(@Req() req: AuthRequest) {
-    return this.authService.getMe(req.user.sub);
-  }
-
-  @Post('admin/auth/login')
-  async adminLogin(@Body() body: AdminLoginPayload) {
-    return this.authService.adminLogin(body.email, body.password);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('admin/auth/me')
-  async adminMe(@Req() req: AuthRequest) {
-    if (!req.user.isStaff) {
-      throw new ForbiddenException('Bạn không có quyền quản trị');
+    @Post('auth/verify-email')
+    async verifyEmail(
+    @Body()
+    dto: VerifyEmailDto) {
+        return this.authService.verifyEmail(dto);
     }
-
-    const user = await this.authService.getMe(req.user.sub);
-    if (!user || !user.is_staff) {
-      throw new ForbiddenException('Quyền quản trị đã bị thu hồi');
+    @Post('auth/resend-verification')
+    async resendVerification(
+    @Body('email')
+    email: string) {
+        return this.authService.resendVerificationCode(email);
     }
-
-    return { user };
-  }
+    @UseGuards(JwtAuthGuard)
+    @Post('auth/update-profile')
+    async updateProfile(
+    @Req()
+    req: AuthRequest,
+    @Body()
+    data: UpdateProfilePayload) {
+        return this.authService.updateProfile(req.user.sub, data);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Post('auth/change-password')
+    async changePassword(
+    @Req()
+    req: AuthRequest,
+    @Body()
+    dto: ChangePasswordPayload) {
+        return this.authService.changePassword(req.user.sub, dto);
+    }
+    @Post('auth/login')
+    async login(
+    @Body()
+    dto: LoginDto) {
+        return this.authService.login(dto);
+    }
+    @Post('auth/google')
+    async googleLogin(
+    @Body()
+    dto: GoogleLoginDto) {
+        return this.authService.googleLogin(dto);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('auth/me')
+    async getMe(
+    @Req()
+    req: AuthRequest) {
+        return this.authService.getMe(req.user.sub);
+    }
 }

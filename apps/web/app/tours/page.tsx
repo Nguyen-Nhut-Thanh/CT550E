@@ -1,15 +1,13 @@
 "use client";
 
-import {
-  TourCard,
-  TourEmptyState,
-  TourFilterSidebar,
-  TourListSkeleton,
-  TourSortControl,
-} from "@/components/tours";
-import { getPublicTours } from "@/lib/client/api/tourApi";
-import { trackRecommendationEvent } from "@/lib/client/utils/recommendationTracker";
-import { getTourPriceValue } from "@/lib/client/utils/tourDisplay";
+import TourCard from "@/components/tours/TourCard";
+import TourEmptyState from "@/components/tours/TourEmptyState";
+import TourFilterSidebar from "@/components/tours/TourFilterSidebar";
+import TourListSkeleton from "@/components/tours/TourListSkeleton";
+import TourSortControl from "@/components/tours/TourSortControl";
+import { trackRecommendationEvent } from "@/lib/recommendations/events";
+import { getPublicTours } from "@/lib/tours/api";
+import { getTourPriceValue } from "@/lib/tours/display";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import type { PublicTourCard, PublicToursResponse } from "shared";

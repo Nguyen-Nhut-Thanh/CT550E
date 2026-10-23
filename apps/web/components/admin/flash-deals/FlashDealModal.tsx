@@ -1,11 +1,23 @@
 "use client";
 
-import { AdminModalShell } from "@/components/admin/AdminModalShell";
-import { PriceInput } from "@/components/admin/PriceInput";
-import { previewFlashDealPrice } from "@/lib/admin/flashDeals";
-import { formatVND } from "@/lib/utils";
-import { Clock, Loader2, Percent, Save, Zap } from "lucide-react";
-import type { FlashDealModalProps } from 'shared';
+import { Dialog } from "@/components/common/Dialog";
+import { PriceInput } from "@/components/common/PriceInput";
+import { previewFlashDealPrice } from "@/lib/admin/flash-deals/forms";
+import { formatVND } from "@/lib/utils/currency";
+import {
+  ArrowRight,
+  ChartNoAxesCombined,
+  Clock,
+  Gift,
+  Loader2,
+  Save,
+  Tag,
+  X,
+} from "lucide-react";
+import { useId } from "react";
+import type { FlashDealModalProps } from "shared";
+import { FlashDealPromotion } from "./FlashDealPromotion";
+import styles from "./FlashDealModal.module.css";
 
 export function FlashDealModal({
   open,
@@ -16,150 +28,235 @@ export function FlashDealModal({
   onChange,
   onSave,
 }: FlashDealModalProps) {
-  if (!open) {
-    return null;
-  }
+  const id = useId();
+  if (!open) return null;
+
+  const percentage = form.discount_type === "percentage";
+  const price = Number(schedule?.price ?? 0);
+  const invalidPercentage = percentage && form.discount_value > 100;
+  const hours = Math.max(0, Number(form.hours_before) || 0);
+  const close = () => {
+    if (!saving) onClose();
+  };
+  const fieldClassName =
+    "h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60";
+  const panelClassName = `${styles.panel} rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5`;
 
   return (
-    <AdminModalShell
-      title="Thiết lập Flash Deal"
-      icon={<Zap size={20} fill="currentColor" />}
-      onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-100"
-          >
-            Hủy bỏ
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="flex flex-[1.5] items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            Lưu deal
-          </button>
-        </>
-      }
+    <Dialog
+      onClose={close}
+      labelledBy={`${id}-title`}
+      describedBy={`${id}-description`}
+      overlayClassName="bg-slate-900/50"
     >
-      <div className="space-y-6 p-4">
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <label className="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500">
-                Loại ưu đãi
-              </label>
-              <div className="flex gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-1">
-                <button
-                  onClick={() =>
-                    onChange((current) => ({ ...current, discount_type: "percentage" }))
-                  }
-                  className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
-                    form.discount_type === "percentage"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  Phần trăm (%)
-                </button>
-                <button
-                  onClick={() =>
-                    onChange((current) => ({ ...current, discount_type: "fixed_amount" }))
-                  }
-                  className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
-                    form.discount_type === "fixed_amount"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  Số tiền (VND)
-                </button>
-              </div>
+      <div
+        className={`${styles.modal} my-auto grid overflow-y-auto rounded-[24px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]`}
+      >
+        <FlashDealPromotion />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!saving && !invalidPercentage && schedule) onSave();
+          }}
+          className={`${styles.form} relative flex min-w-0 flex-col gap-5 p-5 sm:p-7 xl:gap-6 xl:p-10`}
+        >
+          <header className="pr-12">
+            <h2
+              id={`${id}-title`}
+              className="text-2xl font-extrabold tracking-tight text-[#101e3d] sm:text-[30px] xl:text-[32px]"
+            >
+              Thiết lập Flash Deal
+            </h2>
+            <p
+              id={`${id}-description`}
+              className="mt-1.5 text-sm leading-relaxed text-[#7387aa] sm:text-base"
+            >
+              Cấu hình thông tin ưu đãi cho tour này.
+            </p>
+          </header>
+          <button
+            type="button"
+            onClick={close}
+            disabled={saving}
+            aria-label="Đóng thiết lập Flash Deal"
+            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-[#f2f5fa] text-[#647794] transition hover:bg-slate-200 focus-visible:outline-blue-500 disabled:opacity-50 sm:right-7 sm:top-7 xl:right-8 xl:top-8"
+          >
+            <X size={23} />
+          </button>
+
+          <fieldset disabled={saving} className={panelClassName}>
+            <legend className="sr-only">Loại ưu đãi</legend>
+            <div
+              aria-hidden="true"
+              className="mb-3 flex items-center gap-2.5 text-sm font-bold text-[#526da8] sm:text-base"
+            >
+              <Tag size={20} className="fill-[#6d88bc] text-[#6d88bc]" />
+              Loại ưu đãi
             </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                aria-pressed={percentage}
+                onClick={() =>
+                  onChange((current) => ({
+                    ...current,
+                    discount_type: "percentage",
+                  }))
+                }
+                className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-bold transition ${percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
+              >
+                Giảm theo %
+              </button>
+              <button
+                type="button"
+                aria-pressed={!percentage}
+                onClick={() =>
+                  onChange((current) => ({
+                    ...current,
+                    discount_type: "fixed_amount",
+                  }))
+                }
+                className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-bold transition ${!percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
+              >
+                Giảm theo số tiền
+              </button>
+            </div>
+          </fieldset>
 
-            {form.discount_type === "percentage" ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className={panelClassName}>
+              <label
+                htmlFor={`${id}-discount`}
+                className="mb-3 block text-sm font-bold text-[#667b9b]"
+              >
+                {percentage ? "Mức giảm giá (%)" : "Mức giảm giá (VND)"}
+              </label>
               <PriceInput
-                label="Mức giảm (%)"
+                id={`${id}-discount`}
+                label=""
                 value={form.discount_value}
                 onChange={(value) =>
                   onChange((current) => ({ ...current, discount_value: value }))
                 }
-                placeholder="10"
-                suffix="%"
-                icon={Percent}
-              />
-            ) : (
-              <PriceInput
-                label="Mức giảm (VND)"
-                value={form.discount_value}
-                onChange={(value) =>
-                  onChange((current) => ({ ...current, discount_value: value }))
+                placeholder={percentage ? "12" : "500.000"}
+                suffix={percentage ? "%" : "đ"}
+                icon={null}
+                inputClassName={fieldClassName}
+                disabled={saving}
+                error={
+                  invalidPercentage ? "Mức giảm tối đa là 100%." : undefined
                 }
-                placeholder="500,000"
               />
-            )}
-          </div>
-
-          <div className="h-full pt-6">
-            <div className="flex h-full flex-col justify-center space-y-3 rounded-3xl border border-blue-100 bg-blue-50/50 p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-blue-600">
-                  <Clock size={16} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    Kích hoạt deal
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    className="w-16 rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs font-bold text-blue-600 outline-none focus:ring-2 focus:ring-blue-500/20"
-                    value={form.hours_before}
-                    onChange={(event) =>
-                      onChange((current) => ({
-                        ...current,
-                        hours_before: Number(event.target.value),
-                      }))
-                    }
-                  />
-                  <span className="text-xs font-bold text-slate-400">giờ</span>
-                </div>
+            </div>
+            <div className={panelClassName}>
+              <label
+                htmlFor={`${id}-hours`}
+                className="mb-3 flex items-center gap-2.5 text-sm font-bold text-[#667b9b]"
+              >
+                <Clock size={20} />
+                Thời gian kích hoạt
+              </label>
+              <div className="relative">
+                <input
+                  id={`${id}-hours`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  required
+                  placeholder="72"
+                  disabled={saving}
+                  value={form.hours_before ? String(form.hours_before) : ""}
+                  onChange={(event) =>
+                    onChange((current) => ({
+                      ...current,
+                      hours_before: Number(event.target.value),
+                    }))
+                  }
+                  className={fieldClassName}
+                  style={{ paddingLeft: "1rem" }}
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#7385a2]">
+                  giờ
+                </span>
               </div>
-              <p className="text-center text-[10px] font-medium italic leading-tight text-blue-500">
-                Bật trước khởi hành {Math.floor(form.hours_before / 24)} ngày{" "}
-                {form.hours_before % 24}h.
+              <p className="mt-2 text-xs italic leading-relaxed text-[#6684ca] sm:text-[13px]">
+                Bật trước khởi hành {Math.floor(hours / 24)} ngày {hours % 24}h.
               </p>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4 border-t border-slate-50 pt-4">
-          <div className="flex flex-col justify-center rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
-            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Giá bán gốc
-            </span>
-            <span className="text-xl font-bold italic tracking-tight text-slate-900">
-              {formatVND(Number(schedule?.price))}
-            </span>
-          </div>
+          <section aria-label="Xem trước giá tour" className={panelClassName}>
+            <h3 className="mb-4 flex items-center gap-2.5 text-sm font-bold text-[#4764ad] sm:text-base">
+              <ChartNoAxesCombined size={21} />
+              Xem trước giá tour
+            </h3>
+            <div
+              aria-live="polite"
+              className="grid items-center gap-3 rounded-2xl border border-[#f0f3f9] bg-white px-4 py-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:px-5"
+            >
+              <div>
+                <p className="text-xs font-medium text-[#7184a3] sm:text-sm">
+                  Giá gốc
+                </p>
+                <p className="mt-1 whitespace-nowrap text-lg font-bold italic text-[#99a7c1] line-through decoration-2 xl:text-2xl">
+                  {formatVND(price)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 sm:flex-col">
+                <span className="whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-red-600">
+                  Giảm{" "}
+                  {percentage
+                    ? `${form.discount_value}%`
+                    : formatVND(form.discount_value)}
+                </span>
+                <ArrowRight size={22} className="text-red-400" />
+              </div>
+              <div className="sm:justify-self-end">
+                <p className="text-xs font-medium text-red-500 sm:text-sm">
+                  Giá sau giảm
+                </p>
+                <p className="mt-1 whitespace-nowrap text-xl font-extrabold text-red-600 sm:text-2xl">
+                  {formatVND(
+                    previewFlashDealPrice(
+                      price,
+                      form.discount_type,
+                      form.discount_value,
+                    ),
+                  )}
+                </p>
+              </div>
+            </div>
+          </section>
 
-          <div className="flex flex-col justify-center rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4">
-            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-              Giá sau giảm
-            </span>
-            <span className="text-xl font-black italic tracking-tighter text-emerald-700">
-              {formatVND(
-                previewFlashDealPrice(
-                  Number(schedule?.price),
-                  form.discount_type,
-                  form.discount_value,
-                ),
+          <p className="flex items-center gap-3 rounded-2xl bg-[#eaf3ff] px-4 py-3 text-xs leading-relaxed text-[#1467ff] sm:text-sm">
+            <Gift size={22} className="shrink-0" />
+            Sau khi lưu, flash deal sẽ tự động áp dụng cho tour trong thời gian
+            đã đặt trước.
+          </p>
+          <footer className="grid grid-cols-[1fr_1.8fr] gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={close}
+              disabled={saving}
+              className="min-h-12 rounded-2xl border border-[#e5ebf5] bg-white px-4 py-3 text-sm font-bold text-[#5e718e] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 sm:text-base"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !schedule || invalidPercentage}
+              className="flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-[#0e5bff] px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/15 transition hover:bg-blue-700 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+            >
+              {saving ? (
+                <Loader2 size={21} className="animate-spin" />
+              ) : (
+                <Save size={21} />
               )}
-            </span>
-          </div>
-        </div>
+              {saving ? "Đang lưu..." : "Lưu flash deal"}
+            </button>
+          </footer>
+        </form>
       </div>
-    </AdminModalShell>
+    </Dialog>
   );
 }

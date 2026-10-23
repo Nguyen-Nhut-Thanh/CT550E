@@ -1,46 +1,8 @@
 import InlineNotice from "@/components/common/InlineNotice";
-import { formatVND } from "@/lib/client/utils/utils";
-import {
-  CalendarDays,
-  CreditCard,
-  ShieldCheck,
-  TicketPercent,
-  Wallet,
-} from "lucide-react";
-import type { BookingVoucherAndPaymentProps, PaymentMethod } from "shared";
-
-const PAYMENT_METHODS: Array<{
-  id: PaymentMethod;
-  label: string;
-  description: string;
-  icon: typeof CreditCard;
-  enabled: boolean;
-  badge?: string;
-}> = [
-  {
-    id: "vnpay",
-    label: "VNPay",
-    description: "Thanh toán online qua ATM, QR ngân hàng, thẻ nội địa.",
-    icon: CreditCard,
-    enabled: true,
-  },
-  {
-    id: "momo",
-    label: "MoMo",
-    description: "Thanh toán nhanh trên điện thoại, phù hợp mobile-first.",
-    icon: Wallet,
-    enabled: false,
-    badge: "Sắp có",
-  },
-  {
-    id: "bank_transfer",
-    label: "Chuyển khoản",
-    description: "Giữ chỗ trước, chuyển khoản xác nhận sau.",
-    icon: ShieldCheck,
-    enabled: false,
-    badge: "Sắp có",
-  },
-];
+import { PAYMENT_METHODS } from "@/lib/booking/paymentMethods";
+import { formatVND } from "@/lib/utils/currency";
+import { CalendarDays, TicketPercent } from "lucide-react";
+import type { BookingVoucherAndPaymentProps } from "shared";
 
 export function BookingVoucherAndPayment({
   voucherCode,
@@ -108,15 +70,13 @@ export function BookingVoucherAndPayment({
               return (
                 <label
                   key={method.id}
-                  className={`flex items-start gap-3 rounded-xl border p-4 transition ${
-                    paymentMethod === method.id
+                  className={`flex items-start gap-3 rounded-xl border p-4 transition ${paymentMethod === method.id
                       ? "border-blue-300 bg-blue-50/70"
                       : "border-slate-200 bg-slate-50"
-                  } ${
-                    method.enabled
+                    } ${method.enabled
                       ? "cursor-pointer"
                       : "cursor-not-allowed opacity-60"
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"

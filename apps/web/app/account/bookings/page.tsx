@@ -2,9 +2,9 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { AccountBookingsTab } from "@/components/account";
-import { useAccountResource } from "@/components/account/useAccountResource";
-import { getMyBookings } from "@/lib/client/api/authApi";
+import { AccountBookingsTab } from "@/components/account/AccountBookingsTab";
+import { getMyBookings } from "@/lib/account/api";
+import { useAccountResource } from "@/lib/account/useAccountResource";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function BookingsHistoryAccountPage() {

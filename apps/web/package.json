@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev -p 3000",
+    "dev": "next dev --turbopack -p 3000",
+    "dev:webpack": "next dev -p 3000",
+    "start": "next start -p 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:lib": "tsx --tsconfig tsconfig.json --test tests/lib.test.ts",
+    "test:components": "tsx --tsconfig tests/tsconfig.json --test tests/components.test.tsx"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

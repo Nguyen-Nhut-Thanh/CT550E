@@ -3,6 +3,7 @@
 import { Heart, Loader2 } from "lucide-react";
 import type { FavoriteButtonProps } from 'shared';
 
+/** Hiển thị nút thêm hoặc bỏ mục yêu thích và trạng thái đang xử lý. */
 export default function FavoriteButton({
   active,
   loading = false,

@@ -1,0 +1,76 @@
+import type * as ReactTypes from 'react';
+import type { ScheduleFormState } from "./forms";
+import type { AdminSchedule, HotelItem, RoomTypeItem, ScheduleOverviewTour, ScheduleTablePanelTour, TourInfo, TransportItem } from "./models";
+export type ScheduleBasicInfoCardProps = {
+    form: ScheduleFormState;
+    isPast: boolean;
+    hasBookings: boolean;
+    bookedCount: number;
+    originalQuota: number;
+    tourInfo: TourInfo | null;
+    onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
+};
+export type ScheduleItinerarySectionProps = {
+    form: ScheduleFormState;
+    isPast: boolean;
+    expandedDay: number | null;
+    tourInfo: TourInfo | null;
+    hotels: HotelItem[];
+    transports: TransportItem[];
+    roomTypesMap: Record<number, RoomTypeItem[]>;
+    onExpandedDayChange: (value: number | null) => void;
+    onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
+    onHotelSelect: (hotelId: number) => void;
+};
+export type ScheduleSidebarProps = {
+    form: ScheduleFormState;
+    isPast: boolean;
+    saving: boolean;
+    uploading: boolean;
+    fileInputRef: ReactTypes.RefObject<HTMLInputElement | null>;
+    onSave: () => void;
+    onFileUpload: (event: ReactTypes.ChangeEvent<HTMLInputElement>) => void;
+    onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
+};
+export type ScheduleTablePanelProps = {
+    selectedTourId: number;
+    selectedTour?: ScheduleTablePanelTour;
+    schedules: AdminSchedule[];
+    loading: boolean;
+    scheduleStatusFilter: string;
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onFilterChange: (value: string) => void;
+    onCreate: () => void;
+    onEdit: (scheduleId: number) => void;
+    onDelete: (scheduleId: number) => void;
+    onToggleStatus: (scheduleId: number, currentStatus: number, bookedCount: number) => void;
+    onPageChange: (page: number) => void;
+};
+export type TourListPanelProps = {
+    loading: boolean;
+    tours: ScheduleOverviewTour[];
+    selectedTourId: number | null;
+    searchTerm: string;
+    tourStatusFilter: string;
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onSearchChange: (value: string) => void;
+    onFilterChange: (value: string) => void;
+    onSelectTour: (tourId: number) => void;
+    onPageChange: (page: number) => void;
+};
+export type ScheduleStartFieldsProps = {
+    dateValue: string;
+    minDate: string;
+    disabled?: boolean;
+    onDateChange: (value: string) => void;
+    timeValue?: string;
+    onTimeChange?: (value: string) => void;
+    dateLabel?: string;
+    timeLabel?: string;
+};

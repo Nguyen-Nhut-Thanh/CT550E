@@ -1,0 +1,42 @@
+import { API_BASE } from "@/lib/http/config";
+
+export const setToken = (token: string) => {
+  if(typeof window !== 'undefined') {
+    localStorage.setItem('user_token', token);
+    window.dispatchEvent(new Event('auth-change'));
+  }
+};
+
+export const getToken = (): string | null => {
+  if(typeof window !== 'undefined') {
+    return localStorage.getItem('user_token');
+  }
+  return null;
+};
+
+export const removeToken = () => {
+  if(typeof window !== 'undefined') {
+    localStorage.removeItem('user_token');
+    window.dispatchEvent(new Event('auth-change'));
+  }
+};
+
+export const fetchMe = async () => {
+  const token = getToken();
+  if(!token) return null;
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if(!res.ok) {
+      if(res.status === 401 || res.status === 403) removeToken();
+      return null;
+    }
+    return await res.json();
+  } catch(error) {
+    return null;
+  }
+};

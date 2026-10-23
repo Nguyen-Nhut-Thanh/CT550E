@@ -1,6 +1,7 @@
 "use client";
 
-import { formatVND, normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils";
+import { formatVND } from "@/lib/utils/currency";
+import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { Award, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

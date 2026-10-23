@@ -1,12 +1,9 @@
-import * as common_1 from "@nestjs/common";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import * as crypto from "node:crypto";
-import { PrismaService } from "../../prisma.service";
-import { MailService } from "../mail/mail.service";
-
-@common_1.Injectable()
+import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { MailService } from "../../infrastructure/mail/mail.service";
+@Injectable()
 export class PaymentService {
-    prisma: PrismaService;
-    mailService: MailService;
     tmnCode = process.env.VNP_TMN_CODE;
     hashSecret = process.env.VNP_HASH_SECRET;
     vnpUrl = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
@@ -14,11 +11,8 @@ export class PaymentService {
         process.env.NEXT_PUBLIC_API_BASE ||
         'https://api.nhutthanh.id.vn';
     returnUrl = `${this.apiBaseUrl.replace(/\/+$/, '')}/payment/vnpay-return`;
-    constructor(prisma: PrismaService, mailService: MailService) {
-        this.prisma = prisma;
-        this.mailService = mailService;
-    }
-    sortObject(obj: any) {
+    constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) {}
+    private sortObject(obj: any) {
         const sorted: Record<string, any> = {};
         const keys = Object.keys(obj).sort();
         for (const key of keys) {
@@ -26,17 +20,18 @@ export class PaymentService {
         }
         return sorted;
     }
-    createSignedQuery(params: any) {
+    private createSignedQuery(params: any) {
         const sortedParams = this.sortObject(params);
         const query = Object.keys(sortedParams)
             .map((key: any) => `${encodeURIComponent(key)}=${encodeURIComponent(String(sortedParams[key])).replace(/%20/g, '+')}`)
             .join('&');
-        if (!this.hashSecret) throw new common_1.BadRequestException("Chưa cấu hình VNPay.");
+        if (!this.hashSecret)
+            throw new BadRequestException("Chưa cấu hình VNPay.");
         const hmac = crypto.createHmac('sha512', this.hashSecret);
         const signature = hmac.update(Buffer.from(query, 'utf-8')).digest('hex');
         return { query, signature };
     }
-    async markBookingPaid(orderId: any, transactionCode: any) {
+    private async markBookingPaid(orderId: any, transactionCode: any) {
         const booking = await this.prisma.bookings.findUnique({
             where: { booking_id: orderId },
             include: {
@@ -57,18 +52,20 @@ export class PaymentService {
         }
         const changed = await this.prisma.$transaction(async (tx: any) => {
             const claimed = await tx.bookings.updateMany({ where: { booking_id: orderId, status: "pending" }, data: { status: "paid" } });
-            if (claimed.count !== 1) return false;
+            if (claimed.count !== 1)
+                return false;
             await tx.payments.create({ data: { booking_id: orderId, amount: booking.total_amount, method: "vnpay", status: "completed", transaction_code: transactionCode } });
             return true;
         });
-        if (!changed) return booking;
+        if (!changed)
+            return booking;
         await this.mailService.sendBookingPaidEmail({
             email: booking.contact_email,
             contactName: booking.contact_name,
             bookingId: booking.booking_id,
             tourName: booking.tour_schedules?.tours?.name || 'Tour',
             totalAmount: Number(booking.total_amount),
-        }).catch(() => { new common_1.Logger("PaymentService").warn("Không thể gửi email thanh toán; thanh toán đã được lưu."); });
+        }).catch(() => { new Logger("PaymentService").warn("Không thể gửi email thanh toán; thanh toán đã được lưu."); });
         return booking;
     }
     createPaymentUrl(bookingId: any, amount: any, ipAddr: any) {
@@ -129,7 +126,8 @@ export class PaymentService {
         if (Number(normalizedQuery.vnp_Amount) !== Math.round(Number(booking.total_amount) * 100)) {
             return { RspCode: '04', Message: 'Invalid Amount' };
         }
-        if (!["pending", "paid"].includes(booking.status)) return { RspCode: '02', Message: 'Order not payable' };
+        if (!["pending", "paid"].includes(booking.status))
+            return { RspCode: '02', Message: 'Order not payable' };
         if (booking.status === 'paid') {
             return { RspCode: '02', Message: 'Order already confirmed' };
         }

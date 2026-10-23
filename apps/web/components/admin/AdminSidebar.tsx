@@ -1,23 +1,8 @@
 "use client";
 
-import { removeToken } from "@/lib/auth";
-import {
-  ArrowLeft,
-  Briefcase,
-  CalendarDays,
-  Compass,
-  FileText,
-  Image as ImageIcon,
-  LayoutDashboard,
-  LogOut,
-  Map,
-  MapPin,
-  MessageSquare,
-  Star,
-  Ticket,
-  Users,
-  Zap,
-} from "lucide-react";
+import { removeToken } from "@/lib/auth/session";
+import { NavigationPending } from "@/components/common/NavigationPending";
+import { ArrowLeft, Briefcase, CalendarDays, Compass, FileText, Image as ImageIcon, LayoutDashboard, LogOut, Map, MapPin, MessageSquare, Star, Ticket, Users, Zap, } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -120,6 +105,7 @@ export const AdminSidebar = ({ open = false, onClose }: { open?: boolean; onClos
                     >
                       <item.icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
                       {item.name}
+                      <NavigationPending />
                     </Link>
                   </li>
                 );

@@ -1,20 +1,10 @@
 "use client";
 
-import {
-  FeaturedLocationsLeftPanel,
-  FeaturedLocationsRightPanel,
-} from "@/components/admin/featured-locations/FeaturedLocationsPanels";
-import { useToast } from "@/components/common/Toast";
-import {
-  FEATURED_LIMIT,
-  filterFeaturedTabs,
-  filterRegionChildren,
-  getCurrentFeatured,
-} from "@/lib/admin/featuredLocations";
-import {
-  getAdminLocations,
-  updateAdminLocation,
-} from "@/lib/admin/locationsApi";
+import { FeaturedLocationsLeftPanel } from "@/components/admin/locations/FeaturedLocationsLeftPanel";
+import { FeaturedLocationsRightPanel } from "@/components/admin/locations/FeaturedLocationsRightPanel";
+import { getAdminLocations, updateAdminLocation } from "@/lib/admin/locations/api";
+import { FEATURED_LIMIT, filterFeaturedTabs, filterRegionChildren, getCurrentFeatured } from "@/lib/admin/locations/featured";
+import { useToast } from "@/lib/notifications/useToast";
 import { ArrowLeft, Info, Loader2, Save, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";

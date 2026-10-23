@@ -1,62 +1,88 @@
-# API structure
+# API
 
-Organize modules by feature, not by audience. `src/app.module.ts` registers each
-feature module once; `src/main.ts` handles startup and shutdown.
+## Cấu trúc
 
 ```text
-src/modules/
-  banners/
-    banners.module.ts
-    banners.service.ts
-    banners-public.controller.ts
-    banners-admin.controller.ts
-  flash-deals/
-  tours/
-  locations/
-  vouchers/
-  users/
-  posts/
-  dashboard/
+src/
+  main.ts                    # Nạp môi trường, gọi bootstrap
+  bootstrap.ts               # Tạo ứng dụng, CORS, validation, shutdown
+  app.module.ts              # Đăng ký các module
+  config/                    # Môi trường và cấu hình JWT dùng chung
+  common/
+    auth/                    # Tra user từ account, giữ thông báo lỗi của từng luồng
+    utils/                   # Tiện ích số và ngày
+    validation/              # Kiểm tra payload và chuẩn hóa giá
+  infrastructure/
+    database/                # Prisma, MongoDB và vòng đời kết nối
+    mail/                    # Gửi email và dựng nội dung email
+    security/                # JwtModule dùng chung
+    storage/                 # Cấu hình Cloudinary và upload buffer
+  modules/
+    banners/
+      banners.module.ts
+      banners-admin.controller.ts
+      banners-public.controller.ts
+      banners.service.ts
 ```
 
-- Keep public and admin controllers separate, with explicit public/admin names.
-- Preserve existing URL decorators when moving files. Module names do not define
-  API URLs.
-- Apply `AdminAuthGuard` to the admin controller class, so every method is protected.
-  Public controllers must not inherit that guard.
-- Share a service when behavior belongs to the same feature. Keep distinct public
-  and admin queries, filters and return shapes. Tours and locations retain separate
-  public/admin services because their business logic differs.
-- Register each service in its owning module. Other modules should import that
-  module instead of registering the service again.
-- Reuse `CloudinaryModule` for upload configuration and buffer uploads. Controllers
-  retain their folders, file checks and API error responses.
-- Define data types, request/response types, form models and component props in
-  `packages/shared/src`, grouped by feature. Import them directly from `shared`.
-  Before adding a type, check whether an equivalent definition already exists.
-  Do not create module-local `.types.ts` files or forwarding type-only files.
-- The empty `PrismaService` interface in `prisma.service.ts` is a class augmentation
-  that gives the proxy provider the Prisma client API. Keep it beside the class
-  so Nest's runtime dependency injection metadata continues to reference that class.
+Các nhóm chức năng gồm `auth`, `banners`, `bookings`, `catalogs`, `chat`,
+`dashboard`, `favorites`, `featured-tours`, `flash-deals`, `locations`,
+`payment`, `posts`, `reviews`, `schedules`, `tours`, `users`, `vouchers`.
 
-## Validation
+File controller, service, helper, mapper, guard, strategy và DTO đặt trực tiếp
+trong thư mục của chức năng. Không tạo thêm thư mục con chỉ để phân loại file;
+dùng hậu tố tên file để nhận biết vai trò.
 
-From the repository root:
+- `tours` quản lý tour; `schedules` quản lý lịch khởi hành, giá, lịch trình,
+  khách sạn của lịch và email đổi lịch; `catalogs` đọc danh mục khách sạn,
+  loại phòng và phương tiện. Đường dẫn HTTP cũ được giữ nguyên.
+- Controller quản trị dùng `AdminAuthGuard`; endpoint đăng nhập admin vẫn
+  công khai, endpoint xem tài khoản admin vẫn kiểm tra quyền trong handler.
+- Đăng ký service tại module sở hữu. `DatabaseModule` là global module duy
+  nhất cung cấp Prisma cho các chức năng; không thêm Prisma vào providers
+  của từng module. PostgreSQL và MongoDB được khởi tạo/đóng bằng lifecycle
+  của Nest, trước khi ứng dụng bắt đầu nhận request.
+- Các module cần gửi email hoặc upload phải import `MailModule` hoặc
+  `CloudinaryModule`; không tự cấu hình lại client. Controller giữ tên thư mục
+  upload, giới hạn file và thông báo lỗi của endpoint.
+- Auth và chat dùng cùng `SecurityModule`. Secret và thời hạn JWT nằm tại
+  `config/jwt.ts`, giữ cách tính thời hạn token của luồng đăng nhập.
+- Chỉ đưa helper dùng chung vào `common/`. Mapper lịch khởi hành, dịch vụ bổ
+  sung booking và chuẩn hóa tour nằm cùng nhóm nghiệp vụ.
+- Các kiểu dữ liệu/hợp đồng nằm trong `packages/shared/src`, import từ
+  `shared`. DTO có decorator kiểm tra dữ liệu nằm tại `modules/auth/auth.dto.ts`.
+- Interface rỗng mở rộng `PrismaService` được giữ cạnh class proxy trong
+  `infrastructure/database/prisma.service.ts` để giữ đúng kiểu Prisma và
+  metadata dependency injection của Nest.
+- Các route alias dashboard và hai cách gọi xóa lịch khởi hành là tương thích
+  đang được hỗ trợ; không bỏ một route chỉ vì handler có cùng nội dung.
+
+## Kiểm tra
+
+Chạy từ gốc repository:
 
 ```sh
+npm run build --workspace=shared
 npm run typecheck
-npm run build
+npm run test --workspace=api
+npm run test:lib --workspace=web
 ```
 
-The API build clears its generated `dist/` directory before compiling, so removed
-or moved sources cannot leave obsolete JavaScript/declaration files behind.
+Test API kiểm tra 114 đường dẫn/alias và guard tương ứng, dependency injection
+của toàn ứng dụng, provider/vòng đời database dùng chung, quyền admin,
+dịch vụ bổ sung booking, mapper lịch khởi hành, quyền sở hữu account và
+phân cấp location. Các kết nối database được thay thế trong kiểm thử, không
+cần PostgreSQL/MongoDB đang chạy.
+
+Build API xóa `dist/` trước khi biên dịch để tránh giữ JavaScript/declaration
+cũ của các file đã di chuyển hoặc bị xóa.
 
 ## Human support chat
 
 `ChatModule` owns the authenticated `/chat` HTTP API and `/chat` Socket.IO
 namespace. Both customer and staff screens reuse the same message timeline,
-composer, connection hook and request helper. Contracts live in shared `chat.ts`;
-staff workspace props live in shared `admin/chat.ts`.
+composer, connection hook and request helper. Contracts live in shared `chat/`;
+staff workspace props live in shared `admin/chat/`.
 
 - Customers can read and write only their own conversations. Every HTTP request,
   socket event and broadcast recipient is checked against current account/role

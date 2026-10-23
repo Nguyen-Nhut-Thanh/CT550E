@@ -1,11 +1,11 @@
 "use client";
 
-import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import { TourPoliciesAccordionEditor } from "@/components/admin/tour-detail/TourPoliciesAccordionEditor";
-import { useToast } from "@/components/common/Toast";
-import { normalizeTourDetailForm } from "@/lib/admin/tourDetail";
-import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/toursApi";
+import { TourPoliciesAccordionEditor } from "@/components/admin/tours/TourPoliciesAccordionEditor";
+import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/common/AdminFormCard";
+import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";
+import { normalizeTourDetailForm } from "@/lib/admin/tours/forms";
+import { useToast } from "@/lib/notifications/useToast";
 import { CheckCircle2, Loader2, Save, ScrollText } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

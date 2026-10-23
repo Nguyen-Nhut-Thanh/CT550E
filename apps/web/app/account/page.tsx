@@ -2,14 +2,11 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { AccountOverviewTab } from "@/components/account";
+import { AccountOverviewTab } from "@/components/account/AccountOverviewTab";
 import { useAccount } from "@/components/account/AccountShell";
-import { useAccountResource } from "@/components/account/useAccountResource";
-import {
-  getAccountStats,
-  getMyBookings,
-  getMyFavoriteTours,
-} from "@/lib/client/api/authApi";
+import { getAccountStats, getMyBookings } from "@/lib/account/api";
+import { useAccountResource } from "@/lib/account/useAccountResource";
+import { getMyFavoriteTours } from "@/lib/favorites/api";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 

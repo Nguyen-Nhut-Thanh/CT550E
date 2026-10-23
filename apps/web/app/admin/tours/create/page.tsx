@@ -1,26 +1,15 @@
 "use client";
 
-import { AdminBackPageHeader } from "@/components/admin/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/admin/AdminFormCard";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { PriceInput } from "@/components/admin/PriceInput";
+import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/common/AdminFormCard";
 import FormFieldLabel from "@/components/common/FormFieldLabel";
-import { useToast } from "@/components/common/Toast";
-import { getAdminTransports } from "@/lib/admin/catalogsApi";
-import { getAdminLocations } from "@/lib/admin/locationsApi";
-import { createAdminTour } from "@/lib/admin/toursApi";
-import {
-  AlertTriangle,
-  Clock,
-  Image as ImageIcon,
-  Info,
-  Loader2,
-  MapPin,
-  Save,
-  Sparkles,
-  Ticket,
-  Utensils,
-} from "lucide-react";
+import { ImageUpload } from "@/components/common/ImageUpload";
+import { PriceInput } from "@/components/common/PriceInput";
+import { getAdminTransports } from "@/lib/admin/catalogs/api";
+import { getAdminLocations } from "@/lib/admin/locations/api";
+import { createAdminTour } from "@/lib/admin/tours/api";
+import { useToast } from "@/lib/notifications/useToast";
+import { AlertTriangle, Clock, Image as ImageIcon, Info, Loader2, MapPin, Save, Sparkles, Ticket, Utensils, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LocationOption, TransportOption } from 'shared';

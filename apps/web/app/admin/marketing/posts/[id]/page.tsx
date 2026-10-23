@@ -1,15 +1,11 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PostEditorContent } from "@/components/admin/posts/PostEditorContent";
 import { PostEditorSidebar } from "@/components/admin/posts/PostEditorSidebar";
-import { useToast } from "@/components/common/Toast";
-import { buildPostEditorForm, createDefaultPostEditorForm } from "@/lib/admin/posts";
-import {
-  getAdminPostCategories,
-  getAdminPosts,
-  saveAdminPost,
-} from "@/lib/admin/postsApi";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { getAdminPostCategories, getAdminPosts, saveAdminPost } from "@/lib/admin/posts/api";
+import { buildPostEditorForm, createDefaultPostEditorForm } from "@/lib/admin/posts/forms";
+import { useToast } from "@/lib/notifications/useToast";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";

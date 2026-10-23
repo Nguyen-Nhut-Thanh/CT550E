@@ -7,6 +7,7 @@ const toneClassMap = {
   success: "bg-emerald-50 border border-emerald-100 text-emerald-600",
 } as const;
 
+/** Hiển thị thông báo thành công hoặc lỗi ngay trong nội dung trang. */
 export default function InlineNotice({
   tone,
   children,

@@ -1,6 +1,6 @@
 "use client";
 
-import { chatApi } from '@/lib/chatApi';
+import { chatApi } from "@/lib/chat/api";
 import { ImagePlus, SendHorizontal, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ChatComposerProps, PendingImage } from 'shared';

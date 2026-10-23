@@ -1,12 +1,12 @@
 "use client";
 
-import { fetchMe, getToken } from "@/lib/client/utils/auth";
+import { AccountResourceProvider } from "@/components/account/AccountResourceProvider";
+import { AccountSidebar } from "@/components/account/AccountSidebar";
+import { fetchMe, getToken } from "@/lib/auth/session";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { UserProfile } from "shared";
-import { AccountSidebar } from "./sidebar/AccountSidebar";
-import { AccountResourceProvider } from "./useAccountResource";
 
 const AccountContext = createContext<{ user: UserProfile; updateUser: (updates: Partial<UserProfile>) => void } | null>(null);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { formatVND } from "@/lib/utils";
+import { formatVND } from "@/lib/utils/currency";
 import { BarChart2, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import type { DashboardAnalyticsChartProps } from 'shared';

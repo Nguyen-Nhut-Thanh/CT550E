@@ -2,9 +2,9 @@
 
 import { AccountContent } from "@/components/account/AccountContent";
 
-import { AccountFavoritesTab } from "@/components/account";
-import { useAccountResource } from "@/components/account/useAccountResource";
-import { getMyFavoriteTours } from "@/lib/client/api/authApi";
+import { AccountFavoritesTab } from "@/components/account/AccountFavoritesTab";
+import { useAccountResource } from "@/lib/account/useAccountResource";
+import { getMyFavoriteTours } from "@/lib/favorites/api";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function FavoritesAccountPage() {

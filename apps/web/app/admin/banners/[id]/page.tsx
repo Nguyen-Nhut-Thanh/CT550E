@@ -1,22 +1,8 @@
 "use client";
 
-import { useToast } from "@/components/common/Toast";
-import {
-  fetchAdminBannerDetail,
-  saveAdminBanner,
-  uploadAdminBannerImage,
-} from "@/lib/admin/banners";
-import {
-  AlignLeft,
-  ArrowLeft,
-  Camera,
-  Globe,
-  Loader2,
-  Save,
-  ToggleLeft,
-  Type,
-  X,
-} from "lucide-react";
+import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/admin/banners/api";
+import { useToast } from "@/lib/notifications/useToast";
+import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X, } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 

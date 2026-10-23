@@ -1,6 +1,6 @@
 "use client";
+import { ChatInboxNotification } from "@/components/chat/ChatInboxNotification";
 import { Menu, Search } from "lucide-react";
-import { ChatInboxNotification } from '@/components/chat/ChatInboxNotification';
 
 export const AdminTopbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   return (

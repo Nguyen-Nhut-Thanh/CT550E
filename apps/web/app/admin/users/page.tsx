@@ -1,15 +1,11 @@
 "use client";
 
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
 import { CreateStaffModal } from "@/components/admin/users/CreateStaffModal";
 import { UsersTable } from "@/components/admin/users/UsersTable";
-import { useToast } from "@/components/common/Toast";
-import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users";
-import {
-  createAdminStaff,
-  getAdminUsers,
-  updateAdminUserStatus,
-} from "@/lib/admin/usersApi";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { createAdminStaff, getAdminUsers, updateAdminUserStatus } from "@/lib/admin/users/api";
+import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users/forms";
+import { useToast } from "@/lib/notifications/useToast";
 import { UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { StaffFormData, UserItem } from "shared";

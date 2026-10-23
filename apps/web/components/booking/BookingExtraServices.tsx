@@ -1,4 +1,4 @@
-import { formatVND } from "@/lib/client/utils/utils";
+import { formatVND } from "@/lib/utils/currency";
 import { Camera, Check, Luggage, ShieldCheck, UserRound } from "lucide-react";
 import type { BookingExtraService } from "shared";
 

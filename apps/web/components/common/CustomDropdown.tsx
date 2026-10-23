@@ -1,9 +1,12 @@
 "use client";
 
+import { useDismiss } from "@/lib/ui/useDismiss";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { CustomDropdownProps } from 'shared';
+import { Popover } from "./Popover";
 
+/** Hiển thị danh sách lựa chọn dạng popup, hỗ trợ chọn bằng chuột và bàn phím. */
 export default function CustomDropdown({
   label,
   placeholder = "Chọn một tùy chọn",
@@ -16,26 +19,26 @@ export default function CustomDropdown({
   matchTriggerWidth = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const id = useId();
+  const listRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const selectedOption = options.find((option) => option.value === selectedValue);
   const isDefault = variant === "default";
   const isCompact = variant === "compact";
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
+  useDismiss(containerRef, isOpen, () => setIsOpen(false));
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const focusOption = (index: number) => {
+    const items = listRef.current?.querySelectorAll<HTMLButtonElement>('[role="option"]');
+    if (items?.length) items[(index + items.length) % items.length].focus();
+  };
 
   return (
     <div ref={containerRef} className={`relative ${isDefault ? "space-y-1.5" : ""} ${className}`}>
       {label ? (
         <label
+          htmlFor={id}
           className={
             isDefault
               ? "text-[14px] font-extrabold uppercase tracking-wider text-slate-600"
@@ -50,6 +53,8 @@ export default function CustomDropdown({
 
       <div className="relative inline-block w-full">
         <button
+          id={id}
+          ref={triggerRef}
           type="button"
           onClick={() => setIsOpen((open) => !open)}
           className={`group flex items-center justify-between gap-3 text-left transition-all duration-300 ${
@@ -68,6 +73,17 @@ export default function CustomDropdown({
               : "mt-3 flex w-full items-center border-0 bg-transparent px-0 py-0 text-left text-[16px] font-normal text-[#1f1f1f] outline-none focus:ring-0 md:text-[17px]"
           }`}
           aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls={isOpen ? `${id}-options` : undefined}
+          aria-label={label ? undefined : (selectedOption?.label ?? placeholder)}
+          onKeyDown={event => {
+            if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+              event.preventDefault();
+              setIsOpen(true);
+              const index = options.findIndex(option => option.value === selectedValue);
+              requestAnimationFrame(() => focusOption(index < 0 ? (event.key === "ArrowUp" ? options.length - 1 : 0) : index));
+            }
+          }}
         >
           {Icon ? (
             <Icon
@@ -100,16 +116,20 @@ export default function CustomDropdown({
         </button>
 
         {isOpen ? (
+          <Popover anchorRef={triggerRef} matchAnchorWidth={matchTriggerWidth || isDefault} width={isCompact ? 230 : 260} align={isCompact ? "end" : "start"} className="rounded-[20px] border-0 bg-transparent p-0 shadow-2xl">
           <div
-            className={`absolute z-50 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-2 shadow-2xl ${
-              matchTriggerWidth
-                ? "left-0 right-0 top-[calc(100%+8px)]"
-                : isCompact
-                ? "right-0 top-[calc(100%+8px)] min-w-[230px] rounded-[18px] border-slate-100 p-1.5 shadow-xl ring-1 ring-slate-900/5"
-                : isDefault
-                ? "left-0 right-0 top-[calc(100%+10px)]"
-                : "left-0 top-[calc(100%+12px)] min-w-[260px]"
-            }`}
+            ref={listRef}
+            id={`${id}-options`}
+            role="listbox"
+            aria-label={label ?? placeholder}
+            onKeyDown={event => {
+              const items = Array.from(listRef.current?.querySelectorAll('[role="option"]') ?? []);
+              const index = items.indexOf(document.activeElement as Element);
+              const target = event.key === "ArrowDown" ? index + 1 : event.key === "ArrowUp" ? index - 1 : event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : null;
+              if (target !== null) { event.preventDefault(); focusOption(target); }
+              if (event.key === "Tab") setIsOpen(false);
+            }}
+            className="overflow-hidden rounded-[20px] border border-slate-200 bg-white p-2"
           >
             <div className="custom-scrollbar max-h-[300px] overflow-y-auto p-0.5">
               {options.map((option) => {
@@ -119,9 +139,12 @@ export default function CustomDropdown({
                   <button
                     key={option.value}
                     type="button"
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => {
                       onSelect(option.value);
                       setIsOpen(false);
+                      triggerRef.current?.focus();
                     }}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] transition-all duration-200 ${
                       isSelected
@@ -138,6 +161,7 @@ export default function CustomDropdown({
               })}
             </div>
           </div>
+          </Popover>
         ) : null}
       </div>
     </div>

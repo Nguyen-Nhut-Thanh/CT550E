@@ -1,23 +1,14 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
-import { AdminTable } from "@/components/admin/AdminTable";
 import { FlashDealModal } from "@/components/admin/flash-deals/FlashDealModal";
-import { useToast } from "@/components/common/Toast";
-import {
-  buildFlashDealForm,
-  buildFlashDealPayload,
-  createDefaultFlashDealForm,
-  filterFlashDealSchedules,
-  previewFlashDealPrice,
-} from "@/lib/admin/flashDeals";
-import {
-  getAdminFlashDeals,
-  saveAdminFlashDeal,
-} from "@/lib/admin/marketing";
-import { formatVND } from "@/lib/utils";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminStatusBadge } from "@/components/common/AdminStatusBadge";
+import { AdminTable } from "@/components/common/AdminTable";
+import { getAdminFlashDeals, saveAdminFlashDeal } from "@/lib/admin/flash-deals/api";
+import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm, filterFlashDealSchedules, previewFlashDealPrice } from "@/lib/admin/flash-deals/forms";
+import { useToast } from "@/lib/notifications/useToast";
+import { formatVND } from "@/lib/utils/currency";
 import { Calendar, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FlashDealForm, FlashDealSchedule } from "shared";

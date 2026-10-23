@@ -1,29 +1,15 @@
 "use client";
 
-import { AdminIconActionButton } from "@/components/admin/AdminIconActionButton";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/AdminSearchInput";
-import { AdminTable } from "@/components/admin/AdminTable";
 import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
-import { useToast } from "@/components/common/Toast";
-import { confirmAction } from "@/lib/admin/confirm";
-import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts";
-import {
-  createAdminPostCategory,
-  deleteAdminPost,
-  getAdminPostCategories,
-  getAdminPosts,
-} from "@/lib/admin/postsApi";
-import {
-  Calendar,
-  Edit,
-  ExternalLink,
-  FileText,
-  Plus,
-  Settings2,
-  Tag,
-  Trash2,
-} from "lucide-react";
+import { AdminIconActionButton } from "@/components/common/AdminIconActionButton";
+import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminTable } from "@/components/common/AdminTable";
+import { createAdminPostCategory, deleteAdminPost, getAdminPostCategories, getAdminPosts } from "@/lib/admin/posts/api";
+import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts/forms";
+import { useToast } from "@/lib/notifications/useToast";
+import { confirmAction } from "@/lib/utils/confirm";
+import { Calendar, Edit, ExternalLink, FileText, Plus, Settings2, Tag, Trash2, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PostCategory, PostCategoryDraft, PostItem } from "shared";

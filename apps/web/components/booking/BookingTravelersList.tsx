@@ -1,8 +1,8 @@
+import { BookingGenderSelect } from "@/components/booking/BookingGenderSelect";
 import { BirthdayInput } from "@/components/common/BirthdayInput";
-import { formatVND } from "@/lib/client/utils/utils";
+import { formatVND } from "@/lib/utils/currency";
 import { UserRound } from "lucide-react";
 import type { BookingTravelersListProps, TravelerType } from "shared";
-import { BookingGenderSelect } from "./BookingGenderSelect";
 
 export function BookingTravelersList({
   travelers,

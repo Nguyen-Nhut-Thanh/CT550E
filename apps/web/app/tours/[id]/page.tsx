@@ -1,18 +1,16 @@
 "use client";
 
-import {
-  TourAmenities,
-  TourBookingCard,
-  TourDepartureCalendar,
-  TourDetailHero,
-  TourHighlightsList,
-  TourItineraryTimeline,
-  TourRecommendedList,
-  TourReviewsSection,
-  TourSmartMap,
-  TourVideoHighlights,
-} from "@/components/tours/detail";
-import { getPublicTourDetail } from "@/lib/client/api/tourApi";
+import TourAmenities from "@/components/tours/TourAmenities";
+import TourBookingCard from "@/components/tours/TourBookingCard";
+import TourDepartureCalendar from "@/components/tours/TourDepartureCalendar";
+import TourDetailHero from "@/components/tours/TourDetailHero";
+import TourHighlightsList from "@/components/tours/TourHighlightsList";
+import TourItineraryTimeline from "@/components/tours/TourItineraryTimeline";
+import TourRecommendedList from "@/components/tours/TourRecommendedList";
+import TourReviewsSection from "@/components/tours/TourReviewsSection";
+import TourSmartMap from "@/components/tours/TourSmartMap";
+import TourVideoHighlights from "@/components/tours/TourVideoHighlights";
+import { getPublicTourDetail } from "@/lib/tours/api";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";

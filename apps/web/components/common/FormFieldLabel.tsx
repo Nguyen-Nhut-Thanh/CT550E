@@ -2,6 +2,7 @@
 
 import type { FormFieldLabelProps } from 'shared';
 
+/** Hiển thị nhãn của trường nhập liệu, có thể kèm biểu tượng. */
 export default function FormFieldLabel({
   children,
   icon,
