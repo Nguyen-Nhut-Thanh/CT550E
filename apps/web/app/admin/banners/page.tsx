@@ -103,7 +103,7 @@ export default function AdminBannersPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Quản lý Banners"
         description="Banners quảng bá trên trang chủ và các trang đích."

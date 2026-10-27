@@ -23,3 +23,7 @@ export function saveAdminFlashDeal(
     "Không thể cập nhật flash deal.",
   );
 }
+
+export function deleteAdminFlashDeal(dealId: number) {
+  return requestAdminJson(`/admin/marketing/flash-deals/${dealId}`, { method: 'DELETE' }, 'Không thể xóa flash deal.');
+}

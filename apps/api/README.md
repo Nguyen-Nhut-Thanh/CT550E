@@ -1,5 +1,12 @@
 # API
 
+## Chạy phát triển
+
+`npm run dev --workspace=api` theo dõi `src` bằng TypeScript, chờ lần biên dịch
+đầu tiên thành công rồi khởi động API. Khi sửa mã nguồn, TypeScript cập nhật
+`dist` và Node tự nạp lại máy chủ. Không cần build thủ công sau mỗi lần sửa.
+Nếu đang dùng tiến trình dev cũ, khởi động lại một lần để dùng cơ chế này.
+
 ## Cấu trúc
 
 ```text

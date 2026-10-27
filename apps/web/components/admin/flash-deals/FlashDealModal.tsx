@@ -17,7 +17,6 @@ import {
 import { useId } from "react";
 import type { FlashDealModalProps } from "shared";
 import { FlashDealPromotion } from "./FlashDealPromotion";
-import styles from "./FlashDealModal.module.css";
 
 export function FlashDealModal({
   open,
@@ -38,9 +37,6 @@ export function FlashDealModal({
   const close = () => {
     if (!saving) onClose();
   };
-  const fieldClassName =
-    "h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60";
-  const panelClassName = `${styles.panel} rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5`;
 
   return (
     <Dialog
@@ -49,16 +45,14 @@ export function FlashDealModal({
       describedBy={`${id}-description`}
       overlayClassName="bg-slate-900/50"
     >
-      <div
-        className={`${styles.modal} my-auto grid overflow-y-auto rounded-[24px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]`}
-      >
+      <div className="ui-flash-deal-modal-modal w-[min(640px,_calc(100vw_-_48px))] max-w-full max-h-[calc(100dvh_-_64px)] min-[1024px]:w-[min(920px,_calc(100vw_-_64px))] min-[1024px]:grid-cols-[280px_minmax(0,_1fr)] admin-max-639:w-full admin-max-639:max-h-[calc(100dvh_-_32px)] my-auto grid overflow-y-auto rounded-[24px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]">
         <FlashDealPromotion />
         <form
           onSubmit={(event) => {
             event.preventDefault();
             if (!saving && !invalidPercentage && schedule) onSave();
           }}
-          className={`${styles.form} relative flex min-w-0 flex-col gap-5 p-5 sm:p-7 xl:gap-6 xl:p-10`}
+          className="ui-flash-deal-modal-form [&&]:gap-[18px] [&&]:p-[24px] [&_header_h2]:text-[27px] [&_header_h2]:leading-[1.3] [&_header_p]:text-[14px] [&_.ui-flash-deal-modal-panel]:p-[16px] admin-max-639:[&&]:p-[20px] admin-max-639:[&&]:gap-[16px] admin-max-639:[&_header_h2]:text-[23px] admin-short-desktop:[&&]:gap-[10px] admin-short-desktop:[&&]:p-[20px_24px] admin-short-desktop:[&_header_h2]:text-[26px] admin-short-desktop:[&_header_h2]:leading-[34px] admin-short-desktop:[&_header_p]:mt-[4px] admin-short-desktop:[&_header_p]:text-[14px] admin-short-desktop:[&_header_p]:leading-[20px] admin-short-desktop:[&_.ui-flash-deal-modal-panel]:p-[12px_16px] admin-short-desktop:[&_fieldset>div:first-of-type]:mb-[8px] admin-short-desktop:[&_fieldset>div:first-of-type]:text-[13px] admin-short-desktop:[&_fieldset>div:first-of-type]:leading-[20px] admin-short-desktop:[&_fieldset_button]:min-h-[44px] admin-short-desktop:[&_fieldset_button]:py-[6px] admin-short-desktop:[&_fieldset_button]:text-[14px] admin-short-desktop:[&_input]:h-[44px] admin-short-desktop:[&_section>div]:p-[12px_16px] admin-short-desktop:[&>p]:py-[10px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[20px] admin-short-desktop:[&_footer_button]:min-h-[44px] admin-short-desktop:[&_footer_button]:py-[10px] admin-short-desktop:[&_footer_button]:text-[14px] relative flex min-w-0 flex-col gap-5 p-5 sm:p-7 xl:gap-6 xl:p-10"
         >
           <header className="pr-12">
             <h2
@@ -84,7 +78,10 @@ export function FlashDealModal({
             <X size={23} />
           </button>
 
-          <fieldset disabled={saving} className={panelClassName}>
+          <fieldset
+            disabled={saving}
+            className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5"
+          >
             <legend className="sr-only">Loại ưu đãi</legend>
             <div
               aria-hidden="true"
@@ -124,7 +121,7 @@ export function FlashDealModal({
           </fieldset>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className={panelClassName}>
+            <div className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5">
               <label
                 htmlFor={`${id}-discount`}
                 className="mb-3 block text-sm font-bold text-[#667b9b]"
@@ -141,14 +138,14 @@ export function FlashDealModal({
                 placeholder={percentage ? "12" : "500.000"}
                 suffix={percentage ? "%" : "đ"}
                 icon={null}
-                inputClassName={fieldClassName}
+                inputClassName="h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60"
                 disabled={saving}
                 error={
                   invalidPercentage ? "Mức giảm tối đa là 100%." : undefined
                 }
               />
             </div>
-            <div className={panelClassName}>
+            <div className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5">
               <label
                 htmlFor={`${id}-hours`}
                 className="mb-3 flex items-center gap-2.5 text-sm font-bold text-[#667b9b]"
@@ -172,7 +169,7 @@ export function FlashDealModal({
                       hours_before: Number(event.target.value),
                     }))
                   }
-                  className={fieldClassName}
+                  className="h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60"
                   style={{ paddingLeft: "1rem" }}
                 />
                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#7385a2]">
@@ -185,7 +182,10 @@ export function FlashDealModal({
             </div>
           </div>
 
-          <section aria-label="Xem trước giá tour" className={panelClassName}>
+          <section
+            aria-label="Xem trước giá tour"
+            className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5"
+          >
             <h3 className="mb-4 flex items-center gap-2.5 text-sm font-bold text-[#4764ad] sm:text-base">
               <ChartNoAxesCombined size={21} />
               Xem trước giá tour

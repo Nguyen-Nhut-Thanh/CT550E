@@ -12,6 +12,7 @@ import type { AdminDatePickerProps } from "shared";
 
 /** Hiển thị ô chọn ngày bằng lịch hoặc cho phép nhập ngày trực tiếp. */
 export function AdminDatePicker({
+  variant = "default",
   label,
   value,
   minDate,
@@ -20,6 +21,7 @@ export function AdminDatePicker({
   allowManualInput = false,
   onChange,
 }: AdminDatePickerProps) {
+  const compact = variant === "compact";
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const id = useId();
   const selectedDate = useMemo(() => parseCalendarDate(value), [value]);
@@ -37,9 +39,9 @@ export function AdminDatePicker({
       {label ? (
         <label
           htmlFor={id}
-          className="ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"
+          className={compact ? "block text-[11px] font-medium text-slate-500" : "ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"}
         >
-          <Calendar size={16} className="text-blue-600" />
+          {!compact && <Calendar size={16} className="text-blue-600" />}
           {label}
         </label>
       ) : null}
@@ -75,18 +77,18 @@ export function AdminDatePicker({
               );
               setOpen((current) => !current);
             }}
-            className={`flex min-h-[64px] w-full items-center justify-between rounded-[20px] border border-[#e4ebf4] bg-white px-4 py-2 text-left shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition ${
+            className={`flex w-full items-center justify-between border border-[#e4ebf4] bg-white text-left transition ${compact ? "h-10 rounded-[10px] px-3 py-2" : "min-h-[64px] rounded-[20px] px-4 py-2 shadow-[0_8px_20px_rgba(15,23,42,0.06)]"} ${
               disabled
                 ? "cursor-not-allowed opacity-60"
                 : "hover:border-[#d3ddea]"
             }`}
           >
-            <span className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#edf4ff] text-[#2f76ff]">
+            <span className={`flex min-w-0 items-center ${compact ? "gap-2" : "gap-3"}`}>
+              <span className={`flex shrink-0 items-center justify-center text-[#2f76ff] ${compact ? "h-5 w-5" : "h-7 w-7 rounded-full bg-[#edf4ff]"}`}>
                 <Calendar size={16} />
               </span>
               <span
-                className={`pr-2 text-[13px] font-bold leading-5 ${
+                className={`truncate pr-2 leading-5 ${compact ? "text-[12px] font-medium" : "text-[13px] font-bold"} ${
                   selectedDate ? "text-slate-800" : "text-slate-400"
                 }`}
               >

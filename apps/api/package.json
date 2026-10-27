@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "build": "node build.mjs",
-    "dev": "node --watch-path=dist dist/main.js",
+    "dev": "node dev.mjs",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test:locations": "tsx --tsconfig tsconfig.json --test tests/locations.test.ts",
-    "test": "npm run build && node --test tests/refactor.test.cjs && npm run test:locations"
+    "test": "npm run build && node --test tests/refactor.test.cjs && npm run test:locations && npm run test:posts",
+    "test:posts": "tsx --tsconfig tsconfig.json --test tests/posts.test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",

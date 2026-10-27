@@ -2,6 +2,8 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { formatCurrency, mergeBookingNote, resolveRollbackStatus } from "./booking.helpers";
+import type { AdminBookingFilters } from "shared";
+import { buildBookingListWhere } from "./booking-list";
 @Injectable()
 export class BookingsAdminService {
     constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) { }
@@ -76,11 +78,14 @@ export class BookingsAdminService {
         this.ensureStaffAccess(isStaff);
         return this.findAdminBookingOrThrow(bookingId);
     }
-    async listAdminBookings(isStaff: any, page: any = 1, limit: any = 10) {
+    async listAdminBookings(isStaff: any, page: number = 1, limit: number = 10, filters: AdminBookingFilters = {}) {
         this.ensureStaffAccess(isStaff);
+        if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new BadRequestException('Phân trang không hợp lệ.');
+        const where = buildBookingListWhere(filters);
         const skip = (page - 1) * limit;
-        const [items, total] = await Promise.all([
+        const [items, total, groups] = await Promise.all([
             this.prisma.bookings.findMany({
+                where,
                 skip,
                 take: limit,
                 include: {
@@ -95,22 +100,27 @@ export class BookingsAdminService {
                                 select: {
                                     name: true,
                                     code: true,
+                                    tour_id: true,
+                                    tour_images: { orderBy: { sort_order: 'asc' }, take: 1, select: { image_url: true } },
                                 },
                             },
                         },
                     },
                     payments: true,
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy: [{ created_at: 'desc' }, { booking_id: 'desc' }],
             }),
-            this.prisma.bookings.count(),
+            this.prisma.bookings.count({ where }),
+            this.prisma.bookings.groupBy({ by: ['status'], _count: { _all: true } }),
         ]);
+        const count = (status: string) => groups.find(group => group.status === status)?._count._all ?? 0;
         return {
             items,
             total,
             page,
             limit,
-            totalPages: Math.ceil(total / limit),
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+            stats: { total: groups.reduce((sum, group) => sum + group._count._all, 0), paid: count('paid'), pending: count('pending'), cancelled: count('cancelled'), cancelRequested: count('cancel_requested') },
         };
     }
     async approveCancel(bookingId: any, isStaff: any, note: any, refundAmount: any) {

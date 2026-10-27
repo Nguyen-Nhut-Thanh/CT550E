@@ -5,7 +5,7 @@ import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { Award, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import type { DashboardTopToursProps } from 'shared';
+import type { DashboardTopToursProps } from "shared";
 
 export function DashboardTopTours({ topTours }: DashboardTopToursProps) {
   if (!topTours || topTours.length === 0) {
@@ -63,10 +63,10 @@ export function DashboardTopTours({ topTours }: DashboardTopToursProps) {
                     idx === 0
                       ? "bg-amber-100 text-amber-800"
                       : idx === 1
-                      ? "bg-slate-200 text-slate-700"
-                      : idx === 2
-                      ? "bg-amber-50 text-amber-900"
-                      : "bg-slate-50 text-slate-500"
+                        ? "bg-slate-200 text-slate-700"
+                        : idx === 2
+                          ? "bg-amber-50 text-amber-900"
+                          : "bg-slate-50 text-slate-500"
                   }`}
                 >
                   {idx + 1}

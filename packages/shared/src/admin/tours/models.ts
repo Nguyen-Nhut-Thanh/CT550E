@@ -17,9 +17,12 @@ export type ToursPageTour = {
     base_price: string | number;
     status: number;
     tour_type: string | null;
+    summary?: string | null;
+    booked_count?: number;
+    countries?: { location_id: number; name: string }[];
     tour_images?: {
         image_url: string;
-        is_cover: number;
+        is_cover?: number;
     }[];
 };
 export type TourScheduleSummary = {
@@ -28,6 +31,7 @@ export type TourScheduleSummary = {
     };
 };
 export type TourLike = {
+    summary?: string | null;
     code?: string | null;
     name?: string | null;
     status: number;

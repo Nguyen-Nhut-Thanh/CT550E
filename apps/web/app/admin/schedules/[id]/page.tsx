@@ -4,9 +4,21 @@ import { ScheduleBasicInfoCard } from "@/components/admin/schedules/ScheduleBasi
 import { ScheduleItinerarySection } from "@/components/admin/schedules/ScheduleItinerarySection";
 import { ScheduleSidebar } from "@/components/admin/schedules/ScheduleSidebar";
 import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
-import { getAdminCatalogTransports, getAdminHotels, getHotelRoomTypes } from "@/lib/admin/catalogs/api";
-import { getAdminScheduleDetail, saveAdminSchedule } from "@/lib/admin/schedules/api";
-import { buildScheduleFormFromResponse, buildSchedulePayload, createDefaultScheduleForm, ensureItineraryDays } from "@/lib/admin/schedules/forms";
+import {
+  getAdminCatalogTransports,
+  getAdminHotels,
+  getHotelRoomTypes,
+} from "@/lib/admin/catalogs/api";
+import {
+  getAdminScheduleDetail,
+  saveAdminSchedule,
+} from "@/lib/admin/schedules/api";
+import {
+  buildScheduleFormFromResponse,
+  buildSchedulePayload,
+  createDefaultScheduleForm,
+  ensureItineraryDays,
+} from "@/lib/admin/schedules/forms";
 import { getAdminTourDetail } from "@/lib/admin/tours/api";
 import { getToken } from "@/lib/auth/session";
 import { API_BASE } from "@/lib/http/config";
@@ -15,7 +27,13 @@ import { useToast } from "@/lib/notifications/useToast";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { HotelItem, RoomTypeItem, ScheduleDetailResponse, TourInfo, TransportItem } from 'shared';
+import type {
+  HotelItem,
+  RoomTypeItem,
+  ScheduleDetailResponse,
+  TourInfo,
+  TransportItem,
+} from "shared";
 
 export default function AdminScheduleDetailPage() {
   const { id } = useParams();
@@ -35,7 +53,9 @@ export default function AdminScheduleDetailPage() {
   const [originalQuota, setOriginalQuota] = useState(0);
   const [hotels, setHotels] = useState<HotelItem[]>([]);
   const [transports, setTransports] = useState<TransportItem[]>([]);
-  const [roomTypesMap, setRoomTypesMap] = useState<Record<number, RoomTypeItem[]>>({});
+  const [roomTypesMap, setRoomTypesMap] = useState<
+    Record<number, RoomTypeItem[]>
+  >({});
   const [expandedDay, setExpandedDay] = useState<number | null>(1);
   const [form, setForm] = useState(createDefaultScheduleForm);
 
@@ -43,7 +63,9 @@ export default function AdminScheduleDetailPage() {
     if (isNew || !form.start_date) return false;
 
     try {
-      const startDt = new Date(`${form.start_date}T${form.start_time || "00:00"}:00`);
+      const startDt = new Date(
+        `${form.start_date}T${form.start_time || "00:00"}:00`,
+      );
       return startDt.getTime() < Date.now();
     } catch {
       return false;
@@ -56,8 +78,7 @@ export default function AdminScheduleDetailPage() {
       setRoomTypesMap((prev) =>
         prev[hotelId] ? prev : { ...prev, [hotelId]: data },
       );
-    } catch {
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -77,9 +98,18 @@ export default function AdminScheduleDetailPage() {
         let scheduleData: ScheduleDetailResponse | null = null;
 
         if (!isNew) {
-          scheduleData = await getAdminScheduleDetail<ScheduleDetailResponse>(String(id));
-          currentTourId = scheduleData.tour_id ? String(scheduleData.tour_id) : currentTourId;
-          setHasBookings(Boolean(scheduleData.hasBookings ?? Number(scheduleData.booked_count || 0) > 0));
+          scheduleData = await getAdminScheduleDetail<ScheduleDetailResponse>(
+            String(id),
+          );
+          currentTourId = scheduleData.tour_id
+            ? String(scheduleData.tour_id)
+            : currentTourId;
+          setHasBookings(
+            Boolean(
+              scheduleData.hasBookings ??
+              Number(scheduleData.booked_count || 0) > 0,
+            ),
+          );
           setBookedCount(Number(scheduleData.booked_count || 0));
           setOriginalQuota(Number(scheduleData.quota || 0));
 
@@ -114,7 +144,9 @@ export default function AdminScheduleDetailPage() {
 
     setForm((prev) => {
       const nextPrices = prev.prices.map((item) =>
-        item.passenger_type === "adult" && Number(item.price) <= 0 && basePrice > 0
+        item.passenger_type === "adult" &&
+        Number(item.price) <= 0 &&
+        basePrice > 0
           ? { ...item, price: basePrice }
           : item,
       );
@@ -134,9 +166,13 @@ export default function AdminScheduleDetailPage() {
       return;
     }
 
-    const selectedStartDate = new Date(`${form.start_date}T${form.start_time || "00:00"}:00`);
+    const selectedStartDate = new Date(
+      `${form.start_date}T${form.start_time || "00:00"}:00`,
+    );
     const cutOffHours = Number(tourInfo?.cut_off_hours || 0);
-    const minAllowedDateTime = new Date(Date.now() + cutOffHours * 60 * 60 * 1000);
+    const minAllowedDateTime = new Date(
+      Date.now() + cutOffHours * 60 * 60 * 1000,
+    );
 
     if (selectedStartDate.getTime() < minAllowedDateTime.getTime()) {
       showError(
@@ -149,7 +185,9 @@ export default function AdminScheduleDetailPage() {
 
     try {
       const data = (await saveAdminSchedule(
-        isNew ? `/admin/tours/${tourId}/schedules` : `/admin/tours/schedules/${id}`,
+        isNew
+          ? `/admin/tours/${tourId}/schedules`
+          : `/admin/tours/schedules/${id}`,
         isNew ? "POST" : "PATCH",
         buildSchedulePayload(form),
       )) as ScheduleDetailResponse;
@@ -161,13 +199,19 @@ export default function AdminScheduleDetailPage() {
       );
       router.push("/admin/schedules");
     } catch (requestError) {
-      showError(requestError instanceof Error ? requestError.message : "Lỗi kết nối server");
+      showError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Lỗi kết nối server",
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const token = getToken();
@@ -203,7 +247,7 @@ export default function AdminScheduleDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-20">
+    <div className="mx-auto max-w-5xl space-y-4 pb-20">
       <AdminBackPageHeader
         title={isNew ? "Thiết lập lịch mới" : "Chỉnh sửa lịch khởi hành"}
         description={tourInfo?.name || ""}
@@ -214,9 +258,10 @@ export default function AdminScheduleDetailPage() {
         <div className="space-y-8 lg:col-span-2">
           {hasBookings && !isPast ? (
             <div className="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
-              Đợt khởi hành này đã có {bookedCount} khách đặt. Bạn vẫn có thể cập nhật ảnh,
-              giá áp dụng cho đơn mới, quota theo hướng tăng, và lịch trình theo ngày. Nếu đổi
-              ngày hoặc giờ khởi hành, hệ thống sẽ gửi email thông báo đến khách hàng.
+              Đợt khởi hành này đã có {bookedCount} khách đặt. Bạn vẫn có thể
+              cập nhật ảnh, giá áp dụng cho đơn mới, quota theo hướng tăng, và
+              lịch trình theo ngày. Nếu đổi ngày hoặc giờ khởi hành, hệ thống sẽ
+              gửi email thông báo đến khách hàng.
             </div>
           ) : null}
 

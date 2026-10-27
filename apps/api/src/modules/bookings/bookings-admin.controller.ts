@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards, } from "@nestjs/common";
 import { AdminAuthGuard } from "../auth/admin.guard";
 import { BookingsAdminService } from "./bookings-admin.service";
+import type { AdminBookingFilters } from "shared";
 @Controller("bookings")
 @UseGuards(AdminAuthGuard)
 export class BookingsAdminController {
@@ -12,8 +13,9 @@ export class BookingsAdminController {
     @Query("page")
     page?: string,
     @Query("limit")
-    limit?: string) {
-        return this.service.listAdminBookings(Boolean(req.user.isStaff), Number(page || 1), Number(limit || 10));
+    limit?: string,
+    @Query() filters?: AdminBookingFilters) {
+        return this.service.listAdminBookings(Boolean(req.user.isStaff), Number(page || 1), Number(limit || 10), filters);
     }
     @Get("admin/:id")
     adminDetail(

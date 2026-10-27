@@ -47,12 +47,14 @@ export function matchesTourSearch(tour: TourLike, searchTerm: string) {
 
   return (
     tour.name?.toLowerCase().includes(normalizedSearch) ||
-    tour.code?.toLowerCase().includes(normalizedSearch)
+    tour.code?.toLowerCase().includes(normalizedSearch) ||
+    tour.summary?.toLowerCase().includes(normalizedSearch)
   );
 }
 
 export function matchesTourTypeFilter(tour: TourLike, filterType: string) {
-  return filterType === "all" || tour.tour_type === filterType;
+  const type = (tour.tour_type || "domestic").toLowerCase();
+  return filterType === "all" || type === filterType || (filterType === "outbound" && type === "cross_border");
 }
 
 export function matchesTourStatusFilter(tour: TourLike, filterType: string) {

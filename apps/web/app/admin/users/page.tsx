@@ -101,11 +101,11 @@ export default function AdminUsersPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+    <div className="space-y-4">
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Quản lý Người dùng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-xl font-bold leading-tight text-slate-900">Quản lý Người dùng</h1>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
             Quản lý tài khoản khách hàng và nhân viên hệ thống.
           </p>
         </div>

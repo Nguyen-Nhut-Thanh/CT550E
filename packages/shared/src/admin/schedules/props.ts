@@ -48,13 +48,14 @@ export type ScheduleTablePanelProps = {
     onDelete: (scheduleId: number) => void;
     onToggleStatus: (scheduleId: number, currentStatus: number, bookedCount: number) => void;
     onPageChange: (page: number) => void;
+    pendingIds?: number[];
 };
 export type TourListPanelProps = {
     loading: boolean;
     tours: ScheduleOverviewTour[];
     selectedTourId: number | null;
     searchTerm: string;
-    tourStatusFilter: string;
+    tourTypeFilter: string;
     currentPage: number;
     totalPages: number;
     totalItems: number;

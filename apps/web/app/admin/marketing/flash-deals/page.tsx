@@ -1,217 +1,79 @@
 "use client";
 
-import { FlashDealModal } from "@/components/admin/flash-deals/FlashDealModal";
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
-import { AdminStatusBadge } from "@/components/common/AdminStatusBadge";
-import { AdminTable } from "@/components/common/AdminTable";
-import { getAdminFlashDeals, saveAdminFlashDeal } from "@/lib/admin/flash-deals/api";
-import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm, filterFlashDealSchedules, previewFlashDealPrice } from "@/lib/admin/flash-deals/forms";
-import { useToast } from "@/lib/notifications/useToast";
-import { formatVND } from "@/lib/utils/currency";
-import { Calendar, Zap } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FlashDealForm, FlashDealSchedule } from "shared";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlashDealModal } from '@/components/admin/flash-deals/FlashDealModal';
+import { FlashDealPageHeader } from '@/components/admin/flash-deals/FlashDealPageHeader';
+import { FlashDealFilters } from '@/components/admin/flash-deals/FlashDealFilters';
+import { FlashDealTable } from '@/components/admin/flash-deals/FlashDealTable';
+import { deleteAdminFlashDeal, getAdminFlashDeals, saveAdminFlashDeal } from '@/lib/admin/flash-deals/api';
+import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm } from '@/lib/admin/flash-deals/forms';
+import { DEFAULT_FLASH_DEAL_FILTERS, filterManagedFlashDeals, getFlashDealOverview } from '@/lib/admin/flash-deals/management';
+import { useToast } from '@/lib/notifications/useToast';
+import { confirmAction } from '@/lib/utils/confirm';
+import type { FlashDealForm, FlashDealSchedule } from 'shared';
 
 export default function AdminFlashDealsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [failure, setFailure] = useState('');
   const [schedules, setSchedules] = useState<FlashDealSchedule[]>([]);
+  const [filters, setFilters] = useState({ ...DEFAULT_FLASH_DEAL_FILTERS });
+  const [draftFilters, setDraftFilters] = useState({ ...DEFAULT_FLASH_DEAL_FILTERS });
+  const [page, setPage] = useState(1);
+  const [now, setNow] = useState(Date.now);
   const [showModal, setShowModal] = useState(false);
   const [currentSchedule, setCurrentSchedule] = useState<FlashDealSchedule | null>(null);
   const [form, setForm] = useState<FlashDealForm>(createDefaultFlashDealForm);
   const { success, error: showError } = useToast();
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setFailure('');
+    try { setSchedules(await getAdminFlashDeals()); setNow(Date.now()); }
+    catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Không thể tải danh sách flash deal.'); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
 
-    try {
-      setSchedules(await getAdminFlashDeals());
-    } catch {
-      showError("Lỗi tải danh sách lịch trình");
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
+  const filteredSchedules = useMemo(() => filterManagedFlashDeals(schedules, filters, now), [schedules, filters, now]);
+  const overview = useMemo(() => getFlashDealOverview(schedules, now), [schedules, now]);
+  const destinations = useMemo(() => {
+    const unique = new Map<number, string>();
+    schedules.forEach(schedule => schedule.tours?.tour_destinations?.forEach(({ locations }) => unique.set(locations.location_id, locations.name)));
+    return [...unique].map(([id, label]) => ({ value: String(id), label })).sort((left, right) => left.label.localeCompare(right.label, 'vi'));
+  }, [schedules]);
+  const filterActive = Object.entries(draftFilters).some(([key, value]) => value !== DEFAULT_FLASH_DEAL_FILTERS[key as keyof typeof DEFAULT_FLASH_DEAL_FILTERS]) || Object.entries(filters).some(([key, value]) => value !== DEFAULT_FLASH_DEAL_FILTERS[key as keyof typeof DEFAULT_FLASH_DEAL_FILTERS]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const filteredSchedules = useMemo(
-    () => filterFlashDealSchedules(schedules, searchTerm),
-    [schedules, searchTerm],
-  );
-
-  const openDealModal = (schedule: FlashDealSchedule) => {
-    setCurrentSchedule(schedule);
-    setForm(buildFlashDealForm(schedule));
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setCurrentSchedule(null);
-    setForm(createDefaultFlashDealForm());
-  };
-
+  const openDealModal = (schedule: FlashDealSchedule) => { setCurrentSchedule(schedule); setForm(buildFlashDealForm(schedule)); setShowModal(true); };
+  const closeModal = () => { setShowModal(false); setCurrentSchedule(null); setForm(createDefaultFlashDealForm()); };
   const handleSaveDeal = async () => {
-    if (!currentSchedule) {
-      showError("Không tìm thấy lịch trình để áp dụng deal");
-      return;
+    if (!currentSchedule) return;
+    if (!Number.isFinite(form.discount_value) || form.discount_value <= 0 || (form.discount_type === 'percentage' ? form.discount_value > 100 : form.discount_value > Number(currentSchedule.price))) {
+      showError('Mức giảm cần lớn hơn 0 và không vượt quá giá gốc hoặc 100%.'); return;
     }
-
-    if (form.discount_value <= 0) {
-      showError("Vui lòng nhập mức giảm giá hợp lệ");
-      return;
-    }
-
     setSaving(true);
-
     try {
-      const existingDeal = currentSchedule.flash_deals;
-      const url = existingDeal
-        ? `/admin/marketing/flash-deals/${existingDeal.deal_id}`
-        : "/admin/marketing/flash-deals";
-      const method = existingDeal ? "PATCH" : "POST";
-
-      await saveAdminFlashDeal(
-        url,
-        method,
-        buildFlashDealPayload(currentSchedule, form),
-      );
-      success("Đã cập nhật flash deal");
-      closeModal();
-      void loadData();
-    } catch {
-      showError("Lỗi kết nối");
-    } finally {
-      setSaving(false);
-    }
+      const deal = currentSchedule.flash_deals;
+      await saveAdminFlashDeal(deal ? `/admin/marketing/flash-deals/${deal.deal_id}` : '/admin/marketing/flash-deals', deal ? 'PATCH' : 'POST', buildFlashDealPayload(currentSchedule, form));
+      success(deal ? 'Đã cập nhật flash deal' : 'Đã tạo flash deal'); closeModal(); void loadData();
+    } catch (cause) { showError(cause instanceof Error ? cause.message : 'Không thể lưu flash deal.'); }
+    finally { setSaving(false); }
+  };
+  const handleDelete = async (schedule: FlashDealSchedule) => {
+    const deal = schedule.flash_deals;
+    if (!deal || !confirmAction(`Xóa flash deal của tour “${schedule.tours?.name || 'đã chọn'}”?`)) return;
+    setDeleting(true);
+    try { await deleteAdminFlashDeal(deal.deal_id); success('Đã xóa flash deal'); void loadData(); }
+    catch (cause) { showError(cause instanceof Error ? cause.message : 'Không thể xóa flash deal.'); }
+    finally { setDeleting(false); }
   };
 
-  const columns = [
-    {
-      header: "Tour & lịch trình",
-      render: (schedule: FlashDealSchedule) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="rounded border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase leading-none tracking-widest text-blue-600">
-              {schedule.tours?.code}
-            </span>
-            <span className="line-clamp-1 font-bold text-slate-900">
-              {schedule.tours?.name}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-tighter text-slate-400">
-            <Calendar size={12} />
-            Khởi hành: {new Date(schedule.start_date).toLocaleDateString("vi-VN")}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Chỗ trống",
-      align: "center" as const,
-      render: (schedule: FlashDealSchedule) => (
-        <span className="font-bold text-slate-700">
-          {schedule.quota - (schedule._count?.bookings || 0)} / {schedule.quota}
-        </span>
-      ),
-    },
-    {
-      header: "Giá gốc",
-      align: "right" as const,
-      render: (schedule: FlashDealSchedule) => (
-        <span className="text-xs font-medium italic text-slate-400 line-through">
-          {formatVND(schedule.price)}
-        </span>
-      ),
-    },
-    {
-      header: "Ưu đãi",
-      align: "center" as const,
-      render: (schedule: FlashDealSchedule) =>
-        schedule.flash_deals ? (
-          <AdminStatusBadge tone="warning" icon={<Zap size={10} fill="currentColor" />}>
-            {schedule.flash_deals.discount_type === "percentage"
-              ? `-${schedule.flash_deals.discount_value}%`
-              : `-${formatVND(schedule.flash_deals.discount_value)}`}
-          </AdminStatusBadge>
-        ) : (
-          <span className="text-[10px] font-bold uppercase tracking-widest italic text-slate-300">
-            Chưa có
-          </span>
-        ),
-    },
-    {
-      header: "Giá deal",
-      align: "right" as const,
-      render: (schedule: FlashDealSchedule) => (
-        <span className="text-sm font-black text-blue-600">
-          {schedule.flash_deals
-            ? formatVND(
-                previewFlashDealPrice(
-                  Number(schedule.price),
-                  schedule.flash_deals.discount_type,
-                  Number(schedule.flash_deals.discount_value),
-                ),
-              )
-            : "-"}
-        </span>
-      ),
-    },
-    {
-      header: "Thao tác",
-      align: "right" as const,
-      render: (schedule: FlashDealSchedule) => (
-        <button
-          onClick={() => openDealModal(schedule)}
-          className={`rounded-xl border px-4 py-2 text-xs font-semibold shadow-sm transition-all ${
-            schedule.flash_deals
-              ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              : "border-blue-600 bg-blue-600 text-white shadow-blue-100 hover:bg-blue-700"
-          }`}
-        >
-          {schedule.flash_deals ? "Sửa deal" : "Bật deal"}
-        </button>
-      ),
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Flash Deals Giờ Chót"
-        description="Danh sách các lịch khởi hành sắp tới để áp dụng ưu đãi giá hời."
-      />
-
-      <AdminSearchInput
-        value={searchTerm}
-        onChange={setSearchTerm}
-        placeholder="Tìm tên tour hoặc mã tour..."
-      />
-
-      <AdminTable
-        items={filteredSchedules}
-        columns={columns}
-        loading={loading}
-        rowKey={(schedule) => schedule.tour_schedule_id}
-        pageSize={10}
-        itemLabel="flash deal"
-        emptyMessage="Không tìm thấy lịch khởi hành nào"
-      />
-
-      <FlashDealModal
-        open={showModal}
-        saving={saving}
-        schedule={currentSchedule}
-        form={form}
-        onClose={closeModal}
-        onChange={(updater) => setForm((current) => updater(current))}
-        onSave={handleSaveDeal}
-      />
-    </div>
-  );
+  return <div className="ui-flash-deal-management-page flex flex-col gap-[18px] min-w-0 text-[#12234c] [&_:is(button,_input,_a):focus-visible]:[outline:2px_solid_#3b82f6] [&_:is(button,_input,_a):focus-visible]:outline-offset-[3px] admin-max-650:gap-[14px]">
+    <FlashDealPageHeader overview={overview} loading={loading} />
+    <FlashDealFilters value={draftFilters} onChange={setDraftFilters} onApply={() => { setFilters({ ...draftFilters }); setPage(1); }} onReset={() => { setDraftFilters({ ...DEFAULT_FLASH_DEAL_FILTERS }); setFilters({ ...DEFAULT_FLASH_DEAL_FILTERS }); setPage(1); }} destinations={destinations} count={filteredSchedules.length} active={filterActive} />
+    {failure && <div role="alert" className="ui-flash-deal-management-error flex justify-between gap-[12px] [border:1px_solid_#fecdd3] rounded-[12px] [background:#fff1f3] p-[14px_16px] text-[#ba3550] text-[13px] [&_button]:underline [&_button]:font-[650]"><span>{failure}</span><button type="button" onClick={loadData}>Thử lại</button></div>}
+    <FlashDealTable items={filteredSchedules} loading={loading} busy={saving || deleting} now={now} page={page} onPageChange={setPage} onEdit={openDealModal} onDelete={schedule => { void handleDelete(schedule); }} />
+    <FlashDealModal open={showModal} saving={saving} schedule={currentSchedule} form={form} onClose={closeModal} onChange={updater => setForm(current => updater(current))} onSave={handleSaveDeal} />
+  </div>;
 }

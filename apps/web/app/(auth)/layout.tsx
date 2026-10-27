@@ -30,5 +30,7 @@ export default function AuthLayout({
     return content;
   }
 
-  return <GoogleOAuthProvider clientId={clientId}>{content}</GoogleOAuthProvider>;
+  return (
+    <GoogleOAuthProvider clientId={clientId}>{content}</GoogleOAuthProvider>
+  );
 }

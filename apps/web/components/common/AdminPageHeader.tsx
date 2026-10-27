@@ -6,10 +6,10 @@ import type { AdminPageHeaderProps } from 'shared';
 /** Hiển thị tiêu đề, mô tả và các nút thao tác của trang quản trị. */
 export function AdminPageHeader({ title, description, actions, primaryAction }: AdminPageHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-        {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
+        <h1 className="text-xl font-bold leading-tight text-slate-900">{title}</h1>
+        {description && <p className="text-xs leading-relaxed text-slate-500 mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center gap-2">
         {actions}

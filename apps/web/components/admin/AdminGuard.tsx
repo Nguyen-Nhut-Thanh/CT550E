@@ -4,7 +4,7 @@ import { getAdminMe } from "@/lib/admin/auth/api";
 import { Home, Loader2, LogIn, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { GuardCache, GuardStatus } from 'shared';
+import type { GuardCache, GuardStatus } from "shared";
 
 const AUTH_STATUS_KEY = "admin_auth_status";
 const AUTH_MESSAGE_KEY = "admin_auth_message";

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
 @import "tailwindcss";
 @source "../components/admin";
+@source "../components/common";
 @source "./admin";
 
 .font-handwriting {
@@ -24,7 +25,7 @@
   padding-right: 4px;
 }
 
-.dashboard-kpi > .flex > div:last-child {
+.dashboard-kpi>.flex>div:last-child {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -32,7 +33,7 @@
   font-size: 10px;
 }
 
-.dashboard-kpi-copy > p:first-child {
+.dashboard-kpi-copy>p:first-child {
   padding-right: 48px;
 }
 
@@ -162,11 +163,9 @@ h6 {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.05) 0%,
-    rgba(0, 0, 0, 0.65) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.65) 100%);
   transition: 0.7s ease;
   z-index: 1;
 }
@@ -188,24 +187,29 @@ h6 {
 .slide .hero-banner-item:nth-child(1)::before,
 .slide .hero-banner-item:nth-child(2)::before {
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       rgba(0, 0, 0, 0.65) 0%,
       rgba(0, 0, 0, 0.2) 55%,
-      rgba(0, 0, 0, 0.1) 100%
-    ),
-    linear-gradient(
-      180deg,
+      rgba(0, 0, 0, 0.1) 100%),
+    linear-gradient(180deg,
       rgba(0, 0, 0, 0.2) 0%,
       transparent 30%,
-      rgba(0, 0, 0, 0.3) 100%
-    );
+      rgba(0, 0, 0, 0.3) 100%);
 }
 
 /* Vị trí ngang của các thumbnail phụ (desktop) */
-.slide .hero-banner-item:nth-child(3) { left: calc(50% + 50px); }
-.slide .hero-banner-item:nth-child(4) { left: calc(50% + 248px); }
-.slide .hero-banner-item:nth-child(5) { left: calc(50% + 446px); }
+.slide .hero-banner-item:nth-child(3) {
+  left: calc(50% + 50px);
+}
+
+.slide .hero-banner-item:nth-child(4) {
+  left: calc(50% + 248px);
+}
+
+.slide .hero-banner-item:nth-child(5) {
+  left: calc(50% + 446px);
+}
+
 .slide .hero-banner-item:nth-child(n + 6) {
   left: calc(50% + 644px);
   opacity: 0;
@@ -227,9 +231,17 @@ h6 {
   opacity: 0;
 }
 
-.animate-hero-content .hero-title  { animation-delay: 0.15s; }
-.animate-hero-content .hero-desc   { animation-delay: 0.3s; }
-.animate-hero-content .hero-action { animation-delay: 0.45s; }
+.animate-hero-content .hero-title {
+  animation-delay: 0.15s;
+}
+
+.animate-hero-content .hero-desc {
+  animation-delay: 0.3s;
+}
+
+.animate-hero-content .hero-action {
+  animation-delay: 0.45s;
+}
 
 @keyframes fadeInText {
   from {
@@ -237,6 +249,7 @@ h6 {
     transform: translateY(40px);
     filter: blur(5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -246,10 +259,21 @@ h6 {
 
 /* ── HeroBanner responsive ── */
 @media (max-width: 991px) {
-  .slide .hero-banner-item:nth-child(3) { left: 24px; }
-  .slide .hero-banner-item:nth-child(4) { left: 222px; }
-  .slide .hero-banner-item:nth-child(5) { left: 420px; }
-  .slide .hero-banner-item:nth-child(n + 6) { left: 618px; }
+  .slide .hero-banner-item:nth-child(3) {
+    left: 24px;
+  }
+
+  .slide .hero-banner-item:nth-child(4) {
+    left: 222px;
+  }
+
+  .slide .hero-banner-item:nth-child(5) {
+    left: 420px;
+  }
+
+  .slide .hero-banner-item:nth-child(n + 6) {
+    left: 618px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -259,8 +283,39 @@ h6 {
     top: calc(100% - 310px);
   }
 
-  .slide .hero-banner-item:nth-child(3) { left: 16px; }
-  .slide .hero-banner-item:nth-child(4) { left: 162px; }
-  .slide .hero-banner-item:nth-child(5) { left: 308px; }
+  .slide .hero-banner-item:nth-child(3) {
+    left: 16px;
+  }
+
+  .slide .hero-banner-item:nth-child(4) {
+    left: 162px;
+  }
+
+  .slide .hero-banner-item:nth-child(5) {
+    left: 308px;
+  }
 }
 
+
+/* Shared Tailwind variants preserve the existing inclusive admin breakpoints. */
+@custom-variant admin-short-desktop (@media (min-width:1024px) and (max-height:800px));
+@custom-variant admin-short-tablet (@media (min-width:800px) and (max-height:800px));
+@custom-variant admin-max-1400 (@media (max-width:1400px));
+@custom-variant admin-max-1250 (@media (max-width:1250px));
+@custom-variant admin-max-1100 (@media (max-width:1100px));
+@custom-variant admin-max-900 (@media (max-width:900px));
+@custom-variant admin-max-799 (@media (max-width:799px));
+@custom-variant admin-max-750 (@media (max-width:750px));
+@custom-variant admin-max-650 (@media (max-width:650px));
+@custom-variant admin-max-639 (@media (max-width:639px));
+@custom-variant admin-max-600 (@media (max-width:600px));
+@custom-variant admin-max-479 (@media (max-width:479px));
+
+@theme {
+  --animate-admin-shimmer: admin-shimmer 1.5s infinite;
+  @keyframes admin-shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+}

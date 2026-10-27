@@ -3,7 +3,14 @@
 import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 
 /** Hiển thị nội dung nổi cạnh ô nhập, tránh bị cắt bởi popup hoặc vùng có thanh cuộn. */
-export function Popover({ anchorRef, children, className = "", matchAnchorWidth = false, width = 260, align = "start" }: {
+export function Popover({
+  anchorRef,
+  children,
+  className = "",
+  matchAnchorWidth = false,
+  width = 260,
+  align = "start",
+}: {
   anchorRef: RefObject<HTMLElement | null>;
   children: ReactNode;
   className?: string;
@@ -23,7 +30,10 @@ export function Popover({ anchorRef, children, className = "", matchAnchorWidth 
       if (!anchor) return;
       const box = anchor.getBoundingClientRect();
       const padding = 8;
-      const panelWidth = Math.min(matchAnchorWidth ? box.width : width, window.innerWidth - padding * 2);
+      const panelWidth = Math.min(
+        matchAnchorWidth ? box.width : width,
+        window.innerWidth - padding * 2,
+      );
       panel.style.width = `${Math.max(0, panelWidth)}px`;
       const below = window.innerHeight - box.bottom - padding * 2;
       const above = box.top - padding * 2;
@@ -50,5 +60,14 @@ export function Popover({ anchorRef, children, className = "", matchAnchorWidth 
     };
   }, [anchorRef, matchAnchorWidth, width, align]);
 
-  return <div ref={ref} popover="manual" className={`fixed m-0 overflow-y-auto ${className}`} style={{ opacity: 0, inset: "auto" }}>{children}</div>;
+  return (
+    <div
+      ref={ref}
+      popover="manual"
+      className={`fixed m-0 overflow-y-auto ${className}`}
+      style={{ opacity: 0, inset: "auto" }}
+    >
+      {children}
+    </div>
+  );
 }

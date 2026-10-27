@@ -2,7 +2,18 @@
 
 import { FooterLink } from "@/components/common/FooterLink";
 
-import { BriefcaseBusiness, Compass, Heart, Info, Mail, MapPin, Phone, Plane, Send, ShieldCheck, } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Compass,
+  Heart,
+  Info,
+  Mail,
+  MapPin,
+  Phone,
+  Plane,
+  Send,
+  ShieldCheck,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

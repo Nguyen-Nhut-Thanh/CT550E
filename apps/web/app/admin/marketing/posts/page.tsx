@@ -1,7 +1,9 @@
 "use client";
 
+import CustomDropdown from "@/components/common/CustomDropdown";
+
 import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
-import { AdminIconActionButton } from "@/components/common/AdminIconActionButton";
+import { AdminRowActions } from "@/components/common/AdminRowActions";
 import { AdminPageHeader } from "@/components/common/AdminPageHeader";
 import { AdminSearchInput } from "@/components/common/AdminSearchInput";
 import { AdminTable } from "@/components/common/AdminTable";
@@ -19,6 +21,8 @@ export default function AdminPostsPage() {
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [categories, setCategories] = useState<PostCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState<PostCategoryDraft>(
     createDefaultPostCategoryDraft,
@@ -50,8 +54,8 @@ export default function AdminPostsPage() {
   }, [loadData]);
 
   const filteredPosts = useMemo(
-    () => posts.filter((post) => matchesPostSearch(post, searchTerm)),
-    [posts, searchTerm],
+    () => posts.filter((post) => matchesPostSearch(post, searchTerm) && (statusFilter === '' || post.status === Number(statusFilter)) && (!categoryFilter || post.category_id === Number(categoryFilter))),
+    [posts, searchTerm, statusFilter, categoryFilter],
   );
 
   const handleCreateCategory = async () => {
@@ -143,43 +147,36 @@ export default function AdminPostsPage() {
       header: "Thao tác",
       align: "right" as const,
       render: (post: PostItem) => (
-        <div className="flex items-center justify-end gap-2">
-          <AdminIconActionButton
-            href={`/blog/${post.slug}`}
-            target="_blank"
-            rel="noreferrer"
-            icon={<ExternalLink size={16} />}
-            title="Xem bài viết"
-          />
-          <AdminIconActionButton
-            onClick={() => router.push(`/admin/marketing/posts/${post.post_id}`)}
-            icon={<Edit size={16} />}
-            title="Chỉnh sửa"
-            tone="primary"
-          />
-          <AdminIconActionButton
-            onClick={() => handleDelete(post.post_id)}
-            icon={<Trash2 size={16} />}
-            title="Xóa"
-            tone="danger"
-          />
+        <div className="flex justify-end">
+          <AdminRowActions label={`Thao tác với ${post.title}`} actions={[
+            ...(post.status === 1 ? [{
+              label: 'Xem bài viết',
+              icon: <ExternalLink size={16} />,
+              onClick: () => { window.open(`/blog/${post.slug}`, '_blank', 'noopener,noreferrer'); },
+            }] : []),
+            { label: 'Chỉnh sửa bài viết', icon: <Edit size={16} />, href: `/admin/marketing/posts/${post.post_id}` },
+            { label: 'Xóa bài viết', icon: <Trash2 size={16} />, danger: true, onClick: () => { void handleDelete(post.post_id); } },
+          ]} />
         </div>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Quản lý Bài viết"
         description="Viết và quản lý các bài viết tin tức, cẩm nang du lịch."
         actions={
+          <div className="flex flex-wrap gap-2">
+          <button onClick={() => router.push('/admin/marketing/posts/layout')} className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700"><Settings2 size={18} /> Bố cục trang bài viết</button>
           <button
             onClick={() => setShowCategoryModal(true)}
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50"
           >
             <Settings2 size={18} /> Danh mục
           </button>
+          </div>
         }
         primaryAction={{
           label: "Viết bài mới",
@@ -188,6 +185,8 @@ export default function AdminPostsPage() {
         }}
       />
 
+      <div className="grid grid-cols-3 gap-3">{[{ name: 'Tất cả bài viết', value: posts.length }, { name: 'Đã xuất bản', value: posts.filter(post => post.status === 1).length }, { name: 'Bản nháp', value: posts.filter(post => post.status === 0).length }].map(item => <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">{item.name}</p><p className="mt-1 text-2xl font-bold text-slate-900">{item.value}</p></div>)}</div>
+      <div className="flex flex-wrap items-center gap-3"><CustomDropdown variant="compact" matchTriggerWidth selectedValue={statusFilter} onSelect={setStatusFilter} options={[{ value: '', label: 'Tất cả trạng thái' }, { value: '1', label: 'Đã xuất bản' }, { value: '0', label: 'Bản nháp' }]} /><CustomDropdown variant="compact" matchTriggerWidth selectedValue={categoryFilter} onSelect={setCategoryFilter} options={[{ value: '', label: 'Tất cả danh mục' }, ...categories.map(item => ({ value: String(item.category_id), label: item.name }))]} /><span className="text-xs text-slate-500">{filteredPosts.length} bài viết</span></div>
       <AdminSearchInput
         value={searchTerm}
         onChange={setSearchTerm}

@@ -1,4 +1,11 @@
-import { ArrowRight, Globe2, Heart, Leaf, ShieldCheck, Users, } from "lucide-react";
+import {
+  ArrowRight,
+  Globe2,
+  Heart,
+  Leaf,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -72,8 +79,12 @@ export default function AboutPage() {
             </h1>
 
             <p className="mt-4 max-w-[410px] text-[14px] leading-6 text-slate-700 sm:text-[15px]">
-              Chúng tôi là <strong className="font-extrabold text-[#0b2c3d]">JourniTrip</strong> – đơn vị chuyên cung cấp
-              các tour du lịch trong nước và quốc tế, mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn cho mọi
+              Chúng tôi là{" "}
+              <strong className="font-extrabold text-[#0b2c3d]">
+                JourniTrip
+              </strong>{" "}
+              – đơn vị chuyên cung cấp các tour du lịch trong nước và quốc tế,
+              mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn cho mọi
               hành trình của bạn.
             </p>
 
@@ -83,9 +94,25 @@ export default function AboutPage() {
                 <br />
                 cùng chúng tôi!
               </span>
-              <svg viewBox="0 0 72 42" className="h-11 w-[76px] text-[#08777c]" fill="none">
-                <path d="M2 29c16-19 35-18 51-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="5 5" />
-                <path d="m51 22 15-13-6 18-9-5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                viewBox="0 0 72 42"
+                className="h-11 w-[76px] text-[#08777c]"
+                fill="none"
+              >
+                <path
+                  d="M2 29c16-19 35-18 51-7"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeDasharray="5 5"
+                />
+                <path
+                  d="m51 22 15-13-6 18-9-5Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </div>
@@ -147,13 +174,15 @@ export default function AboutPage() {
 
             <div className="mt-5 space-y-4 text-[14px] leading-6 text-slate-600">
               <p>
-                JourniTrip được thành lập bởi những người trẻ yêu thích du lịch, luôn tin rằng: mỗi chuyến đi không chỉ
-                là điểm đến, mà còn là cơ hội để khám phá văn hóa, con người và chính bản thân mình.
+                JourniTrip được thành lập bởi những người trẻ yêu thích du lịch,
+                luôn tin rằng: mỗi chuyến đi không chỉ là điểm đến, mà còn là cơ
+                hội để khám phá văn hóa, con người và chính bản thân mình.
               </p>
               <p>
-                Với kinh nghiệm nhiều năm trong ngành du lịch, chúng tôi không ngừng nỗ lực để mang đến những hành trình
-                chất lượng, linh hoạt và phù hợp với mọi nhu cầu – từ những chuyến đi ngắn ngày đến hành trình khám phá
-                thế giới.
+                Với kinh nghiệm nhiều năm trong ngành du lịch, chúng tôi không
+                ngừng nỗ lực để mang đến những hành trình chất lượng, linh hoạt
+                và phù hợp với mọi nhu cầu – từ những chuyến đi ngắn ngày đến
+                hành trình khám phá thế giới.
               </p>
             </div>
 
@@ -167,7 +196,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      
+
       {/* STATS */}
       <section className="bg-white">
         <div className="mx-auto grid max-w-[1220px] items-stretch lg:grid-cols-[36%_64%]">
@@ -187,11 +216,16 @@ export default function AboutPage() {
             </h2>
             <div className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-4 sm:gap-y-0">
               {stats.map((stat, index) => (
-                <div key={stat.value} className={`px-4 ${index === 0 ? "sm:pl-0" : ""} sm:border-r sm:border-slate-200 sm:last:border-r-0`}>
+                <div
+                  key={stat.value}
+                  className={`px-4 ${index === 0 ? "sm:pl-0" : ""} sm:border-r sm:border-slate-200 sm:last:border-r-0`}
+                >
                   <div className="text-[24px] font-black leading-none tracking-[-0.03em] text-[#0b2c3d] sm:text-[27px]">
                     {stat.value}
                   </div>
-                  <p className="mt-2 whitespace-pre-line text-[11px] leading-[1.55] text-slate-600">{stat.label}</p>
+                  <p className="mt-2 whitespace-pre-line text-[11px] leading-[1.55] text-slate-600">
+                    {stat.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -213,12 +247,19 @@ export default function AboutPage() {
 
           <div className="mt-8 grid gap-y-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
             {values.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="px-5 text-center lg:border-r lg:border-[#d9ecef] lg:last:border-r-0">
+              <div
+                key={title}
+                className="px-5 text-center lg:border-r lg:border-[#d9ecef] lg:last:border-r-0"
+              >
                 <div className="mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#dff3f4] text-[#0c8d91]">
                   <Icon className="h-7 w-7 stroke-[1.7]" />
                 </div>
-                <h3 className="mt-4 text-[13px] font-extrabold text-[#0b2c3d]">{title}</h3>
-                <p className="mx-auto mt-2 max-w-[175px] text-[11px] leading-[1.7] text-slate-600">{desc}</p>
+                <h3 className="mt-4 text-[13px] font-extrabold text-[#0b2c3d]">
+                  {title}
+                </h3>
+                <p className="mx-auto mt-2 max-w-[175px] text-[11px] leading-[1.7] text-slate-600">
+                  {desc}
+                </p>
               </div>
             ))}
           </div>
@@ -238,15 +279,18 @@ export default function AboutPage() {
 
         <div className="relative z-10 mx-auto grid min-h-[260px] max-w-[1220px] items-center gap-8 px-5 py-10 sm:min-h-[285px] sm:px-8 lg:grid-cols-[1fr_0.75fr] lg:px-10">
           <div className="max-w-[500px]">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/85">HÃY CÙNG CHÚNG TÔI</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+              HÃY CÙNG CHÚNG TÔI
+            </p>
             <h2 className="mt-2 text-[28px] font-black leading-[1.12] tracking-[-0.03em] sm:text-[32px] lg:text-[34px]">
               Biến những ước mơ du lịch
               <br />
               thành hiện thực
             </h2>
             <p className="mt-3 max-w-[475px] text-[12px] leading-5 text-white/90 sm:text-[13px]">
-              Dù bạn muốn khám phá thiên nhiên, trải nghiệm văn hóa hay đơn giản là tìm một nơi để thư giãn – JourniTrip
-              luôn sẵn sàng đồng hành cùng bạn.
+              Dù bạn muốn khám phá thiên nhiên, trải nghiệm văn hóa hay đơn giản
+              là tìm một nơi để thư giãn – JourniTrip luôn sẵn sàng đồng hành
+              cùng bạn.
             </p>
             <Link
               href="/tours"

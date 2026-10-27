@@ -131,7 +131,7 @@ export default function AdminTourCreatePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-20">
+    <div className="mx-auto max-w-5xl space-y-4 pb-20">
       <AdminBackPageHeader
         title="Thêm Tour Mới"
         description="Khởi tạo hành trình du lịch mới cho khách hàng."

@@ -30,7 +30,9 @@ export function AccountOverviewTab({
 
         <div className="absolute left-[9%] top-5 select-none text-center text-white drop-shadow-md">
           <p className="-rotate-3 text-[27px] font-semibold italic leading-[1.05] [font-family:cursive]">
-            Collect moments<br />not things
+            Collect moments
+            <br />
+            not things
           </p>
           <div className="ml-40 mt-0 text-2xl">⌁✈</div>
         </div>

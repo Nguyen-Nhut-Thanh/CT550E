@@ -8,6 +8,7 @@ export type AdminBackPageHeaderProps = {
     actions?: ReactNode;
 };
 export type AdminDatePickerProps = {
+    variant?: "default" | "compact";
     label?: string;
     value: string;
     minDate?: string;
@@ -59,6 +60,8 @@ export type AdminPaginationProps = {
     totalItems: number;
     pageSize: number;
     itemLabel?: string;
+    variant?: "simple" | "numbered";
+    showSinglePage?: boolean;
     onPageChange: (page: number) => void;
 };
 export type AdminSearchInputProps = {

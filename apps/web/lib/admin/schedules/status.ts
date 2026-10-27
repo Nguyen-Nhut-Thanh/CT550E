@@ -1,7 +1,7 @@
 import type { ScheduleLike } from 'shared';
 
 export function getScheduleBookedCount(schedule: ScheduleLike) {
-  return schedule._count?.bookings || 0;
+  return schedule.booked_count ?? schedule._count?.bookings ?? 0;
 }
 
 export function isSchedulePast(schedule: ScheduleLike) {
@@ -36,6 +36,7 @@ export function matchesScheduleStatusFilter(
 
   if(filterType === "upcoming") return !past && schedule.status === 1;
   if(filterType === "past") return past;
+  if(filterType === "selling") return !past && !full && schedule.status === 1;
   if(filterType === "full") return full && !past;
   if(filterType === "hidden") return schedule.status === 0;
   return true;

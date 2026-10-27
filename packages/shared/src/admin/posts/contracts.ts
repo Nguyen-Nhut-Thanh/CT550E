@@ -1,3 +1,4 @@
+import type { ArticleDocument, CoverPosition } from '../../blog/blocks';
 export type PostCategoryPayload = {
     name: string;
     description?: string;
@@ -7,6 +8,10 @@ export type PostAdminQuery = {
     search?: string;
 };
 export type PostPayload = {
+    content_blocks?: ArticleDocument;
+    author_display_name?: string;
+    tags?: string[];
+    cover_position?: CoverPosition;
     title?: string;
     slug?: string;
     summary?: string;

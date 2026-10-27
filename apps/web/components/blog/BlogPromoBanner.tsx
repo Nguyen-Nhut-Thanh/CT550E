@@ -7,7 +7,7 @@ export function BlogPromoBanner() {
     <div className="relative min-h-[220px] w-full overflow-hidden rounded-3xl bg-slate-900 p-6 text-white shadow-md">
       <Image
         src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600"
-        alt="Khám phá thế giới cùng TravelGo"
+        alt="Khám phá thế giới cùng JourniTrip"
         fill
         className="object-cover opacity-75"
         sizes="360px"
@@ -17,7 +17,7 @@ export function BlogPromoBanner() {
       <div className="relative z-10 flex h-full flex-col justify-between space-y-4 pt-2">
         <div className="space-y-1.5">
           <h3 className="text-xl font-black leading-tight text-white sm:text-2xl">
-            Khám phá thế giới cùng TravelGo
+            Khám phá thế giới cùng JourniTrip
           </h3>
           <p className="text-xs font-medium text-white/90 sm:text-sm">
             Những hành trình tuyệt vời đang chờ bạn!

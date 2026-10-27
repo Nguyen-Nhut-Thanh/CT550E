@@ -3,6 +3,7 @@ import type { TourAdminPayload, TourListParams } from 'shared';
 import { requireFields } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries } from "./tour-input";
+import { getTourCountries, tourCountrySelect } from './tour-list';
 @Injectable()
 export class ToursAdminService {
     constructor(private readonly prisma: PrismaService) { }
@@ -86,6 +87,13 @@ export class ToursAdminService {
                 status: true,
                 updated_at: true,
                 duration_nights: true,
+                summary: true,
+                tour_destinations: {
+                    select: { locations: { select: tourCountrySelect } },
+                },
+                tour_schedules: {
+                    select: { _count: { select: { bookings: { where: { status: { not: 'cancelled' } } } } } },
+                },
                 tour_images: {
                     orderBy: { sort_order: 'asc' },
                     take: 1,
@@ -95,7 +103,13 @@ export class ToursAdminService {
                 },
             },
         });
-        return { items };
+        return {
+            items: items.map(({ tour_destinations, tour_schedules, ...tour }) => ({
+                ...tour,
+                countries: getTourCountries(tour_destinations),
+                booked_count: tour_schedules.reduce((count, schedule) => count + schedule._count.bookings, 0),
+            })),
+        };
     }
     async create(body: TourAdminPayload) {
         requireFields(body as Record<string, unknown>, [

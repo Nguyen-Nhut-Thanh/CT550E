@@ -101,10 +101,10 @@ export default function AdminBannerDetailPage() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold leading-tight text-slate-900">
               {isNew ? "Thêm Banner Mới" : "Chỉnh sửa Banner"}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-xs leading-relaxed text-slate-500 mt-0.5">
               Cấu hình nội dung và hình ảnh hiển thị trên trang chủ.
             </p>
           </div>

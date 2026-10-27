@@ -190,8 +190,8 @@ export default function AdminFeaturedLocationsPage() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold uppercase text-slate-900">Địa điểm yêu thích</h1>
-            <p className="mt-0.5 text-sm text-slate-500">
+            <h1 className="text-xl font-bold leading-tight text-slate-900">Địa điểm yêu thích</h1>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
               Quản lý các điểm đến nổi bật hiển thị tại trang chủ.
             </p>
           </div>

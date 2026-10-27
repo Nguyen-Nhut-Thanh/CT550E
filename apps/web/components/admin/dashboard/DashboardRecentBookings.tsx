@@ -4,9 +4,11 @@ import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { ArrowRight, Briefcase, Calendar, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import type { DashboardRecentBookingsProps } from 'shared';
+import type { DashboardRecentBookingsProps } from "shared";
 
-export function DashboardRecentBookings({ bookings }: DashboardRecentBookingsProps) {
+export function DashboardRecentBookings({
+  bookings,
+}: DashboardRecentBookingsProps) {
   const statusConfig: Record<
     string,
     { label: string; badge: string; dot: string }
@@ -137,7 +139,10 @@ export function DashboardRecentBookings({ bookings }: DashboardRecentBookingsPro
                   {/* Tour title & departure */}
                   <td className="px-3 py-3">
                     <div className="min-w-0 max-w-[240px]">
-                      <p className="font-bold text-slate-800 truncate" title={booking.tour}>
+                      <p
+                        className="font-bold text-slate-800 truncate"
+                        title={booking.tour}
+                      >
                         {booking.tour}
                       </p>
                       <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
@@ -185,7 +190,10 @@ export function DashboardRecentBookings({ bookings }: DashboardRecentBookingsPro
 
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                <td
+                  colSpan={7}
+                  className="px-6 py-12 text-center text-slate-400"
+                >
                   <Briefcase className="mx-auto mb-2 h-8 w-8 text-slate-300" />
                   Chưa có đơn đặt tour nào phát sinh gần đây.
                 </td>

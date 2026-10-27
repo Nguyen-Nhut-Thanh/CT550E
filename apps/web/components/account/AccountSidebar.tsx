@@ -1,25 +1,72 @@
 "use client";
 
 import { removeToken } from "@/lib/auth/session";
+import { useAdminAccess } from "@/lib/account/useAdminAccess";
 import { NavigationPending } from "@/components/common/NavigationPending";
-import { Bell, CalendarDays, Heart, LogOut, Settings, Star, User, Wallet, } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Star,
+  User,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { AccountSidebarProps } from "shared";
 
 const menuItems = [
   { id: "overview", label: "Trang cá nhân", icon: User, href: "/account" },
-  { id: "favorites", label: "Tour yêu thích", icon: Heart, href: "/account/favorites" },
-  { id: "bookings", label: "Lịch sử đặt tour", icon: CalendarDays, href: "/account/bookings" },
-  { id: "reviews", label: "Bài đánh giá", icon: Star, href: "/account/reviews" },
-  { id: "wallet", label: "Ví & thanh toán", icon: Wallet, href: "/account/wallet" },
-  { id: "notifications", label: "Thông báo", icon: Bell, badge: true, href: "/account/notifications" },
-  { id: "settings", label: "Cài đặt", icon: Settings, href: "/account/settings" },
+  {
+    id: "favorites",
+    label: "Tour yêu thích",
+    icon: Heart,
+    href: "/account/favorites",
+  },
+  {
+    id: "bookings",
+    label: "Lịch sử đặt tour",
+    icon: CalendarDays,
+    href: "/account/bookings",
+  },
+  {
+    id: "reviews",
+    label: "Bài đánh giá",
+    icon: Star,
+    href: "/account/reviews",
+  },
+  {
+    id: "wallet",
+    label: "Ví & thanh toán",
+    icon: Wallet,
+    href: "/account/wallet",
+  },
+  {
+    id: "notifications",
+    label: "Thông báo",
+    icon: Bell,
+    badge: true,
+    href: "/account/notifications",
+  },
+  {
+    id: "settings",
+    label: "Cài đặt",
+    icon: Settings,
+    href: "/account/settings",
+  },
 ];
 
-export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps) {
+export function AccountSidebar({
+  activeTab,
+  setActiveTab,
+  user,
+}: AccountSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const canAccessAdmin = useAdminAccess(user);
 
   const handleLogout = () => {
     removeToken();
@@ -72,12 +119,27 @@ export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps)
                   className={isActive ? "text-[#1766c2]" : "text-slate-500"}
                 />
                 <span className="flex-1">{item.label}</span>
-                {item.badge && <span className="h-2 w-2 rounded-full bg-rose-500" />}
+                {item.badge && (
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                )}
                 <NavigationPending />
               </Link>
             );
           })}
         </div>
+
+        {canAccessAdmin && (
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <Link
+              href="/admin"
+              className="flex w-full items-center gap-3.5 rounded-xl bg-blue-50 px-4 py-3.5 text-sm font-semibold text-[#1766c2] transition-colors hover:bg-blue-100"
+            >
+              <LayoutDashboard size={20} strokeWidth={1.9} />
+              <span>Trang quản trị</span>
+              <NavigationPending />
+            </Link>
+          </div>
+        )}
 
         <button
           type="button"
@@ -92,9 +154,15 @@ export function AccountSidebar({ activeTab, setActiveTab }: AccountSidebarProps)
       <div className="mt-auto overflow-hidden pt-10">
         <div className="relative h-[265px] bg-gradient-to-b from-white via-[#edf8ff] to-[#c9ebff]">
           <div className="absolute left-7 top-2 -rotate-6 select-none text-[32px] font-semibold italic leading-[1.05] text-[#0f4d88] [font-family:cursive]">
-            Good<br />Vibes<br />Only
+            Good
+            <br />
+            Vibes
+            <br />
+            Only
           </div>
-          <div className="absolute left-[120px] top-[65px] text-3xl text-[#1766c2]">⌁✈</div>
+          <div className="absolute left-[120px] top-[65px] text-3xl text-[#1766c2]">
+            ⌁✈
+          </div>
           <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(160deg,transparent_0_32%,#8dc7ed_33%_52%,#65acd8_53%_70%,#3b90c7_71%_100%)] opacity-90" />
           <div className="absolute inset-x-0 bottom-0 h-[72px] bg-gradient-to-b from-[#5fc3ea]/20 to-[#4aa8d3]/80" />
         </div>

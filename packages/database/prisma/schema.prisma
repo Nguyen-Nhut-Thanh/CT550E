@@ -16,6 +16,12 @@ model post_categories {
 }
 
 model posts {
+  content_blocks Json?
+  author_display_name String? @db.VarChar(150)
+  published_at DateTime? @db.Timestamp(6)
+  tags String[] @default([])
+  cover_position String @default("center") @db.VarChar(10)
+  placements blog_placements[]
   post_id     Int      @id @default(autoincrement())
   category_id Int
   author_id   Int?
@@ -32,6 +38,12 @@ model posts {
   author       accounts?       @relation(fields: [author_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
   users        users?          @relation(fields: [usersUser_id], references: [user_id])
   usersUser_id Int?
+}
+
+model blog_placements {
+  slot Int @id
+  post_id Int @unique
+  post posts @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

@@ -245,7 +245,7 @@ export default function AdminLocationDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-20">
+    <div className="mx-auto max-w-5xl space-y-4 pb-20">
       <AdminBackPageHeader
         title={isNew ? "Thêm địa điểm mới" : "Cập nhật địa điểm"}
         onBack={() => router.push("/admin/locations")}

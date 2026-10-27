@@ -15,8 +15,13 @@ export type AdminBooking = {
     infant_unit_price?: number | string;
     discount_amount?: number | string;
     tour_schedules?: {
+        tour_schedule_id?: number;
+        tour_id?: number;
+        code?: string | null;
         start_date?: string | null;
         tours?: {
+            tour_id?: number;
+            tour_images?: Array<{ image_url: string }>;
             name?: string | null;
             code?: string | null;
             departure_locations?: {
@@ -45,3 +50,15 @@ export type AdminBooking = {
         discount_type: string;
     } | null;
 };
+
+export type AdminBookingFilters = {
+    search?: string;
+    status?: string;
+    tourId?: string;
+    scheduleId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    dateField?: string;
+};
+export type AdminBookingStats = { total: number; paid: number; pending: number; cancelled: number; cancelRequested: number };
+export type AdminBookingListResponse = { items: AdminBooking[]; total: number; totalPages: number; page: number; limit: number; stats?: AdminBookingStats | null };

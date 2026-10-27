@@ -37,7 +37,7 @@ export function DashboardHeader({
   ];
 
   return (
-    <div className="dashboard-welcome relative isolate flex min-h-36 flex-col gap-5 overflow-hidden rounded-2xl border border-blue-100 p-5 shadow-sm 2xl:flex-row 2xl:items-start 2xl:justify-between">
+    <div className="dashboard-welcome relative isolate flex flex-col gap-3 overflow-hidden rounded-2xl border border-blue-100 px-4 py-3 shadow-sm 2xl:flex-row 2xl:items-center 2xl:justify-between">
       <div>
         <div className="hidden">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
@@ -52,10 +52,10 @@ export function DashboardHeader({
           </span>
         </div>
 
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 md:text-3xl">
+        <h1 className="text-xl font-black tracking-tight text-slate-900 md:text-2xl">
           {getGreeting()}, <span className="text-blue-600">Quản trị viên</span> <span className="inline-block text-2xl">👋</span>
         </h1>
-        <p className="mt-1 text-sm font-medium text-slate-500">
+        <p className="mt-0.5 text-xs leading-relaxed font-medium text-slate-500">
           Theo dõi tổng quan doanh thu, lịch trình tour và đơn đặt tour trong thời gian thực.
         </p>
       </div>

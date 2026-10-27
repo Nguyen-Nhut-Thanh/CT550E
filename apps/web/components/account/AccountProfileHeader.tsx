@@ -34,8 +34,12 @@ export function AccountProfileHeader({ user }: AccountProfileHeaderProps) {
           <BadgeCheck className="h-5 w-5 fill-[#1766c2] text-white" />
         </div>
 
-        <p className="mt-1 truncate text-[13px] font-medium text-slate-500">{email}</p>
-        <p className="mt-2 text-[13px] font-medium italic text-slate-500">{bio}</p>
+        <p className="mt-1 truncate text-[13px] font-medium text-slate-500">
+          {email}
+        </p>
+        <p className="mt-2 text-[13px] font-medium italic text-slate-500">
+          {bio}
+        </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-500">
           <span className="inline-flex items-center gap-1.5">

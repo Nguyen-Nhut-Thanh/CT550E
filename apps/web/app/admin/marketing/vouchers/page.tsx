@@ -7,8 +7,18 @@ import { AdminSearchInput } from "@/components/common/AdminSearchInput";
 import { AdminStatusBadge } from "@/components/common/AdminStatusBadge";
 import { AdminTable } from "@/components/common/AdminTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { createAdminVoucher, deleteAdminVoucher, getAdminVouchers } from "@/lib/admin/vouchers/api";
-import { buildVoucherForm, buildVoucherPayload, createDefaultVoucherForm, filterVouchers, getVoucherDateParts } from "@/lib/admin/vouchers/forms";
+import {
+  createAdminVoucher,
+  deleteAdminVoucher,
+  getAdminVouchers,
+} from "@/lib/admin/vouchers/api";
+import {
+  buildVoucherForm,
+  buildVoucherPayload,
+  createDefaultVoucherForm,
+  filterVouchers,
+  getVoucherDateParts,
+} from "@/lib/admin/vouchers/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { formatVND } from "@/lib/utils/currency";
 import { isVoucherLocked } from "@/lib/vouchers/status";
@@ -24,14 +34,14 @@ export default function AdminVouchersPage() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
-  const [pendingDeleteVoucher, setPendingDeleteVoucher] = useState<Voucher | null>(null);
+  const [pendingDeleteVoucher, setPendingDeleteVoucher] =
+    useState<Voucher | null>(null);
   const [form, setForm] = useState<VoucherForm>(createDefaultVoucherForm);
   const { success, error: showError } = useToast();
 
   const isReadonlyVoucher = !!editingVoucher;
-  const { minDate, minTime, startDateValue, startTimeValue } = getVoucherDateParts(
-    form.start_date,
-  );
+  const { minDate, minTime, startDateValue, startTimeValue } =
+    getVoucherDateParts(form.start_date);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -72,7 +82,12 @@ export default function AdminVouchersPage() {
       return;
     }
 
-    if (!form.code || !form.discount_value || !form.duration_hours || !form.usage_limit) {
+    if (
+      !form.code ||
+      !form.discount_value ||
+      !form.duration_hours ||
+      !form.usage_limit
+    ) {
       showError("Vui lòng nhập đầy đủ mã, mức giảm, thời hạn và số lượng");
       return;
     }
@@ -118,12 +133,18 @@ export default function AdminVouchersPage() {
 
   const handleStartDateChange = (datePart: string) => {
     const timePart = startTimeValue || minTime;
-    setForm((current) => ({ ...current, start_date: `${datePart}T${timePart}` }));
+    setForm((current) => ({
+      ...current,
+      start_date: `${datePart}T${timePart}`,
+    }));
   };
 
   const handleStartTimeChange = (timePart: string) => {
     const datePart = startDateValue || minDate;
-    setForm((current) => ({ ...current, start_date: `${datePart}T${timePart}` }));
+    setForm((current) => ({
+      ...current,
+      start_date: `${datePart}T${timePart}`,
+    }));
   };
 
   const columns = [
@@ -188,11 +209,14 @@ export default function AdminVouchersPage() {
   ];
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-4">
       <AdminPageHeader
         title="Mã giảm giá (Vouchers)"
         description="Quản lý các chương trình ưu đãi nhập mã khuyến mãi."
-        primaryAction={{ label: "Tạo mã mới", onClick: () => openVoucherModal() }}
+        primaryAction={{
+          label: "Tạo mã mới",
+          onClick: () => openVoucherModal(),
+        }}
       />
 
       <AdminSearchInput
@@ -201,7 +225,10 @@ export default function AdminVouchersPage() {
         placeholder="Tìm theo mã voucher..."
       />
 
-      <VoucherStatusFilterTabs value={statusFilter} onChange={setStatusFilter} />
+      <VoucherStatusFilterTabs
+        value={statusFilter}
+        onChange={setStatusFilter}
+      />
 
       <AdminTable
         items={filteredVouchers}

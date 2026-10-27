@@ -1,16 +1,7 @@
 import type { ItineraryFormItem, SchedulePriceItem } from "./forms";
-export type ScheduleOverviewTour = {
-    tour_id: number;
-    code: string;
-    name: string;
-    duration_days: number;
-    base_price: string | number;
-    status: number;
-};
-export type ScheduleTablePanelTour = {
-    tour_id: number;
-    status: number;
-};
+import type { ToursPageTour } from "../tours/models";
+export type ScheduleOverviewTour = ToursPageTour;
+export type ScheduleTablePanelTour = ScheduleOverviewTour;
 export type ScheduleManagementItem = Omit<AdminSchedule, 'price' | '_count'> & {
     price: number;
     _count?: {
@@ -79,6 +70,7 @@ export type ScheduleEditorScheduleDetailResponse = Omit<ScheduleDetailResponse, 
     }> | null;
 };
 export type ScheduleLike = Pick<AdminSchedule, 'start_date' | 'quota' | 'status'> & {
+    booked_count?: number;
     _count?: {
         bookings?: number;
     };
@@ -90,6 +82,7 @@ export type AdminSchedule = {
     price: string | number;
     quota: number;
     status: number;
+    booked_count?: number;
     _count?: {
         bookings: number;
     };

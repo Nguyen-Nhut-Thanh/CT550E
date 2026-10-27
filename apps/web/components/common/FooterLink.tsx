@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { NavigationPending } from "./NavigationPending";
 
-const linkClass = "group relative w-fit text-[14px] font-medium text-slate-500 transition-colors duration-300 hover:text-blue-600";
+const linkClass =
+  "group relative w-fit text-[14px] font-medium text-slate-500 transition-colors duration-300 hover:text-blue-600";
 
 /** Hiển thị liên kết trong chân trang với hiệu ứng khi rê chuột. */
 export function FooterLink({

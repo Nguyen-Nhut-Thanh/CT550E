@@ -6,7 +6,9 @@ export function AccountWalletTab() {
   return (
     <div className="space-y-6 pt-2">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">Ví & Thanh toán</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+          Ví & Thanh toán
+        </h1>
         <p className="mt-1 text-sm font-medium text-slate-500">
           Quản lý phương thức thanh toán và ưu đãi
         </p>
@@ -19,8 +21,12 @@ export function AccountWalletTab() {
               <Wallet className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Số dư ví JourniTrip</h3>
-              <p className="text-xs text-slate-500">Sử dụng thanh toán các dịch vụ du lịch</p>
+              <h3 className="text-base font-extrabold text-slate-900">
+                Số dư ví JourniTrip
+              </h3>
+              <p className="text-xs text-slate-500">
+                Sử dụng thanh toán các dịch vụ du lịch
+              </p>
             </div>
           </div>
           <p className="text-3xl font-black text-[#1766c2]">0đ</p>
@@ -32,7 +38,9 @@ export function AccountWalletTab() {
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Phương thức lưu trữ</h3>
+              <h3 className="text-base font-extrabold text-slate-900">
+                Phương thức lưu trữ
+              </h3>
               <p className="text-xs text-slate-500">Thẻ và ví liên kết</p>
             </div>
           </div>

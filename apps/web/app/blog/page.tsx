@@ -1,49 +1,27 @@
-"use client";
+import { BlogPostLayout } from "@/components/blog/BlogPostLayout";
+import { publicFetch } from "@/lib/http/publicFetch";
+import type { BlogPost } from "@/lib/blog/types";
 
-import { BlogArticleContent } from "@/components/blog/BlogArticleContent";
-import { BlogFeaturedPosts } from "@/components/blog/BlogFeaturedPosts";
-import { BlogHero } from "@/components/blog/BlogHero";
-import { BlogNewsletter } from "@/components/blog/BlogNewsletter";
-import { BlogPromoBanner } from "@/components/blog/BlogPromoBanner";
-import { BlogRelatedPosts } from "@/components/blog/BlogRelatedPosts";
-import { BlogSocialLinks } from "@/components/blog/BlogSocialLinks";
-
-export default function BlogPage() {
+export const dynamic = "force-dynamic";
+export default async function BlogPage() {
+  const slots = await publicFetch<(BlogPost | null)[]>("/posts/layout", {
+    cache: "no-store",
+  });
+  const post = slots[0];
+  if (!post)
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-24 text-center">
+        <h1 className="text-3xl font-bold">Cẩm nang du lịch</h1>
+        <p className="mt-4 text-slate-500">
+          Các bài viết đang được chuẩn bị. Hẹn gặp bạn sớm!
+        </p>
+      </main>
+    );
   return (
-    <main className="min-h-screen bg-[#f8fafc] pb-20">
-      {/* Top Full-Width Hero Section */}
-      <BlogHero
-        category="Việt Nam"
-        title="Vịnh Hạ Long – Kỳ quan thiên nhiên giữa lòng Quảng Ninh"
-        summary="Khám phá vẻ đẹp hùng vĩ của vịnh Hạ Long – điểm đến không thể bỏ lỡ trong hành trình du lịch Việt Nam."
-        date="12/04/2025"
-        author="Nguyễn Minh Anh"
-        readTime="5 phút đọc"
-        heroImage="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600"
-      />
-
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-12">
-        {/* Main 2-Column Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
-          {/* Left Column: Article Content */}
-          <div className="min-w-0">
-            <BlogArticleContent />
-          </div>
-
-          {/* Right Column: Sticky Sidebar Widgets */}
-          <aside className="sticky top-24 space-y-6">
-            <BlogFeaturedPosts />
-            <BlogPromoBanner />
-            <BlogNewsletter />
-            <BlogSocialLinks />
-          </aside>
-        </div>
-
-        {/* Bottom Section: Có thể bạn sẽ thích */}
-        <div className="pt-4 border-t border-slate-200">
-          <BlogRelatedPosts />
-        </div>
-      </div>
-    </main>
+    <BlogPostLayout
+      post={post}
+      featured={slots.slice(1, 5).filter((item): item is BlogPost => !!item)}
+      related={slots.slice(5, 9).filter((item): item is BlogPost => !!item)}
+    />
   );
 }

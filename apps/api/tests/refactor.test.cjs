@@ -8,6 +8,93 @@ const expectedRoutes = require('./fixtures/routes.json');
 
 afterEach(() => mock.restoreAll());
 
+test('booking controller forwards search and filters instead of returning an unfiltered page', async () => {
+  const { BookingsAdminController } = require('../dist/modules/bookings/bookings-admin.controller');
+  const filters = { search: '#BK00011', status: 'confirmed', tourId: '13', scheduleId: '13' };
+  const controller = new BookingsAdminController({ listAdminBookings: async (...args) => {
+    assert.deepEqual(args, [true, 2, 10, filters]);
+    return { items: [], total: 0 };
+  } });
+  assert.deepEqual(await controller.adminList({ user: { isStaff: true } }, '2', '10', filters), { items: [], total: 0 });
+  const { buildBookingListWhere } = require('../dist/modules/bookings/booking-list');
+  assert.equal(buildBookingListWhere(filters).status, 'confirmed');
+});
+
+test('API dev compiles sources before starting the server and does not spawn duplicate servers', async () => {
+  const { EventEmitter } = require('node:events');
+  const childProcess = require('node:child_process');
+  const { syncBuiltinESMExports } = require('node:module');
+  const signals = ['SIGINT', 'SIGTERM'];
+  const listeners = signals.map(signal => new Set(process.listeners(signal)));
+  const spawned = [];
+  const spawnMock = mock.method(childProcess, 'spawn', (executable, args, options) => {
+    const child = new EventEmitter(); child.stdout = new EventEmitter(); child.stderr = new EventEmitter(); child.kill = () => { child.killed = true; };
+    spawned.push({ executable, args, options, child }); return child;
+  });
+  syncBuiltinESMExports();
+  try {
+    await import('../dev.mjs');
+    assert.equal(spawned.length, 1);
+    assert.ok(spawned[0].args.includes('--watch'));
+    spawned[0].child.stdout.emit('data', Buffer.from('Found 0 er'));
+    assert.equal(spawned.length, 1);
+    spawned[0].child.stdout.emit('data', Buffer.from('rors. Watching for file changes.\n'));
+    assert.equal(spawned.length, 2);
+    assert.deepEqual(spawned[1].args, ['--watch-path=dist', 'dist/main.js']);
+    spawned[0].child.stdout.emit('data', Buffer.from('Found 0 errors. Watching for file changes.\n'));
+    assert.equal(spawned.length, 2);
+    spawned[1].child.emit('exit', 0);
+    assert.equal(spawned[0].child.killed, true);
+  } finally {
+    signals.forEach((signal, index) => process.listeners(signal).filter(listener => !listeners[index].has(listener)).forEach(listener => process.removeListener(signal, listener)));
+    spawnMock.mock.restore(); syncBuiltinESMExports();
+  }
+});
+
+test('booking filters combine tour, departure and booking dates before pagination', async () => {
+  const { buildBookingListWhere } = require('../dist/modules/bookings/booking-list');
+  const { BookingsAdminService } = require('../dist/modules/bookings/bookings-admin.service');
+  const filters = { search: '#BK00012', tourId: '3', scheduleId: '9', status: 'paid', dateField: 'departure', dateFrom: '2026-10-23', dateTo: '2026-10-24' };
+  const where = buildBookingListWhere(filters);
+  assert.equal(where.status, 'paid');
+  assert.equal(where.tour_schedule_id, 9);
+  assert.equal(where.tour_schedules.tour_id, 3);
+  assert.equal(where.tour_schedules.start_date.gte.toISOString(), '2026-10-22T17:00:00.000Z');
+  assert.equal(where.tour_schedules.start_date.lt.toISOString(), '2026-10-24T17:00:00.000Z');
+  assert.deepEqual(where.OR.at(-1), { booking_id: 12 });
+  const created = buildBookingListWhere({ dateFrom: '2026-10-23', dateField: 'created' });
+  assert.equal(created.created_at.gte.toISOString(), '2026-10-22T17:00:00.000Z');
+  assert.equal(created.tour_schedules, undefined);
+  for (const invalid of [{ dateFrom: '2026-02-30' }, { dateFrom: '2026-10-24', dateTo: '2026-10-23' }, { tourId: '-1' }, { status: 'unknown' }]) assert.throws(() => buildBookingListWhere(invalid));
+  const service = new BookingsAdminService({ bookings: {
+    findMany: async query => { assert.deepEqual(query.where, where); assert.equal(query.skip, 10); assert.equal(query.take, 10); return [{ booking_id: 12 }]; },
+    count: async query => { assert.deepEqual(query.where, where); return 15; },
+    groupBy: async () => [{ status: 'paid', _count: { _all: 18 } }, { status: 'pending', _count: { _all: 7 } }, { status: 'cancel_requested', _count: { _all: 2 } }],
+  } }, {});
+  const result = await service.listAdminBookings(true, 2, 10, filters);
+  assert.equal(result.total, 15); assert.equal(result.totalPages, 2);
+  assert.deepEqual(result.stats, { total: 27, paid: 18, pending: 7, cancelled: 0, cancelRequested: 2 });
+  await assert.rejects(service.listAdminBookings(false), error => error.getStatus() === 403);
+  await assert.rejects(service.listAdminBookings(true, 0), error => error.getStatus() === 400);
+});
+
+test('tour list resolves countries through location ancestors and counts only non-cancelled bookings', async () => {
+  const { getTourCountries } = require('../dist/modules/tours/tour-list');
+  const { ToursAdminService } = require('../dist/modules/tours/tours-admin.service');
+  const country = { location_id: 1, name: 'Việt Nam', level_id: 3 };
+  const province = { location_id: 2, name: 'Quảng Ninh', level_id: 5, locations: { location_id: 3, name: 'Miền Bắc', level_id: 4, locations: country } };
+  const destinations = [{ locations: { location_id: 4, name: 'Hạ Long', level_id: 6, locations: province } }, { locations: province }, { locations: { location_id: 9, name: 'Chưa phân loại', level_id: 5 } }];
+  assert.deepEqual(getTourCountries(destinations), [{ location_id: 1, name: 'Việt Nam' }]);
+  assert.deepEqual(getTourCountries([]), []);
+  const service = new ToursAdminService({ tours: { findMany: async query => {
+    assert.deepEqual(query.select.tour_schedules.select._count.select.bookings.where, { status: { not: 'cancelled' } });
+    assert.equal(query.where.status, 1);
+    return [{ tour_id: 1, tour_destinations: destinations, tour_schedules: [{ _count: { bookings: 2 } }, { _count: { bookings: 3 } }] }, { tour_id: 2, tour_destinations: [], tour_schedules: [] }];
+  } } });
+  const { items } = await service.list({ status: '1' });
+  assert.deepEqual(items, [{ tour_id: 1, countries: [{ location_id: 1, name: 'Việt Nam' }], booked_count: 5 }, { tour_id: 2, countries: [], booked_count: 0 }]);
+});
+
 test('environment loads before bootstrap evaluates module decorators', async () => {
   const Module = require('node:module');
   const entry = require.resolve('../dist/main');

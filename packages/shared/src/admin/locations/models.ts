@@ -9,6 +9,11 @@ export type LocationItem = {
     name: string;
     slug: string;
     level_id: number;
+    parent_id?: number | null;
+    note?: string | null;
+    updated_at?: string | null;
+    featured_image?: string | null;
+    location_images?: AdminLocationImage[];
     is_featured?: boolean;
     geographic_levels?: {
         name?: string | null;

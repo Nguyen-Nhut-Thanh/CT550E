@@ -1,7 +1,18 @@
 "use client";
 
 import { formatVND } from "@/lib/utils/currency";
-import { ArrowDownRight, ArrowUpRight, Briefcase, CheckCircle2, Clock, Compass, CreditCard, DollarSign, Percent, Users, } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  Compass,
+  CreditCard,
+  DollarSign,
+  Percent,
+  Users,
+} from "lucide-react";
 import type { DashboardKpiCardsProps, DashboardTimeRange } from "shared";
 
 export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
@@ -127,8 +138,12 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
             <Clock size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400">Chờ thanh toán</p>
-            <p className="text-base font-bold text-slate-900">{kpis.pendingBookings} đơn</p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Chờ thanh toán
+            </p>
+            <p className="text-base font-bold text-slate-900">
+              {kpis.pendingBookings} đơn
+            </p>
           </div>
         </div>
 
@@ -137,8 +152,12 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
             <CheckCircle2 size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400">Đã xác nhận</p>
-            <p className="text-base font-bold text-slate-900">{kpis.confirmedBookings} đơn</p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Đã xác nhận
+            </p>
+            <p className="text-base font-bold text-slate-900">
+              {kpis.confirmedBookings} đơn
+            </p>
           </div>
         </div>
 
@@ -147,8 +166,12 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
             <CreditCard size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400">Đã thanh toán</p>
-            <p className="text-base font-bold text-slate-900">{kpis.paidBookings} đơn</p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Đã thanh toán
+            </p>
+            <p className="text-base font-bold text-slate-900">
+              {kpis.paidBookings} đơn
+            </p>
           </div>
         </div>
 
@@ -157,8 +180,12 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
             <Percent size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400">Tỷ lệ thành công</p>
-            <p className="text-base font-bold text-emerald-600">{kpis.conversionRate}%</p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Tỷ lệ thành công
+            </p>
+            <p className="text-base font-bold text-emerald-600">
+              {kpis.conversionRate}%
+            </p>
           </div>
         </div>
       </div>

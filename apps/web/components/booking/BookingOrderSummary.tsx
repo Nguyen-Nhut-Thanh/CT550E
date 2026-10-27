@@ -2,7 +2,7 @@ import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { BadgeCheck, Loader2, Luggage } from "lucide-react";
-import type { BookingOrderSummaryProps } from 'shared';
+import type { BookingOrderSummaryProps } from "shared";
 
 export function BookingOrderSummary({
   tour,
@@ -19,10 +19,28 @@ export function BookingOrderSummary({
     <aside className="relative lg:sticky lg:top-24 lg:self-start">
       <div>
         <div className="flex flex-col rounded-2xl border border-blue-100/60 bg-white p-4 shadow-[0_4px_24px_rgba(37,99,235,0.04)]">
-          <div className="flex items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><Luggage className="h-5 w-5 text-blue-700" />Tóm tắt đơn hàng</h2><a href="#booking-passengers" className="text-xs font-semibold text-blue-600">Chỉnh sửa</a></div>
-          <ImageWithFallback src={tour.tour_images?.[0]?.image_url || undefined} fallback="/images/account/cover-images.png" alt={tour.name} className="mt-3 h-20 w-full shrink-0 rounded-xl object-cover" />
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <Luggage className="h-5 w-5 text-blue-700" />
+              Tóm tắt đơn hàng
+            </h2>
+            <a
+              href="#booking-passengers"
+              className="text-xs font-semibold text-blue-600"
+            >
+              Chỉnh sửa
+            </a>
+          </div>
+          <ImageWithFallback
+            src={tour.tour_images?.[0]?.image_url || undefined}
+            fallback="/images/account/cover-images.png"
+            alt={tour.name}
+            className="mt-3 h-20 w-full shrink-0 rounded-xl object-cover"
+          />
           <p className="mt-2 text-sm font-bold text-slate-900">{tour.name}</p>
-          <p className="mt-1 text-xs text-slate-500">{tour.duration_days} ngày {tour.duration_nights} đêm</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {tour.duration_days} ngày {tour.duration_nights} đêm
+          </p>
           <div className="mt-3 space-y-2.5 [&_span:first-child]:font-medium">
             <div className="flex items-start justify-between gap-4">
               <span className="text-sm text-slate-500">Khởi hành</span>
@@ -73,7 +91,12 @@ export function BookingOrderSummary({
                   {formatVND(pricing.subtotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-slate-600"><span>Dịch vụ bổ sung</span><span className="font-semibold text-[#ef3b2d]">{formatVND(pricing.servicesTotal)}</span></div>
+              <div className="flex items-center justify-between text-slate-600">
+                <span>Dịch vụ bổ sung</span>
+                <span className="font-semibold text-[#ef3b2d]">
+                  {formatVND(pricing.servicesTotal)}
+                </span>
+              </div>
               <div className="flex items-center justify-between text-emerald-600">
                 <span>Giảm giá</span>
                 <span className="font-semibold">
@@ -84,7 +107,10 @@ export function BookingOrderSummary({
           </div>
 
           <div className="mt-3 flex shrink-0 items-center justify-between gap-2 rounded-xl bg-blue-50 p-2.5 text-sm font-bold text-blue-900">
-            <span>Tổng thanh toán</span><span className="text-lg text-blue-700">{formatVND(pricing.total)}</span>
+            <span>Tổng thanh toán</span>
+            <span className="text-lg text-blue-700">
+              {formatVND(pricing.total)}
+            </span>
           </div>
           <button
             type="button"

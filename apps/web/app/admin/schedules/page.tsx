@@ -1,19 +1,31 @@
 "use client";
 
 import { ScheduleEmptyState } from "@/components/admin/schedules/ScheduleEmptyState";
+import { SchedulePageHeader } from "@/components/admin/schedules/SchedulePageHeader";
+
 import { ScheduleTablePanel } from "@/components/admin/schedules/ScheduleTablePanel";
 import { TourListPanel } from "@/components/admin/schedules/TourListPanel";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { deleteAdminSchedule, getTourSchedules, updateAdminScheduleStatus } from "@/lib/admin/schedules/api";
+import {
+  deleteAdminSchedule,
+  getTourSchedules,
+  updateAdminScheduleStatus,
+} from "@/lib/admin/schedules/api";
 import { matchesScheduleStatusFilter } from "@/lib/admin/schedules/status";
 import { getAdminTours } from "@/lib/admin/tours/api";
-import { matchesTourSearch, matchesTourStatusFilter } from "@/lib/admin/tours/filters";
+import {
+  matchesTourSearch,
+  matchesTourTypeFilter,
+} from "@/lib/admin/tours/filters";
 import { useToast } from "@/lib/notifications/useToast";
 import { confirmAction } from "@/lib/utils/confirm";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import type { AdminSchedule as Schedule, ScheduleOverviewTour as Tour } from "shared";
+import { useEffect, useRef, useState } from "react";
+import type {
+  AdminSchedule as Schedule,
+  ScheduleOverviewTour as Tour,
+} from "shared";
 
 export default function AdminSchedulesPage() {
   const pageSize = 10;
@@ -25,46 +37,76 @@ export default function AdminSchedulesPage() {
   const [loadingTours, setLoadingTours] = useState(true);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [tourStatusFilter, setTourStatusFilter] = useState<string>("all");
-  const [scheduleStatusFilter, setScheduleStatusFilter] = useState<string>("upcoming");
+  const [tourTypeFilter, setTourTypeFilter] = useState<string>("all");
+  const [tourError, setTourError] = useState(false);
+  const [scheduleError, setScheduleError] = useState(false);
+  const [tourRetry, setTourRetry] = useState(0);
+  const [scheduleRetry, setScheduleRetry] = useState(0);
+  const [pendingIds, setPendingIds] = useState<number[]>([]);
+  const mutations = useRef(new Set<number>());
+  const [scheduleStatusFilter, setScheduleStatusFilter] =
+    useState<string>("upcoming");
   const [tourPage, setTourPage] = useState(1);
   const [schedulePage, setSchedulePage] = useState(1);
-  const [pendingDeleteScheduleId, setPendingDeleteScheduleId] = useState<number | null>(null);
+  const [pendingDeleteScheduleId, setPendingDeleteScheduleId] = useState<
+    number | null
+  >(null);
 
   const selectedTour = tours.find((tour) => tour.tour_id === selectedTourId);
 
   useEffect(() => {
+    let active = true;
     async function loadTours() {
       setLoadingTours(true);
+      setTourError(false);
       try {
         const data = await getAdminTours<Tour>();
+        if (!active) return;
         setTours(data.items || []);
+        setSelectedTourId(
+          (current) => current ?? data.items?.[0]?.tour_id ?? null,
+        );
       } catch {
+        if (active) setTourError(true);
       } finally {
-        setLoadingTours(false);
+        if (active) setLoadingTours(false);
       }
     }
 
     void loadTours();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [tourRetry]);
 
   useEffect(() => {
     if (!selectedTourId) return;
+    let active = true;
 
     async function loadSchedules() {
       setLoadingSchedules(true);
+      setScheduleError(false);
+      setSchedules([]);
       try {
-        setSchedules(await getTourSchedules<Schedule>(selectedTourId!));
+        const items = await getTourSchedules<Schedule>(selectedTourId!);
+        if (active) setSchedules(items);
       } catch {
+        if (active) setScheduleError(true);
       } finally {
-        setLoadingSchedules(false);
+        if (active) setLoadingSchedules(false);
       }
     }
 
     void loadSchedules();
-  }, [selectedTourId]);
+    return () => {
+      active = false;
+    };
+  }, [selectedTourId, scheduleRetry]);
 
   const handleDeleteSchedule = async (scheduleId: number) => {
+    if (mutations.current.has(scheduleId)) return;
+    mutations.current.add(scheduleId);
+    setPendingIds([...mutations.current]);
     try {
       await deleteAdminSchedule(scheduleId);
       success("Đã xóa lịch khởi hành thành công");
@@ -74,8 +116,13 @@ export default function AdminSchedulesPage() {
       setPendingDeleteScheduleId(null);
     } catch (requestError) {
       showError(
-        requestError instanceof Error ? requestError.message : "Lỗi khi xóa dữ liệu",
+        requestError instanceof Error
+          ? requestError.message
+          : "Lỗi khi xóa dữ liệu",
       );
+    } finally {
+      mutations.current.delete(scheduleId);
+      setPendingIds([...mutations.current]);
     }
   };
 
@@ -84,9 +131,12 @@ export default function AdminSchedulesPage() {
     currentStatus: number,
     bookedCount: number,
   ) => {
+    if (mutations.current.has(scheduleId)) return;
     if (currentStatus === 1 && bookedCount > 0) {
       const confirmHide = confirmAction(
-        `CẢNH BÁO: Đợt khởi hành này đã có ${bookedCount} khách đặt chỗ.\n\n` +
+        `CẢNH BÁO: Đợt khởi hành này đã có ${bookedCount} khách đặt chỗ.
+
+` +
           "Việc ẩn sẽ khiến tour không còn hiển thị trên website cho người mới.\n\n" +
           "Bạn có chắc chắn muốn ngừng nhận khách cho đợt này không?",
       );
@@ -94,6 +144,8 @@ export default function AdminSchedulesPage() {
     }
 
     const nextStatus = currentStatus === 1 ? 0 : 1;
+    mutations.current.add(scheduleId);
+    setPendingIds([...mutations.current]);
     try {
       await updateAdminScheduleStatus(scheduleId, nextStatus);
       success(`Đã ${nextStatus === 1 ? "hiện" : "ẩn"} lịch khởi hành`);
@@ -110,20 +162,29 @@ export default function AdminSchedulesPage() {
           ? requestError.message
           : "Lỗi khi cập nhật trạng thái",
       );
+    } finally {
+      mutations.current.delete(scheduleId);
+      setPendingIds([...mutations.current]);
     }
   };
 
   const filteredTours = tours.filter(
     (tour) =>
       matchesTourSearch(tour, searchTerm) &&
-      matchesTourStatusFilter(tour, tourStatusFilter),
+      matchesTourTypeFilter(tour, tourTypeFilter),
   );
   const filteredSchedules = schedules.filter((schedule) =>
     matchesScheduleStatusFilter(schedule, scheduleStatusFilter),
   );
 
-  const tourTotalPages = Math.max(1, Math.ceil(filteredTours.length / pageSize));
-  const scheduleTotalPages = Math.max(1, Math.ceil(filteredSchedules.length / pageSize));
+  const tourTotalPages = Math.max(
+    1,
+    Math.ceil(filteredTours.length / pageSize),
+  );
+  const scheduleTotalPages = Math.max(
+    1,
+    Math.ceil(filteredSchedules.length / pageSize),
+  );
   const paginatedTours = filteredTours.slice(
     (tourPage - 1) * pageSize,
     tourPage * pageSize,
@@ -135,7 +196,7 @@ export default function AdminSchedulesPage() {
 
   useEffect(() => {
     setTourPage(1);
-  }, [searchTerm, tourStatusFilter]);
+  }, [searchTerm, tourTypeFilter]);
 
   useEffect(() => {
     setSchedulePage(1);
@@ -154,38 +215,64 @@ export default function AdminSchedulesPage() {
   }, [schedulePage, scheduleTotalPages]);
 
   return (
-    <div className="relative mx-auto max-w-[1600px] space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-2xl font-bold leading-tight text-slate-900">
-            Quản lý lịch khởi hành
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Thiết lập ngày đi, giá và dịch vụ chi tiết cho từng hành trình.
-          </p>
-        </div>
-      </div>
+    <div className="ui-schedule-overview-page flex flex-col gap-[12px] min-w-0 text-[#112246] [&_:is(a,_button,_input):focus-visible]:[outline:2px_solid_#3b82f6] [&_:is(a,_button,_input):focus-visible]:outline-offset-[3px] min-[901px]:h-full min-[901px]:min-h-0 admin-max-600:gap-[14px]">
+      <SchedulePageHeader />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-        <TourListPanel
-          loading={loadingTours}
-          tours={paginatedTours}
-          selectedTourId={selectedTourId}
-          searchTerm={searchTerm}
-          tourStatusFilter={tourStatusFilter}
-          currentPage={tourPage}
-          totalPages={tourTotalPages}
-          totalItems={filteredTours.length}
-          pageSize={pageSize}
-          onSearchChange={setSearchTerm}
-          onFilterChange={setTourStatusFilter}
-          onSelectTour={setSelectedTourId}
-          onPageChange={setTourPage}
-        />
+      <div className="ui-schedule-overview-columns grid grid-cols-[minmax(320px,_.9fr)_minmax(0,_1.65fr)] gap-[16px] [align-items:start] min-[901px]:[flex:1] min-[901px]:min-h-0 min-[901px]:items-stretch min-[1600px]:grid-cols-[minmax(400px,_.95fr)_minmax(0,_1.55fr)] admin-max-1100:grid-cols-[minmax(280px,_.85fr)_minmax(0,_1.3fr)] admin-max-900:grid-cols-[1fr]">
+        {tourError ? (
+          <div
+            role="alert"
+            className="ui-schedule-overview-error flex items-center justify-between gap-[12px] [background:#fff3f4] text-[#bd3751] p-[16px] rounded-[12px] text-[13px] [&_button]:font-bold [&_button]:underline"
+          >
+            Không thể tải danh sách tour.
+            <button
+              type="button"
+              onClick={() => setTourRetry((current) => current + 1)}
+            >
+              Tải lại
+            </button>
+          </div>
+        ) : (
+          <TourListPanel
+            loading={loadingTours}
+            tours={paginatedTours}
+            selectedTourId={selectedTourId}
+            searchTerm={searchTerm}
+            tourTypeFilter={tourTypeFilter}
+            currentPage={tourPage}
+            totalPages={tourTotalPages}
+            totalItems={filteredTours.length}
+            pageSize={pageSize}
+            onSearchChange={setSearchTerm}
+            onFilterChange={setTourTypeFilter}
+            onSelectTour={(id) => {
+              if (id !== selectedTourId) {
+                setSchedules([]);
+                setScheduleError(false);
+                setLoadingSchedules(true);
+                setSelectedTourId(id);
+              }
+            }}
+            onPageChange={setTourPage}
+          />
+        )}
 
-        <div className="lg:col-span-8">
+        <div className="ui-schedule-overview-scheduleColumn min-w-0 min-[901px]:flex min-[901px]:min-h-0">
           {!selectedTourId ? (
             <ScheduleEmptyState />
+          ) : scheduleError ? (
+            <div
+              role="alert"
+              className="ui-schedule-overview-error flex items-center justify-between gap-[12px] [background:#fff3f4] text-[#bd3751] p-[16px] rounded-[12px] text-[13px] [&_button]:font-bold [&_button]:underline"
+            >
+              Không thể tải lịch khởi hành.
+              <button
+                type="button"
+                onClick={() => setScheduleRetry((current) => current + 1)}
+              >
+                Tải lại
+              </button>
+            </div>
           ) : (
             <ScheduleTablePanel
               selectedTourId={selectedTourId}
@@ -198,11 +285,16 @@ export default function AdminSchedulesPage() {
               totalItems={filteredSchedules.length}
               pageSize={pageSize}
               onFilterChange={setScheduleStatusFilter}
-              onCreate={() => router.push(`/admin/schedules/new?tourId=${selectedTourId}`)}
-              onEdit={(scheduleId) => router.push(`/admin/schedules/${scheduleId}`)}
+              onCreate={() =>
+                router.push(`/admin/schedules/new?tourId=${selectedTourId}`)
+              }
+              onEdit={(scheduleId) =>
+                router.push(`/admin/schedules/${scheduleId}`)
+              }
               onDelete={setPendingDeleteScheduleId}
               onToggleStatus={handleToggleStatus}
               onPageChange={setSchedulePage}
+              pendingIds={pendingIds}
             />
           )}
         </div>
@@ -213,14 +305,25 @@ export default function AdminSchedulesPage() {
         icon={<AlertTriangle size={32} />}
         title="Xóa lịch khởi hành?"
         description="Đợt khởi hành này sẽ bị xóa nếu chưa có khách đặt. Hành động này không thể hoàn tác."
-        confirmLabel="Xác nhận xóa"
+        confirmLabel={
+          pendingDeleteScheduleId !== null &&
+          pendingIds.includes(pendingDeleteScheduleId)
+            ? "Đang xóa..."
+            : "Xác nhận xóa"
+        }
         cancelLabel="Hủy bỏ"
         onConfirm={() => {
           if (pendingDeleteScheduleId !== null) {
             void handleDeleteSchedule(pendingDeleteScheduleId);
           }
         }}
-        onCancel={() => setPendingDeleteScheduleId(null)}
+        onCancel={() => {
+          if (
+            pendingDeleteScheduleId === null ||
+            !pendingIds.includes(pendingDeleteScheduleId)
+          )
+            setPendingDeleteScheduleId(null);
+        }}
       />
     </div>
   );

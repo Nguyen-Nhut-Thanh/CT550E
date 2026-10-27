@@ -3,15 +3,34 @@
 import { PostEditorContent } from "@/components/admin/posts/PostEditorContent";
 import { PostEditorSidebar } from "@/components/admin/posts/PostEditorSidebar";
 import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import { getAdminPostCategories, getAdminPosts, saveAdminPost } from "@/lib/admin/posts/api";
-import { buildPostEditorForm, createDefaultPostEditorForm } from "@/lib/admin/posts/forms";
+import {
+  createAdminPostCategory,
+  getAdminPostCategories,
+  saveAdminPost,
+} from "@/lib/admin/posts/api";
+import { requestAdminJson } from "@/lib/http/requestAdminJson";
+import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
+import {
+  buildPostEditorForm,
+  createDefaultPostEditorForm,
+} from "@/lib/admin/posts/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import type { PostCategory, PostEditorForm } from "shared";
+import type {
+  PostCategory,
+  PostCategoryDraft,
+  PostEditorForm,
+  PostItem,
+} from "shared";
+import { articleText, hasArticleContent } from "shared";
 
-export default function AdminPostEditorPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AdminPostEditorPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const isNew = id === "new";
   const router = useRouter();
@@ -19,35 +38,107 @@ export default function AdminPostEditorPage({ params }: { params: Promise<{ id: 
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [showCategories, setShowCategories] = useState(false);
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState<PostCategoryDraft>({
+    name: "",
+    description: "",
+  });
+  const [savedForm, setSavedForm] = useState("");
   const [categories, setCategories] = useState<PostCategory[]>([]);
   const [form, setForm] = useState<PostEditorForm>(createDefaultPostEditorForm);
 
   useEffect(() => {
     const init = async () => {
-      setCategories(await getAdminPostCategories());
-
-      if (!isNew) {
-        try {
-          const posts = await getAdminPosts();
-          const post = posts.find((item) => item.post_id === Number(id));
-
-          if (post) {
-            setForm(buildPostEditorForm(post));
-          }
-        } catch {
-          showError("Không thể tải thông tin bài viết");
-        } finally {
-          setLoading(false);
-        }
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [items, post] = await Promise.all([
+          getAdminPostCategories(),
+          isNew
+            ? Promise.resolve(null)
+            : requestAdminJson<PostItem>(
+                `/admin/posts/${id}`,
+                { method: "GET" },
+                "Không thể tải bài viết.",
+              ),
+        ]);
+        setCategories(items);
+        const initial = post
+          ? buildPostEditorForm(post)
+          : createDefaultPostEditorForm();
+        setForm(initial);
+        setSavedForm(JSON.stringify(initial));
+      } catch (cause) {
+        setLoadError(
+          cause instanceof Error
+            ? cause.message
+            : "Không thể tải thông tin bài viết.",
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
     void init();
   }, [id, isNew, showError]);
 
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (savedForm && savedForm !== JSON.stringify(form)) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [savedForm, form]);
+
+  async function addCategory() {
+    if (!newCategory.name.trim()) return;
+    setSavingCategory(true);
+    try {
+      await createAdminPostCategory({
+        ...newCategory,
+        name: newCategory.name.trim(),
+      });
+      const items = await getAdminPostCategories();
+      setCategories(items);
+      const created = items.find(
+        (item) => item.name === newCategory.name.trim(),
+      );
+      if (created)
+        setForm((previous) => ({
+          ...previous,
+          category_id: String(created.category_id),
+        }));
+      setNewCategory({ name: "", description: "" });
+      setShowCategories(false);
+      success("Đã thêm danh mục.");
+    } catch (cause) {
+      showError(
+        cause instanceof Error ? cause.message : "Không thể thêm danh mục.",
+      );
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
   const handleSave = async () => {
-    if (!form.title || !form.content || !form.category_id) {
-      showError("Vui lòng điền đầy đủ tiêu đề, nội dung và danh mục");
+    if (!form.category_id) {
+      showError("Vui lòng chọn danh mục trước khi lưu.");
+      return;
+    }
+    if (
+      form.status === 1 &&
+      (!form.title.trim() ||
+        !form.thumbnail ||
+        !hasArticleContent(form.content_blocks))
+    ) {
+      showError(
+        "Để đăng công khai, vui lòng nhập tiêu đề, tải ảnh bìa và thêm nội dung bài viết.",
+      );
       return;
     }
 
@@ -56,11 +147,22 @@ export default function AdminPostEditorPage({ params }: { params: Promise<{ id: 
       const url = isNew ? "/admin/posts" : `/admin/posts/${id}`;
       const method = isNew ? "POST" : "PATCH";
 
-      await saveAdminPost(url, method, form);
-      success(isNew ? "Đã đăng bài viết mới" : "Đã cập nhật bài viết");
+      await saveAdminPost(url, method, {
+        ...form,
+        content: articleText(form.content_blocks),
+      });
+      success(
+        form.status === 0
+          ? "Đã lưu bản nháp"
+          : isNew
+            ? "Đã đăng bài viết mới"
+            : "Đã cập nhật bài viết",
+      );
       router.push("/admin/marketing/posts");
-    } catch {
-      showError("Lỗi kết nối");
+    } catch (cause) {
+      showError(
+        cause instanceof Error ? cause.message : "Không thể lưu bài viết.",
+      );
     } finally {
       setSaving(false);
     }
@@ -73,9 +175,27 @@ export default function AdminPostEditorPage({ params }: { params: Promise<{ id: 
       </div>
     );
   }
+  if (loadError)
+    return (
+      <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">
+        {loadError}
+        <button
+          onClick={() => window.location.reload()}
+          className="ml-4 underline"
+        >
+          Tải lại
+        </button>
+        <button
+          onClick={() => router.push("/admin/marketing/posts")}
+          className="ml-4 underline"
+        >
+          Về danh sách
+        </button>
+      </div>
+    );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -89,6 +209,28 @@ export default function AdminPostEditorPage({ params }: { params: Promise<{ id: 
         />
       </div>
 
+      <PostCategoriesModal
+        open={showCategories}
+        categories={categories}
+        newCategory={newCategory}
+        saving={savingCategory}
+        onClose={() => setShowCategories(false)}
+        onCreate={addCategory}
+        onDraftChange={setNewCategory}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800">
+        <p>
+          {isNew
+            ? "Đã tạo sẵn mẫu giới thiệu điểm đến. Điền nội dung vào từng khối hoặc thêm, di chuyển và xóa khối theo ý bạn."
+            : "Nội dung được chia thành các khối. Mỗi khối sẽ hiển thị theo giao diện chung của trang bài viết."}
+        </p>
+        <button
+          onClick={() => setShowCategories(true)}
+          className="font-bold underline"
+        >
+          Thêm / quản lý danh mục
+        </button>
+      </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <PostEditorContent form={form} onFormChange={setForm} />

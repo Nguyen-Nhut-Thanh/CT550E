@@ -2,7 +2,23 @@
 
 import { removeToken } from "@/lib/auth/session";
 import { NavigationPending } from "@/components/common/NavigationPending";
-import { ArrowLeft, Briefcase, CalendarDays, Compass, FileText, Image as ImageIcon, LayoutDashboard, LogOut, Map, MapPin, MessageSquare, Star, Ticket, Users, Zap, } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  CalendarDays,
+  Compass,
+  FileText,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  Map,
+  MapPin,
+  MessageSquare,
+  Star,
+  Ticket,
+  Users,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -14,7 +30,11 @@ const menuItems = [
       { name: "Quản lý Tour", href: "/admin/tours", icon: Map },
       { name: "Lịch khởi hành", href: "/admin/schedules", icon: CalendarDays },
       { name: "Quản lý Địa điểm", href: "/admin/locations", icon: MapPin },
-      { name: "Địa điểm yêu thích", href: "/admin/locations/featured", icon: Star },
+      {
+        name: "Địa điểm yêu thích",
+        href: "/admin/locations/featured",
+        icon: Star,
+      },
       { name: "Quản lý Booking", href: "/admin/bookings", icon: Briefcase },
     ],
   },
@@ -25,6 +45,11 @@ const menuItems = [
       { name: "Flash Deals", href: "/admin/marketing/flash-deals", icon: Zap },
       { name: "Mã giảm giá", href: "/admin/marketing/vouchers", icon: Ticket },
       { name: "Bài viết", href: "/admin/marketing/posts", icon: FileText },
+      {
+        name: "Bố cục bài viết",
+        href: "/admin/marketing/posts/layout",
+        icon: LayoutDashboard,
+      },
     ],
   },
   {
@@ -36,7 +61,13 @@ const menuItems = [
   },
 ];
 
-export const AdminSidebar = ({ open = false, onClose }: { open?: boolean; onClose?: () => void }) => {
+export const AdminSidebar = ({
+  open = false,
+  onClose,
+}: {
+  open?: boolean;
+  onClose?: () => void;
+}) => {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -50,11 +81,25 @@ export const AdminSidebar = ({ open = false, onClose }: { open?: boolean; onClos
   };
 
   return (
-    <aside className={`admin-navigation ${open ? "flex" : "hidden"} fixed left-0 top-0 z-40 h-dvh w-64 flex-shrink-0 flex-col overflow-hidden border-r border-slate-800 bg-slate-900 text-slate-300 shadow-xl lg:sticky lg:flex`}>
+    <aside
+      className={`admin-navigation ${open ? "flex" : "hidden"} fixed left-0 top-0 z-40 h-dvh w-64 flex-shrink-0 flex-col overflow-hidden border-r border-slate-800 bg-slate-900 text-slate-300 shadow-xl lg:sticky lg:flex`}
+    >
       <div className="flex h-16 items-center border-b border-slate-800 bg-slate-950 px-6">
         <div className="flex items-center gap-3 text-xl font-black tracking-wide text-white">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600"><Compass size={23} /></span>
-          <div><div className="flex items-center gap-3">TRAVOL <span className="rounded-full bg-blue-500/25 px-2 py-0.5 text-[9px] tracking-normal text-blue-100">ADMIN</span></div><p className="mt-0.5 text-[10px] font-normal tracking-normal text-blue-300/70">Travel Management System</p></div>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600">
+            <Compass size={23} />
+          </span>
+          <div>
+            <div className="flex items-center gap-3">
+              JourniTrip{" "}
+              <span className="rounded-full bg-blue-500/25 px-2 py-0.5 text-[9px] tracking-normal text-blue-100">
+                ADMIN
+              </span>
+            </div>
+            <p className="mt-0.5 text-[10px] font-normal tracking-normal text-blue-300/70">
+              Travel Management System
+            </p>
+          </div>
         </div>
       </div>
 
@@ -103,7 +148,10 @@ export const AdminSidebar = ({ open = false, onClose }: { open?: boolean; onClos
                           : "hover:bg-slate-800 hover:text-white"
                       }`}
                     >
-                      <item.icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
+                      <item.icon
+                        size={18}
+                        className={isActive ? "text-white" : "text-slate-400"}
+                      />
                       {item.name}
                       <NavigationPending />
                     </Link>

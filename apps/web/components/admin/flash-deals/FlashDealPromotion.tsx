@@ -1,12 +1,11 @@
 import { AlarmClock, Plane, Send, Zap } from "lucide-react";
 import Image from "next/image";
-import styles from "./FlashDealModal.module.css";
 
 export function FlashDealPromotion() {
   return (
     <aside
       aria-hidden="true"
-      className={`${styles.promotion} relative hidden min-h-full overflow-hidden bg-[#c8edff] lg:block`}
+      className="ui-flash-deal-modal-promotion [&_h2]:text-[42px] relative hidden min-h-full overflow-hidden bg-[#c8edff] lg:block"
     >
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_22%,#effaff_0%,transparent_55%),linear-gradient(145deg,#80ccfa_0%,#d7f3ff_55%,#8ed7f5_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-[56%]">
@@ -37,7 +36,7 @@ export function FlashDealPromotion() {
           strokeLinecap="round"
         />
       </svg>
-      <div className={`${styles.promotionCopy} relative`}>
+      <div className="ui-flash-deal-modal-promotionCopy p-[32px_26px_0] [&>p]:text-[14px] relative">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#2c94ff] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-400/15">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white">
             <Zap size={15} className="fill-[#2c94ff] text-[#2c94ff]" />
@@ -77,7 +76,7 @@ export function FlashDealPromotion() {
         />
       </div>
       <div
-        className={`${styles.promotionBadge} absolute bottom-[35%] z-20 flex -rotate-[9deg] items-center gap-3 rounded-2xl bg-white/85 py-3 pl-2 pr-5 shadow-[0_14px_30px_rgba(34,139,217,0.12)] backdrop-blur-sm`}
+        className="ui-flash-deal-modal-promotionBadge left-[20%] [&>span]:w-[64px] [&>span]:h-[64px] [&_svg]:w-[44px] [&_svg]:h-[44px] [&_p]:text-[12px] absolute bottom-[35%] z-20 flex -rotate-[9deg] items-center gap-3 rounded-2xl bg-white/85 py-3 pl-2 pr-5 shadow-[0_14px_30px_rgba(34,139,217,0.12)] backdrop-blur-sm"
       >
         <span className="-my-4 -ml-5 flex h-20 w-20 shrink-0 rotate-6 items-center justify-center rounded-full bg-gradient-to-br from-white to-sky-100 text-[#227aff] shadow-lg shadow-sky-400/10">
           <AlarmClock size={56} strokeWidth={2} />

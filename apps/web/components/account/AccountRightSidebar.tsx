@@ -8,8 +8,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { AccountRightSidebarProps, FeaturedDestinationItem } from "shared";
 
-export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarProps) {
-  const [destinations, setDestinations] = useState<FeaturedDestinationItem[]>([]);
+export function AccountRightSidebar({
+  user,
+  setActiveTab,
+}: AccountRightSidebarProps) {
+  const [destinations, setDestinations] = useState<FeaturedDestinationItem[]>(
+    [],
+  );
   const [loadingDestinations, setLoadingDestinations] = useState(true);
 
   useEffect(() => {
@@ -38,8 +43,15 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
   const displayName = user?.full_name || "Khách hàng";
   const email = user?.accounts?.email || "Chưa cập nhật";
   const phone = user?.phone || "Chưa cập nhật";
-  const birthday = user?.birthday ? displayBirthday(user.birthday.slice(0, 10)) : "Chưa cập nhật";
-  const gender = user?.gender === "female" ? "Nữ" : user?.gender === "male" ? "Nam" : "Chưa cập nhật";
+  const birthday = user?.birthday
+    ? displayBirthday(user.birthday.slice(0, 10))
+    : "Chưa cập nhật";
+  const gender =
+    user?.gender === "female"
+      ? "Nữ"
+      : user?.gender === "male"
+        ? "Nam"
+        : "Chưa cập nhật";
 
   const infoItems = [
     { label: "Họ và tên", value: displayName, icon: User },
@@ -61,27 +73,43 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#d9f2ff]/95 via-[#d9f2ff]/78 to-transparent" />
         <div className="absolute left-5 top-6 max-w-[245px] text-[16px] font-semibold italic leading-[1.5] text-[#28577c] [font-family:cursive]">
-          “Không phải là đích đến,<br />mà là những trải nghiệm<br />trên đường đi mới thật sự<br />có giá trị.”
+          “Không phải là đích đến,
+          <br />
+          mà là những trải nghiệm
+          <br />
+          trên đường đi mới thật sự
+          <br />
+          có giá trị.”
         </div>
-        <div className="absolute bottom-5 right-14 rotate-12 text-2xl text-[#1766c2]">✈</div>
+        <div className="absolute bottom-5 right-14 rotate-12 text-2xl text-[#1766c2]">
+          ✈
+        </div>
       </section>
 
       <section className="rounded-[13px] border border-slate-100 bg-white p-4 shadow-[0_2px_14px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-center gap-2">
           <User className="h-5 w-5 fill-[#1766c2]/10 text-[#1766c2]" />
-          <h3 className="text-[15px] font-bold text-slate-900">Thông tin cá nhân</h3>
+          <h3 className="text-[15px] font-bold text-slate-900">
+            Thông tin cá nhân
+          </h3>
         </div>
 
         <div className="space-y-3.5">
           {infoItems.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="grid grid-cols-[116px_minmax(0,1fr)] items-center gap-2 text-[11px]">
+              <div
+                key={item.label}
+                className="grid grid-cols-[116px_minmax(0,1fr)] items-center gap-2 text-[11px]"
+              >
                 <div className="flex items-center gap-2 text-slate-400">
                   <Icon className="h-3.5 w-3.5" />
                   <span>{item.label}</span>
                 </div>
-                <span className="truncate text-right font-semibold text-slate-700" title={String(item.value)}>
+                <span
+                  className="truncate text-right font-semibold text-slate-700"
+                  title={String(item.value)}
+                >
                   {item.value}
                 </span>
               </div>
@@ -102,7 +130,9 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-[#1766c2]" />
-            <h3 className="text-[14px] font-bold text-slate-800">Điểm đến nổi bật</h3>
+            <h3 className="text-[14px] font-bold text-slate-800">
+              Điểm đến nổi bật
+            </h3>
           </div>
           <Link
             href="/#favorite-destinations"
@@ -149,4 +179,3 @@ export function AccountRightSidebar({ user, setActiveTab }: AccountRightSidebarP
     </div>
   );
 }
-

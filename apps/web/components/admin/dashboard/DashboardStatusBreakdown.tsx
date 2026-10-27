@@ -1,7 +1,14 @@
 "use client";
 
-import { Award, CheckCircle2, Clock, CreditCard, PieChart, XCircle } from "lucide-react";
-import type { DashboardStatusBreakdownProps } from 'shared';
+import {
+  Award,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  PieChart,
+  XCircle,
+} from "lucide-react";
+import type { DashboardStatusBreakdownProps } from "shared";
 
 export function DashboardStatusBreakdown({
   statusBreakdown,
@@ -109,7 +116,7 @@ export function DashboardStatusBreakdown({
             >
               <div className="flex items-center gap-2.5">
                 <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                
+
                 <span className="text-xs font-semibold text-slate-700">
                   {item.label}
                 </span>

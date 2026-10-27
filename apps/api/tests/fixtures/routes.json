@@ -204,6 +204,20 @@
   },
   {
     "verb": "GET",
+    "url": "/admin/posts/:id",
+    "guards": [
+      "AdminAuthGuard"
+    ]
+  },
+  {
+    "verb": "GET",
+    "url": "/admin/posts/layout",
+    "guards": [
+      "AdminAuthGuard"
+    ]
+  },
+  {
+    "verb": "GET",
     "url": "/admin/reviews",
     "guards": [
       "AdminAuthGuard"
@@ -411,6 +425,16 @@
   },
   {
     "verb": "GET",
+    "url": "/posts/:slug",
+    "guards": []
+  },
+  {
+    "verb": "GET",
+    "url": "/posts/layout",
+    "guards": []
+  },
+  {
+    "verb": "GET",
     "url": "/public/booking-services",
     "guards": []
   },
@@ -480,6 +504,13 @@
   {
     "verb": "PATCH",
     "url": "/admin/posts/:id",
+    "guards": [
+      "AdminAuthGuard"
+    ]
+  },
+  {
+    "verb": "PATCH",
+    "url": "/admin/posts/layout",
     "guards": [
       "AdminAuthGuard"
     ]
@@ -576,6 +607,13 @@
   {
     "verb": "POST",
     "url": "/admin/posts",
+    "guards": [
+      "AdminAuthGuard"
+    ]
+  },
+  {
+    "verb": "POST",
+    "url": "/admin/posts/upload-image",
     "guards": [
       "AdminAuthGuard"
     ]
