@@ -1,21 +1,17 @@
-import type { ChatManageInput } from "../../chat/contracts";
-import type { ChatStaff, Conversation } from "../../chat/models";
+import type { ChatContextInput } from "../../chat/contracts";
+import type { Conversation } from "../../chat/models";
 import type { ChatComposerProps } from "../../chat/props";
-import type { ChatActor } from "../../chat/models";
 import type { ChatDisplayMessage } from "../../chat/view-models";
 export type ChatWorkspaceProps = {
     conversation: Conversation | null;
-    actor: ChatActor | null;
     messages: ChatDisplayMessage[];
     loading: boolean;
     hasMore: boolean;
     connected: boolean;
     typing: boolean;
-    staff: ChatStaff[];
     busy: boolean;
     onBack: () => void;
-    onManage: (input: ChatManageInput) => Promise<void>;
-    onSend: ChatComposerProps['onSend'];
+    onSend: (content: string, type?: 'TEXT' | 'IMAGE' | 'CONTEXT', context?: ChatContextInput) => Promise<void>;
     onTyping: ChatComposerProps['onTyping'];
     onLoadMore: () => void;
     onRetry: (message: ChatDisplayMessage) => void;
@@ -23,12 +19,9 @@ export type ChatWorkspaceProps = {
 };
 export type ConversationSidebarProps = {
     conversations: Conversation[];
-    unreadTotal: number;
     selectedId: number | null;
     loading: boolean;
     searchTerm: string;
-    filter: string;
-    onFilterChange: (value: string) => void;
     onSearchChange: (value: string) => void;
     onRefresh: () => void;
     onSelect: (conversationId: number) => void;

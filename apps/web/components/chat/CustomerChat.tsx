@@ -237,7 +237,7 @@ export function CustomerChat() {
                     : conversation?.status === "CLOSED"
                       ? "Đã giải quyết · Gửi tin mới để tiếp tục hỗ trợ"
                       : conversation?.status === "WAITING"
-                        ? "Tin nhắn sẽ được nhân viên tiếp nhận"
+                        ? "Nhân viên sẽ sớm trả lời bạn"
                         : "Đã kết nối với nhân viên"}
               </p>
               <ChatComposer

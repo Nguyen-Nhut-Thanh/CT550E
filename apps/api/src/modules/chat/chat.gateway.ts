@@ -105,9 +105,7 @@ export class ChatGateway implements OnGatewayInit {
     data: TypingPayload) {
         return this.attempt(async () => {
             const actor = await this.actor(client);
-            const conversation = await this.chat.authorize(data?.conversation_id, actor);
-            if (actor.isStaff && (conversation.assigned_staff_id !== actor.userId || conversation.status !== 'IN_PROGRESS'))
-                return { success: false };
+            await this.chat.authorize(data?.conversation_id, actor);
             if (typeof data.is_typing !== 'boolean')
                 return { success: false };
             const now = Date.now();

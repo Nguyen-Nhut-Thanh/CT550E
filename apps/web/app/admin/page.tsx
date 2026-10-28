@@ -4,6 +4,7 @@ import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardA
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards";
 import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
+import { AdminModalShell } from "@/components/common/AdminModalShell";
 import { DashboardStatusBreakdown } from "@/components/admin/dashboard/DashboardStatusBreakdown";
 import { DashboardTopTours } from "@/components/admin/dashboard/DashboardTopTours";
 import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboard/api";
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { DashboardStats, DashboardTimeRange } from "shared";
 
 export default function AdminDashboardPage() {
+  const [showStatus, setShowStatus] = useState(false);
   const [data, setData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -162,23 +164,14 @@ export default function AdminDashboardPage() {
           {/* Main KPI Cards & Secondary Metric Counters */}
           <DashboardKpiCards kpis={data.kpis} timeRange={timeRange} />
 
-          {/* Interactive Revenue & Bookings Trend Chart */}
-          {/* Grid Layout: Recent Bookings & Status/Top-Tour Panels */}
-          <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
-            {/* Left Column (2 Cols): Recent Bookings Table */}
-            <div className="min-w-0 space-y-4">
-              <DashboardAnalyticsChart chart={data.chart} />
-              <DashboardRecentBookings bookings={data.recentBookings} />
-            </div>
-
-            {/* Right Column (1 Col): Status Breakdown & Top Tours */}
-            <div className="min-w-0 space-y-4">
-              <DashboardStatusBreakdown
-                statusBreakdown={data.statusBreakdown}
-              />
-              <DashboardTopTours topTours={data.topTours} />
-            </div>
+          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
+            <DashboardAnalyticsChart chart={data.chart} />
+            <DashboardTopTours topTours={data.topTours} />
           </div>
+          <DashboardRecentBookings bookings={data.recentBookings} onShowStatus={() => setShowStatus(true)} />
+          {showStatus && <AdminModalShell title="Trạng Thái Đơn Hàng" onClose={() => setShowStatus(false)} maxWidthClassName="max-w-xl">
+            <div className="p-4"><DashboardStatusBreakdown statusBreakdown={data.statusBreakdown} /></div>
+          </AdminModalShell>}
 
           {/* Quick Action Shortcuts Panel */}
         </>

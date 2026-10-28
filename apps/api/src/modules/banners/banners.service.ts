@@ -19,6 +19,7 @@ export class BannersService {
             header: data.header ?? undefined,
             description: data.description ?? undefined,
             image_url: data.image_url ?? undefined,
+            link_to: data.link_to ?? undefined,
             status: data.status !== undefined ? Number(data.status) : undefined,
         };
     }
@@ -44,6 +45,7 @@ export class BannersService {
                 header: payload.header ?? '',
                 description: payload.description ?? '',
                 image_url: payload.image_url ?? '',
+                link_to: payload.link_to ?? null,
                 status: payload.status ?? 1,
             },
         });

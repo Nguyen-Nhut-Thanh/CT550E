@@ -10,6 +10,15 @@ export class BookingsService {
     getExtraServices() {
         return BOOKING_EXTRAS;
     }
+    async customerForStaff(userId: number) {
+        const user = await this.prisma.users.findUnique({ where: { user_id: userId }, select: { full_name: true, phone: true, accounts: { select: { email: true, status: true } } } });
+        if (!user || user.accounts.status !== 1) throw new NotFoundException('Không tìm thấy khách hàng đang hoạt động.');
+        return { full_name: user.full_name, phone: user.phone, email: user.accounts.email };
+    }
+    async createForCustomer(userId: number, dto: BookingPayload) {
+        await this.customerForStaff(userId);
+        return this.createBooking({ ...dto, user_id: userId });
+    }
     async createForAccount(accountId: number, dto: BookingPayload) {
         return this.createBooking({ ...dto, user_id: await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.") });
     }

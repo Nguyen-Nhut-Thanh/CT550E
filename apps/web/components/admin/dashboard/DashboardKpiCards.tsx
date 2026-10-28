@@ -79,52 +79,21 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
   return (
     <div className="space-y-4">
       {/* 4 Primary KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <div
-              key={card.title}
-              className={`dashboard-kpi group relative overflow-hidden rounded-2xl border ${card.borderColor} bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
-            >
-              {/* Subtle top background gradient highlight */}
-              <div
-                className={`hidden absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${card.gradient}`}
-              />
-
-              <div className="flex items-start justify-between">
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.gradient} text-white shadow-lg transition-transform group-hover:scale-105`}
-                >
-                  <Icon size={24} />
+            <div key={card.title} className={`min-w-0 rounded-xl border ${card.borderColor} bg-white px-3.5 py-3 shadow-sm`}>
+              <div className="flex items-start gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}><Icon size={21}/></div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{card.title}</p>
+                    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${card.isUp ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-rose-100 bg-rose-50 text-rose-700"}`}>{card.isUp ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>} {card.trend}</span>
+                  </div>
+                  <h3 className="mt-1 text-xl font-extrabold leading-6 tracking-tight text-slate-950">{card.value}</h3>
+                  <p className="mt-1 text-[11px] leading-4 text-slate-500">{card.subtitle}</p>
                 </div>
-
-                <div
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
-                    card.isUp
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                      : "bg-rose-50 text-rose-700 border border-rose-100"
-                  }`}
-                >
-                  {card.isUp ? (
-                    <ArrowUpRight size={14} />
-                  ) : (
-                    <ArrowDownRight size={14} />
-                  )}
-                  {card.trend}
-                </div>
-              </div>
-
-              <div className="dashboard-kpi-copy">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  {card.title}
-                </p>
-                <h3 className="mt-1 text-xl font-black tracking-tight text-slate-950 2xl:text-2xl">
-                  {card.value}
-                </h3>
-                <p className="mt-1 text-xs font-medium text-slate-500">
-                  {card.subtitle}
-                </p>
               </div>
             </div>
           );

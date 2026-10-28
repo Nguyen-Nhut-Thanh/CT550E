@@ -1,5 +1,7 @@
 "use client";
 
+import { UserRound } from "lucide-react";
+import { TourMessageCard } from "./TourMessageCard";
 import { formatMessageTime } from "@/lib/chat/format";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import type { ChatTimelineProps } from "shared";
@@ -50,7 +52,7 @@ export function ChatTimeline({
           el.scrollHeight - el.scrollTop - el.clientHeight < 70;
         markVisible();
       }}
-      className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4"
+      className="min-h-0 flex-1 space-y-3 overflow-x-auto overflow-y-auto bg-[#f3f8fb] p-4"
       aria-label="Lịch sử tin nhắn"
     >
       {hasMore && (
@@ -69,26 +71,23 @@ export function ChatTimeline({
       )}
       {!loading && !messages.length && (
         <p className="mx-auto max-w-xs py-12 text-center text-sm leading-6 text-slate-500">
-          Gửi lời nhắn để nhân viên tiếp nhận và tư vấn chuyến đi cho bạn.
+          Gửi lời nhắn để nhân viên tư vấn chuyến đi cho bạn.
         </p>
       )}
-      {messages.map((message) => {
+      {messages.map((message, index) => {
         const own = isStaff
           ? message.sender_role !== "USER"
           : message.sender_role === "USER";
         return (
           <div
             key={message.client_message_id || message.message_id}
-            className={`flex ${own ? "justify-end" : "justify-start"}`}
+            className={`flex items-start gap-3 ${message.context?.kind === "tour" ? "min-w-full w-max" : ""} ${own ? "justify-end" : "justify-start"}`}
           >
+            {!own && <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e1e8f1] text-[#6b829f]"><UserRound size={18}/></span>}
+            <div className={message.context?.kind === "tour" ? "w-[600px] min-w-[600px] shrink-0" : "min-w-0 max-w-[80%]"}>
             <div
-              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${own ? "bg-blue-600 text-white" : "border border-slate-200 bg-white text-slate-800"}`}
+              className={`${message.context?.kind === "tour" ? "w-[600px] min-w-[600px] shrink-0" : "w-fit"} rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${(message.message_type === "IMAGE" || message.context?.kind === "tour") ? "!border-0 !bg-transparent !p-0 !shadow-none" : own ? "bg-blue-500 text-white" : "rounded-bl-md border border-[#e8eef4] bg-white text-slate-800 shadow-[0_1px_3px_rgba(50,75,100,0.1)]"}`}
             >
-              {!own && !isStaff && (
-                <p className="mb-1 text-[10px] font-semibold text-blue-600">
-                  Nhân viên tư vấn
-                </p>
-              )}
               {message.message_type === "IMAGE" ? (
                 <a
                   href={message.content}
@@ -111,12 +110,12 @@ export function ChatTimeline({
                 </a>
               ) : message.message_type === "CONTEXT" ? (
                 <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase opacity-70">
+                  <p className={`text-[10px] font-semibold uppercase opacity-70 ${message.context?.kind === "tour" ? "hidden" : ""}`}>
                     {message.context?.kind === "booking"
                       ? "Hỗ trợ đơn đặt tour"
                       : "Tư vấn tour"}
                   </p>
-                  {message.context &&
+                  {message.context?.kind === "tour" ? <TourMessageCard context={message.context} /> : message.context &&
                   !(isStaff && message.context.kind === "booking") ? (
                     <a
                       href={message.context.url}
@@ -133,8 +132,9 @@ export function ChatTimeline({
                   {message.content}
                 </p>
               )}
-              <div
-                className={`mt-1 flex justify-end gap-1.5 text-[10px] ${own ? "text-blue-100" : "text-slate-400"}`}
+            </div>
+              {index === messages.length - 1 && <div
+                className={`mt-1.5 flex gap-1.5 px-2 text-[11px] text-[#8ba1bf] ${own ? "justify-end" : "justify-start"}`}
               >
                 <time dateTime={message.created_at}>
                   {formatMessageTime(message.created_at)}
@@ -150,7 +150,7 @@ export function ChatTimeline({
                           : "Đã gửi"}
                   </span>
                 )}
-              </div>
+              </div>}
               {message.delivery_status === "failed" && (
                 <button
                   type="button"

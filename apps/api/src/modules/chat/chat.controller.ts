@@ -25,6 +25,10 @@ export class ChatController {
     async staff(
     @Req()
     req: AuthenticatedRequest) { return this.chat.staff(await this.chat.actor(req.user)); }
+    @Get('conversations/:id/contexts')
+    async contexts(@Param('id', ParseIntPipe) id: number, @Req() req: AuthenticatedRequest) {
+        return this.chat.contexts(id, await this.chat.actor(req.user));
+    }
     @Get('conversations/:id/messages')
     async messages(
     @Param('id', ParseIntPipe)

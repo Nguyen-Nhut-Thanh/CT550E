@@ -1,5 +1,6 @@
 "use client";
 
+import CustomDropdown from "@/components/common/CustomDropdown";
 import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/admin/banners/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X, } from "lucide-react";
@@ -37,7 +38,7 @@ export default function AdminBannerDetailPage() {
             description: data.description || "",
             image_url: data.image_url || "",
             link_to: data.link_to || "",
-            status: data.status || 1,
+            status: data.status ?? 1,
           });
         } catch {
           showError("Lỗi tải thông tin banner");
@@ -243,16 +244,13 @@ export default function AdminBannerDetailPage() {
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
                 <ToggleLeft size={14} className="text-slate-400" /> Trạng thái
               </label>
-              <select
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none appearance-none"
-                value={form.status}
-                onChange={(e) =>
-                  setForm({ ...form, status: Number(e.target.value) })
-                }
-              >
-                <option value={1}>Đang hiển thị</option>
-                <option value={0}>Đang ẩn</option>
-              </select>
+              <CustomDropdown
+                variant="compact"
+                matchTriggerWidth
+                selectedValue={String(form.status)}
+                onSelect={(value) => setForm(current => ({ ...current, status: Number(value) }))}
+                options={[{ value: "1", label: "Đang hiển thị" }, { value: "0", label: "Đang ẩn" }]}
+              />
             </div>
           </div>
         </div>

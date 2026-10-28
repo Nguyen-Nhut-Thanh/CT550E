@@ -14,29 +14,6 @@
   background-size: cover;
 }
 
-.dashboard-kpi {
-  min-height: 112px;
-}
-
-.dashboard-kpi-copy {
-  margin-top: -48px;
-  padding-left: 64px;
-  padding-top: 4px;
-  padding-right: 4px;
-}
-
-.dashboard-kpi>.flex>div:last-child {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 2px 6px;
-  font-size: 10px;
-}
-
-.dashboard-kpi-copy>p:first-child {
-  padding-right: 48px;
-}
-
 .admin-dashboard {
   color: #0b1c45;
 }
@@ -47,12 +24,6 @@
   background-size: cover;
 }
 
-@media (min-width: 1024px) and (max-width: 1350px) {
-  .dashboard-kpi-copy {
-    margin-top: 12px;
-    padding-left: 0;
-  }
-}
 
 .admin-content-scroll {
   overflow-y: auto;

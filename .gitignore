@@ -13,3 +13,6 @@ __pycache__/
 /scratch/
 ThamKhao/
 scripts/
+
+# Isolated production performance build
+.next-perf/

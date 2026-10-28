@@ -38,7 +38,8 @@ export default function TourDetailPage({
         const data = await getPublicTourDetail(tourId);
         if (!active) return;
         setTour(data);
-        setSelectedScheduleId(null);
+        const requestedSchedule = Number(new URLSearchParams(window.location.search).get("scheduleId"));
+        setSelectedScheduleId(data.tour_schedules?.some(item => item.tour_schedule_id === requestedSchedule) ? requestedSchedule : null);
       } catch {
         if (!active) return;
         setTour(null);

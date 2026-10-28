@@ -1,5 +1,5 @@
 import type { Banner } from "../../banners/models";
-export type BannerPayload = Partial<Pick<Banner, "location_name" | "header" | "description" | "image_url">> & {
+export type BannerPayload = Partial<Pick<Banner, "location_name" | "header" | "description" | "image_url" | "link_to">> & {
     status?: number | string;
 };
 export type AdminBannerPayload = Omit<Banner, "banner_id" | "created_at" | "updated_at" | "link_to"> & {

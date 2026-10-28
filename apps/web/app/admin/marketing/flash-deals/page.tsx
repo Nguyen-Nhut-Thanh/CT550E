@@ -9,13 +9,15 @@ import { deleteAdminFlashDeal, getAdminFlashDeals, saveAdminFlashDeal } from '@/
 import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm } from '@/lib/admin/flash-deals/forms';
 import { DEFAULT_FLASH_DEAL_FILTERS, filterManagedFlashDeals, getFlashDealOverview } from '@/lib/admin/flash-deals/management';
 import { useToast } from '@/lib/notifications/useToast';
-import { confirmAction } from '@/lib/utils/confirm';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Trash2 } from 'lucide-react';
 import type { FlashDealForm, FlashDealSchedule } from 'shared';
 
 export default function AdminFlashDealsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FlashDealSchedule | null>(null);
   const [failure, setFailure] = useState('');
   const [schedules, setSchedules] = useState<FlashDealSchedule[]>([]);
   const [filters, setFilters] = useState({ ...DEFAULT_FLASH_DEAL_FILTERS });
@@ -62,7 +64,8 @@ export default function AdminFlashDealsPage() {
   };
   const handleDelete = async (schedule: FlashDealSchedule) => {
     const deal = schedule.flash_deals;
-    if (!deal || !confirmAction(`Xóa flash deal của tour “${schedule.tours?.name || 'đã chọn'}”?`)) return;
+    if (!deal || deleting) return;
+    setDeleteTarget(null);
     setDeleting(true);
     try { await deleteAdminFlashDeal(deal.deal_id); success('Đã xóa flash deal'); void loadData(); }
     catch (cause) { showError(cause instanceof Error ? cause.message : 'Không thể xóa flash deal.'); }
@@ -73,7 +76,17 @@ export default function AdminFlashDealsPage() {
     <FlashDealPageHeader overview={overview} loading={loading} />
     <FlashDealFilters value={draftFilters} onChange={setDraftFilters} onApply={() => { setFilters({ ...draftFilters }); setPage(1); }} onReset={() => { setDraftFilters({ ...DEFAULT_FLASH_DEAL_FILTERS }); setFilters({ ...DEFAULT_FLASH_DEAL_FILTERS }); setPage(1); }} destinations={destinations} count={filteredSchedules.length} active={filterActive} />
     {failure && <div role="alert" className="ui-flash-deal-management-error flex justify-between gap-[12px] [border:1px_solid_#fecdd3] rounded-[12px] [background:#fff1f3] p-[14px_16px] text-[#ba3550] text-[13px] [&_button]:underline [&_button]:font-[650]"><span>{failure}</span><button type="button" onClick={loadData}>Thử lại</button></div>}
-    <FlashDealTable items={filteredSchedules} loading={loading} busy={saving || deleting} now={now} page={page} onPageChange={setPage} onEdit={openDealModal} onDelete={schedule => { void handleDelete(schedule); }} />
+    <FlashDealTable items={filteredSchedules} loading={loading} busy={saving || deleting} now={now} page={page} onPageChange={setPage} onEdit={openDealModal} onDelete={schedule => { if (!deleting && schedule.flash_deals) setDeleteTarget(schedule); }} />
+    <ConfirmDialog
+      open={deleteTarget !== null}
+      icon={<Trash2 size={28} />}
+      title="Xóa flash deal?"
+      description={`Bạn có chắc muốn xóa flash deal của tour “${deleteTarget?.tours?.name || 'đã chọn'}”? Ưu đãi sẽ bị gỡ khỏi lịch khởi hành này.`}
+      confirmLabel="Xóa flash deal"
+      cancelLabel="Hủy"
+      onConfirm={() => { if (deleteTarget) void handleDelete(deleteTarget); }}
+      onCancel={() => setDeleteTarget(null)}
+    />
     <FlashDealModal open={showModal} saving={saving} schedule={currentSchedule} form={form} onClose={closeModal} onChange={updater => setForm(current => updater(current))} onSave={handleSaveDeal} />
   </div>;
 }

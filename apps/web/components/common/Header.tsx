@@ -14,8 +14,8 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const { navLocationData, isLoadingNav } = useNavLocationData();
   const pathname = usePathname();
+  const { navLocationData, isLoadingNav } = useNavLocationData(!pathname.startsWith("/admin"));
   const isHome = pathname === "/";
 
   useEffect(() => {

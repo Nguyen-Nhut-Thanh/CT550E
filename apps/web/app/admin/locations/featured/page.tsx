@@ -254,7 +254,7 @@ export default function AdminFeaturedLocationsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
         <FeaturedLocationsLeftPanel
           allChildren={allChildren}
           featured={featured}
@@ -263,6 +263,13 @@ export default function AdminFeaturedLocationsPage() {
         <FeaturedLocationsRightPanel
           featured={featured}
           onMoveItem={moveItem}
+          onReorder={(from, to) => setFeatured(current => {
+            if (from === to || from < 0 || to < 0 || from >= current.length || to >= current.length) return current;
+            const next = [...current];
+            const [item] = next.splice(from, 1);
+            next.splice(to, 0, item);
+            return next;
+          })}
           onToggleSelect={toggleSelect}
           onImageChange={(index, value) =>
             setFeatured((current) => {

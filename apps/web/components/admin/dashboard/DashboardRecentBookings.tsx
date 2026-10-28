@@ -8,7 +8,8 @@ import type { DashboardRecentBookingsProps } from "shared";
 
 export function DashboardRecentBookings({
   bookings,
-}: DashboardRecentBookingsProps) {
+  onShowStatus,
+}: DashboardRecentBookingsProps & { onShowStatus?: () => void }) {
   const statusConfig: Record<
     string,
     { label: string; badge: string; dot: string }
@@ -79,6 +80,8 @@ export function DashboardRecentBookings({
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+        {onShowStatus && <button type="button" onClick={onShowStatus} className="inline-flex items-center rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-600 hover:bg-blue-100">Trạng Thái Đơn Hàng</button>}
         <Link
           href="/admin/bookings"
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 transition-all hover:bg-slate-100 hover:text-blue-600 self-start sm:self-auto"
@@ -86,6 +89,7 @@ export function DashboardRecentBookings({
           Xem tất cả đơn
           <ArrowRight size={14} />
         </Link>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

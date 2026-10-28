@@ -1,12 +1,19 @@
 "use client";
 
 import { useLinkStatus } from "next/link";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-/** Hiển thị thanh tiến trình ngay khi người dùng bấm liên kết và đang chờ chuyển trang. */
+/** Hiển thị tiến trình khi chuyển trang mất hơn 200ms để tránh nháy ở các lần tải nhanh. */
 export function NavigationPending() {
   const { pending } = useLinkStatus();
-  if (!pending) return null;
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!pending) { setVisible(false); return; }
+    const timer = window.setTimeout(() => setVisible(true), 200);
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+  if (!pending || !visible) return null;
 
   return createPortal(
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-1 overflow-hidden bg-blue-100">

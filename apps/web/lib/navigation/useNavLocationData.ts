@@ -4,11 +4,12 @@ import { publicFetch } from "@/lib/http/publicFetch";
 import { useEffect, useState } from "react";
 import type { NavLocationData } from "shared";
 
-export function useNavLocationData() {
+export function useNavLocationData(enabled = true) {
   const [navLocationData, setNavLocationData] = useState<NavLocationData | null>(null);
   const [isLoadingNav, setIsLoadingNav] = useState(false);
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
 
     const fetchNavData = async () => {
@@ -35,7 +36,7 @@ export function useNavLocationData() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [enabled]);
 
   return {
     navLocationData,

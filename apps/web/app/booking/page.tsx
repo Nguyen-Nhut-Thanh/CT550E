@@ -16,7 +16,7 @@ import { BookingVoucherAndPayment } from "@/components/booking/BookingVoucherAnd
 import InlineNotice from "@/components/common/InlineNotice";
 
 import { fetchMe, getToken } from "@/lib/auth/session";
-import { createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher } from "@/lib/booking/api";
+import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher } from "@/lib/booking/api";
 import { parseBirthday } from "@/lib/booking/birthday";
 import { getSingleRoomSurchargeTotal, getUnitPrice } from "@/lib/booking/pricing";
 import { buildTravelers, syncTravelers } from "@/lib/booking/travelers";
@@ -30,6 +30,7 @@ function BookingContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tourId = searchParams.get("tourId");
+  const customerId = Number(searchParams.get("customerId")) || undefined;
   const scheduleIdParam = searchParams.get("scheduleId");
 
   const [loading, setLoading] = useState(true);
@@ -84,7 +85,7 @@ function BookingContent() {
         setLoading(true);
         const [tourData, me] = await Promise.all([
           getBookingTourDetail(tourId),
-          fetchMe(),
+          customerId ? getStaffBookingCustomer(customerId) : fetchMe(),
         ]);
 
         if (!active) return;
@@ -122,7 +123,7 @@ function BookingContent() {
     return () => {
       active = false;
     };
-  }, [scheduleIdParam, tourId]);
+  }, [scheduleIdParam, tourId, customerId]);
 
   useEffect(() => {
     setTravelers((current) =>
@@ -311,8 +312,12 @@ function BookingContent() {
         single_room_surcharge: pricing.singleRoomSurcharge,
         single_room_count: pricing.singleRoomCount,
         additional_service_ids: selectedExtraIds,
-      });
+      }, customerId);
 
+      if (data && customerId) {
+        router.push("/admin/bookings");
+        return;
+      }
       if (data) {
         setSubmitTone("success");
         setSubmitMessage("Đặt tour thành công! Đang khởi tạo thanh toán...");

@@ -35,6 +35,7 @@ export type AdminLocationImage = {
     image_url?: string | null;
 };
 export type AdminLocationItem = {
+    note?: string | null;
     location_id: number;
     name: string;
     parent_id?: number | null;

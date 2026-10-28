@@ -128,8 +128,7 @@ export class DashboardService {
             }),
             // Top tour có lượt đặt cao nhất
             this.prisma.tours.findMany({
-                where: { status: 1 },
-                take: 5,
+
                 include: {
                     tour_images: {
                         where: { is_cover: 1 },
@@ -139,6 +138,7 @@ export class DashboardService {
                     tour_schedules: {
                         include: {
                             bookings: {
+                                where: { created_at: { gte: startDate, lte: now }, status: { not: 'cancelled' } },
                                 select: {
                                     total_amount: true,
                                     status: true,
@@ -240,8 +240,7 @@ export class DashboardService {
                 priceFrom: Number(t.base_price || 0),
             };
         })
-            .sort((a, b) => b.revenue - a.revenue || b.bookingsCount - a.bookingsCount)
-            .slice(0, 5);
+            .sort((a, b) => b.bookingsCount - a.bookingsCount || b.revenue - a.revenue || a.tourId - b.tourId);
         return {
             timeRange: range,
             kpis,

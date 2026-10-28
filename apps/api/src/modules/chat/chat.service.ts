@@ -36,14 +36,14 @@ export class ChatService {
             // Serialize creation per customer without discarding legacy history.
             await tx.$executeRaw `SELECT pg_advisory_xact_lock(8421, ${actor.userId}::integer)`;
             return await tx.conversations.findFirst({ where: { user_id: actor.userId }, orderBy: { conversation_id: 'desc' } })
-                ?? tx.conversations.create({ data: { user_id: actor.userId, status: 'WAITING' } });
+                ?? tx.conversations.create({ data: { user_id: actor.userId, status: 'IN_PROGRESS' } });
         });
     }
     async list(actor: ChatActor) {
         const rows = await this.prisma.conversations.findMany({
             where: actor.isStaff ? {} : { user_id: actor.userId },
             include: {
-                users: { select: { user_id: true, full_name: true, avatar_url: true } },
+                users: { select: { user_id: true, full_name: true, avatar_url: true, ...(actor.isStaff ? { phone: true, address: true, created_at: true, accounts: { select: { email: true } } } : {}) } },
                 assigned_staff: { select: { user_id: true, full_name: true } },
                 _count: { select: { messages: { where: { is_read: false, sender_role: actor.isStaff ? 'USER' : { in: ['ADMIN', 'STAFF'] } } } } },
             }, orderBy: [{ last_message_at: 'desc' }, { conversation_id: 'desc' }],
@@ -69,6 +69,22 @@ export class ChatService {
             items.reverse();
         return { items, has_more: hasMore, next_cursor: items.length ? items[after ? items.length - 1 : 0].message_id : null };
     }
+    async contexts(id: number, actor: ChatActor) {
+        await this.authorize(id, actor);
+        const rows = await this.prisma.messages.findMany({
+            where: { conversation_id: id, message_type: 'CONTEXT' },
+            orderBy: { message_id: 'desc' }, select: { context: true },
+        });
+        const seen = new Set<string>();
+        return rows.flatMap(row => {
+            const card = row.context as unknown as ChatContextCard | null;
+            if (!card || !['tour', 'booking'].includes(card.kind)) return [];
+            const key = card.kind + ':' + card.id;
+            if (seen.has(key)) return [];
+            seen.add(key);
+            return [card];
+        });
+    }
     private async context(input: ChatContextInput | undefined, owner: number): Promise<ChatContextCard> {
         if (!input || Boolean(input.tour_id) === Boolean(input.booking_id))
             throw new BadRequestException('Chọn một tour hoặc đơn đặt tour');
@@ -76,10 +92,16 @@ export class ChatService {
         if (!Number.isSafeInteger(id) || id! < 1)
             throw new BadRequestException('Thông tin tư vấn không hợp lệ');
         if (input.tour_id) {
-            const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true } });
+            const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true, summary: true, cuisine_info: true, transport_info: true, transports: { select: { name: true } }, tour_type: true, rating_avg: true, rating_count: true, tour_destinations: { orderBy: { visit_order: 'asc' }, take: 1, select: { locations: { select: { name: true } } } }, base_price: true, duration_days: true, duration_nights: true, cut_off_hours: true, tour_schedules: { where: { status: 1, start_date: { gte: new Date() } }, orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], include: { flash_deals: true, tour_schedule_hotels: { select: { hotels: { select: { star_rating: true } } } } } }, tour_images: { orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } } } });
             if (!tour)
                 throw new NotFoundException('Tour không còn hiển thị');
-            return { kind: 'tour', id: input.tour_id, title: tour.name, url: `/tours/${input.tour_id}` };
+            const schedule = tour.tour_schedules.find(item => item.quota > item.booked_count && item.start_date.getTime() - Date.now() >= (tour.cut_off_hours || 24) * 3600000);
+            if (!schedule) throw new BadRequestException('Tour chưa có lịch khởi hành còn chỗ phù hợp');
+            const originalPrice = Number(schedule.price);
+            const deal = schedule.flash_deals;
+            const price = deal?.status === 1 ? Math.max(0, Math.round(deal.discount_type === 'percentage' ? originalPrice * (1 - Number(deal.discount_value) / 100) : originalPrice - Number(deal.discount_value))) : originalPrice;
+            const stars = [...new Set(schedule.tour_schedule_hotels?.map(item => item.hotels.star_rating) || [])].sort();
+            return { ...(tour.summary ? { summary: tour.summary } : {}), ...(tour.tour_destinations?.[0] ? { destination: tour.tour_destinations[0].locations.name } : {}), ...(tour.transport_info || tour.transports?.name ? { transport: tour.transport_info || tour.transports?.name } : {}), ...(tour.cuisine_info ? { meals: tour.cuisine_info } : {}), ...(stars.length ? { hotel: stars.map(star => star + ' sao').join(' - ') } : {}), ...(tour.rating_count ? { rating: Number(tour.rating_avg), rating_count: tour.rating_count } : {}), ...(tour.tour_type ? { category: tour.duration_days === 1 ? 'Tour trong ngày' : tour.tour_type === 'international' ? 'Tour quốc tế' : 'Tour trong nước' } : {}), ...(price < originalPrice ? { original_price: originalPrice } : {}), kind: 'tour', id: input.tour_id, title: tour.name, url: `/tours/${input.tour_id}`, image_url: schedule.cover_image_url || tour.tour_images[0]?.image_url, price, schedule_id: schedule.tour_schedule_id, departure_date: schedule.start_date.toISOString(), duration: `${tour.duration_days} ngày ${tour.duration_nights} đêm` };
         }
         const booking = await this.prisma.bookings.findFirst({ where: { booking_id: input.booking_id, user_id: owner }, include: { tour_schedules: { select: { tours: { select: { name: true } } } } } });
         if (!booking)
@@ -121,8 +143,6 @@ export class ChatService {
                     return existing;
                 }
             }
-            if (actor.isStaff && (current.assigned_staff_id !== actor.userId || current.status !== 'IN_PROGRESS'))
-                throw new ForbiddenException('Hãy tiếp nhận hội thoại trước khi trả lời');
             const message = await tx.messages.create({ data: {
                     conversation_id: data.conversation_id, sender_id: actor.userId, sender_role: actor.isStaff ? 'STAFF' : 'USER',
                     message_type: type, content: context?.title ?? content, client_message_id: data.client_message_id, ...(context ? { context } : {}),
@@ -135,7 +155,7 @@ export class ChatService {
             }
             await tx.conversations.update({ where: { conversation_id: data.conversation_id }, data: {
                     last_message: type === 'IMAGE' ? '[Hình ảnh]' : message.content.slice(0, 200), last_message_at: message.created_at,
-                    ...(!actor.isStaff ? { status: assignee ? 'IN_PROGRESS' : 'WAITING', assigned_staff_id: assignee, resolved_at: null } : {}),
+                    status: 'IN_PROGRESS', assigned_staff_id: actor.isStaff ? actor.userId : assignee, resolved_at: null,
                 } });
             return message;
         });
@@ -146,9 +166,6 @@ export class ChatService {
         return this.prisma.$transaction(async (tx) => {
             await tx.$queryRaw `SELECT conversation_id FROM conversations WHERE conversation_id = ${id} FOR UPDATE`;
             const current = await tx.conversations.findUniqueOrThrow({ where: { conversation_id: id } });
-            const activeAssignee = current.assigned_staff_id ? await tx.users.findFirst({ where: { user_id: current.assigned_staff_id, is_staff: true, accounts: { status: 1 } } }) : null;
-            if (activeAssignee && current.assigned_staff_id !== actor.userId)
-                throw new ConflictException('Hội thoại đã có nhân viên phụ trách');
             let target = actor.userId;
             if (action === 'transfer') {
                 const staff = Number.isSafeInteger(staffId) ? await tx.users.findFirst({ where: { user_id: staffId, is_staff: true, accounts: { status: 1 } } }) : null;
@@ -163,8 +180,6 @@ export class ChatService {
     }
     async read(id: number, actor: ChatActor, through?: number) {
         const conversation = await this.authorize(id, actor);
-        if (actor.isStaff && conversation.assigned_staff_id !== actor.userId)
-            return { count: 0 };
         if (!Number.isSafeInteger(through) || through! < 1)
             throw new BadRequestException('Mốc đã đọc không hợp lệ');
         return this.prisma.messages.updateMany({ where: { conversation_id: id, message_id: { lte: through }, is_read: false, sender_role: actor.isStaff ? 'USER' : { in: ['ADMIN', 'STAFF'] } }, data: { is_read: true } });

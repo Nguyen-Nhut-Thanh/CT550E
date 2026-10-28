@@ -1,11 +1,18 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards, } from "@nestjs/common";
 import { AdminAuthGuard } from "../auth/admin.guard";
 import { BookingsAdminService } from "./bookings-admin.service";
-import type { AdminBookingFilters } from "shared";
+import { BookingsService } from "./bookings.service";
+import type { BookingPayload, AdminBookingFilters } from "shared";
 @Controller("bookings")
 @UseGuards(AdminAuthGuard)
 export class BookingsAdminController {
-    constructor(private readonly service: BookingsAdminService) { }
+    constructor(private readonly service: BookingsAdminService, private readonly bookings: BookingsService) { }
+    @Get("admin/customer/:id")
+    customer(@Param("id", ParseIntPipe) id: number) { return this.bookings.customerForStaff(id); }
+    @Post("admin/customer/:id")
+    createForCustomer(@Param("id", ParseIntPipe) id: number, @Body() body: BookingPayload) {
+        return this.bookings.createForCustomer(id, body);
+    }
     @Get("admin/list")
     adminList(
     @Req()

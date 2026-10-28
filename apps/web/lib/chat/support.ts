@@ -5,5 +5,5 @@ export function openSupportChat(context?: ChatContextInput) {
 }
 
 export function chatStatusLabel(status: string) {
-  return status === 'IN_PROGRESS' ? 'Đang hỗ trợ' : status === 'CLOSED' ? 'Đã giải quyết' : 'Chờ tiếp nhận';
+  return status === 'CLOSED' ? 'Đã hoàn thành' : 'Đang hỗ trợ';
 }

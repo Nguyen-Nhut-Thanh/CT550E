@@ -1,6 +1,6 @@
 import { getToken } from "@/lib/auth/session";
 import { requestWithToken } from "@/lib/http/requestWithToken";
-import type { ChatActor, ChatManageInput, ChatMessagePage, ChatStaff, Conversation, UploadResponse } from 'shared';
+import type { ChatContextCard, ChatActor, ChatManageInput, ChatMessagePage, ChatStaff, Conversation, UploadResponse } from 'shared';
 
 export async function chatRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
@@ -14,6 +14,7 @@ export const chatApi = {
   me: () => chatRequest<ChatActor>('/me'),
   list: () => chatRequest<Conversation[]>('/conversations'),
   create: () => chatRequest<Conversation>('/conversations', { method: 'POST' }),
+  contexts: (id: number) => chatRequest<ChatContextCard[]>(`/conversations/${id}/contexts`),
   staff: () => chatRequest<ChatStaff[]>('/staff'),
   messages: (id: number, cursor = '') => chatRequest<ChatMessagePage>(`/conversations/${id}/messages${cursor}`),
   manage: (id: number, body: ChatManageInput) => chatRequest(`/conversations/${id}/manage`, { method: 'POST', body: JSON.stringify(body) }),

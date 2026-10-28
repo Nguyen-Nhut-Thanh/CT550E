@@ -142,6 +142,8 @@ export const AdminSidebar = ({
                     <Link
                       href={item.href}
                       onClick={onClose}
+                      onMouseEnter={() => router.prefetch(item.href)}
+                      onFocus={() => router.prefetch(item.href)}
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                         isActive
                           ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"

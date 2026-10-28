@@ -44,6 +44,11 @@ export async function saveAdminBanner(
   return response;
 }
 
+export async function updateAdminBannerStatus(bannerId: number, status: number) {
+  const response = await adminFetch(`/banners/admin/${bannerId}`, {method: "PATCH", body: JSON.stringify({status})});
+  if (!response.ok) throw new Error("Không thể cập nhật trạng thái banner");
+}
+
 export async function deleteAdminBanner(bannerId: string | number) {
   const response = await adminFetch(`/banners/admin/${bannerId}`, {
     method: "DELETE",

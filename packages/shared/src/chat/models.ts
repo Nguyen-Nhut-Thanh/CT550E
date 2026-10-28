@@ -11,6 +11,10 @@ export type Conversation = {
         user_id: number;
         full_name: string;
         avatar_url: string | null;
+        phone?: string | null;
+        address?: string | null;
+        created_at?: string;
+        accounts?: { email: string };
     } | null;
 };
 export type RealtimeMessage = {
@@ -31,6 +35,20 @@ export type ChatStaff = {
 };
 export type ChatContextCard = {
     kind: 'tour' | 'booking';
+    image_url?: string;
+    price?: number;
+    duration?: string;
+    schedule_id?: number;
+    departure_date?: string;
+    original_price?: number;
+    summary?: string;
+    destination?: string;
+    transport?: string;
+    meals?: string;
+    hotel?: string;
+    rating?: number;
+    rating_count?: number;
+    category?: string;
     id: number;
     title: string;
     url: string;

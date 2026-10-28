@@ -11,7 +11,7 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
 
   if (!chart || chart.length === 0) {
     return (
-      <div className="flex h-80 flex-col items-center justify-center rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
+      <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
         <BarChart2 className="h-10 w-10 text-slate-300" />
         <p className="mt-2 text-sm font-semibold text-slate-500">Chưa có dữ liệu biểu đồ trong khoảng thời gian này.</p>
       </div>
@@ -62,7 +62,7 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
   const hoveredItem = hoveredIndex !== null ? points[hoveredIndex] ?? null : null;
 
   return (
-    <div className="rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
+    <div className="flex h-full min-w-0 flex-col rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
       {/* Chart Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-1">
         <div>
@@ -143,7 +143,7 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
       </div>
 
       {/* Interactive SVG Chart Canvas */}
-      <div className="relative mt-3 w-full select-none">
+      <div className="relative mt-3 flex min-h-0 flex-1 items-center w-full select-none">
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="h-auto min-h-40 w-full overflow-visible"

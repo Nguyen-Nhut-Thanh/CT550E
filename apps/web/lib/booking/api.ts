@@ -21,8 +21,12 @@ export function validatePublicVoucher(code: string, amount: number) {
   );
 }
 
-export function createBooking(payload: BookingPayload) {
-  return requestWithToken<{ booking_id?: number; id?: number }>("/bookings", {
+export function getStaffBookingCustomer(id: number) {
+  return requestWithToken<{full_name: string; phone: string | null; email: string}>(`/bookings/admin/customer/${id}`);
+}
+
+export function createBooking(payload: BookingPayload, customerId?: number) {
+  return requestWithToken<{ booking_id?: number; id?: number }>(customerId ? `/bookings/admin/customer/${customerId}` : "/bookings", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
