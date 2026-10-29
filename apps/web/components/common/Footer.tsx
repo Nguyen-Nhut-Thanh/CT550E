@@ -292,7 +292,7 @@ export default function Footer() {
       {/* Landscape decoration bottom-left */}
       <div className="pointer-events-none absolute bottom-[76px] left-0 hidden h-40 w-[390px] overflow-hidden opacity-90 xl:block">
         <Image
-          src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=900"
+          src="/images/shared/footer-travel-landscape.jpg"
           alt=""
           fill
           className="object-cover"

@@ -263,3 +263,31 @@ test("an attraction loads its province, region and country without a city level"
   assert.equal(LOCATION_LEVEL_LABELS[6], "Địa điểm tham quan");
   assert.equal(LOCATION_LEVEL_LABELS[7], undefined);
 });
+
+// Booking progress must follow the itinerary, independent of payment status.
+import { getBookingTripStatus } from "@/lib/account/booking-status";
+
+test("booking 27–29 October is ongoing on 28 October even when payment is pending", () => {
+  const booking = { status: "pending", tour_schedules: { start_date: "2026-10-27T00:00:00Z", end_date: "2026-10-29T00:00:00Z" } };
+  assert.deepEqual(getBookingTripStatus(booking, new Date("2026-10-28T05:00:00Z")), { status: "ongoing", statusText: "Đang diễn ra" });
+  assert.equal(getBookingTripStatus(booking, new Date("2026-10-26T12:00:00Z")).status, "upcoming");
+  assert.equal(getBookingTripStatus(booking, new Date("2026-10-29T16:59:59Z")).status, "ongoing");
+  assert.equal(getBookingTripStatus(booking, new Date("2026-10-29T17:00:00Z")).status, "completed");
+});
+
+test("booking starts on Vietnam's calendar day and paid future trips remain upcoming", () => {
+  const booking = { status: "paid", tour_schedules: { start_date: "2026-10-27", end_date: "2026-10-29" } };
+  assert.equal(getBookingTripStatus(booking, new Date("2026-10-26T16:59:59Z")).status, "upcoming");
+  assert.equal(getBookingTripStatus(booking, new Date("2026-10-26T17:00:00Z")).status, "ongoing");
+});
+
+test("cancel requests are not reported as cancelled and missing dates do not imply completion", () => {
+  const tour_schedules = { start_date: "2026-10-27", end_date: "2026-10-29" };
+  const now = new Date("2026-10-28T05:00:00Z");
+  assert.equal(getBookingTripStatus({ status: "cancelled", tour_schedules }, now).status, "cancelled");
+  assert.deepEqual(getBookingTripStatus({ status: "cancel_requested", tour_schedules }, now), { status: "unknown", statusText: "Đang yêu cầu hủy" });
+  assert.equal(getBookingTripStatus({ status: "paid" }, now).status, "unknown");
+  assert.equal(getBookingTripStatus({ status: "pending", tour_schedules: { start_date: "invalid" } }, now).status, "unknown");
+  assert.equal(getBookingTripStatus({ status: "paid", tour_schedules: { start_date: "2026-10-27" } }, now).status, "unknown");
+  assert.equal(getBookingTripStatus({ status: "completed", tour_schedules }, now).status, "completed");
+});

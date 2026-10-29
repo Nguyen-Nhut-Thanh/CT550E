@@ -23,7 +23,7 @@ export function BookingTourInfoCard({
         <Link href={`/tours/${tour.tour_id}`}>
           <ImageWithFallback
             src={tour.tour_images?.[0]?.image_url || undefined}
-            fallback="/images/account/cover-images.png"
+            fallback="/images/shared/travel-cover.png"
             alt={tour.name}
             className="h-48 w-full rounded-xl object-cover sm:h-44"
           />

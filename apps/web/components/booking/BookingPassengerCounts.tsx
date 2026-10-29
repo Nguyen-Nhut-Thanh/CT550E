@@ -84,7 +84,7 @@ export function BookingPassengerCounts({
           <div
             key={item.type}
             className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-3.5 shadow-[0_3px_12px_rgba(59,130,246,0.04)]"
-            style={{ backgroundImage: 'url("/images/background/ticket.png")', backgroundSize: "105% 114%", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
+            style={{ backgroundImage: 'url("/images/booking/ticket-background.png")', backgroundSize: "105% 114%", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
           >
             <div className="relative flex flex-col gap-3">
               <div className="flex items-center justify-between gap-2">

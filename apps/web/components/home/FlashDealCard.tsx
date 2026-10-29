@@ -41,7 +41,7 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
 
   const imageUrl =
     normalizeImageSrc(item.cover_image_url || item.image_url) ||
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";
+    "/images/shared/default-tour-beach.jpg";
   const displayPrice = item.sale_price || item.original_price || 0;
   const hasDiscount =
     !!item.original_price && item.original_price > (item.sale_price || 0);

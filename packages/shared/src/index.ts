@@ -81,3 +81,4 @@ export type { VoucherPayload, VoucherValidationApiResponse } from "./vouchers/co
 export type { Voucher, VoucherLike, VoucherValidationResult } from "./vouchers/models";
 export { ARTICLE_ICONS, isArticleUrl, articleBlockText, articleText, hasArticleContent, createArticleBlock, createDestinationTemplate } from './blog/blocks';
 export type { ArticleIcon, ArticleBlock, ArticleDocument, CoverPosition } from './blog/blocks';
+export type { BookingDetail } from "./booking/models";

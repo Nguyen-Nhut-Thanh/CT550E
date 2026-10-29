@@ -6,21 +6,21 @@ const WHY_CHOOSE_ITEMS = [
     title: "An Toàn Tuyệt Đối",
     description:
       "Chúng tôi cam kết tiêu chuẩn an toàn cao nhất, đảm bảo mọi hành trình của bạn luôn được bảo vệ và hỗ trợ kịp thời.",
-    icon: "https://cdn-icons-png.flaticon.com/512/784/784306.png",
+    icon: "/images/home/why-choose-safety.png",
     rotate: "-rotate-[15deg]",
   },
   {
     title: "Dịch Vụ Đẳng Cấp",
     description:
       "Tận hưởng những dịch vụ cao cấp được thiết kế riêng biệt, mang lại sự thoải mái và hài lòng tối đa cho du khách.",
-    icon: "https://cdn-icons-png.flaticon.com/512/1042/1042339.png",
+    icon: "/images/home/why-choose-premium-service.png",
     rotate: "rotate-[10deg]",
   },
   {
     title: "Tiết Kiệm Chi Phí",
     description:
       "Cung cấp mức giá cạnh tranh nhất cùng nhiều ưu đãi hấp dẫn giúp bạn có chuyến đi trong mơ với chi phí hợp lý.",
-    icon: "https://cdn-icons-png.flaticon.com/512/2721/2721091.png",
+    icon: "/images/home/why-choose-savings.png",
     rotate: "",
   },
 ];
@@ -30,7 +30,7 @@ export default function WhyChooseSection() {
     <section
       className="relative overflow-hidden bg-[#f7fcff] px-4 py-20 sm:px-6 lg:px-10 xl:px-20"
       style={{
-        backgroundImage: "url('/images/why-choose-bg.png')",
+        backgroundImage: "url('/images/home/why-choose-background.png')",
         backgroundRepeat: "no-repeat",
 
         // Cắt phần trời phía trên,

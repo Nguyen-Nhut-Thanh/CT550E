@@ -18,7 +18,7 @@ export default function TourItineraryTimeline({ itineraries }: TourItineraryTime
           { time: "Lịch trình", title: it.title || `Ngày ${idx + 1}`, desc: it.content },
           ...(it.meals ? [{ time: "Bữa ăn", title: "Ẩm thực trong ngày", desc: it.meals }] : []),
         ],
-        image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600",
+        image: "/images/tours/itinerary-landscape.jpg",
       }))
     : [];
 

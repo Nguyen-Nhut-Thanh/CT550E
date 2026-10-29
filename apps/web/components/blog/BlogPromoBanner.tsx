@@ -6,7 +6,7 @@ export function BlogPromoBanner() {
   return (
     <div className="relative min-h-[220px] w-full overflow-hidden rounded-3xl bg-slate-900 p-6 text-white shadow-md">
       <Image
-        src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600"
+        src="/images/blog/promotion-beach.jpg"
         alt="Khám phá thế giới cùng JourniTrip"
         fill
         className="object-cover opacity-75"

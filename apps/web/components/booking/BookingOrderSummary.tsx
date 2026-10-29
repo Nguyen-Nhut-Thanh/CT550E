@@ -33,7 +33,7 @@ export function BookingOrderSummary({
           </div>
           <ImageWithFallback
             src={tour.tour_images?.[0]?.image_url || undefined}
-            fallback="/images/account/cover-images.png"
+            fallback="/images/shared/travel-cover.png"
             alt={tour.name}
             className="mt-3 h-20 w-full shrink-0 rounded-xl object-cover"
           />

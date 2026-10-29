@@ -47,12 +47,12 @@ export type BookingItemUI = {
     startDate: string;
     endDate: string;
     passengers: string;
-    status: "completed" | "upcoming" | "cancelled";
+    status: "completed" | "upcoming" | "ongoing" | "cancelled" | "unknown";
     statusText: string;
     price: number;
     image: string;
 };
-export type BookingStatusFilter = "all" | "upcoming" | "completed" | "cancelled";
+export type BookingStatusFilter = "all" | BookingItemUI["status"];
 export type UserProfileLite = {
     full_name?: string | null;
     email?: string | null;

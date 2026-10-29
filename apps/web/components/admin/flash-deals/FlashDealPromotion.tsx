@@ -10,7 +10,7 @@ export function FlashDealPromotion() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_22%,#effaff_0%,transparent_55%),linear-gradient(145deg,#80ccfa_0%,#d7f3ff_55%,#8ed7f5_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-[56%]">
         <Image
-          src="/images/about-us/cover-image-3.png"
+          src="/images/about/travel-dreams-banner.png"
           alt=""
           fill
           sizes="500px"
@@ -59,7 +59,7 @@ export function FlashDealPromotion() {
       />
       <div className="absolute bottom-[17%] left-[16%] z-10 h-[24%] w-[43%] -rotate-[16deg] rounded-xl border-[9px] border-white bg-white shadow-[0_18px_35px_rgba(14,95,145,0.24)]">
         <Image
-          src="/images/about-us/cover-image-3.png"
+          src="/images/about/travel-dreams-banner.png"
           alt=""
           fill
           sizes="220px"
@@ -68,7 +68,7 @@ export function FlashDealPromotion() {
       </div>
       <div className="absolute bottom-[20%] left-[53%] h-[17%] w-[23%] rotate-[15deg] rounded-lg border-[7px] border-white bg-white shadow-xl shadow-sky-900/15">
         <Image
-          src="/images/about-us/cover-image-1.png"
+          src="/images/about/hero-travel.png"
           alt=""
           fill
           sizes="140px"

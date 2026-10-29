@@ -9,7 +9,7 @@
 }
 
 .dashboard-welcome {
-  background-image: linear-gradient(90deg, #e8f3ff 0%, #e8f3fff2 42%, #e8f3ff66 75%, #e8f3ff11 100%), url('/images/account/cover-images.png');
+  background-image: linear-gradient(90deg, #e8f3ff 0%, #e8f3fff2 42%, #e8f3ff66 75%, #e8f3ff11 100%), url('/images/shared/travel-cover.png');
   background-position: center, right 55%;
   background-size: cover;
 }
@@ -19,7 +19,7 @@
 }
 
 .admin-navigation {
-  background-image: linear-gradient(180deg, #00112bf7 25%, #001b40c9 75%, #00112bf0), url('/images/account/cover-images.png');
+  background-image: linear-gradient(180deg, #00112bf7 25%, #001b40c9 75%, #00112bf0), url('/images/shared/travel-cover.png');
   background-position: center, center bottom;
   background-size: cover;
 }

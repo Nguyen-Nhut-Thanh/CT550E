@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { DestinationCardProps } from 'shared';
 
 const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200";
+  "/images/shared/default-tour-beach.jpg";
 
 export function getDestinationCardClassName(index: number): string {
   const layouts = [

@@ -1,0 +1,116 @@
+[
+  {
+    "source": "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1200",
+    "local": "/images/blog/article-travel-landscape.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 190743
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=300",
+    "local": "/images/blog/featured-da-nang.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 18716
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=300",
+    "local": "/images/blog/featured-sapa.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 10053
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300",
+    "local": "/images/blog/featured-beach.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 13435
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?q=80&w=300",
+    "local": "/images/blog/featured-coast.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 24995
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600",
+    "local": "/images/blog/promotion-beach.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 39530
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=400",
+    "local": "/images/blog/related-da-lat.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 26085
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=400",
+    "local": "/images/blog/related-ninh-binh.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 29272
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400",
+    "local": "/images/blog/related-phu-quoc.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 20764
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?q=80&w=400",
+    "local": "/images/blog/related-hue.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 41069
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=900",
+    "local": "/images/shared/footer-travel-landscape.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 114875
+  },
+  {
+    "source": "https://flagcdn.com/vn.svg",
+    "local": "/images/shared/vietnam-flag.svg",
+    "contentType": "image/svg+xml",
+    "bytes": 194
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1400&q=90",
+    "local": "/images/home/about-introduction-landscape.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 276306
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=90",
+    "local": "/images/home/about-introduction-city.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 131901
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200",
+    "local": "/images/shared/default-tour-beach.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 132449
+  },
+  {
+    "source": "https://cdn-icons-png.flaticon.com/512/784/784306.png",
+    "local": "/images/home/why-choose-safety.png",
+    "contentType": "image/png",
+    "bytes": 19503
+  },
+  {
+    "source": "https://cdn-icons-png.flaticon.com/512/1042/1042339.png",
+    "local": "/images/home/why-choose-premium-service.png",
+    "contentType": "image/png",
+    "bytes": 25513
+  },
+  {
+    "source": "https://cdn-icons-png.flaticon.com/512/2721/2721091.png",
+    "local": "/images/home/why-choose-savings.png",
+    "contentType": "image/png",
+    "bytes": 15028
+  },
+  {
+    "source": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600",
+    "local": "/images/tours/itinerary-landscape.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 44918
+  }
+]

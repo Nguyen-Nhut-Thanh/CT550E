@@ -5,7 +5,7 @@ export function SchedulePageHeader() {
   return (
     <header className="ui-schedule-overview-hero relative isolate pb-[0] min-[901px]:shrink-0">
       <div
-        className="ui-schedule-overview-scenery absolute z-[-1] [inset:-32px_-32px_-15px_42%] opacity-[.27] [background:linear-gradient(90deg,_#eff6ff,_#eff6ff22),_url('/images/about-us/cover-image-3.png')_center_42%/cover] [mask-image:linear-gradient(#000,_transparent)] admin-max-600:[inset:-24px_-24px_-10px_20%]"
+        className="ui-schedule-overview-scenery absolute z-[-1] [inset:-32px_-32px_-15px_42%] opacity-[.27] [background:linear-gradient(90deg,_#eff6ff,_#eff6ff22),_url('/images/about/travel-dreams-banner.png')_center_42%/cover] [mask-image:linear-gradient(#000,_transparent)] admin-max-600:[inset:-24px_-24px_-10px_20%]"
         aria-hidden="true"
       />
       <nav

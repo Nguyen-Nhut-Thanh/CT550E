@@ -44,3 +44,7 @@ export function createPaymentUrl(bookingId: number, amount: number) {
     body: JSON.stringify({ bookingId, amount }),
   });
 }
+
+export function getBookingDetail(id: number, signal?: AbortSignal) {
+  return requestWithToken<import("shared").BookingDetail | null>(`/bookings/${id}`, { signal });
+}

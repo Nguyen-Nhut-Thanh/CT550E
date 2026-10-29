@@ -55,6 +55,23 @@ test('a tour hidden after selection cannot be sent', async () => {
  await assert.rejects(service.send(actor, {conversation_id: 1, content: 'Tour', message_type: 'CONTEXT', context: {tour_id: 42}}), /Tour không còn hiển thị/);
 });
 
+test('customers can send a tour card to request advice in their own conversation', async () => {
+ const start = new Date(Date.now() + 72 * 3600000);
+ const {service, updated} = setup('WAITING', null, {
+  name: 'Tour cần tư vấn', base_price: 2000000, cut_off_hours: 24,
+  duration_days: 2, duration_nights: 1, tour_images: [],
+  tour_schedules: [{tour_schedule_id: 12, start_date: start, price: 1500000, quota: 20, booked_count: 1, cover_image_url: null, flash_deals: null}],
+ });
+ const customer = {userId: 2, accountId: 2, isStaff: false, fullName: 'Customer'};
+ const message = await service.send(customer, {conversation_id: 1, content: 'Nhờ tư vấn', message_type: 'CONTEXT', context: {tour_id: 42}});
+ assert.equal(message.sender_role, 'USER');
+ assert.equal(message.context?.kind, 'tour');
+ assert.equal(message.context?.id, 42);
+ assert.equal(message.context?.schedule_id, 12);
+ assert.equal(message.content, 'Tour cần tư vấn');
+ assert.equal(updated().last_message, 'Tour cần tư vấn');
+});
+
 test('tour without an available departure is rejected', async () => {
  const {service} = setup('IN_PROGRESS', null, {tour_schedules: [], cut_off_hours: 24});
  await assert.rejects(service.send(actor, {conversation_id: 1, content: 'Tour', message_type: 'CONTEXT', context: {tour_id: 42}}), /chưa có lịch khởi hành/);

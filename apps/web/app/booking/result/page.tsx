@@ -10,6 +10,11 @@ function ResultContent() {
   const router = useRouter();
   const status = searchParams.get("status");
   const orderId = searchParams.get("orderId");
+  const bookingId = searchParams.get("booking_id");
+
+  useEffect(() => {
+    if (!status && bookingId && /^\d+$/.test(bookingId) && Number(bookingId) > 0) router.replace(`/booking/${bookingId}`);
+  }, [status, bookingId, router]);
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
@@ -27,6 +32,8 @@ function ResultContent() {
       router.push("/account");
     }
   }, [countdown, router]);
+
+  if (!status && (!bookingId || !/^\d+$/.test(bookingId) || !Number.isSafeInteger(Number(bookingId)) || Number(bookingId) <= 0)) return <div className="p-8 text-center"><h1 className="mb-4 text-xl font-bold">Chưa có thông tin booking</h1><Link href="/account/bookings" className="text-blue-600">Về lịch sử đặt tour</Link></div>;
 
   if (!status) {
     return (
@@ -58,8 +65,8 @@ function ResultContent() {
 
       <div className="p-8 text-center">
         <p className="mb-6 text-slate-600">
-          {isSuccess 
-            ? "Cảm ơn bạn đã sử dụng dịch vụ của TRAVOL. Chi tiết chuyến đi và vé điện tử sẽ được gửi vào email của bạn trong ít phút tới." 
+          {isSuccess
+            ? "Cảm ơn bạn đã sử dụng dịch vụ của JourniTrip. Chi tiết chuyến đi và vé điện tử sẽ được gửi vào email của bạn trong ít phút tới."
             : "Giao dịch đã bị hủy hoặc xảy ra lỗi trong quá trình xử lý. Đơn hàng của bạn vẫn được lưu lại dưới dạng chờ thanh toán."}
         </p>
 
@@ -80,7 +87,7 @@ function ResultContent() {
             </Link>
           )}
         </div>
-        
+
         <p className="mt-6 text-xs text-slate-400">
           Tự động chuyển hướng sau <strong className="text-slate-700">{countdown}s</strong>...
         </p>

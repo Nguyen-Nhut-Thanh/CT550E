@@ -1,20 +1,28 @@
 import {
   ArrowRight,
+  BriefcaseBusiness,
+  Compass,
   Globe2,
   Heart,
   Leaf,
+  MapPin,
+  Plane,
+  Quote,
+  Send,
   ShieldCheck,
+  Star,
+  Sun,
   Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./about.module.css";
 
 export const metadata = {
   title: "Về chúng tôi - JourniTrip",
   description:
-    "JourniTrip là đơn vị chuyên cung cấp các tour du lịch trong nước và quốc tế, mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn.",
+    "Từ đam mê du lịch đến sứ mệnh kết nối thế giới. Khám phá câu chuyện, con người và những giá trị của JourniTrip.",
 };
-
 const values = [
   {
     icon: ShieldCheck,
@@ -42,277 +50,271 @@ const values = [
     desc: "Góp phần phát triển du lịch có trách nhiệm với cộng đồng và môi trường.",
   },
 ];
-
 const stats = [
-  { value: "10+", label: "Năm kinh nghiệm\ntrong ngành du lịch" },
-  { value: "50.000+", label: "Khách hàng\nđã đồng hành" },
-  { value: "1.000+", label: "Tour trong nước\nvà quốc tế" },
-  { value: "100%", label: "Khách hàng hài lòng\nvới dịch vụ" },
+  {
+    icon: BriefcaseBusiness,
+    value: "10+",
+    label: "Năm kinh nghiệm\ntrong ngành du lịch",
+  },
+  { icon: Users, value: "50.000+", label: "Khách hàng\nđã đồng hành" },
+  { icon: MapPin, value: "1.000+", label: "Tour trong nước\nvà quốc tế" },
+  { icon: Star, value: "100%", label: "Khách hàng hài lòng\nvới dịch vụ" },
 ];
-
+function Wave({ top = false }: { top?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`${styles.wave} ${top ? styles.waveTop : ""}`}
+      viewBox="0 0 1440 100"
+      preserveAspectRatio="none"
+    >
+      <path
+        d="M0 62C175-12 255 118 500 58S758 28 946 55s306-61 494-16v61H0Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+function Flight({ className = "" }: { className?: string }) {
+  return (
+    <div aria-hidden="true" className={`${styles.flight} ${className}`}>
+      <svg viewBox="0 0 260 130" fill="none">
+        <path
+          d="M0 115C40 100 100 60 104 90s-52 19-21-19S170 51 235 12"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeDasharray="7 7"
+          strokeLinecap="round"
+        />
+      </svg>
+      <Plane size={34} fill="currentColor" strokeWidth={1} />
+    </div>
+  );
+}
 export default function AboutPage() {
   return (
-    <main className="overflow-hidden bg-white text-[#0b2c3d]">
-      {/* HERO */}
-      <section className="relative min-h-[330px] overflow-hidden sm:min-h-[390px] lg:min-h-[410px]">
-        <Image
-          src="/images/about-us/cover-image-1.png"
-          alt="Khám phá thế giới cùng JourniTrip"
-          fill
-          priority
-          className="object-cover object-[68%_54%]"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#eefbff]/98 via-[#eefbff]/86 via-45% to-transparent" />
-
-        <div className="relative z-10 mx-auto flex min-h-[330px] max-w-[1220px] items-center px-5 py-10 sm:min-h-[390px] sm:px-8 lg:min-h-[410px] lg:px-10">
-          <div className="max-w-[450px]">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
-                VỀ CHÚNG TÔI
-              </span>
-              <span className="h-px w-8 bg-[#0c797c]" />
-            </div>
-
-            <h1 className="text-[38px] font-black leading-[1.02] tracking-[-0.04em] text-[#0b2c3d] sm:text-[46px] lg:text-[50px]">
-              Chúng tôi là ai?
-            </h1>
-
-            <p className="mt-4 max-w-[410px] text-[14px] leading-6 text-slate-700 sm:text-[15px]">
-              Chúng tôi là{" "}
-              <strong className="font-extrabold text-[#0b2c3d]">
-                JourniTrip
-              </strong>{" "}
-              – đơn vị chuyên cung cấp các tour du lịch trong nước và quốc tế,
-              mang đến những trải nghiệm đáng nhớ, an toàn và trọn vẹn cho mọi
-              hành trình của bạn.
-            </p>
-
-            <div className="mt-6 flex items-center gap-4">
-              <span className="font-handwriting max-w-[270px] rotate-[-3deg] text-[25px] font-bold leading-8 text-[#08777c] sm:text-[29px]">
-                Khám phá thế giới
-                <br />
-                cùng chúng tôi!
-              </span>
-              <svg
-                viewBox="0 0 72 42"
-                className="h-11 w-[76px] text-[#08777c]"
-                fill="none"
-              >
-                <path
-                  d="M2 29c16-19 35-18 51-7"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeDasharray="5 5"
-                />
-                <path
-                  d="m51 22 15-13-6 18-9-5Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-          </div>
+    <div className={styles.page}>
+      <section className={styles.hero} aria-labelledby="about-title">
+        <div className={styles.heroPhoto}>
+          <Image
+            src="/images/about/hero-bay-traveler.png"
+            alt="Du khách dang tay đón hành trình khám phá vịnh Hạ Long"
+            fill
+            priority
+            sizes="(max-width: 700px) 100vw, 60vw"
+            className={styles.cover}
+          />
+          <span className={`${styles.handwriting} ${styles.heroNote}`}>
+            JourniTrip More
+            <br />
+            Live Brighter ♡
+          </span>
         </div>
+        <Flight className={styles.heroFlight} />
+        <div className={`${styles.container} ${styles.heroContent}`}>
+          <p className={styles.eyebrow}>Về chúng tôi</p>
+          <h1 id="about-title">
+            Chúng tôi là
+            <br />
+            JourniTrip
+          </h1>
+          <p className={styles.heroDescription}>
+            Đồng hành cùng bạn trên mọi hành trình khám phá thế giới, mang đến
+            những trải nghiệm du lịch đáng nhớ và ý nghĩa.
+          </p>
+          <a href="#cau-chuyen" className={styles.primaryButton}>
+            Khám phá câu chuyện của chúng tôi <ArrowRight size={17} />
+          </a>
+        </div>
+        <Wave />
       </section>
 
-      {/* STORY */}
-      <section className="bg-white py-14 sm:py-16 lg:py-[58px]">
-        <div className="mx-auto grid max-w-[1220px] items-center gap-12 px-5 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 lg:px-10">
-          <div className="relative mx-auto h-[350px] w-full max-w-[520px] sm:h-[390px] lg:mx-0">
-            <div className="absolute left-0 top-0 w-[76%] -rotate-[5deg] bg-white p-2.5 shadow-[0_14px_35px_rgba(15,23,42,0.14)] ring-1 ring-slate-200/70">
-              <div className="relative aspect-[1.45/1] overflow-hidden">
-                <Image
-                  src="/images/about-us/our-story-1.png"
-                  alt="Đội ngũ JourniTrip"
-                  fill
-                  className="object-cover"
-                  sizes="520px"
-                />
-              </div>
-            </div>
-
-            <div className="absolute bottom-8 right-0 z-20 w-[52%] rotate-[5deg] bg-white p-2.5 shadow-[0_14px_35px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
-              <div className="relative aspect-[1.45/1] overflow-hidden">
-                <Image
-                  src="/images/about-us/our-story-2.png"
-                  alt="Vịnh Hạ Long"
-                  fill
-                  className="object-cover"
-                  sizes="300px"
-                />
-              </div>
-            </div>
-
-            <div className="absolute bottom-0 left-2 rotate-[-5deg]">
-              <p className="font-handwriting text-[22px] font-bold leading-6 text-[#173746] sm:text-[24px]">
-                Những hành trình
-                <br />
-                thật, những cảm xúc thật!
-              </p>
-              <div className="mt-2 h-[2px] w-28 rotate-[-4deg] bg-[#0c8d91]" />
-            </div>
-
-            <div className="absolute bottom-14 left-[54%] h-8 w-8 text-[#0c8d91]">
-              <span className="absolute left-0 top-0 h-px w-7 rotate-[72deg] bg-current" />
-              <span className="absolute left-1 top-2 h-px w-6 rotate-[30deg] bg-current" />
-              <span className="absolute left-4 top-1 h-px w-6 -rotate-[18deg] bg-current" />
-            </div>
-          </div>
-
-          <div className="max-w-[560px] lg:pl-2">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
-              CÂU CHUYỆN CỦA CHÚNG TÔI
-            </p>
-            <h2 className="mt-3 text-[30px] font-black leading-[1.12] tracking-[-0.03em] text-[#0b2c3d] sm:text-[34px] lg:max-w-[470px]">
-              Từ đam mê du lịch
-              <br className="hidden sm:block" /> đến sứ mệnh kết nối
-            </h2>
-
-            <div className="mt-5 space-y-4 text-[14px] leading-6 text-slate-600">
-              <p>
-                JourniTrip được thành lập bởi những người trẻ yêu thích du lịch,
-                luôn tin rằng: mỗi chuyến đi không chỉ là điểm đến, mà còn là cơ
-                hội để khám phá văn hóa, con người và chính bản thân mình.
-              </p>
-              <p>
-                Với kinh nghiệm nhiều năm trong ngành du lịch, chúng tôi không
-                ngừng nỗ lực để mang đến những hành trình chất lượng, linh hoạt
-                và phù hợp với mọi nhu cầu – từ những chuyến đi ngắn ngày đến
-                hành trình khám phá thế giới.
-              </p>
-            </div>
-
-            <Link
-              href="/tours"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#109a9a] px-6 py-3 text-[13px] font-bold text-white shadow-[0_8px_20px_rgba(16,154,154,0.24)] transition hover:-translate-y-0.5 hover:bg-[#0d8686]"
-            >
-              Tìm hiểu thêm về chúng tôi
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-[1220px] items-stretch lg:grid-cols-[36%_64%]">
-          <div className="relative min-h-[240px] sm:min-h-[290px] lg:min-h-[220px]">
+      <section
+        id="cau-chuyen"
+        className={`${styles.story} ${styles.container}`}
+        aria-labelledby="story-title"
+      >
+        <div className={styles.collage}>
+          <div className={styles.collageBackdrop} />
+          <div className={styles.storyPhoto}>
             <Image
-              src="/images/about-us/cover-image-2.png"
-              alt="Hành trình khám phá"
+              src="/images/about/our-story-team.png"
+              alt="Những người bạn cùng nhau tận hưởng chuyến đi"
               fill
-              className="object-cover object-center"
-              sizes="(max-width: 1024px) 100vw, 440px"
+              sizes="(max-width: 700px) 75vw, 380px"
+              className={styles.cover}
             />
           </div>
-
-          <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-8">
-            <h2 className="text-[25px] font-black tracking-[-0.03em] text-[#0b2c3d] sm:text-[28px]">
-              Những con số biết nói
-            </h2>
-            <div className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-4 sm:gap-y-0">
-              {stats.map((stat, index) => (
-                <div
-                  key={stat.value}
-                  className={`px-4 ${index === 0 ? "sm:pl-0" : ""} sm:border-r sm:border-slate-200 sm:last:border-r-0`}
-                >
-                  <div className="text-[24px] font-black leading-none tracking-[-0.03em] text-[#0b2c3d] sm:text-[27px]">
-                    {stat.value}
-                  </div>
-                  <p className="mt-2 whitespace-pre-line text-[11px] leading-[1.55] text-slate-600">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <span className={`${styles.sticker} ${styles.storySticker}`}>
+            <Sun size={34} />
+            Những hành trình
+            <br />
+            thật, những cảm xúc thật!
+          </span>
+          <div className={styles.detailPhoto}>
+            <Image
+              src="/images/about/our-story-ha-long-bay.png"
+              alt="Cảnh sắc vịnh Hạ Long trong hành trình khám phá"
+              fill
+              sizes="(max-width: 700px) 55vw, 280px"
+              className={styles.cover}
+            />
           </div>
+          <span className={`${styles.sticker} ${styles.detailSticker}`}>
+            <MapPin size={25} />
+            Khám phá nhiều hơn
+            <br />
+            cùng JourniTrip
+          </span>
+        </div>
+        <div className={styles.storyCopy}>
+          <Compass
+            aria-hidden="true"
+            className={styles.compass}
+            strokeWidth={0.6}
+          />
+          <p className={styles.eyebrow}>Câu chuyện của chúng tôi</p>
+          <h2 id="story-title">
+            Từ đam mê du lịch
+            <br />
+            đến sứ mệnh kết nối thế giới
+          </h2>
+          <p>
+            JourniTrip được thành lập bởi những người trẻ yêu thích du lịch,
+            luôn tin rằng mỗi chuyến đi không chỉ là đến một điểm đến, mà còn là
+            cơ hội để khám phá văn hóa, con người và chính bản thân mình.
+          </p>
+          <p>
+            Với kinh nghiệm nhiều năm trong ngành du lịch, chúng tôi không ngừng
+            nỗ lực để mang đến những hành trình chất lượng, linh hoạt và phù hợp
+            với mọi nhu cầu – từ những chuyến đi ngắn ngày đến hành trình khám
+            phá thế giới.
+          </p>
+          <a href="#gia-tri" className={styles.outlineButton}>
+            Tìm hiểu thêm về chúng tôi <ArrowRight size={16} />
+          </a>
         </div>
       </section>
 
-      {/* VALUES */}
-      <section className="bg-[#edf9fb] py-12 sm:py-14">
-        <div className="mx-auto max-w-[1220px] px-5 sm:px-8 lg:px-10">
-          <div className="text-center">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0c797c]">
-              VÌ SAO CHỌN JourniTrip
-            </p>
-            <h2 className="mt-2 text-[28px] font-black tracking-[-0.03em] text-[#0b2c3d] sm:text-[32px]">
-              Giá trị chúng tôi mang lại
-            </h2>
-          </div>
-
-          <div className="mt-8 grid gap-y-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-            {values.map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="px-5 text-center lg:border-r lg:border-[#d9ecef] lg:last:border-r-0"
-              >
-                <div className="mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#dff3f4] text-[#0c8d91]">
-                  <Icon className="h-7 w-7 stroke-[1.7]" />
-                </div>
-                <h3 className="mt-4 text-[13px] font-extrabold text-[#0b2c3d]">
-                  {title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-[175px] text-[11px] leading-[1.7] text-slate-600">
-                  {desc}
-                </p>
+      <section className={styles.statistics} aria-labelledby="stats-title">
+        <Image
+          src="/images/about/hero-bay-traveler.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className={styles.statsPhoto}
+        />
+        <div className={styles.statsVeil} />
+        <Wave top />
+        <div className={`${styles.container} ${styles.statsContent}`}>
+          <h2 id="stats-title">Những con số biết nói</h2>
+          <p>
+            Sự tin tưởng của bạn là động lực để chúng tôi không ngừng phát
+            triển.
+          </p>
+          <div className={styles.statsGrid}>
+            {stats.map(({ icon: Icon, value, label }) => (
+              <div key={value} className={styles.statCard}>
+                <span>
+                  <Icon size={27} strokeWidth={1.7} />
+                </span>
+                <strong>{value}</strong>
+                <p>{label}</p>
               </div>
             ))}
           </div>
         </div>
+        <span className={`${styles.handwriting} ${styles.statsNote}`}>
+          Good Trips
+          <br />
+          Better People ♡
+        </span>
+        <Wave />
       </section>
 
-      {/* CTA */}
-      <section className="relative min-h-[260px] overflow-hidden text-white sm:min-h-[285px]">
-        <Image
-          src="/images/about-us/cover-image-3.png"
-          alt="Biến những ước mơ du lịch thành hiện thực"
-          fill
-          className="object-cover object-center"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06515d]/95 via-[#087489]/78 to-[#0b8191]/15" />
-
-        <div className="relative z-10 mx-auto grid min-h-[260px] max-w-[1220px] items-center gap-8 px-5 py-10 sm:min-h-[285px] sm:px-8 lg:grid-cols-[1fr_0.75fr] lg:px-10">
-          <div className="max-w-[500px]">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/85">
-              HÃY CÙNG CHÚNG TÔI
-            </p>
-            <h2 className="mt-2 text-[28px] font-black leading-[1.12] tracking-[-0.03em] sm:text-[32px] lg:text-[34px]">
-              Biến những ước mơ du lịch
-              <br />
-              thành hiện thực
-            </h2>
-            <p className="mt-3 max-w-[475px] text-[12px] leading-5 text-white/90 sm:text-[13px]">
-              Dù bạn muốn khám phá thiên nhiên, trải nghiệm văn hóa hay đơn giản
-              là tìm một nơi để thư giãn – JourniTrip luôn sẵn sàng đồng hành
-              cùng bạn.
-            </p>
-            <Link
-              href="/tours"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[12px] font-extrabold text-[#0c767d] shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-50"
-            >
-              Khám phá tour ngay
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+      <section
+        id="gia-tri"
+        className={styles.values}
+        aria-labelledby="values-title"
+      >
+        <Flight className={styles.valuesFlight} />
+        <div className={styles.container}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.eyebrow}>Vì sao chọn JourniTrip</p>
+            <h2 id="values-title">Giá trị chúng tôi mang lại</h2>
           </div>
-
-          <div className="hidden justify-end lg:flex">
-            <div className="rotate-[-5deg] text-right">
-              <p className="font-handwriting text-[31px] font-bold leading-[1.05] drop-shadow-md xl:text-[35px]">
-                Cùng bạn
-                <br />
-                đi khắp muôn nơi ♡
-              </p>
-              <div className="ml-auto mt-2 h-[2px] w-36 rotate-[2deg] bg-white/90" />
+          <div className={styles.valuesGrid}>
+            {values.map(({ icon: Icon, title, desc }) => (
+              <article key={title} className={styles.value}>
+                <span className={styles.valueIcon}>
+                  <Icon size={31} strokeWidth={1.7} />
+                </span>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </article>
+            ))}
+          </div>
+          <div className={styles.quoteRow}>
+            <div className={styles.quotePhoto}>
+              <Image
+                src="/images/about/hero-bay-traveler.png"
+                alt="Tìm cảm hứng giữa thiên nhiên và những hành trình mới"
+                fill
+                sizes="(max-width: 700px) 100vw, 50vw"
+                className={styles.cover}
+              />
             </div>
+            <blockquote className={styles.quote}>
+              <Quote aria-hidden="true" size={36} fill="currentColor" />
+              <p>
+                Chúng tôi tin rằng du lịch không chỉ giúp bạn nhìn thấy thế
+                giới, mà còn giúp bạn nhìn thấy một phiên bản tốt hơn của chính
+                mình.
+              </p>
+              <cite>— Đội ngũ JourniTrip</cite>
+              <Send
+                aria-hidden="true"
+                className={styles.paperPlane}
+                size={49}
+                strokeWidth={1}
+              />
+            </blockquote>
           </div>
         </div>
       </section>
-    </main>
+
+      <section className={styles.cta} aria-labelledby="cta-title">
+        <Image
+          src="/images/about/travel-dreams-banner.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className={styles.cover}
+        />
+        <div className={styles.ctaVeil} />
+        <Wave top />
+        <div className={`${styles.container} ${styles.ctaContent}`}>
+          <p>Hãy cùng chúng tôi</p>
+          <h2 id="cta-title">biến những ước mơ du lịch thành hiện thực</h2>
+          <span>
+            Khám phá thế giới, tạo nên những hành trình đáng nhớ cùng
+            JourniTrip.
+          </span>
+          <Link href="/tours" className={styles.primaryButton}>
+            Khám phá tour ngay <ArrowRight size={17} />
+          </Link>
+        </div>
+        <div aria-hidden="true" className={styles.signpost}>
+          <span>New Places</span>
+          <span>New Friends</span>
+          <span>New Stories</span>
+          <span>
+            Same You
+            <br />
+            Happier
+          </span>
+        </div>
+      </section>
+    </div>
   );
 }

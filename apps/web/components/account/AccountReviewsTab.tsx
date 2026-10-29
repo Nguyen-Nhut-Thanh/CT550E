@@ -144,8 +144,8 @@ export function AccountReviewsTab() {
             >
               <Link href={`/tours/${review.tour_id}`} className="shrink-0">
                 <ImageWithFallback
-                  src={review.tour_image || "/images/account/cover-images.png"}
-                  fallback="/images/account/cover-images.png"
+                  src={review.tour_image || "/images/shared/travel-cover.png"}
+                  fallback="/images/shared/travel-cover.png"
                   alt={review.tour_name}
                   className="h-40 w-full rounded-lg object-cover sm:h-[112px] sm:w-[170px]"
                 />

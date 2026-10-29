@@ -11,7 +11,6 @@ import {
   CalendarDays,
   Camera,
   ContactRound,
-  Home,
   Info,
   Loader2,
   LockKeyhole,
@@ -22,7 +21,6 @@ import {
   Save,
   UserRound,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import type {
   AccountUserProps as AccountSettingsTabProps,
@@ -105,35 +103,28 @@ export function AccountSettingsTab({
 
   return (
     <div className="w-full">
-      <div className="relative overflow-hidden pb-7 pt-2 sm:pb-9">
-        <div className="mb-7 flex items-center gap-3 text-[13px] text-slate-400">
-          <Link href="/" aria-label="Trang chủ">
-            <Home size={17} />
-          </Link>
-          <span>/</span>
-          <span>Cài đặt</span>
-        </div>
+      <div className="relative overflow-hidden pb-4 pt-0">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-2 bottom-0 hidden h-32 w-72 items-center justify-center gap-5 text-blue-300/80 xl:flex"
+          className="pointer-events-none absolute right-0 top-2 hidden h-20 w-52 items-center justify-center gap-3 text-blue-300/80 xl:flex"
         >
           <Camera
-            size={62}
+            size={44}
             strokeWidth={1.2}
             className="-rotate-12 rounded-2xl bg-white/60 p-2 shadow-sm"
           />
           <Plane
-            size={44}
-            className="-translate-y-7 -rotate-12 text-blue-400"
+            size={32}
+            className="-translate-y-3 -rotate-12 text-blue-400"
           />
-          <div className="rotate-12 rounded-lg border-[6px] border-white bg-gradient-to-b from-sky-200 to-emerald-200 p-5 shadow-md">
-            <MapPin size={38} className="text-white" />
+          <div className="rotate-12 rounded-lg border-4 border-white bg-gradient-to-b from-sky-200 to-emerald-200 p-3 shadow-md">
+            <MapPin size={28} className="text-white" />
           </div>
         </div>
-        <h1 className="relative text-[26px] font-extrabold tracking-tight text-[#13274c] sm:text-[32px]">
+        <h1 className="relative text-[24px] font-extrabold tracking-tight text-[#13274c] sm:text-[28px]">
           Cài đặt tài khoản
         </h1>
-        <p className="mt-1 text-[15px] font-medium text-slate-500">
+        <p className="relative mt-1 text-sm font-medium text-slate-500 xl:pr-56">
           Cập nhật thông tin cá nhân và tài khoản để trải nghiệm tốt hơn
         </p>
       </div>

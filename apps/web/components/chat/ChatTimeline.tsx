@@ -3,12 +3,14 @@
 import { UserRound } from "lucide-react";
 import { TourMessageCard } from "./TourMessageCard";
 import { formatMessageTime } from "@/lib/chat/format";
+import { DEFAULT_AVATAR, resolveAvatar } from "@/lib/account/avatar";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import type { ChatTimelineProps } from "shared";
 
 export function ChatTimeline({
   messages,
   isStaff,
+  customer,
   loading,
   hasMore,
   onLoadMore,
@@ -52,14 +54,15 @@ export function ChatTimeline({
           el.scrollHeight - el.scrollTop - el.clientHeight < 70;
         markVisible();
       }}
-      className="min-h-0 flex-1 space-y-3 overflow-x-auto overflow-y-auto bg-[#f3f8fb] p-4"
+      className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-[#f3f8fb] p-4"
+      style={{ backgroundImage: "radial-gradient(ellipse at 0% 100%, #dceeff 0%, transparent 55%), radial-gradient(ellipse at 100% 0%, #e7f5ff 0%, transparent 50%)" }}
       aria-label="Lịch sử tin nhắn"
     >
       {hasMore && (
         <button
           type="button"
           onClick={onLoadMore}
-          className="mx-auto block rounded-full border bg-white px-4 py-1.5 text-xs text-blue-600"
+          className="mx-auto mb-3 block rounded-full border bg-white px-4 py-1.5 text-xs text-blue-600"
         >
           Xem tin nhắn trước
         </button>
@@ -78,15 +81,27 @@ export function ChatTimeline({
         const own = isStaff
           ? message.sender_role !== "USER"
           : message.sender_role === "USER";
+        const previousMessage = messages[index - 1];
+        const continuesGroup = previousMessage?.sender_id === message.sender_id &&
+          previousMessage?.sender_role === message.sender_role;
+        const changesType = previousMessage?.message_type !== message.message_type ||
+          previousMessage?.context?.kind !== message.context?.kind;
+        const sender = isStaff && customer?.user_id === message.sender_id ? customer : null;
         return (
           <div
             key={message.client_message_id || message.message_id}
-            className={`flex items-start gap-3 ${message.context?.kind === "tour" ? "min-w-full w-max" : ""} ${own ? "justify-end" : "justify-start"}`}
+            className={`flex min-w-0 items-start gap-3 ${index === 0 ? "" : !continuesGroup ? "mt-3" : changesType ? "mt-[5px]" : "mt-0.5"} ${own ? "justify-end" : "justify-start"}`}
           >
-            {!own && <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e1e8f1] text-[#6b829f]"><UserRound size={18}/></span>}
-            <div className={message.context?.kind === "tour" ? "w-[600px] min-w-[600px] shrink-0" : "min-w-0 max-w-[80%]"}>
+            {!own && <span aria-hidden="true" className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e1e8f1] font-semibold text-[#6b829f] ${continuesGroup ? "invisible" : ""}`}>
+              {sender?.avatar_url ? (
+                <img src={resolveAvatar(sender.avatar_url)} alt="" className="h-full w-full object-cover" onError={event => {
+                  if (!event.currentTarget.src.endsWith(DEFAULT_AVATAR)) event.currentTarget.src = DEFAULT_AVATAR;
+                }} />
+              ) : sender?.full_name ? sender.full_name.trim().charAt(0).toUpperCase() : <UserRound size={18} />}
+            </span>}
+            <div className={`flex min-w-0 flex-col ${message.context?.kind === "tour" ? "w-full max-w-[600px]" : "max-w-[80%]"} ${own ? "items-end" : "items-start"}`}>
             <div
-              className={`${message.context?.kind === "tour" ? "w-[600px] min-w-[600px] shrink-0" : "w-fit"} rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${(message.message_type === "IMAGE" || message.context?.kind === "tour") ? "!border-0 !bg-transparent !p-0 !shadow-none" : own ? "bg-blue-500 text-white" : "rounded-bl-md border border-[#e8eef4] bg-white text-slate-800 shadow-[0_1px_3px_rgba(50,75,100,0.1)]"}`}
+              className={`${message.context?.kind === "tour" ? "w-full min-w-0" : "w-fit max-w-full"} rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${(message.message_type === "IMAGE" || message.context?.kind === "tour") ? "!border-0 !bg-transparent !p-0 !shadow-none" : own && isStaff ? "bg-blue-500 text-white" : `${own ? "rounded-br-md" : "rounded-bl-md"} border border-[#e8eef4] bg-white text-slate-800 shadow-[0_1px_3px_rgba(50,75,100,0.1)]`}`}
             >
               {message.message_type === "IMAGE" ? (
                 <a
@@ -94,12 +109,13 @@ export function ChatTimeline({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Mở ảnh đầy đủ"
+                  className={`flex max-w-full ${own ? "justify-end" : "justify-start"}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={message.content}
                     alt="Ảnh trong hội thoại"
-                    className="max-h-64 max-w-full rounded-lg object-contain"
+                    className="h-auto max-h-40 w-auto max-w-[min(100%,200px)] rounded-lg object-contain"
                     loading="lazy"
                     onLoad={() => {
                       const el = container.current;

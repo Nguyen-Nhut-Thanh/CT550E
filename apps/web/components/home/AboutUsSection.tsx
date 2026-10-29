@@ -34,10 +34,10 @@ const benefits = [
 ];
 
 const primaryImage =
-  "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1400&q=90";
+  "/images/home/about-introduction-landscape.jpg";
 
 const secondaryImage =
-  "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=90";
+  "/images/home/about-introduction-city.jpg";
 
 export default function AboutUsSection() {
   return (

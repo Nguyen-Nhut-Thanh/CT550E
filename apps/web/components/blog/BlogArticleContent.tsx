@@ -19,7 +19,7 @@ export function BlogArticleContent() {
 
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl shadow-md">
           <Image
-            src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1200"
+            src="/images/blog/article-travel-landscape.jpg"
             alt="Vịnh Hạ Long"
             fill
             className="object-cover"

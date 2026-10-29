@@ -65,7 +65,7 @@ export function AccountRightSidebar({
     <div className="space-y-3.5">
       <section className="relative h-[156px] overflow-hidden rounded-[13px] border border-sky-100 bg-[#dff5ff]">
         <Image
-          src="/images/account/cover-images.png"
+          src="/images/shared/travel-cover.png"
           alt="Travel quote"
           fill
           className="object-cover opacity-45"

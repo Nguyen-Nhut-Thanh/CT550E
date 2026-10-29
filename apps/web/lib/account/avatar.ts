@@ -1,4 +1,4 @@
-export const DEFAULT_AVATAR = "/images/account/avata.png";
+export const DEFAULT_AVATAR = "/images/account/default-avatar.png";
 
 export function resolveAvatar(source?: string | null): string {
   const value = source?.trim();

@@ -23,7 +23,7 @@ export function useHeroBannerSlider({
       )
       .map((item) => ({
         ...item,
-        image_url: normalizeImageSrc(item.image_url) || "/images/fallback-banner.jpg",
+        image_url: normalizeImageSrc(item.image_url) || "/images/shared/default-tour-beach.jpg",
         description:
           typeof item.description === "string" ? item.description : "",
         link_to:

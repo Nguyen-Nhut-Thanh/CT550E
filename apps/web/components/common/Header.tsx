@@ -144,7 +144,7 @@ export default function Header() {
           <div className="flex items-center gap-[24px] border-l border-gray-200/30 pl-[24px] max-[640px]:gap-[12px] max-[640px]:pl-[12px]">
             <div className="flex items-center gap-2.5 leading-none cursor-pointer max-[480px]:hidden">
               <img
-                src="https://flagcdn.com/vn.svg"
+                src="/images/shared/vietnam-flag.svg"
                 className="w-7 h-5 rounded-sm object-cover shadow-sm"
                 alt="Vietnam Flag"
               />

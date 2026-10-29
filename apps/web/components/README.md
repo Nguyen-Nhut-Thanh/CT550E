@@ -30,8 +30,8 @@ Hook và xử lý dữ liệu nằm trong `lib/`, ví dụ `lib/notifications/us
 `lib/account/useAccountResource`, `lib/ui/useDismiss`. Không đưa hook hoặc
 cache dữ liệu vào file component dùng chung.
 
-`common/TourRecommendationCard` là khung thẻ giới thiệu tour dùng chung, rộng cố định
-600px. Truyền `tour: TourRecommendationData` với ảnh, giá, lịch khởi hành, tiện ích
+`common/TourRecommendationCard` là khung thẻ giới thiệu tour dùng chung, co theo khung chứa, tối đa
+600px. Giữ bố cục ngang và thu nhỏ ảnh, chữ, khoảng cách theo cùng tỉ lệ với chiều rộng thẻ. Truyền `tour: TourRecommendationData` với ảnh, giá, lịch khởi hành, tiện ích
 và mô tả; component không phụ thuộc hội thoại, socket hay API chatbot.
 `favorite`, `favoritePending`, `onToggleFavorite` và `error` điều khiển nút yêu thích
 từ bên ngoài. `chat/TourMessageCard` nối dữ liệu chat và hook yêu thích vào khung này.

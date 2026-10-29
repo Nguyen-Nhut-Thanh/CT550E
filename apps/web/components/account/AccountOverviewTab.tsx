@@ -19,7 +19,7 @@ export function AccountOverviewTab({
     <>
       <section className="relative h-[138px] overflow-hidden bg-sky-400 lg:h-[138px]">
         <Image
-          src="/images/account/cover-images.png"
+          src="/images/shared/travel-cover.png"
           alt="JourniTrip cover"
           fill
           priority

@@ -1,15 +1,22 @@
 "use client";
 
+import { getBookingTripStatus } from "@/lib/account/booking-status";
 import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
 import { CalendarDays, MessageCircle, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AccountBookingsTabProps, BookingItemUI, BookingStatusFilter, } from "shared";
 
 export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
   const [activeFilter, setActiveFilter] = useState<BookingStatusFilter>("all");
+
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const formattedBookings: BookingItemUI[] = useMemo(() => {
     if (bookings && bookings.length > 0) {
@@ -17,10 +24,10 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         const id = b.booking_id;
         const name = b.tour_schedules?.tours?.name || `Đơn đặt tour #${b.booking_id}`;
         const startDate = b.tour_schedules?.start_date
-          ? new Date(b.tour_schedules.start_date).toLocaleDateString("vi-VN")
+          ? new Date(b.tour_schedules.start_date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
           : "Chưa xác định";
         const endDate = b.tour_schedules?.end_date
-          ? new Date(b.tour_schedules.end_date).toLocaleDateString("vi-VN")
+          ? new Date(b.tour_schedules.end_date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
           : "Chưa xác định";
 
         const passParts: string[] = [];
@@ -29,22 +36,12 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         if (b.infant_count) passParts.push(`${b.infant_count} em bé`);
         const passengers = passParts.join(", ") || "1 người lớn";
 
-        const st = (b.status || "").toLowerCase();
-        let status: "completed" | "upcoming" | "cancelled" = "completed";
-        let statusText = "Đã hoàn thành";
-
-        if (st.includes("hủy") || st.includes("cancel")) {
-          status = "cancelled";
-          statusText = "Đã hủy";
-        } else if (st.includes("chờ") || st.includes("mới") || st.includes("pending") || st.includes("upcoming")) {
-          status = "upcoming";
-          statusText = "Sắp diễn ra";
-        }
+        const { status, statusText } = getBookingTripStatus(b, now);
 
         const price = b.total_amount ? Number(b.total_amount) : 2890000;
         const image =
           b.tour_schedules?.tours?.tour_images?.[0]?.image_url ||
-          "/images/account/cover-images.png";
+          "/images/shared/travel-cover.png";
 
         return {
           id,
@@ -61,7 +58,7 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
     }
 
     return [];
-  }, [bookings]);
+  }, [bookings, now]);
 
   const upcomingCount = useMemo(
     () => formattedBookings.filter((b) => b.status === "upcoming").length,
@@ -93,53 +90,19 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveFilter("all")}
-          className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-            activeFilter === "all"
-              ? "bg-[#1766c2] text-white shadow-sm"
-              : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Tất cả ({formattedBookings.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveFilter("upcoming")}
-          className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-            activeFilter === "upcoming"
-              ? "bg-[#1766c2] text-white shadow-sm"
-              : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Sắp diễn ra ({upcomingCount})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveFilter("completed")}
-          className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-            activeFilter === "completed"
-              ? "bg-[#1766c2] text-white shadow-sm"
-              : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Đã hoàn thành ({completedCount})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveFilter("cancelled")}
-          className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-            activeFilter === "cancelled"
-              ? "bg-[#1766c2] text-white shadow-sm"
-              : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Đã hủy ({cancelledCount})
-        </button>
+        {([
+          { id: "all", label: "Tất cả", count: formattedBookings.length },
+          { id: "upcoming", label: "Sắp diễn ra", count: upcomingCount },
+          { id: "ongoing", label: "Đang diễn ra", count: formattedBookings.filter(item => item.status === "ongoing").length },
+          { id: "completed", label: "Đã hoàn thành", count: completedCount },
+          { id: "cancelled", label: "Đã hủy", count: cancelledCount },
+          { id: "unknown", label: "Khác", count: formattedBookings.filter(item => item.status === "unknown").length },
+        ] as const).filter(filter => filter.id !== "unknown" || filter.count > 0).map(filter => (
+          <button key={filter.id} type="button" onClick={() => setActiveFilter(filter.id)} aria-pressed={activeFilter === filter.id}
+            className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${activeFilter === filter.id ? "bg-[#1766c2] text-white shadow-sm" : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"}`}>
+            {filter.label} ({filter.count})
+          </button>
+        ))}
       </div>
 
       {/* Booking Cards List */}
@@ -189,6 +152,11 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                 {/* Status & Price */}
                 <div className="text-left sm:text-right space-y-1">
                   <div>
+                    {(item.status === "ongoing" || item.status === "unknown") && (
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${item.status === "ongoing" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
+                        {item.statusText}
+                      </span>
+                    )}
                     {item.status === "completed" && (
                       <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
                         {item.statusText}
@@ -214,7 +182,7 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                 {/* Buttons */}
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/booking/result?booking_id=${item.id}`}
+                    href={`/booking/${item.id}`}
                     className="rounded-xl bg-[#eef6ff] px-4 py-2.5 text-xs font-bold text-[#1766c2] transition hover:bg-blue-100"
                   >
                     Xem chi tiết

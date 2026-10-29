@@ -32,7 +32,7 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
           t?.tour_type === "international" ? "international" : "domestic";
         const image =
           t?.tour_images?.[0]?.image_url ||
-          "/images/account/cover-images.png";
+          "/images/shared/travel-cover.png";
 
         return {
           tour_id: tourId,

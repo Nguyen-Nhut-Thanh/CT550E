@@ -52,15 +52,15 @@ export function BookingExtraServices({
                   ? ShieldCheck
                   : Camera;
             const backgrounds: Record<string, string> = {
-              private_guide: "/images/background/private-tour-guide.png",
-              travel_insurance: "/images/background/travel-insurance.png",
-              photography: "/images/background/take-photos.png",
+              private_guide: "/images/booking/private-tour-guide.png",
+              travel_insurance: "/images/booking/travel-insurance.png",
+              photography: "/images/booking/photography.png",
             };
             return (
               <label
                 key={service.id}
                 style={{
-                  backgroundImage: `url("${backgrounds[service.id] || "/images/background/ticket.png"}")`,
+                  backgroundImage: `url("${backgrounds[service.id] || "/images/booking/ticket-background.png"}")`,
                   backgroundSize: "105% 128%",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",

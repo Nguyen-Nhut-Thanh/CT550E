@@ -2,11 +2,12 @@
 
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { ChatTimeline } from "@/components/chat/ChatTimeline";
+import { CustomerTourPicker } from "@/components/chat/CustomerTourPicker";
 import { chatApi } from "@/lib/chat/api";
 import { chatStatusLabel } from "@/lib/chat/support";
 import { useChatConversation } from "@/lib/chat/useChatConversation";
 import { useChatSession } from "@/lib/chat/useChatSession";
-import { MessageCircle, Minus, X } from "lucide-react";
+import { Headset, MessageCircle, Minus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ChatContextInput } from "shared";
@@ -18,6 +19,7 @@ export function CustomerChat() {
   const [pending, setPending] = useState<ChatContextInput | null>(null);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showTourPicker, setShowTourPicker] = useState(false);
   const contextSending = useRef(false);
   const tokenRef = useRef(session.token);
   tokenRef.current = session.token;
@@ -115,16 +117,22 @@ export function CustomerChat() {
   }, [open, pending, chat.connected, chat.send, error]);
 
   return (
-    <div className="fixed bottom-5 right-4 z-50 sm:right-6">
+    <div className="fixed bottom-4 right-4 z-[120] sm:right-6">
       {open && (
         <section
           aria-label="Chat với nhân viên"
-          className="mb-3 flex h-[min(600px,calc(100dvh-180px))] w-[min(390px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+          className="mb-3 flex h-[min(560px,calc(100dvh-140px))] w-[min(390px,calc(100vw-32px))] flex-col overflow-hidden rounded-[28px] border border-blue-100 bg-[#f3faff] shadow-[0_18px_60px_-12px_#5c7da860]"
         >
-          <header className="flex items-center justify-between bg-blue-600 px-4 py-3 text-white">
-            <div>
-              <p className="font-bold">JourniTrip · Tư vấn viên</p>
-              <p className="text-xs text-blue-100">
+          <header className="flex shrink-0 items-center gap-2.5 border-b border-white/10 bg-gradient-to-r from-[#165de8] to-[#2548bc] px-4 py-3 text-white">
+            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/15 shadow-sm">
+              <Headset size={20} strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <p className="text-[15px] font-bold tracking-tight">JourniTrip</p>
+                <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[10px] font-medium leading-4 text-blue-50">Tư vấn viên</span>
+              </div>
+              <p className="mt-0.5 truncate text-[11px] leading-4 text-blue-100">
                 {session.actor && !session.actor.isStaff
                   ? conversation?.assigned_staff?.full_name ||
                     (conversation
@@ -137,7 +145,7 @@ export function CustomerChat() {
               type="button"
               aria-label="Thu nhỏ chat"
               onClick={() => setOpen(false)}
-              className="rounded-full p-2 hover:bg-blue-500"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-blue-50 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               <Minus size={18} />
             </button>
@@ -229,6 +237,7 @@ export function CustomerChat() {
                 onRetry={chat.retry}
                 onVisible={chat.markRead}
               />
+              {(!chat.connected || chat.typing || conversation?.status === "CLOSED" || conversation?.status === "WAITING") && (
               <p className="bg-slate-50 px-4 py-1 text-[11px] text-slate-500">
                 {!chat.connected
                   ? "Đang kết nối…"
@@ -238,14 +247,17 @@ export function CustomerChat() {
                       ? "Đã giải quyết · Gửi tin mới để tiếp tục hỗ trợ"
                       : conversation?.status === "WAITING"
                         ? "Nhân viên sẽ sớm trả lời bạn"
-                        : "Đã kết nối với nhân viên"}
+                        : null}
               </p>
+              )}
               <ChatComposer
                 key={`composer:${session.token}:${id}`}
                 disabled={!chat.connected || !id}
                 onSend={chat.send}
                 onTyping={chat.sendTyping}
+                onShareTour={() => setShowTourPicker(true)}
               />
+              {showTourPicker && <CustomerTourPicker disabled={!chat.connected || !id} onSend={chat.send} onClose={() => setShowTourPicker(false)} />}
             </>
           )}
         </section>
@@ -259,7 +271,7 @@ export function CustomerChat() {
         }
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="relative ml-auto flex h-14 items-center gap-2 rounded-full bg-blue-600 px-5 font-semibold text-white shadow-lg transition hover:bg-blue-700"
+        className="relative ml-auto flex h-12 items-center gap-2 rounded-full bg-blue-600 px-5 font-semibold text-white shadow-lg transition hover:bg-blue-700"
       >
         {open ? <X size={22} /> : <MessageCircle size={23} />}
         <span className="hidden text-sm sm:inline">Chat tư vấn</span>
