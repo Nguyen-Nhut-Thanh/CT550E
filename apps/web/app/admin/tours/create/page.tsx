@@ -1,10 +1,10 @@
 "use client";
 
-import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/common/AdminFormCard";
-import FormFieldLabel from "@/components/common/FormFieldLabel";
-import { ImageUpload } from "@/components/common/ImageUpload";
-import { PriceInput } from "@/components/common/PriceInput";
+import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
+import FormFieldLabel from "@/components/common/forms/FormFieldLabel";
+import { ImageUpload } from "@/components/common/forms/ImageUpload";
+import { PriceInput } from "@/components/common/forms/PriceInput";
 import { getAdminTransports } from "@/lib/admin/catalogs/api";
 import { getAdminLocations } from "@/lib/admin/locations/api";
 import { createAdminTour } from "@/lib/admin/tours/api";

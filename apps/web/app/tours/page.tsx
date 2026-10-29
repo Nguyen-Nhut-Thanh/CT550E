@@ -1,10 +1,10 @@
 "use client";
 
-import TourCard from "@/components/tours/TourCard";
-import TourEmptyState from "@/components/tours/TourEmptyState";
-import TourFilterSidebar from "@/components/tours/TourFilterSidebar";
-import TourListSkeleton from "@/components/tours/TourListSkeleton";
-import TourSortControl from "@/components/tours/TourSortControl";
+import TourCard from "@/components/tours/listing/TourCard";
+import TourEmptyState from "@/components/tours/listing/TourEmptyState";
+import TourFilterSidebar from "@/components/tours/listing/TourFilterSidebar";
+import TourListSkeleton from "@/components/tours/listing/TourListSkeleton";
+import TourSortControl from "@/components/tours/listing/TourSortControl";
 import { trackRecommendationEvent } from "@/lib/recommendations/events";
 import { getPublicTours } from "@/lib/tours/api";
 import { getTourPriceValue } from "@/lib/tours/display";

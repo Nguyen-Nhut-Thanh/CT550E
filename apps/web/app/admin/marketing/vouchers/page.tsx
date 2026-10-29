@@ -2,11 +2,11 @@
 
 import { VoucherModal } from "@/components/admin/vouchers/VoucherModal";
 import { VoucherStatusFilterTabs } from "@/components/admin/vouchers/VoucherStatusFilterTabs";
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
-import { AdminStatusBadge } from "@/components/common/AdminStatusBadge";
-import { AdminTable } from "@/components/common/AdminTable";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
+import { AdminStatusBadge } from "@/components/admin/common/AdminStatusBadge";
+import { AdminTable } from "@/components/admin/common/AdminTable";
+import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
   createAdminVoucher,
   deleteAdminVoucher,

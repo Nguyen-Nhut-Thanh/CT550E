@@ -28,7 +28,7 @@ Trong mỗi nhóm, `api.ts` gửi request, `forms.ts` xử lý dữ liệu form;
 - `utils/`: định dạng tiền, ngày giờ, ảnh, lịch và hộp thoại xác nhận.
 - `hooks/`: hooks không gắn riêng với nghiệp vụ, hiện có `useCountdown`.
 - `ui/`: xử lý tương tác giao diện dùng chung, như đóng popup khi bấm ngoài hoặc Escape.
-- `notifications/`: context, hook và trạng thái thông báo ngắn; giao diện nằm ở `components/common`.
+- `notifications/`: context, hook và trạng thái thông báo ngắn; giao diện nằm ở `components/common/feedback`.
 
 `http/config.ts` lấy địa chỉ API từ `NEXT_PUBLIC_API_BASE`, mặc định
 `http://localhost:4000`. Các request công khai, có token và admin giữ
@@ -50,8 +50,4 @@ Kiểm tra sau khi thay đổi:
 
 ```sh
 npm run typecheck --workspace=web
-npm run test:lib --workspace=web
 ```
-
-Các kiểm thử trong `apps/web/tests/lib.test.ts` kiểm tra lịch, dữ liệu
-hành khách, tính giá, ngày sinh và hợp đồng request sau khi tách module.

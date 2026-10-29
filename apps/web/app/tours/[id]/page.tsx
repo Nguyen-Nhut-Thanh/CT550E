@@ -1,15 +1,15 @@
 "use client";
 
-import TourAmenities from "@/components/tours/TourAmenities";
-import TourBookingCard from "@/components/tours/TourBookingCard";
-import TourDepartureCalendar from "@/components/tours/TourDepartureCalendar";
-import TourDetailHero from "@/components/tours/TourDetailHero";
-import TourHighlightsList from "@/components/tours/TourHighlightsList";
-import TourItineraryTimeline from "@/components/tours/TourItineraryTimeline";
-import TourRecommendedList from "@/components/tours/TourRecommendedList";
-import TourReviewsSection from "@/components/tours/TourReviewsSection";
-import TourSmartMap from "@/components/tours/TourSmartMap";
-import TourVideoHighlights from "@/components/tours/TourVideoHighlights";
+import TourAmenities from "@/components/tours/detail/TourAmenities";
+import TourBookingCard from "@/components/tours/booking/TourBookingCard";
+import TourDepartureCalendar from "@/components/tours/booking/TourDepartureCalendar";
+import TourDetailHero from "@/components/tours/detail/TourDetailHero";
+import TourHighlightsList from "@/components/tours/detail/TourHighlightsList";
+import TourItineraryTimeline from "@/components/tours/detail/TourItineraryTimeline";
+import TourRecommendedList from "@/components/tours/recommendations/TourRecommendedList";
+import TourReviewsSection from "@/components/tours/reviews/TourReviewsSection";
+import TourSmartMap from "@/components/tours/detail/TourSmartMap";
+import TourVideoHighlights from "@/components/tours/detail/TourVideoHighlights";
 import { getPublicTourDetail } from "@/lib/tours/api";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";

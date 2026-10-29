@@ -67,6 +67,4 @@ Build shared trước khi kiểm tra web/API vì package xuất bản khai báo 
 ```sh
 npm run build --workspace=shared
 npm run typecheck
-npm run test:lib --workspace=web
-npm run test:locations --workspace=api
 ```

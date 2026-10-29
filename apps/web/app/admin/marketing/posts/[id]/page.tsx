@@ -1,15 +1,15 @@
 "use client";
 
-import { PostEditorContent } from "@/components/admin/posts/PostEditorContent";
-import { PostEditorSidebar } from "@/components/admin/posts/PostEditorSidebar";
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
+import { PostEditorContent } from "@/components/admin/posts/editor/PostEditorContent";
+import { PostEditorSidebar } from "@/components/admin/posts/editor/PostEditorSidebar";
+import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
 import {
   createAdminPostCategory,
   getAdminPostCategories,
   saveAdminPost,
 } from "@/lib/admin/posts/api";
 import { requestAdminJson } from "@/lib/http/requestAdminJson";
-import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
+import { PostCategoriesModal } from "@/components/admin/posts/categories/PostCategoriesModal";
 import {
   buildPostEditorForm,
   createDefaultPostEditorForm,

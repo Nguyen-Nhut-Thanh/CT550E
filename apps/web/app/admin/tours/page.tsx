@@ -1,11 +1,11 @@
 "use client";
 
-import { TourManagementHeader } from "@/components/admin/tours/TourManagementHeader";
-import { TourManagementStats } from "@/components/admin/tours/TourManagementStats";
-import { TourManagementFilters } from "@/components/admin/tours/TourManagementFilters";
-import { TourManagementTable } from "@/components/admin/tours/TourManagementTable";
+import { TourManagementHeader } from "@/components/admin/tours/management/TourManagementHeader";
+import { TourManagementStats } from "@/components/admin/tours/management/TourManagementStats";
+import { TourManagementFilters } from "@/components/admin/tours/management/TourManagementFilters";
+import { TourManagementTable } from "@/components/admin/tours/management/TourManagementTable";
 
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import { deleteAdminTour, getAdminTours, toggleAdminTourStatus } from "@/lib/admin/tours/api";
 import { DEFAULT_TOUR_FILTERS, filterManagedTours } from "@/lib/admin/tours/management";
 import { useToast } from "@/lib/notifications/useToast";

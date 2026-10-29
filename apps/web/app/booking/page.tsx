@@ -3,17 +3,18 @@
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { BookingMemberVouchers } from "@/components/booking/vouchers/BookingMemberVouchers";
 import type { PaymentMethod, TravelerForm, TravelerType, UserProfileLite, VoucherValidationResult, } from "shared";
 
-import { BookingContactForm } from "@/components/booking/BookingContactForm";
-import { BookingExtraServices } from "@/components/booking/BookingExtraServices";
-import { BookingOrderSummary } from "@/components/booking/BookingOrderSummary";
-import { BookingPassengerCounts } from "@/components/booking/BookingPassengerCounts";
-import { BookingTourInfoCard } from "@/components/booking/BookingTourInfoCard";
-import { BookingTravelersList } from "@/components/booking/BookingTravelersList";
-import { BookingVoucherAndPayment } from "@/components/booking/BookingVoucherAndPayment";
-import InlineNotice from "@/components/common/InlineNotice";
+import { BookingContactForm } from "@/components/booking/checkout/BookingContactForm";
+import { BookingExtraServices } from "@/components/booking/checkout/BookingExtraServices";
+import { BookingOrderSummary } from "@/components/booking/checkout/BookingOrderSummary";
+import { BookingPassengerCounts } from "@/components/booking/checkout/BookingPassengerCounts";
+import { BookingTourInfoCard } from "@/components/booking/checkout/BookingTourInfoCard";
+import { BookingTravelersList } from "@/components/booking/checkout/BookingTravelersList";
+import { BookingVoucherAndPayment } from "@/components/booking/vouchers/BookingVoucherAndPayment";
+import InlineNotice from "@/components/common/feedback/InlineNotice";
 
 import { fetchMe, getToken } from "@/lib/auth/session";
 import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher } from "@/lib/booking/api";
@@ -53,6 +54,7 @@ function BookingContent() {
   const [note, setNote] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherLoading, setVoucherLoading] = useState(false);
+  const voucherRequest = useRef(0);
   const [voucherResult, setVoucherResult] =
     useState<VoucherValidationResult | null>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
@@ -183,8 +185,17 @@ function BookingContent() {
 
   const totalGuests = adultCount + childCount + infantCount;
 
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) {
+  useEffect(() => {
+    voucherRequest.current++;
+    setVoucherResult(null);
+    setVoucherError(null);
+    setVoucherLoading(false);
+  }, [pricing.subtotal, selectedSchedule?.tour_schedule_id]);
+
+  const handleApplyVoucher = async (selectedCode = voucherCode) => {
+    const requestId = ++voucherRequest.current;
+    setVoucherCode(selectedCode);
+    if (!selectedCode.trim()) {
       setVoucherError("Nhập mã giảm giá trước khi áp dụng.");
       setVoucherResult(null);
       return;
@@ -194,9 +205,11 @@ function BookingContent() {
       setVoucherLoading(true);
       setVoucherError(null);
       const data = await validatePublicVoucher(
-        voucherCode.trim(),
+        selectedCode.trim(),
         pricing.subtotal,
+        customerId,
       );
+      if (requestId !== voucherRequest.current) return;
       setVoucherResult({
         voucher_id: data.voucher_id,
         code: data.code,
@@ -205,12 +218,13 @@ function BookingContent() {
           data.final_amount != null ? Number(data.final_amount) : undefined,
       });
     } catch (error) {
+      if (requestId !== voucherRequest.current) return;
       const message =
         error instanceof Error ? error.message : "Không thể áp dụng mã giảm giá.";
       setVoucherResult(null);
       setVoucherError(message);
     } finally {
-      setVoucherLoading(false);
+      if (requestId === voucherRequest.current) setVoucherLoading(false);
     }
   };
 
@@ -353,10 +367,10 @@ function BookingContent() {
           router.push("/account");
         }, 2000);
       }
-    } catch {
+    } catch (error) {
       setSubmitTone("error");
       setSubmitMessage(
-        "Lỗi kết nối máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+        error instanceof Error ? error.message : "Không thể đặt tour. Vui lòng thử lại.",
       );
     } finally {
       setSubmitting(false);
@@ -478,6 +492,8 @@ function BookingContent() {
             <BookingExtraServices services={extraServices} selectedIds={selectedExtraIds} onChange={setSelectedExtraIds}
               loading={extrasLoading} error={extrasError} onRetry={() => void loadExtras()} />
 
+            {getToken() && !customerId && <BookingMemberVouchers subtotal={pricing.subtotal} total={pricing.total} disabled={voucherLoading || submitting} onSelect={code => void handleApplyVoucher(code)} />}
+
             <BookingVoucherAndPayment
               voucherCode={voucherCode}
               voucherLoading={voucherLoading}
@@ -485,11 +501,13 @@ function BookingContent() {
               voucherError={voucherError}
               paymentMethod={paymentMethod}
               onVoucherCodeChange={(code) => {
+                voucherRequest.current++;
+                setVoucherLoading(false);
                 setVoucherCode(code);
                 setVoucherError(null);
                 setVoucherResult(null);
               }}
-              onApplyVoucher={handleApplyVoucher}
+              onApplyVoucher={() => void handleApplyVoucher()}
               onPaymentMethodChange={setPaymentMethod}
             />
           </section>

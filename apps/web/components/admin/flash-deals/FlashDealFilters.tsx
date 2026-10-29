@@ -6,8 +6,8 @@ import {
   SlidersHorizontal,
   Tag,
 } from "lucide-react";
-import CustomDropdown from "@/components/common/CustomDropdown";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
 import type { FlashDealFilters as Filters } from "@/lib/admin/flash-deals/management";
 
 export function FlashDealFilters({

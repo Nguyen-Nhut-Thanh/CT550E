@@ -1,9 +1,9 @@
 "use client";
 
-import { AccountContent } from "@/components/account/AccountContent";
+import { AccountContent } from "@/components/account/layout/AccountContent";
 
-import { AccountOverviewTab } from "@/components/account/AccountOverviewTab";
-import { useAccount } from "@/components/account/AccountShell";
+import { AccountOverviewTab } from "@/components/account/profile/AccountOverviewTab";
+import { useAccount } from "@/components/account/layout/AccountShell";
 import { getAccountStats, getMyBookings } from "@/lib/account/api";
 import { useAccountResource } from "@/lib/account/useAccountResource";
 import { getMyFavoriteTours } from "@/lib/favorites/api";

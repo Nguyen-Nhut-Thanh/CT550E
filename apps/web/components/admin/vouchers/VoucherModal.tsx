@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog } from "@/components/common/Dialog";
+import { Dialog } from "@/components/common/overlays/Dialog";
 import { Loader2, Save, Ticket, X } from "lucide-react";
 import { useId } from "react";
 import type { VoucherModalProps } from "shared";

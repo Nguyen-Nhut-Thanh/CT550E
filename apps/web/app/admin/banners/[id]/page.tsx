@@ -1,6 +1,6 @@
 "use client";
 
-import CustomDropdown from "@/components/common/CustomDropdown";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/admin/banners/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X, } from "lucide-react";

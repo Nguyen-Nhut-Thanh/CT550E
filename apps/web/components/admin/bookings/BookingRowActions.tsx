@@ -4,7 +4,7 @@ import { CheckCircle2, Eye, XCircle } from "lucide-react";
 import {
   AdminRowActions,
   type AdminRowAction,
-} from "@/components/common/AdminRowActions";
+} from "@/components/admin/common/AdminRowActions";
 import type { AdminBooking } from "shared";
 
 export function BookingRowActions({

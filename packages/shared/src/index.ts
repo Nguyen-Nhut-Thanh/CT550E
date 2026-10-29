@@ -1,4 +1,6 @@
 // Public package entry point. Internal modules import directly from one another.
+export { MEMBERSHIP_TIERS, membershipDiscount } from "./membership/models";
+export type { MembershipTierId, MembershipTier, MembershipSummary, MembershipVoucher, MembershipNotification, MembershipAdminList } from "./membership/models";
 import "./common/browser";
 export type { AccountResourceCache, AccountResourceEntry } from "./account/cache";
 export type { AccountBooking, AccountReviewItem, AccountStats, BookingItemUI, BookingStatusFilter, UserProfile, UserProfileLite } from "./account/models";

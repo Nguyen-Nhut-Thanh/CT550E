@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Award } from "lucide-react";
 import Link from "next/link";
 import { formatVND } from "@/lib/utils/currency";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { AdminModalShell } from "@/components/common/AdminModalShell";
+import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
+import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import type { DashboardTopToursProps } from "shared";
 
 export function DashboardTopTours({ topTours }: DashboardTopToursProps) {

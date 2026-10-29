@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog } from "@/components/common/Dialog";
+import { Dialog } from "@/components/common/overlays/Dialog";
 import { getPublicTours } from "@/lib/tours/api";
 import { ImageIcon, LoaderCircle, Map, Search, SendHorizontal, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";

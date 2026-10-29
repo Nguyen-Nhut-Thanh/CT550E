@@ -1,11 +1,11 @@
 "use client";
 
-import { LocationDetailsCard } from "@/components/admin/locations/LocationDetailsCard";
-import { LocationHierarchyCard } from "@/components/admin/locations/LocationHierarchyCard";
-import { LocationImageSidebar } from "@/components/admin/locations/LocationImageSidebar";
-import { LocationLevelSelector } from "@/components/admin/locations/LocationLevelSelector";
-import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
-import InlineNotice from "@/components/common/InlineNotice";
+import { LocationDetailsCard } from "@/components/admin/locations/editor/LocationDetailsCard";
+import { LocationHierarchyCard } from "@/components/admin/locations/editor/LocationHierarchyCard";
+import { LocationImageSidebar } from "@/components/admin/locations/editor/LocationImageSidebar";
+import { LocationLevelSelector } from "@/components/admin/locations/editor/LocationLevelSelector";
+import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import InlineNotice from "@/components/common/feedback/InlineNotice";
 import { getAdminLocationDetail, saveAdminLocation } from "@/lib/admin/locations/api";
 import { LOCATION_LEVEL_LABELS, buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/admin/locations/hierarchy";
 import { getToken } from "@/lib/auth/session";

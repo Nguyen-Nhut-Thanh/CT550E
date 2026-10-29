@@ -1,11 +1,11 @@
 "use client";
 
-import { LocationManagementHeader } from "@/components/admin/locations/LocationManagementHeader";
-import { LocationManagementStats } from "@/components/admin/locations/LocationManagementStats";
-import { LocationManagementFilters } from "@/components/admin/locations/LocationManagementFilters";
-import { LocationManagementTable } from "@/components/admin/locations/LocationManagementTable";
+import { LocationManagementHeader } from "@/components/admin/locations/management/LocationManagementHeader";
+import { LocationManagementStats } from "@/components/admin/locations/management/LocationManagementStats";
+import { LocationManagementFilters } from "@/components/admin/locations/management/LocationManagementFilters";
+import { LocationManagementTable } from "@/components/admin/locations/management/LocationManagementTable";
 
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
   deleteAdminLocation,
   getAdminLocationLevels,

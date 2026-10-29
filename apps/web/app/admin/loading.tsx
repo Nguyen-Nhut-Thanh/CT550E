@@ -1,4 +1,4 @@
-import { PageLoading } from "@/components/common/PageLoading";
+import { PageLoading } from "@/components/common/loading/PageLoading";
 
 export default function AdminLoading() {
   return <PageLoading />;

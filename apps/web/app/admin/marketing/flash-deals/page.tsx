@@ -9,7 +9,7 @@ import { deleteAdminFlashDeal, getAdminFlashDeals, saveAdminFlashDeal } from '@/
 import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm } from '@/lib/admin/flash-deals/forms';
 import { DEFAULT_FLASH_DEAL_FILTERS, filterManagedFlashDeals, getFlashDealOverview } from '@/lib/admin/flash-deals/management';
 import { useToast } from '@/lib/notifications/useToast';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@/components/common/overlays/ConfirmDialog';
 import { Trash2 } from 'lucide-react';
 import type { FlashDealForm, FlashDealSchedule } from 'shared';
 

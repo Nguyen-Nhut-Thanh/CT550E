@@ -1,7 +1,7 @@
 "use client";
 
-import CustomDropdown from "@/components/common/CustomDropdown";
-import { PriceInput } from "@/components/common/PriceInput";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
+import { PriceInput } from "@/components/common/forms/PriceInput";
 import { Tag } from "lucide-react";
 import type { VoucherModalProps } from "shared";
 

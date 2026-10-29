@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { MembershipModule } from './modules/membership/membership.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BannersModule } from './modules/banners/banners.module';
@@ -20,6 +21,7 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
 @Module({
     imports: [
         DatabaseModule,
+        MembershipModule,
         SchedulesModule,
         CatalogsModule,
         AuthModule,

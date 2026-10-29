@@ -1,11 +1,11 @@
 "use client";
 
-import { ScheduleManagement } from "@/components/admin/tours/ScheduleManagement";
-import { TourBasicInfoCard } from "@/components/admin/tours/TourBasicInfoCard";
-import { TourDetailsCard } from "@/components/admin/tours/TourDetailsCard";
-import { TourSidebar } from "@/components/admin/tours/TourSidebar";
-import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/common/AdminFormCard";
+import { ScheduleManagement } from "@/components/admin/tours/editor/ScheduleManagement";
+import { TourBasicInfoCard } from "@/components/admin/tours/editor/TourBasicInfoCard";
+import { TourDetailsCard } from "@/components/admin/tours/editor/TourDetailsCard";
+import { TourSidebar } from "@/components/admin/tours/editor/TourSidebar";
+import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
 import { getAdminTransports } from "@/lib/admin/catalogs/api";
 import { getAdminLocations } from "@/lib/admin/locations/api";
 import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";

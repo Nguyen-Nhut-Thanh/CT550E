@@ -1,7 +1,7 @@
 "use client";
 
-import { Dialog } from "@/components/common/Dialog";
-import { PriceInput } from "@/components/common/PriceInput";
+import { Dialog } from "@/components/common/overlays/Dialog";
+import { PriceInput } from "@/components/common/forms/PriceInput";
 import { previewFlashDealPrice } from "@/lib/admin/flash-deals/forms";
 import { formatVND } from "@/lib/utils/currency";
 import {

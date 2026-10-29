@@ -1,8 +1,8 @@
 "use client";
 
-import { AccountContent } from "@/components/account/AccountContent";
+import { AccountContent } from "@/components/account/layout/AccountContent";
 
-import { AccountBookingsTab } from "@/components/account/AccountBookingsTab";
+import { AccountBookingsTab } from "@/components/account/bookings/AccountBookingsTab";
 import { getMyBookings } from "@/lib/account/api";
 import { useAccountResource } from "@/lib/account/useAccountResource";
 import { AlertCircle, Loader2 } from "lucide-react";

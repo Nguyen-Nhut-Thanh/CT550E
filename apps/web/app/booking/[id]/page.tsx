@@ -1,6 +1,6 @@
 "use client";
 
-import { BookingDetailView } from "@/components/booking/BookingDetailView";
+import { BookingDetailView } from "@/components/booking/detail/BookingDetailView";
 import { getBookingDetail } from "@/lib/booking/api";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";

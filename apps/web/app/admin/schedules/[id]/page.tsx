@@ -1,9 +1,9 @@
 "use client";
 
-import { ScheduleBasicInfoCard } from "@/components/admin/schedules/ScheduleBasicInfoCard";
-import { ScheduleItinerarySection } from "@/components/admin/schedules/ScheduleItinerarySection";
-import { ScheduleSidebar } from "@/components/admin/schedules/ScheduleSidebar";
-import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
+import { ScheduleBasicInfoCard } from "@/components/admin/schedules/editor/ScheduleBasicInfoCard";
+import { ScheduleItinerarySection } from "@/components/admin/schedules/editor/ScheduleItinerarySection";
+import { ScheduleSidebar } from "@/components/admin/schedules/editor/ScheduleSidebar";
+import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
 import {
   getAdminCatalogTransports,
   getAdminHotels,

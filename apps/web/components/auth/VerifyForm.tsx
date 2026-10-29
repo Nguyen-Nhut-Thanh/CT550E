@@ -1,6 +1,6 @@
 "use client";
 
-import InlineNotice from "@/components/common/InlineNotice";
+import InlineNotice from "@/components/common/feedback/InlineNotice";
 import { resendVerificationCode, verifyEmailCode } from "@/lib/auth/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";

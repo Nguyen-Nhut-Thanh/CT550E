@@ -11,7 +11,7 @@ import {
 } from "@/lib/admin/bookings/management";
 import { getAdminTours } from "@/lib/admin/tours/api";
 import { getTourSchedules } from "@/lib/admin/schedules/api";
-import { AdminModalShell } from "@/components/common/AdminModalShell";
+import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import {
   getAdminBookingDetail,
   getAdminBookingList,

@@ -1,4 +1,4 @@
-import { BlogPostLayout } from "@/components/blog/BlogPostLayout";
+import { BlogPostLayout } from "@/components/blog/article/BlogPostLayout";
 import { publicFetch } from "@/lib/http/publicFetch";
 import type { BlogPost } from "@/lib/blog/types";
 

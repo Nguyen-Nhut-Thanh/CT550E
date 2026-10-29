@@ -1,12 +1,12 @@
 "use client";
 
-import CustomDropdown from "@/components/common/CustomDropdown";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
 
-import { PostCategoriesModal } from "@/components/admin/posts/PostCategoriesModal";
-import { AdminRowActions } from "@/components/common/AdminRowActions";
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
-import { AdminTable } from "@/components/common/AdminTable";
+import { PostCategoriesModal } from "@/components/admin/posts/categories/PostCategoriesModal";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
+import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
+import { AdminTable } from "@/components/admin/common/AdminTable";
 import { createAdminPostCategory, deleteAdminPost, getAdminPostCategories, getAdminPosts } from "@/lib/admin/posts/api";
 import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts/forms";
 import { useToast } from "@/lib/notifications/useToast";

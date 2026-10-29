@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { BlogPostLayout } from '@/components/blog/BlogPostLayout';
+import { BlogPostLayout } from '@/components/blog/article/BlogPostLayout';
 import { API_BASE } from '@/lib/http/config';
 import type { BlogDetail } from '@/lib/blog/types';
 

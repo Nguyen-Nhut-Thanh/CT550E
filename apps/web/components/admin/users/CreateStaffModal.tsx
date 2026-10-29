@@ -2,7 +2,7 @@
 
 import { Loader2, Save, X } from "lucide-react";
 import { useId } from "react";
-import { Dialog } from "@/components/common/Dialog";
+import { Dialog } from "@/components/common/overlays/Dialog";
 import type { CreateStaffModalProps as Props } from 'shared';
 
 export function CreateStaffModal({

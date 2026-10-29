@@ -142,13 +142,15 @@ export class BookingsAdminService {
             if (normalizedRefundAmount !== null) {
                 approvalLines.push(`Số tiền hoàn dự kiến: ${formatCurrency(normalizedRefundAmount)}đ`);
             }
-            const cancelled = await tx.bookings.update({
-                where: { booking_id: bookingId },
+            const claimed = await tx.bookings.updateMany({
+                where: { booking_id: bookingId, status: 'cancel_requested' },
                 data: {
                     status: 'cancelled',
                     note: mergeBookingNote(booking.note, approvalLines.join('\n')),
                 },
             });
+            if (claimed.count !== 1) throw new BadRequestException('Yêu cầu hủy này đã được xử lý.');
+            const cancelled = await tx.bookings.findUnique({ where: { booking_id: bookingId } });
             await tx.tour_schedules.update({
                 where: { tour_schedule_id: booking.tour_schedule_id },
                 data: {
@@ -157,6 +159,9 @@ export class BookingsAdminService {
                     },
                 },
             });
+            if (booking.voucher_id) {
+                await tx.vouchers.updateMany({ where: { voucher_id: booking.voucher_id, used_count: { gt: 0 } }, data: { used_count: { decrement: 1 } } });
+            }
             return cancelled;
         });
         await this.mailService.sendCancelApprovedEmail({

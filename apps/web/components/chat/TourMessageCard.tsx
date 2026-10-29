@@ -1,6 +1,6 @@
 "use client";
 
-import { TourRecommendationCard } from "@/components/common/TourRecommendationCard";
+import { TourRecommendationCard } from "@/components/common/tours/TourRecommendationCard";
 import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
 import { useState } from "react";
 import type { ChatContextCard } from "shared";

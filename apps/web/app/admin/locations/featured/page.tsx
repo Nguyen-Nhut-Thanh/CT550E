@@ -1,7 +1,7 @@
 "use client";
 
-import { FeaturedLocationsLeftPanel } from "@/components/admin/locations/FeaturedLocationsLeftPanel";
-import { FeaturedLocationsRightPanel } from "@/components/admin/locations/FeaturedLocationsRightPanel";
+import { FeaturedLocationsLeftPanel } from "@/components/admin/locations/featured/FeaturedLocationsLeftPanel";
+import { FeaturedLocationsRightPanel } from "@/components/admin/locations/featured/FeaturedLocationsRightPanel";
 import { getAdminLocations, updateAdminLocation } from "@/lib/admin/locations/api";
 import { FEATURED_LIMIT, filterFeaturedTabs, filterRegionChildren, getCurrentFeatured } from "@/lib/admin/locations/featured";
 import { useToast } from "@/lib/notifications/useToast";

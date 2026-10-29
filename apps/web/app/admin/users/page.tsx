@@ -2,7 +2,7 @@
 
 import { CreateStaffModal } from "@/components/admin/users/CreateStaffModal";
 import { UsersTable } from "@/components/admin/users/UsersTable";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
 import { createAdminStaff, getAdminUsers, updateAdminUserStatus } from "@/lib/admin/users/api";
 import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users/forms";
 import { useToast } from "@/lib/notifications/useToast";

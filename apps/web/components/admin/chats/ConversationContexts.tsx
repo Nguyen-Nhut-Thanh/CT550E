@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { chatApi } from "@/lib/chat/api";
-import { AdminModalShell } from "@/components/common/AdminModalShell";
+import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import type { ChatContextCard, ChatDisplayMessage } from "shared";
 
 /** Shows the three latest shared items and the full conversation history in a popup. */

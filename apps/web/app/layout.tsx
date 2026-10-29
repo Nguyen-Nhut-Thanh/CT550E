@@ -1,7 +1,7 @@
 import { SupportChat } from "@/components/chat/SupportChat";
-import Footer from "@/components/common/Footer";
-import Header from "@/components/common/Header";
-import { ToastProvider } from "@/components/common/ToastProvider";
+import Footer from "@/components/common/layout/Footer";
+import Header from "@/components/common/layout/Header";
+import { ToastProvider } from "@/components/common/feedback/ToastProvider";
 import { Manrope, Sora } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";

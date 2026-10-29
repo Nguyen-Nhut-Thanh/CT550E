@@ -4,7 +4,7 @@ import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardA
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards";
 import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
-import { AdminModalShell } from "@/components/common/AdminModalShell";
+import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import { DashboardStatusBreakdown } from "@/components/admin/dashboard/DashboardStatusBreakdown";
 import { DashboardTopTours } from "@/components/admin/dashboard/DashboardTopTours";
 import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboard/api";

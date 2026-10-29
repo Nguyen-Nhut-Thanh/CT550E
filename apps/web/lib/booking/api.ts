@@ -1,5 +1,6 @@
 import { publicFetch } from "@/lib/http/publicFetch";
 import { requestWithToken } from "@/lib/http/requestWithToken";
+import { getToken } from "@/lib/auth/session";
 import type { BookingExtraService, BookingPayload, PublicTourDetail, VoucherValidationApiResponse } from "shared";
 
 export function getBookingExtraServices() {
@@ -10,12 +11,15 @@ export function getBookingTourDetail(tourId: string | number) {
   return publicFetch<PublicTourDetail>(`/tours/public/${tourId}`);
 }
 
-export function validatePublicVoucher(code: string, amount: number) {
+export function validatePublicVoucher(code: string, amount: number, customerId?: number) {
   const query = new URLSearchParams({
     code,
     amount: String(amount),
   });
 
+  if (getToken()) return requestWithToken<VoucherValidationApiResponse>(
+    customerId ? `/admin/membership/customers/${customerId}/vouchers/validate?${query.toString()}` : `/membership/vouchers/validate?${query.toString()}`,
+  );
   return publicFetch<VoucherValidationApiResponse>(
     `/public/vouchers/validate?${query.toString()}`,
   );

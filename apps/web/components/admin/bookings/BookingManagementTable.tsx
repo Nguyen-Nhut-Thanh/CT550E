@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, Users } from "lucide-react";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { AdminPagination } from "@/components/common/AdminPagination";
+import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
+import { AdminPagination } from "@/components/admin/common/AdminPagination";
 import {
   buildBookingsCsv,
   formatBookingDate,

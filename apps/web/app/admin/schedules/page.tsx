@@ -1,11 +1,11 @@
 "use client";
 
-import { ScheduleEmptyState } from "@/components/admin/schedules/ScheduleEmptyState";
-import { SchedulePageHeader } from "@/components/admin/schedules/SchedulePageHeader";
+import { ScheduleEmptyState } from "@/components/admin/schedules/listing/ScheduleEmptyState";
+import { SchedulePageHeader } from "@/components/admin/schedules/listing/SchedulePageHeader";
 
-import { ScheduleTablePanel } from "@/components/admin/schedules/ScheduleTablePanel";
-import { TourListPanel } from "@/components/admin/schedules/TourListPanel";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ScheduleTablePanel } from "@/components/admin/schedules/listing/ScheduleTablePanel";
+import { TourListPanel } from "@/components/admin/schedules/tour-picker/TourListPanel";
+import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
   deleteAdminSchedule,
   getTourSchedules,

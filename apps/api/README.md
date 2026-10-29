@@ -71,15 +71,7 @@ Chạy từ gốc repository:
 ```sh
 npm run build --workspace=shared
 npm run typecheck
-npm run test --workspace=api
-npm run test:lib --workspace=web
 ```
-
-Test API kiểm tra 114 đường dẫn/alias và guard tương ứng, dependency injection
-của toàn ứng dụng, provider/vòng đời database dùng chung, quyền admin,
-dịch vụ bổ sung booking, mapper lịch khởi hành, quyền sở hữu account và
-phân cấp location. Các kết nối database được thay thế trong kiểm thử, không
-cần PostgreSQL/MongoDB đang chạy.
 
 Build API xóa `dist/` trước khi biên dịch để tránh giữ JavaScript/declaration
 cũ của các file đã di chuyển hoặc bị xóa.

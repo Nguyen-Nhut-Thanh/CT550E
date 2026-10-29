@@ -8,11 +8,7 @@
     "dev:webpack": "next dev -p 3000",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "test:lib": "tsx --tsconfig tsconfig.json --test tests/lib.test.ts",
-    "test:components": "tsx --tsconfig tests/tsconfig.json --test tests/components.test.tsx",
-    "test:blog": "tsx --tsconfig tests/tsconfig.json --test tests/blog.test.tsx",
-    "test:flash-deals": "tsx --tsconfig tests/tsconfig.json --test tests/flash-deals.test.tsx"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

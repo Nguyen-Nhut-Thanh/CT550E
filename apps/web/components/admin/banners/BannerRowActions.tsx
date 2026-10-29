@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminRowActions } from "@/components/common/AdminRowActions";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
 import { Pencil, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
 import type { Banner } from "shared";
 

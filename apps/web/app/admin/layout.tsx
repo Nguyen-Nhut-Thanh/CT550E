@@ -1,7 +1,7 @@
 "use client";
 
-import { AdminGuard } from "@/components/admin/AdminGuard";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminGuard } from "@/components/admin/layout/AdminGuard";
+import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";

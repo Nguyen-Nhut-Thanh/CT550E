@@ -1,12 +1,12 @@
 "use client";
 
-import CustomDropdown from "@/components/common/CustomDropdown";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutGrid, Loader2, Save, Search } from "lucide-react";
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
+import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
 import { getAdminPosts } from "@/lib/admin/posts/api";
 import { requestAdminJson } from "@/lib/http/requestAdminJson";
 import { useToast } from "@/lib/notifications/useToast";

@@ -1,7 +1,7 @@
 "use client";
 
 import { GoogleAuthSection } from "@/components/auth/GoogleAuthSection";
-import InlineNotice from "@/components/common/InlineNotice";
+import InlineNotice from "@/components/common/feedback/InlineNotice";
 import { loginUser, loginWithGoogle } from "@/lib/auth/api";
 import { setToken } from "@/lib/auth/session";
 import Link from "next/link";

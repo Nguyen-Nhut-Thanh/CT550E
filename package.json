@@ -13,6 +13,7 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "npm run prisma:generate --workspace=database",
     "db:push": "npm run prisma:push --workspace=database",
+    "db:membership": "node scripts/apply-membership.cjs",
     "db:import:provinces": "tsx scripts/import-data/import-provinces.ts",
     "grant-admin": "tsx scripts/grant-admin.ts"
   },

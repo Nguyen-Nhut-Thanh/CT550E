@@ -1,8 +1,8 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/common/AdminPageHeader";
-import CustomDropdown from "@/components/common/CustomDropdown";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
+import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
 import { BannerManagementTable } from "@/components/admin/banners/BannerManagementTable";
 import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/admin/banners/api";
 import { useToast } from "@/lib/notifications/useToast";

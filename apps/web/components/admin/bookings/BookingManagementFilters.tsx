@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Filter, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { AdminSearchInput } from "@/components/common/AdminSearchInput";
-import { AdminDatePicker } from "@/components/common/AdminDatePicker";
-import CustomDropdown from "@/components/common/CustomDropdown";
+import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
+import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import {
   BOOKING_STATUSES,
   formatBookingDate,

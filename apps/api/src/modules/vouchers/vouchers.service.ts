@@ -1,17 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
 import type { VoucherPayload } from 'shared';
+import { membershipDiscount } from 'shared';
+import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class VouchersService {
     constructor(private readonly prisma: PrismaService) { }
-    async validatePublicVoucher(code: string, rawAmount: string) {
+    async validateForAccount(accountId: number, code: string, rawAmount: string) {
+        return this.validatePublicVoucher(code, rawAmount, await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.'));
+    }
+    async validatePublicVoucher(code: string, rawAmount: string, userId?: number) {
         const amount = Number(rawAmount);
         if (!code?.trim() || !Number.isFinite(amount) || amount < 0) {
             throw new BadRequestException('Mã giảm giá hoặc giá trị đơn không hợp lệ.');
         }
         const voucher = await this.prisma.vouchers.findFirst({
             where: {
-                code: code.trim(),
+                code: code.trim().toUpperCase(),
+                OR: [{ owner_user_id: null }, ...(userId ? [{ owner_user_id: userId }] : [])],
                 status: 1,
                 start_date: { lte: new Date() },
                 expiry_date: { gte: new Date() },
@@ -20,13 +26,7 @@ export class VouchersService {
         if (!voucher || voucher.used_count >= voucher.usage_limit || amount < Number(voucher.min_order_value)) {
             throw new BadRequestException('Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng.');
         }
-        let discount = voucher.discount_type === 'percentage'
-            ? amount * Number(voucher.discount_value) / 100
-            : Number(voucher.discount_value);
-        if (voucher.discount_type === 'percentage' && voucher.max_discount_amount != null) {
-            discount = Math.min(discount, Number(voucher.max_discount_amount));
-        }
-        discount = Math.min(Math.max(discount, 0), amount);
+        const discount = membershipDiscount({ discount_type: voucher.discount_type, discount_value: Number(voucher.discount_value), min_order_value: Number(voucher.min_order_value), max_discount_amount: voucher.max_discount_amount === null ? null : Number(voucher.max_discount_amount) }, amount);
         return {
             voucher_id: voucher.voucher_id,
             code: voucher.code,
@@ -67,6 +67,7 @@ export class VouchersService {
     }
     async findAll() {
         return this.prisma.vouchers.findMany({
+            where: { owner_user_id: null },
             orderBy: { created_at: 'desc' },
         });
     }

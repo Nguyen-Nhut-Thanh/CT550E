@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { BookingPayload } from "shared";
-import { BOOKING_EXTRAS } from "shared";
+import { BOOKING_EXTRAS, membershipDiscount } from "shared";
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
@@ -97,22 +97,15 @@ export class BookingsService {
             if (dto.voucher_code) {
                 const voucher = await tx.vouchers.findFirst({
                     where: {
-                        code: dto.voucher_code,
+                        code: String(dto.voucher_code).trim().toUpperCase(),
+                        OR: [{ owner_user_id: null }, { owner_user_id: dto.user_id }],
                         status: 1,
                         start_date: { lte: new Date() },
                         expiry_date: { gte: new Date() },
                     },
                 });
                 if (voucher && voucher.used_count < voucher.usage_limit && subtotal >= Number(voucher.min_order_value)) {
-                    if (voucher.discount_type === 'percentage') {
-                        discountAmount = subtotal * (Number(voucher.discount_value) / 100);
-                        if (voucher.max_discount_amount) {
-                            discountAmount = Math.min(discountAmount, Number(voucher.max_discount_amount));
-                        }
-                    }
-                    else {
-                        discountAmount = Number(voucher.discount_value);
-                    }
+                    discountAmount = membershipDiscount({ discount_type: voucher.discount_type, discount_value: Number(voucher.discount_value), min_order_value: Number(voucher.min_order_value), max_discount_amount: voucher.max_discount_amount === null ? null : Number(voucher.max_discount_amount) }, subtotal);
                     voucherId = voucher.voucher_id;
                     voucherUsageLimit = voucher.usage_limit;
                 }
@@ -168,7 +161,7 @@ export class BookingsService {
             if (reserved.count !== 1)
                 throw new BadRequestException("Không đủ chỗ trống cho số lượng khách yêu cầu.");
             if (voucherId) {
-                const consumed = await tx.vouchers.updateMany({ where: { voucher_id: voucherId, used_count: { lt: voucherUsageLimit } }, data: { used_count: { increment: 1 } } });
+                const consumed = await tx.vouchers.updateMany({ where: { voucher_id: voucherId, used_count: { lt: voucherUsageLimit }, status: 1, start_date: { lte: new Date() }, expiry_date: { gt: new Date() }, OR: [{ owner_user_id: null }, { owner_user_id: dto.user_id }] }, data: { used_count: { increment: 1 } } });
                 if (consumed.count !== 1)
                     throw new BadRequestException("Mã giảm giá đã hết lượt sử dụng.");
             }

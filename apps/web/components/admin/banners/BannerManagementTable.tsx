@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, Eye, EyeOff, ImageIcon } from "lucide-react";
-import { AdminPagination } from "@/components/common/AdminPagination";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { AdminPagination } from "@/components/admin/common/AdminPagination";
+import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
 import { BannerRowActions } from "./BannerRowActions";
 import type { Banner } from "shared";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminDatePicker } from "@/components/common/AdminDatePicker";
+import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
 import { CalendarDays, Clock } from "lucide-react";
 import type { VoucherModalProps } from "shared";
 

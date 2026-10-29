@@ -1,8 +1,8 @@
 "use client";
 
-import { TourPoliciesAccordionEditor } from "@/components/admin/tours/TourPoliciesAccordionEditor";
-import { AdminBackPageHeader } from "@/components/common/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/common/AdminFormCard";
+import { TourPoliciesAccordionEditor } from "@/components/admin/tours/editor/TourPoliciesAccordionEditor";
+import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
 import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";
 import { normalizeTourDetailForm } from "@/lib/admin/tours/forms";
 import { useToast } from "@/lib/notifications/useToast";

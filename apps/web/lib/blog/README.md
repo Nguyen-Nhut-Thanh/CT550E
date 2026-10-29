@@ -13,4 +13,4 @@ Lưu nháp chỉ yêu cầu danh mục, cho phép nội dung chưa hoàn chỉnh
 
 Chỉ bài có `status = 1` được công khai. Ô trống tự bù bằng bài mới nhất, không trùng bài đã chọn. Khi thiếu bài, ưu tiên bài chủ đạo và thu gọn các khối còn lại. Sửa tiêu đề không đổi slug đã xuất bản. Xóa bài tự gỡ vị trí liên kết; chuyển về nháp khiến vị trí tự bù.
 
-Thiết lập cơ sở dữ liệu ở môi trường mới: generate Prisma client, sau đó chạy `node scripts/apply-blog-layout.cjs` và `node scripts/apply-article-blocks.cjs` từ gốc dự án. Các script chỉ bổ sung cấu trúc còn thiếu và giữ nguyên bài cũ. Trên Windows, dừng API trước khi generate để tránh khóa Prisma DLL. Luồng đọc/ghi dữ liệu có thể kiểm tra bằng `node scripts/verify-blog.cjs` sau khi build API; toàn bộ dữ liệu thử được hoàn tác. Kiểm tra tự động: `npm run test:posts --workspace=api` và `npm run test:blog --workspace=web`.
+Thiết lập cơ sở dữ liệu ở môi trường mới: generate Prisma client, sau đó chạy `node scripts/apply-blog-layout.cjs` và `node scripts/apply-article-blocks.cjs` từ gốc dự án. Các script chỉ bổ sung cấu trúc còn thiếu và giữ nguyên bài cũ. Trên Windows, dừng API trước khi generate để tránh khóa Prisma DLL.

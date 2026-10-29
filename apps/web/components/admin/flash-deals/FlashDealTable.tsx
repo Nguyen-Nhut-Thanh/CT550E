@@ -1,8 +1,8 @@
 "use client";
 import { CalendarDays, Flame, Pencil, Plus, Trash2, Zap } from "lucide-react";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { AdminRowActions } from "@/components/common/AdminRowActions";
-import { AdminPagination } from "@/components/common/AdminPagination";
+import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
+import { AdminPagination } from "@/components/admin/common/AdminPagination";
 import {
   getFlashDealSeats,
   getFlashDealStatus,

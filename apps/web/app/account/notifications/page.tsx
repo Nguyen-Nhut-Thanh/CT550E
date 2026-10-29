@@ -1,5 +1,5 @@
-import { AccountContent } from "@/components/account/AccountContent";
-import { AccountNotificationsTab } from "@/components/account/AccountNotificationsTab";
+import { AccountContent } from "@/components/account/layout/AccountContent";
+import { AccountNotificationsTab } from "@/components/account/notifications/AccountNotificationsTab";
 
 export default function NotificationsAccountPage() {
   return (

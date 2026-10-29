@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminModalShell } from "@/components/common/AdminModalShell";
+import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import { CalendarDays } from "lucide-react";
 import { getPublicTours } from "@/lib/tours/api";
 import { Search, SendHorizontal, Map } from "lucide-react";
