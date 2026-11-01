@@ -142,6 +142,7 @@ export class FeaturedToursService {
                 },
             },
             include: {
+                departure_location: true,
                 tours: {
                     include: {
                         departure_locations: true,
@@ -194,7 +195,7 @@ export class FeaturedToursService {
             if (!tour)
                 return null;
             const price = toNumber(schedule.tour_schedule_prices[0]?.price ?? schedule.price);
-            const departureName = tour.departure_locations?.name ?? 'TP. Hồ Chí Minh';
+            const departureName = schedule.departure_location?.name ?? 'Chưa cập nhật';
             const destinationName = tour.tour_destinations[tour.tour_destinations.length - 1]?.locations
                 ?.name ?? tour.name;
             const hotelName = schedule.tour_schedule_hotels[0]?.hotels?.name ?? null;

@@ -116,6 +116,10 @@ model bookings {
   booking_id        Int                 @id @default(autoincrement())
   user_id           Int
   tour_schedule_id  Int
+  pickup_point_id   Int?
+  pickup_snapshot   Json?
+  departure_name    String?             @db.VarChar(255)
+  pickup_point      schedule_pickup_points? @relation(fields: [pickup_point_id], references: [pickup_point_id], onDelete: SetNull)
   contact_name      String              @db.VarChar(150)
   contact_phone     String              @db.VarChar(15)
   contact_email     String              @db.VarChar(150)
@@ -300,6 +304,8 @@ model locations {
   locations                                    locations?           @relation("locationsTolocations", fields: [parent_id], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   other_locations                              locations[]          @relation("locationsTolocations")
   tour_destinations                            tour_destinations[]
+  itinerary_activities                         itinerary_activities[]
+  departing_schedules                          tour_schedules[] @relation("ScheduleDeparture")
   tours_tours_departure_location_idTolocations tours[]              @relation("tours_departure_location_idTolocations")
 
   @@index([level_id], map: "idx_locations_level")
@@ -468,9 +474,25 @@ model tour_itineraries {
   title             String         @db.VarChar(255)
   content           String
   meals             String?        @db.VarChar(100)
+  activities        itinerary_activities[]
   created_at        DateTime       @default(now()) @db.Timestamp(6)
   updated_at        DateTime       @updatedAt @db.Timestamp(6)
   tour_schedules    tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model itinerary_activities {
+  activity_id       Int              @id @default(autoincrement())
+  tour_itinerary_id Int
+  location_id       Int?
+  time              String           @db.VarChar(5)
+  title             String           @db.VarChar(255)
+  description       String           @default("")
+  sort_order        Int
+  itinerary         tour_itineraries @relation(fields: [tour_itinerary_id], references: [tour_itinerary_id], onDelete: Cascade)
+  location          locations?       @relation(fields: [location_id], references: [location_id], onDelete: Restrict)
+
+  @@unique([tour_itinerary_id, sort_order])
+  @@index([location_id])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -484,6 +506,37 @@ model tour_policies {
   tours       tours    @relation(fields: [tour_id], references: [tour_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([tour_id, policy_type], map: "idx_tour_policies_tour_type")
+}
+
+model tour_amenities {
+  amenity_id Int      @id @default(autoincrement())
+  tour_id    Int
+  kind       String   @db.VarChar(30)
+  title      String   @db.VarChar(150)
+  content    String   @default("")
+  sort_order Int      @default(0)
+  tours      tours    @relation(fields: [tour_id], references: [tour_id], onDelete: Cascade)
+  schedule_copies tour_schedule_amenities[]
+
+  @@unique([tour_id, kind])
+  @@index([tour_id, sort_order])
+}
+
+model tour_schedule_amenities {
+  schedule_amenity_id Int @id @default(autoincrement())
+  tour_schedule_id   Int
+  source_amenity_id  Int?
+  kind               String @db.VarChar(30)
+  title              String @db.VarChar(150)
+  content            String @default("")
+  sort_order         Int @default(0)
+  is_visible         Boolean @default(true)
+  schedule           tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
+  source             tour_amenities? @relation(fields: [source_amenity_id], references: [amenity_id], onDelete: SetNull)
+
+  @@unique([tour_schedule_id, kind])
+  @@index([tour_schedule_id, sort_order])
+  @@index([source_amenity_id])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -533,6 +586,14 @@ model tour_schedule_transports {
 model tour_schedules {
   tour_schedule_id         Int                        @id @default(autoincrement())
   tour_id                  Int
+  use_tour_amenities        Boolean @default(true)
+  tour_schedule_amenities   tour_schedule_amenities[]
+  departure_location_id    Int
+  departure_location       locations @relation("ScheduleDeparture", fields: [departure_location_id], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
+  pickup_points            schedule_pickup_points[]
+  operating_region         String? @db.VarChar(10)
+  crew_required_count      Int @default(1)
+  crew                     schedule_crew[]
   start_date               DateTime                   @db.Timestamp(6)
   end_date                 DateTime                   @db.Timestamp(6)
   price                    Decimal                    @default(0) @db.Decimal(20, 2)
@@ -552,6 +613,21 @@ model tour_schedules {
   tours                    tours                      @relation(fields: [tour_id], references: [tour_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([tour_id, start_date], map: "idx_tour_schedules_tour_date")
+  @@index([departure_location_id, status, start_date], map: "idx_schedules_departure")
+}
+
+model schedule_pickup_points {
+  pickup_point_id   Int @id @default(autoincrement())
+  tour_schedule_id  Int
+  name             String @db.VarChar(150)
+  address          String @db.VarChar(500)
+  pickup_at        DateTime @db.Timestamp(6)
+  sort_order       Int @default(0)
+  note             String? @db.VarChar(1000)
+  schedule         tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
+  bookings         bookings[]
+
+  @@index([tour_schedule_id, sort_order])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -570,7 +646,6 @@ model tours {
   status              Int                 @default(1) @db.SmallInt
   created_at          DateTime            @default(now()) @db.Timestamp(6)
   updated_at          DateTime            @updatedAt @db.Timestamp(6)
-  sightseeing_summary String?
   cuisine_info        String?
   best_for            String?             @db.VarChar(255)
   best_time           String?             @db.VarChar(255)
@@ -584,6 +659,7 @@ model tours {
   tour_destinations   tour_destinations[]
   tour_images         tour_images[]
   tour_policies       tour_policies[]
+  tour_amenities      tour_amenities[]
   tour_schedules      tour_schedules[]
   departure_locations locations           @relation("tours_departure_location_idTolocations", fields: [departure_location], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   transports          transports          @relation(fields: [transport_id], references: [transport_id], onDelete: NoAction, onUpdate: NoAction)
@@ -636,6 +712,72 @@ model users {
   accounts          accounts         @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
   conversations     conversations[]
   assigned_conversations conversations[] @relation("ConversationAssignee")
+  employee_profile employee_profiles?
+  staff_shifts staff_shifts[]
+  crew_assignments schedule_crew[]
+}
+
+model employee_profiles {
+  user_id          Int @id
+  employee_code    String @unique @db.VarChar(30)
+  position         String @db.VarChar(100)
+  primary_region   String? @db.VarChar(10)
+  regions          String[] @default([])
+  employment_type  String @default("full_time") @db.VarChar(20)
+  status           String @default("active") @db.VarChar(20)
+  languages        String[] @default([])
+  note             String? @db.VarChar(2000)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @updatedAt @db.Timestamp(6)
+  user             users @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+}
+
+model staff_shifts {
+  shift_id       Int @id @default(autoincrement())
+  user_id        Int
+  duty_type      String @default("page") @db.VarChar(10)
+  region_code    String? @db.VarChar(10)
+  starts_at      DateTime @db.Timestamp(6)
+  ends_at        DateTime @db.Timestamp(6)
+  status         String @default("scheduled") @db.VarChar(20)
+  note           String? @db.VarChar(1000)
+  created_by     Int
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  user           users @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+  @@index([user_id, starts_at, ends_at])
+  @@index([region_code, starts_at, ends_at])
+}
+
+model schedule_crew {
+  assignment_id    Int @id @default(autoincrement())
+  tour_schedule_id Int
+  user_id          Int
+  roles            String[]
+  status           String @default("pending") @db.VarChar(20)
+  report_at        DateTime @db.Timestamp(6)
+  release_at       DateTime @db.Timestamp(6)
+  note             String? @db.VarChar(1000)
+  response_note    String? @db.VarChar(1000)
+  confirmed_at     DateTime? @db.Timestamp(6)
+  assigned_by      Int
+  updated_at       DateTime @updatedAt @db.Timestamp(6)
+  schedule         tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
+  user             users @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+  @@unique([tour_schedule_id, user_id])
+  @@index([user_id, status, report_at, release_at])
+}
+
+model workforce_events {
+  event_id         Int @id @default(autoincrement())
+  actor_user_id    Int
+  target_user_id   Int?
+  tour_schedule_id Int?
+  region_code     String? @db.VarChar(10)
+  action           String @db.VarChar(50)
+  details          Json
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  @@index([region_code, created_at])
+  @@index([tour_schedule_id, created_at])
 }
 
 model recommendation_profiles {
@@ -678,6 +820,8 @@ model conversations {
   user_id           Int
   status            String     @default("WAITING") @db.VarChar(50)
   assigned_staff_id Int?
+  region_code       String? @db.VarChar(10)
+  handover_note     String? @db.VarChar(1000)
   resolved_at       DateTime?  @db.Timestamp(6)
   last_message      String?    @db.Text
   last_message_at   DateTime   @default(now()) @db.Timestamp(6)

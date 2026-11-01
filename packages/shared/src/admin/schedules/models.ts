@@ -9,6 +9,9 @@ export type ScheduleManagementItem = Omit<AdminSchedule, 'price' | '_count'> & {
     };
 };
 export type TourInfo = {
+    tour_amenities?: import('../../tours/amenities').TourAmenity[];
+    tour_destinations?: { location_id: number; visit_order: number; locations?: { name: string } }[];
+    departure_location?: number;
     name?: string | null;
     duration_days?: number | null;
     base_price?: number | string | null;
@@ -43,6 +46,11 @@ export type ScheduleHotelItem = {
     } | null;
 };
 export type ScheduleDetailResponse = {
+    use_tour_amenities?: boolean;
+    tour_schedule_amenities?: import('../../tours/amenities').ScheduleAmenity[];
+    departure_location_id?: number;
+    departure_location?: { location_id: number; name: string };
+    pickup_points?: import("../../tours/models").SchedulePickupPoint[];
     tour_id?: string | number | null;
     start_date?: string | null;
     end_date?: string | null;
@@ -76,6 +84,9 @@ export type ScheduleLike = Pick<AdminSchedule, 'start_date' | 'quota' | 'status'
     };
 };
 export type AdminSchedule = {
+    departure_location_id?: number;
+    departure_location?: { location_id: number; name: string };
+    pickup_points?: import("../../tours/models").SchedulePickupPoint[];
     tour_schedule_id: number;
     start_date: string;
     end_date: string;

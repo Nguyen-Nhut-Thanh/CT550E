@@ -2,16 +2,17 @@ import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { disconnectMongo, prisma } from 'database';
 import { AppModule } from './app.module';
+import { getCorsOrigins } from './config/cors';
 export async function bootstrap(): Promise<void> {
     const logger = new Logger('Startup');
     let app: INestApplication | undefined;
     try {
         app = await NestFactory.create(AppModule);
         app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-        app.enableCors({ origin: ['http://localhost:3000'], credentials: true });
+        app.enableCors({ origin: getCorsOrigins(), credentials: true });
         app.enableShutdownHooks();
         // Nest initializes database providers before it starts accepting requests.
-        await app.listen(Number(process.env.API_PORT ?? 4000));
+        await app.listen(Number(process.env.API_PORT ?? 4000), process.env.API_HOST || '127.0.0.1');
     }
     catch (error) {
         logger.error('Không thể khởi động API', error);

@@ -3,6 +3,7 @@ export type BookingPayload = BookingBasePayload & {
     additional_service_ids?: string[];
 };
 export type BookingBasePayload = {
+    pickup_point_id?: number;
     tour_schedule_id: number;
     contact_name: string;
     contact_phone: string;

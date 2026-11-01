@@ -66,7 +66,12 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
             { icon: Plane, label: "Mã tour", value: tour?.code || "Chưa cập nhật" },
             { icon: CalendarDays, label: "Ngày khởi hành", value: date(b.tour_schedules?.start_date) },
             { icon: Clock3, label: "Thời gian", value: tour ? `${tour.duration_days} ngày ${tour.duration_nights} đêm` : "Chưa cập nhật" },
-            { icon: MapPin, label: "Điểm khởi hành", value: tour?.departure_locations?.name || "Chưa cập nhật" },
+            { icon: MapPin, label: "Điểm khởi hành", value: b.departure_name || b.tour_schedules?.departure_location?.name || "Chưa cập nhật" },
+            ...(b.pickup_snapshot ? [
+              { icon: MapPin, label: "Điểm đón đã chọn", value: `${b.pickup_snapshot.name} — ${b.pickup_snapshot.address}` },
+              { icon: Clock3, label: "Thời gian đón", value: date(b.pickup_snapshot.pickup_at, true) },
+              ...(b.pickup_snapshot.note ? [{ icon: MapPin, label: "Hướng dẫn đón", value: b.pickup_snapshot.note }] : []),
+            ] : []),
           ].map(({ icon: Icon, label, value }) => <div key={label} className={styles.fact}><span className={styles.smallIcon}><Icon size={24} /></span><div><dt>{label}</dt><dd>{value}</dd></div></div>)}</dl>
         </section>
         <section className={`${styles.card} ${styles.contactCard}`} aria-label="Thông tin người đặt tour"><SectionTitle icon={<UserRound size={26} />} title="Thông tin người đặt tour" description="Người đại diện đặt tour, các thông tin liên hệ sẽ được sử dụng để xác nhận và gửi thông báo." /><dl className={styles.contactGrid}><Field label="Họ và tên">{b.contact_name}</Field><Field label="Số điện thoại">{b.contact_phone}</Field><Field label="Email" wide>{b.contact_email}</Field><Field label="Ghi chú" wide><span className={styles.note}>{b.note?.replace(/\[ROOM_SELECTION\]\s*/g, "").trim() || "Không có ghi chú."}</span></Field></dl></section>

@@ -137,9 +137,7 @@ export class ToursPublicService {
                 { code: { contains: search, mode: 'insensitive' } },
                 { name: { contains: search, mode: 'insensitive' } },
                 {
-                    departure_locations: {
-                        name: { contains: search, mode: 'insensitive' },
-                    },
+                    tour_schedules: { some: { status: 1, start_date: { gte: today }, departure_location: { name: { contains: search, mode: 'insensitive' } } } },
                 },
                 {
                     tour_destinations: {
@@ -151,12 +149,6 @@ export class ToursPublicService {
                     },
                 },
             ];
-        }
-        if (params.departure_location) {
-            const departureLocationId = Number(params.departure_location);
-            if (!Number.isNaN(departureLocationId)) {
-                where.departure_location = departureLocationId;
-            }
         }
         const destination = params.destination?.trim();
         if (destination) {
@@ -185,6 +177,12 @@ export class ToursPublicService {
             status: 1,
             start_date: { gte: today },
         };
+        if (params.departure_location && Number.isSafeInteger(Number(params.departure_location))) {
+            scheduleFilter.departure_location_id = Number(params.departure_location);
+        }
+        if (params.date_from && !Number.isNaN(Date.parse(params.date_from))) {
+            scheduleFilter.start_date = { gte: new Date(Math.max(today.getTime(), Date.parse(params.date_from))) };
+        }
         if (minPrice != null || maxPrice != null) {
             scheduleFilter.price = {};
             if (minPrice != null) {
@@ -207,7 +205,7 @@ export class ToursPublicService {
         const itemsRaw = await this.prisma.tours.findMany({
             where,
             orderBy: params.collection === 'bestseller' ? undefined : { updated_at: 'desc' },
-            select: buildCardSelect(),
+            select: buildCardSelect(scheduleFilter),
         });
         const items = itemsRaw
             .map((t: any) => formatTourCard(t, { onlyFlashDeal: params.deal === 'flash' }))
@@ -275,12 +273,7 @@ export class ToursPublicService {
                 duration_nights: true,
                 base_price: true,
                 tour_type: true,
-                sightseeing_summary: true,
-                cuisine_info: true,
-                best_for: true,
-                best_time: true,
-                transport_info: true,
-                promotion_info: true,
+                tour_amenities: { orderBy: { sort_order: 'asc' }, select: { amenity_id: true, kind: true, title: true, content: true, sort_order: true } },
                 cut_off_hours: true,
                 departure_locations: {
                     select: {
@@ -323,11 +316,22 @@ export class ToursPublicService {
                     orderBy: { start_date: 'asc' },
                     select: {
                         tour_schedule_id: true,
+                        departure_location_id: true,
+                        tour_schedule_amenities: { orderBy: { sort_order: 'asc' }, select: { kind: true, title: true, content: true, sort_order: true, is_visible: true } },
+                        departure_location: { select: { location_id: true, name: true, slug: true } },
+                        pickup_points: { orderBy: { sort_order: 'asc' }, select: { pickup_point_id: true, name: true, address: true, pickup_at: true, sort_order: true, note: true } },
                         start_date: true,
                         end_date: true,
                         price: true,
                         quota: true,
                         booked_count: true,
+                        tour_schedule_transports: {
+                            orderBy: [{ day_from: 'asc' }, { schedule_transport_id: 'asc' }],
+                            select: {
+                                schedule_transport_id: true, transport_role: true, day_from: true, day_to: true, note: true,
+                                transports: { select: { name: true, transport_type: true, description: true } },
+                            },
+                        },
                         flash_deals: {
                             where: {
                                 status: 1,
@@ -342,6 +346,16 @@ export class ToursPublicService {
                                 title: true,
                                 content: true,
                                 meals: true,
+                                activities: {
+                                    orderBy: { sort_order: 'asc' },
+                                    select: {
+                                        time: true, title: true, description: true, location_id: true,
+                                        location: { select: {
+                                            location_id: true, parent_id: true, name: true, note: true,
+                                            location_images: { where: { status: 1 }, orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } },
+                                        } },
+                                    },
+                                },
                             },
                         },
                         tour_schedule_prices: {
@@ -367,6 +381,8 @@ export class ToursPublicService {
                                         hotel_id: true,
                                         name: true,
                                         star_rating: true,
+                                        address: true,
+                                        description: true,
                                     },
                                 },
                                 hotel_room_types: {

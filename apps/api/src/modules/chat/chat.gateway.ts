@@ -3,9 +3,10 @@ import { ConnectedSocket, MessageBody, OnGatewayInit, SubscribeMessage, WebSocke
 import type { JoinPayload, JwtChatPayload, ReadPayload, SendPayload, TypingPayload } from 'shared';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
+import { getCorsOrigins } from '../../config/cors';
 @WebSocketGateway({
     namespace: 'chat',
-    cors: { origin: process.env.CORS_ORIGINS?.split(',').map(value => value.trim()).filter(Boolean) ?? ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://nhutthanh.id.vn', 'https://www.nhutthanh.id.vn'], credentials: true },
+    cors: { origin: getCorsOrigins(), credentials: true },
     maxHttpBufferSize: 32 * 1024,
 })
 export class ChatGateway implements OnGatewayInit {

@@ -57,7 +57,7 @@ export default function TourDetailHero({ tour }: TourDetailHeroProps) {
     }
   };
 
-  const departureName = tour.departure_locations?.name || "Hồ Chí Minh";
+  const departureName = [...new Set(tour.tour_schedules.map(schedule => schedule.departure_location?.name).filter(Boolean))].join(" / ") || tour.departure_locations?.name || "Chưa cập nhật";
   const tourCategory = tour.tour_type || "Tour Miền Tây";
 
   const scrollThumbnails = (direction: "left" | "right") => {

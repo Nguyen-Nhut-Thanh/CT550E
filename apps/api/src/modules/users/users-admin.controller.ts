@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Req, UseGuards, } from '@nestjs/common';
 import type { CreateStaffPayload } from 'shared';
 import { AdminAuthGuard } from '../auth/admin.guard';
 import { UsersService } from './users.service';
@@ -20,20 +20,22 @@ export class UsersAdminController {
     async createStaff(
     @Body()
     dto: CreateStaffPayload) {
-        return this.usersService.createStaff(dto);
+        throw new BadRequestException('Vui lòng tạo nhân viên tại mục Nhân sự & điều hành để chọn vai trò và miền phụ trách.');
     }
     @Patch(':id/status')
     async updateStatus(
     @Param('id', ParseIntPipe)
     id: number,
     @Body('status', ParseIntPipe)
-    status: number) {
+    status: number, @Req() req: any) {
+        if (id === req.user.sub && status !== 1) throw new BadRequestException('Không thể tự khóa tài khoản của mình.');
         return this.usersService.updateStatus(id, status);
     }
     @Patch(':id/toggle-staff')
     async toggleStaff(
     @Param('id', ParseIntPipe)
-    id: number) {
+    id: number, @Req() req: any) {
+        if (id === req.user.sub) throw new BadRequestException('Không thể tự thay đổi quyền nhân viên của mình.');
         return this.usersService.toggleStaffStatus(id);
     }
     @Delete(':id')

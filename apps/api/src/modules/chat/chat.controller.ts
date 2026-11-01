@@ -21,10 +21,6 @@ export class ChatController {
     async create(
     @Req()
     req: AuthenticatedRequest) { return this.chat.getOrCreateConversation(await this.chat.actor(req.user)); }
-    @Get('staff')
-    async staff(
-    @Req()
-    req: AuthenticatedRequest) { return this.chat.staff(await this.chat.actor(req.user)); }
     @Get('conversations/:id/contexts')
     async contexts(@Param('id', ParseIntPipe) id: number, @Req() req: AuthenticatedRequest) {
         return this.chat.contexts(id, await this.chat.actor(req.user));
@@ -58,7 +54,7 @@ export class ChatController {
     req: AuthenticatedRequest,
     @Body()
     body: ChatManageInput) {
-        const result = await this.chat.manage(id, await this.chat.actor(req.user), body?.action, body?.staff_id);
+        const result = await this.chat.manage(id, await this.chat.actor(req.user), body?.action);
         await this.gateway.notify(id, 'chat:conversation:updated', { conversation_id: id });
         return result;
     }

@@ -51,9 +51,12 @@ export class BookingsService {
             }
         }
         const booking = await this.prisma.$transaction(async (tx: any) => {
+            await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${dto.tour_schedule_id} FOR UPDATE`;
             const schedule = await tx.tour_schedules.findUnique({
                 where: { tour_schedule_id: dto.tour_schedule_id },
                 include: {
+                    departure_location: true,
+                    pickup_points: { orderBy: { sort_order: 'asc' } },
                     tour_schedule_prices: true,
                     tour_schedule_hotels: { include: { hotel_room_types: true } },
                     tours: {
@@ -69,6 +72,10 @@ export class BookingsService {
             }
             if (!schedule.tours || schedule.tours.status !== 1) {
                 throw new BadRequestException('Tour này hiện đang tạm ẩn và không nhận đặt mới.');
+            }
+            const pickup = schedule.pickup_points.find((point: { pickup_point_id: number }) => point.pickup_point_id === dto.pickup_point_id);
+            if ((schedule.pickup_points.length > 0 && !pickup) || (dto.pickup_point_id != null && !pickup)) {
+                throw new BadRequestException('Vui lòng chọn điểm đón thuộc đúng chuyến khởi hành.');
             }
             const totalGuests = dto.adult_count + dto.child_count + dto.infant_count;
             if (schedule.quota - schedule.booked_count < totalGuests) {
@@ -125,6 +132,9 @@ export class BookingsService {
                 data: {
                     user_id: dto.user_id,
                     tour_schedule_id: dto.tour_schedule_id,
+                    departure_name: schedule.departure_location.name,
+                    pickup_point_id: pickup?.pickup_point_id ?? null,
+                    ...(pickup ? { pickup_snapshot: { name: pickup.name, address: pickup.address, pickup_at: pickup.pickup_at.toISOString(), note: pickup.note } } : {}),
                     contact_name: dto.contact_name,
                     contact_phone: dto.contact_phone,
                     contact_email: dto.contact_email,

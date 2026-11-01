@@ -17,6 +17,7 @@ export function ScheduleBasicInfoCard({
   tourInfo,
   onFormChange,
 }: Props) {
+  const lockedDates = isPast || (hasBookings && form.pickup_points.length > 0);
   const minScheduleDate = (() => {
     const base = new Date();
     const cutOffHours = Number(tourInfo?.cut_off_hours ?? 0);
@@ -65,13 +66,12 @@ export function ScheduleBasicInfoCard({
           <AdminDatePicker
             value={form.start_date}
             minDate={minScheduleDate}
-            disabled={isPast}
+            disabled={lockedDates}
             onChange={handleStartDateChange}
           />
           {hasBookings && !isPast ? (
             <p className="px-1 text-xs font-medium text-amber-700">
-              Nếu thay đổi ngày hoặc giờ khởi hành, hệ thống sẽ gửi email thông báo đến
-              khách đã đặt.
+              {lockedDates ? 'Ngày giờ được khóa để giữ đúng thời gian đón đã xác nhận cho khách.' : 'Nếu thay đổi ngày hoặc giờ khởi hành, hệ thống sẽ gửi email thông báo đến khách đã đặt.'}
             </p>
           ) : null}
         </div>
@@ -84,7 +84,7 @@ export function ScheduleBasicInfoCard({
           <div className="flex min-h-[64px] flex-col justify-center rounded-[20px] border border-[#e4ebf4] bg-white px-4 py-2 shadow-[0_8px_20px_rgba(15,23,42,0.06)]">
             <input
               type="time"
-              disabled={isPast}
+              disabled={lockedDates}
               className={`w-full border-0 bg-transparent p-0 text-sm font-bold outline-none focus:ring-0 ${
                 isPast ? "cursor-not-allowed text-slate-400" : "text-blue-600"
               }`}

@@ -40,6 +40,7 @@ function BookingContent() {
     null,
   );
   const [adultCount, setAdultCount] = useState(1);
+  const [pickupPointId, setPickupPointId] = useState<number | "">("");
   const [childCount, setChildCount] = useState(0);
   const [infantCount, setInfantCount] = useState(0);
   const [singleRoomSelections, setSingleRoomSelections] = useState<boolean[]>([
@@ -102,6 +103,7 @@ function BookingContent() {
 
         setTour(tourData);
         setSelectedSchedule(schedule);
+        setPickupPointId("");
 
         if (me) {
           const profile = me as UserProfileLite;
@@ -272,6 +274,9 @@ function BookingContent() {
 
   const handleSubmitBooking = async () => {
     if (!selectedSchedule || !tour) return;
+    if (selectedSchedule.pickup_points?.length && !pickupPointId) {
+      setSubmitTone("error"); setSubmitMessage("Vui lòng chọn điểm đón trước khi đặt tour."); return;
+    }
 
     const invalidBirthday = travelers.findIndex(traveler => parseBirthday(traveler.birthday) === null);
     if (invalidBirthday !== -1) {
@@ -312,6 +317,7 @@ function BookingContent() {
 
       const data = await createBooking({
         tour_schedule_id: selectedSchedule.tour_schedule_id,
+        pickup_point_id: pickupPointId || undefined,
         contact_name: contactName,
         contact_phone: contactPhone,
         contact_email: contactEmail,
@@ -329,7 +335,7 @@ function BookingContent() {
       }, customerId);
 
       if (data && customerId) {
-        router.push("/admin/bookings");
+        router.push("/admin/chats");
         return;
       }
       if (data) {
@@ -478,6 +484,23 @@ function BookingContent() {
               onContactEmailChange={setContactEmail}
               onNoteChange={setNote}
             />
+
+            {!!selectedSchedule.pickup_points?.length && <section className="space-y-3 rounded-2xl border border-blue-100 bg-white p-5">
+              <label htmlFor="booking-pickup" className="block text-lg font-bold text-slate-900">Chọn điểm đón</label>
+              <p className="text-sm text-slate-500">Áp dụng cho tất cả hành khách trong đơn đặt này.</p>
+              <select id="booking-pickup" required value={pickupPointId} onChange={e => setPickupPointId(e.target.value ? Number(e.target.value) : '')}
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                <option value="">Chọn điểm đón của bạn</option>
+                {selectedSchedule.pickup_points.map(point => <option key={point.pickup_point_id} value={point.pickup_point_id}>
+                  {point.name} — {new Date(point.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
+                </option>)}
+              </select>
+              {selectedSchedule.pickup_points.filter(point => point.pickup_point_id === pickupPointId).map(point => <div key={point.pickup_point_id} className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">
+                <p className="font-semibold">{point.address}</p>
+                <p>Có mặt lúc {new Date(point.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
+                {point.note && <p className="mt-1">{point.note}</p>}
+              </div>)}
+            </section>}
 
             <BookingTravelersList
               travelers={travelers}

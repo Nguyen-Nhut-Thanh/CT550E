@@ -45,6 +45,8 @@ export default function TourDepartureCalendar({
   }, [schedules]);
 
   const [currentMonth, setCurrentMonth] = useState<Date>(monthOptions[0]);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  useEffect(() => { setSelectedDay(null); }, [currentMonth]);
 
   useEffect(() => {
     setCurrentMonth(monthOptions[0]);
@@ -83,7 +85,7 @@ export default function TourDepartureCalendar({
   }, [currentMonth]);
 
   const scheduleMap = useMemo(() => {
-    const map = new Map<number, TourSchedule>();
+    const map = new Map<number, TourSchedule[]>();
 
     schedules.forEach((schedule) => {
       const date = new Date(schedule.start_date);
@@ -91,7 +93,7 @@ export default function TourDepartureCalendar({
         date.getMonth() === currentMonth.getMonth() &&
         date.getFullYear() === currentMonth.getFullYear()
       ) {
-        map.set(date.getDate(), schedule);
+        map.set(date.getDate(), [...(map.get(date.getDate()) || []), schedule]);
       }
     });
 
@@ -123,6 +125,15 @@ export default function TourDepartureCalendar({
         </div>
 
         <div className="space-y-4 pt-1">
+          <p className="font-semibold text-sky-800">Xuất phát: {selectedSchedule.departure_location?.name || "Chưa cập nhật"}</p>
+          {!!selectedSchedule.pickup_points?.length && <div className="rounded-xl bg-sky-50 p-4 text-sm text-slate-700">
+            <p className="font-bold">Các điểm đón của chuyến</p>
+            <ul className="mt-2 space-y-2">{selectedSchedule.pickup_points.map(point => <li key={point.pickup_point_id}>
+              <strong>{point.name}</strong> — {point.address}<br />
+              {new Date(point.pickup_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}{point.note ? ` · ${point.note}` : ''}
+            </li>)}</ul>
+            <p className="mt-3 text-xs">Bạn sẽ chọn điểm đón khi đặt tour.</p>
+          </div>}
           <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between gap-4">
               <h3 className="text-lg font-bold text-slate-900">Bảng giá theo đối tượng</h3>
@@ -256,16 +267,16 @@ export default function TourDepartureCalendar({
                   return <div key={`empty-${index}`} className="h-14 sm:h-16" />;
                 }
 
-                const schedule = scheduleMap.get(day);
+                const daySchedules = scheduleMap.get(day) || [];
+                const schedule = daySchedules[0];
 
                 return (
                   <button
                     key={`${currentMonth}-${day}`}
                     type="button"
                     disabled={!schedule}
-                    onClick={() =>
-                      schedule && onSelect(schedule.tour_schedule_id)
-                    }
+                    onClick={() => { if (daySchedules.length === 1) onSelect(schedule.tour_schedule_id); else setSelectedDay(day); }}
+                    aria-pressed={selectedDay === day}
                     className={`relative flex h-14 sm:h-16 flex-col items-center justify-center rounded-xl p-1 transition border border-transparent ${
                       schedule
                         ? "cursor-pointer bg-sky-50/60 border-sky-100 hover:bg-sky-100 hover:scale-105 shadow-2xs"
@@ -282,7 +293,7 @@ export default function TourDepartureCalendar({
 
                     {schedule ? (
                       <span className="mt-0.5 text-[11px] sm:text-xs font-black text-[#ef3b2d]">
-                        {Math.round(Number(schedule.price) / 1000).toLocaleString(
+                        {daySchedules.length > 1 ? "Từ " : ""}{Math.round(Math.min(...daySchedules.map(item => Number(item.price))) / 1000).toLocaleString(
                           "vi-VN",
                         )}
                         K
@@ -293,6 +304,15 @@ export default function TourDepartureCalendar({
               })}
             </div>
           </div>
+
+          {selectedDay !== null && <div className="space-y-2 border-t border-slate-100 p-4">
+            <p className="text-sm font-bold text-slate-800">Chọn chuyến ngày {selectedDay}/{currentMonth.getMonth() + 1}</p>
+            {(scheduleMap.get(selectedDay) || []).map(schedule => <button key={schedule.tour_schedule_id} type="button" onClick={() => onSelect(schedule.tour_schedule_id)}
+              className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 p-3 text-left text-sm hover:bg-sky-50">
+              <span><strong>{schedule.departure_location?.name || 'Chưa cập nhật'}</strong> · {new Date(schedule.start_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}<br /><small>Chuyến #{schedule.tour_schedule_id} · Còn {Math.max(schedule.quota - schedule.booked_count, 0)} chỗ</small></span>
+              <strong className="text-rose-600">{formatVND(schedule.price)}</strong>
+            </button>)}
+          </div>}
 
           <div className="border-t border-slate-100 bg-[#fffdf8] px-4 py-2.5 text-center">
             <p className="text-xs italic font-semibold text-[#ef3b2d]">

@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import type { ChatActor, ChatContextCard, ChatContextInput, JwtChatPayload, SendPayload } from 'shared';
+import { WorkforceAccessService } from '../workforce/workforce-access.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class ChatService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService, private readonly workforce: WorkforceAccessService) { }
     async actor(payload: Pick<JwtChatPayload, 'sub' | 'accountId'>): Promise<ChatActor> {
         if (!Number.isSafeInteger(payload?.sub) || payload.sub < 1)
             throw new UnauthorizedException('Phiên đăng nhập không hợp lệ');
@@ -13,11 +14,13 @@ export class ChatService {
         if (!user || user.accounts.status !== 1 || (payload.accountId !== undefined && user.account_id !== payload.accountId)) {
             throw new UnauthorizedException('Phiên đăng nhập không hợp lệ');
         }
-        return { userId: user.user_id, accountId: user.account_id, isStaff: user.is_staff, fullName: user.full_name };
+        const workforce = user.is_staff ? await this.workforce.actor(user.user_id, user.account_id) : undefined;
+        if (workforce && !workforce.canChat) throw new ForbiddenException('Vai trò của bạn không có quyền truy cập chat khách hàng.');
+        return { userId: user.user_id, accountId: user.account_id, isStaff: user.is_staff, fullName: user.full_name, workforce };
     }
     requireStaff(actor: ChatActor) {
-        if (!actor.isStaff)
-            throw new ForbiddenException('Chỉ nhân viên được thực hiện');
+        if (!actor.isStaff || !actor.workforce?.canChat)
+            throw new ForbiddenException('Chỉ nhân viên hỗ trợ khách hàng được thực hiện');
     }
     async authorize(id: number, actor: ChatActor) {
         if (!Number.isSafeInteger(id) || id < 1)
@@ -27,6 +30,9 @@ export class ChatService {
             throw new NotFoundException('Không tìm thấy hội thoại');
         if (!actor.isStaff && conversation.user_id !== actor.userId)
             throw new ForbiddenException('Không có quyền truy cập hội thoại');
+        if (actor.isStaff) {
+            this.requireStaff(actor);
+        }
         return conversation;
     }
     async getOrCreateConversation(actor: ChatActor) {
@@ -40,19 +46,15 @@ export class ChatService {
         });
     }
     async list(actor: ChatActor) {
+        if (actor.isStaff) this.requireStaff(actor);
         const rows = await this.prisma.conversations.findMany({
             where: actor.isStaff ? {} : { user_id: actor.userId },
             include: {
                 users: { select: { user_id: true, full_name: true, avatar_url: true, ...(actor.isStaff ? { phone: true, address: true, created_at: true, accounts: { select: { email: true } } } : {}) } },
-                assigned_staff: { select: { user_id: true, full_name: true } },
                 _count: { select: { messages: { where: { is_read: false, sender_role: actor.isStaff ? 'USER' : { in: ['ADMIN', 'STAFF'] } } } } },
             }, orderBy: [{ last_message_at: 'desc' }, { conversation_id: 'desc' }],
         });
         return rows.map(({ _count, ...row }) => ({ ...row, unread_count: _count.messages }));
-    }
-    async staff(actor: ChatActor) {
-        this.requireStaff(actor);
-        return this.prisma.users.findMany({ where: { is_staff: true, accounts: { status: 1 } }, select: { user_id: true, full_name: true }, orderBy: { full_name: 'asc' } });
     }
     async messages(id: number, actor: ChatActor, before?: number, after?: number) {
         await this.authorize(id, actor);
@@ -92,7 +94,7 @@ export class ChatService {
         if (!Number.isSafeInteger(id) || id! < 1)
             throw new BadRequestException('Thông tin tư vấn không hợp lệ');
         if (input.tour_id) {
-            const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true, summary: true, cuisine_info: true, transport_info: true, transports: { select: { name: true } }, tour_type: true, rating_avg: true, rating_count: true, tour_destinations: { orderBy: { visit_order: 'asc' }, take: 1, select: { locations: { select: { name: true } } } }, base_price: true, duration_days: true, duration_nights: true, cut_off_hours: true, tour_schedules: { where: { status: 1, start_date: { gte: new Date() } }, orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], include: { flash_deals: true, tour_schedule_hotels: { select: { hotels: { select: { star_rating: true } } } } } }, tour_images: { orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } } } });
+            const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true, summary: true, transports: { select: { name: true } }, tour_type: true, rating_avg: true, rating_count: true, tour_destinations: { orderBy: { visit_order: 'asc' }, take: 1, select: { locations: { select: { name: true } } } }, base_price: true, duration_days: true, duration_nights: true, cut_off_hours: true, tour_schedules: { where: { status: 1, start_date: { gte: new Date() } }, orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], include: { tour_schedule_amenities: { where: { kind: { in: ['cuisine', 'transport', 'hotel'] } }, select: { kind: true, content: true, is_visible: true } }, tour_schedule_transports: { select: { transports: { select: { name: true } } } }, flash_deals: true, tour_schedule_hotels: { select: { hotels: { select: { star_rating: true } } } } } }, tour_images: { orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } } } });
             if (!tour)
                 throw new NotFoundException('Tour không còn hiển thị');
             const schedule = tour.tour_schedules.find(item => item.quota > item.booked_count && item.start_date.getTime() - Date.now() >= (tour.cut_off_hours || 24) * 3600000);
@@ -100,8 +102,11 @@ export class ChatService {
             const originalPrice = Number(schedule.price);
             const deal = schedule.flash_deals;
             const price = deal?.status === 1 ? Math.max(0, Math.round(deal.discount_type === 'percentage' ? originalPrice * (1 - Number(deal.discount_value) / 100) : originalPrice - Number(deal.discount_value))) : originalPrice;
-            const stars = [...new Set(schedule.tour_schedule_hotels?.map(item => item.hotels.star_rating) || [])].sort();
-            return { ...(tour.summary ? { summary: tour.summary } : {}), ...(tour.tour_destinations?.[0] ? { destination: tour.tour_destinations[0].locations.name } : {}), ...(tour.transport_info || tour.transports?.name ? { transport: tour.transport_info || tour.transports?.name } : {}), ...(tour.cuisine_info ? { meals: tour.cuisine_info } : {}), ...(stars.length ? { hotel: stars.map(star => star + ' sao').join(' - ') } : {}), ...(tour.rating_count ? { rating: Number(tour.rating_avg), rating_count: tour.rating_count } : {}), ...(tour.tour_type ? { category: tour.duration_days === 1 ? 'Tour trong ngày' : tour.tour_type === 'international' ? 'Tour quốc tế' : 'Tour trong nước' } : {}), ...(price < originalPrice ? { original_price: originalPrice } : {}), kind: 'tour', id: input.tour_id, title: tour.name, url: `/tours/${input.tour_id}`, image_url: schedule.cover_image_url || tour.tour_images[0]?.image_url, price, schedule_id: schedule.tour_schedule_id, departure_date: schedule.start_date.toISOString(), duration: `${tour.duration_days} ngày ${tour.duration_nights} đêm` };
+            const transportAmenity = schedule.tour_schedule_amenities.find(item => item.kind === 'transport');
+            const transportInfo = transportAmenity?.is_visible === false ? undefined : transportAmenity?.content || schedule.tour_schedule_transports.map(item => item.transports.name).join(', ') || tour.transports?.name;
+            const cuisineInfo = schedule.tour_schedule_amenities.find(item => item.kind === 'cuisine' && item.is_visible)?.content;
+            const stars = schedule.tour_schedule_amenities.some(item => item.kind === 'hotel' && !item.is_visible) ? [] : [...new Set(schedule.tour_schedule_hotels?.map(item => item.hotels.star_rating) || [])].sort();
+            return { ...(tour.summary ? { summary: tour.summary } : {}), ...(tour.tour_destinations?.[0] ? { destination: tour.tour_destinations[0].locations.name } : {}), ...(transportInfo ? { transport: transportInfo } : {}), ...(cuisineInfo ? { meals: cuisineInfo } : {}), ...(stars.length ? { hotel: stars.map(star => star + ' sao').join(' - ') } : {}), ...(tour.rating_count ? { rating: Number(tour.rating_avg), rating_count: tour.rating_count } : {}), ...(tour.tour_type ? { category: tour.duration_days === 1 ? 'Tour trong ngày' : tour.tour_type === 'international' ? 'Tour quốc tế' : 'Tour trong nước' } : {}), ...(price < originalPrice ? { original_price: originalPrice } : {}), kind: 'tour', id: input.tour_id, title: tour.name, url: `/tours/${input.tour_id}`, image_url: schedule.cover_image_url || tour.tour_images[0]?.image_url, price, schedule_id: schedule.tour_schedule_id, departure_date: schedule.start_date.toISOString(), duration: `${tour.duration_days} ngày ${tour.duration_nights} đêm` };
         }
         const booking = await this.prisma.bookings.findFirst({ where: { booking_id: input.booking_id, user_id: owner }, include: { tour_schedules: { select: { tours: { select: { name: true } } } } } });
         if (!booking)
@@ -134,7 +139,12 @@ export class ChatService {
         const context = type === 'CONTEXT' ? await this.context(data.context, conversation.user_id) : undefined;
         return this.prisma.$transaction(async (tx) => {
             await tx.$queryRaw `SELECT conversation_id FROM conversations WHERE conversation_id = ${data.conversation_id} FOR UPDATE`;
-            const current = await tx.conversations.findUniqueOrThrow({ where: { conversation_id: data.conversation_id } });
+            if (actor.isStaff) await tx.$queryRaw`SELECT user_id FROM users WHERE user_id = ${actor.userId} FOR UPDATE`;
+            await tx.conversations.findUniqueOrThrow({ where: { conversation_id: data.conversation_id } });
+            if (actor.isStaff) {
+                const access = await this.workforce.actor(actor.userId, actor.accountId, tx);
+                if (!access.canChat) throw new ForbiddenException('Không có quyền hỗ trợ khách hàng.');
+            }
             if (data.client_message_id) {
                 const existing = await tx.messages.findUnique({ where: { conversation_id_client_message_id: { conversation_id: data.conversation_id, client_message_id: data.client_message_id } } });
                 if (existing) {
@@ -147,35 +157,27 @@ export class ChatService {
                     conversation_id: data.conversation_id, sender_id: actor.userId, sender_role: actor.isStaff ? 'STAFF' : 'USER',
                     message_type: type, content: context?.title ?? content, client_message_id: data.client_message_id, ...(context ? { context } : {}),
                 } });
-            let assignee = current.assigned_staff_id;
-            if (!actor.isStaff && assignee) {
-                const active = await tx.users.findFirst({ where: { user_id: assignee, is_staff: true, accounts: { status: 1 } }, select: { user_id: true } });
-                if (!active)
-                    assignee = null;
-            }
             await tx.conversations.update({ where: { conversation_id: data.conversation_id }, data: {
                     last_message: type === 'IMAGE' ? '[Hình ảnh]' : message.content.slice(0, 200), last_message_at: message.created_at,
-                    status: 'IN_PROGRESS', assigned_staff_id: actor.isStaff ? actor.userId : assignee, resolved_at: null,
+                    status: 'IN_PROGRESS', assigned_staff_id: null, region_code: null, handover_note: null, resolved_at: null,
                 } });
             return message;
         });
     }
-    async manage(id: number, actor: ChatActor, action: string, staffId?: number) {
+    async manage(id: number, actor: ChatActor, action: string) {
         this.requireStaff(actor);
         await this.authorize(id, actor);
-        return this.prisma.$transaction(async (tx) => {
-            await tx.$queryRaw `SELECT conversation_id FROM conversations WHERE conversation_id = ${id} FOR UPDATE`;
-            const current = await tx.conversations.findUniqueOrThrow({ where: { conversation_id: id } });
-            let target = actor.userId;
-            if (action === 'transfer') {
-                const staff = Number.isSafeInteger(staffId) ? await tx.users.findFirst({ where: { user_id: staffId, is_staff: true, accounts: { status: 1 } } }) : null;
-                if (!staff)
-                    throw new BadRequestException('Nhân viên nhận không hợp lệ');
-                target = staff.user_id;
-            }
-            else if (!['claim', 'close', 'reopen'].includes(action))
-                throw new BadRequestException('Thao tác không hợp lệ');
-            return tx.conversations.update({ where: { conversation_id: id }, data: { assigned_staff_id: target, status: action === 'close' ? 'CLOSED' : 'IN_PROGRESS', resolved_at: action === 'close' ? new Date() : null } });
+        if (!['close', 'reopen'].includes(action)) throw new BadRequestException('Thao tác không hợp lệ.');
+        return this.prisma.$transaction(async tx => {
+            await tx.$queryRaw`SELECT conversation_id FROM conversations WHERE conversation_id = ${id} FOR UPDATE`;
+            await tx.$queryRaw`SELECT user_id FROM users WHERE user_id = ${actor.userId} FOR UPDATE`;
+            const access = await this.workforce.actor(actor.userId, actor.accountId, tx);
+            if (!access.canChat) throw new ForbiddenException('Không có quyền hỗ trợ khách hàng.');
+            await tx.workforce_events.create({ data: { actor_user_id: actor.userId, action: `chat_${action}`, details: { conversation_id: id } } });
+            return tx.conversations.update({ where: { conversation_id: id }, data: {
+                assigned_staff_id: null, region_code: null, handover_note: null,
+                status: action === 'close' ? 'CLOSED' : 'IN_PROGRESS', resolved_at: action === 'close' ? new Date() : null,
+            } });
         });
     }
     async read(id: number, actor: ChatActor, through?: number) {

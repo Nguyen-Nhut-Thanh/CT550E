@@ -4,6 +4,7 @@ export type SchedulePricePayload = Omit<TourSchedulePrice, "price" | "currency">
     currency?: string;
 };
 export type ScheduleItineraryPayload = {
+    activities?: import("../../tours/models").ItineraryActivity[];
     day_number?: number;
     title?: string;
     content?: string;
@@ -14,6 +15,11 @@ export type ScheduleItineraryPayload = {
     nights?: number | string | null;
 };
 export type ScheduleAdminPayload = {
+    use_tour_amenities?: boolean;
+    copy_tour_amenities?: boolean;
+    tour_schedule_amenities?: import('../../tours/amenities').ScheduleAmenity[];
+    departure_location_id?: number;
+    pickup_points?: SchedulePickupPointPayload[];
     start_date?: string;
     end_date?: string;
     price?: number | string;
@@ -22,4 +28,10 @@ export type ScheduleAdminPayload = {
     cover_image_url?: string | null;
     prices?: SchedulePricePayload[];
     itinerary?: ScheduleItineraryPayload[];
+};
+export type SchedulePickupPointPayload = {
+    name: string;
+    address: string;
+    pickup_at: string;
+    note?: string | null;
 };

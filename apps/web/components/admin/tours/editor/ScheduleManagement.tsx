@@ -1,6 +1,11 @@
 "use client";
 
 import { ScheduleStartFields } from "@/components/admin/schedules/editor/ScheduleStartFields";
+import { ScheduleDepartureCard } from "@/components/admin/schedules/editor/ScheduleDepartureCard";
+import { buildSchedulePayload, createDefaultScheduleForm } from "@/lib/admin/schedules/forms";
+import { getAdminLocations } from "@/lib/admin/locations/api";
+import { getAdminTourDetail } from "@/lib/admin/tours/api";
+import Link from "next/link";
 import { AdminPagination } from "@/components/admin/common/AdminPagination";
 import { AdminStatusBadge } from "@/components/admin/common/AdminStatusBadge";
 import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
@@ -11,7 +16,7 @@ import { useToast } from "@/lib/notifications/useToast";
 import { formatVND } from "@/lib/utils/currency";
 import { AlertTriangle, ArrowRight, CalendarDays, DollarSign, Plus, Trash2, Users, X, } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ScheduleManagementItem as Schedule } from 'shared';
+import type { ScheduleManagementItem as Schedule, LocationOption, TourInfo } from 'shared';
 
 function getBookedCount(schedule: Schedule) {
   return schedule._count?.bookings || 0;
@@ -44,12 +49,17 @@ export const ScheduleManagement = ({
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pendingDeleteScheduleId, setPendingDeleteScheduleId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    start_date: "",
-    end_date: "",
-    price: 0,
-    quota: 20,
-  });
+  const [form, setForm] = useState(createDefaultScheduleForm);
+  const [locations, setLocations] = useState<LocationOption[]>([]);
+  useEffect(() => {
+    let active = true;
+    void Promise.all([getAdminLocations<LocationOption>(), getAdminTourDetail<TourInfo>(tourId)]).then(([data, tour]) => {
+      if (!active) return;
+      setLocations(data.items || []);
+      setForm(prev => ({ ...prev, departure_location_id: prev.departure_location_id || tour.tour.departure_location || '' }));
+    }).catch(() => { if (active) setError('Không thể tải nơi xuất phát. Vui lòng tải lại trang.'); });
+    return () => { active = false; };
+  }, [tourId]);
 
   const loadSchedules = useCallback(async () => {
     setLoading(true);
@@ -105,9 +115,11 @@ export const ScheduleManagement = ({
     setError("");
 
     try {
-      await createTourSchedule(tourId, form);
+      if (!form.departure_location_id) throw new Error('Vui lòng chọn nơi xuất phát.');
+      if (form.pickup_points.some(point => !point.name.trim() || !point.address.trim() || !point.pickup_at)) throw new Error('Vui lòng điền đầy đủ thông tin điểm đón.');
+      await createTourSchedule(tourId, buildSchedulePayload(form));
       setIsCreating(false);
-      setForm({ start_date: "", end_date: "", price: 0, quota: 20 });
+      setForm({ ...createDefaultScheduleForm(), departure_location_id: form.departure_location_id });
       void loadSchedules();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Không thể tạo lịch trình");
@@ -192,6 +204,8 @@ export const ScheduleManagement = ({
             </div>
           </div>
 
+          <div className="mt-6"><ScheduleDepartureCard form={form} locations={locations} disabled={false} onChange={setForm} /></div>
+
           {error && (
             <InlineNotice tone="error" className="mt-3 py-3 text-xs">
               {error}
@@ -257,6 +271,7 @@ export const ScheduleManagement = ({
                           <ArrowRight size={12} className="text-slate-300" />
                           {new Date(schedule.end_date).toLocaleDateString("vi-VN")}
                         </div>
+                        <p className="mt-1 text-xs text-slate-500">{schedule.departure_location?.name} · {schedule.pickup_points?.length || 0} điểm đón</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-sm font-black text-blue-600">
                         <div className="flex items-center gap-1">
@@ -289,6 +304,7 @@ export const ScheduleManagement = ({
                         <AdminStatusBadge tone="success">Đang nhận khách</AdminStatusBadge>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                        <Link href={`/admin/schedules/${schedule.tour_schedule_id}`} className="mr-3 text-sm font-semibold text-blue-600">Chỉnh sửa</Link>
                         <button
                           onClick={() => setPendingDeleteScheduleId(schedule.tour_schedule_id)}
                           className="rounded-xl p-2 text-slate-300 transition-all hover:bg-red-50 hover:text-red-500"

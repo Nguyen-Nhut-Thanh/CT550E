@@ -21,6 +21,7 @@ export type TourItineraryTimelineProps = {
     durationDays?: number;
 };
 export type TourSmartMapProps = {
+    itineraries?: TourItinerary[];
     tour?: TourWithMapData | null;
 };
 export type TourVideoHighlightsProps = {

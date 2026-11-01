@@ -183,6 +183,7 @@ export function ScheduleTablePanel({
                             <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[4px] text-[11px] text-[#7d93b9]">
                               Đến: {end.toLocaleDateString("vi-VN")}
                             </span>
+                            <span className="mt-1 block text-xs text-sky-700">{schedule.departure_location?.name} · {schedule.pickup_points?.length || 0} điểm đón</span>
                             <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[4px] text-[11px] text-[#7d93b9]">
                               <Clock3 size={12} />
                               {start.toLocaleTimeString("vi-VN", {

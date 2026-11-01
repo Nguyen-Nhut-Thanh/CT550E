@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
             <h1 className="text-2xl font-black uppercase tracking-wider text-white">
               Travol<span className="text-blue-500">.</span>Admin
             </h1>
-            <p className="mt-2 text-sm text-slate-400">Hệ thống quản trị du lịch cao cấp</p>
+            <p className="mt-2 text-sm text-slate-400">Cổng làm việc dành cho nhân viên và quản trị viên</p>
           </div>
 
           {error && (
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-500">
-                Email quản trị
+                Email đăng nhập
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />

@@ -1,7 +1,9 @@
 export type LocationUsageSummary = {
+    itinerary_activities_count?: number;
     child_locations_count: number;
     destination_tours_count: number;
     departure_tours_count: number;
+    departure_schedules_count?: number;
     hotel_count: number;
     destination_detail_count: number;
     location_images_count: number;

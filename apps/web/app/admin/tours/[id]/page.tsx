@@ -68,7 +68,6 @@ export default function AdminTourDetailPage() {
       delete payload.duration_days;
       delete payload.duration_nights;
       delete payload.tour_type;
-      delete payload.departure_location;
       delete payload.destinations;
     }
 

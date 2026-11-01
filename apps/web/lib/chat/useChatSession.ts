@@ -4,7 +4,7 @@ import { getToken } from "@/lib/auth/session";
 import { chatApi } from "@/lib/chat/api";
 import { disconnectSocket, getSocket } from "@/lib/chat/socket";
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ChatActor, Conversation } from 'shared';
+import type { ChatActor, Conversation } from 'shared'
 
 export function useChatSession() {
   const [token, setToken] = useState<string | null>(null);

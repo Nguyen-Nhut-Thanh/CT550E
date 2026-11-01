@@ -10,6 +10,7 @@ export function Popover({
   matchAnchorWidth = false,
   width = 260,
   align = "start",
+  fitViewport = false,
 }: {
   anchorRef: RefObject<HTMLElement | null>;
   children: ReactNode;
@@ -17,6 +18,8 @@ export function Popover({
   matchAnchorWidth?: boolean;
   width?: number;
   align?: "start" | "end";
+  /** Cho phép phủ lên ô nhập khi panel lớn hơn khoảng trống ở cả hai phía. */
+  fitViewport?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,12 +41,15 @@ export function Popover({
       const below = window.innerHeight - box.bottom - padding * 2;
       const above = box.top - padding * 2;
       const useBelow = below >= panel.scrollHeight || below >= above;
-      const available = Math.max(0, useBelow ? below : above);
+      const overlap = fitViewport && panel.scrollHeight > Math.max(below, above);
+      const available = Math.max(0, overlap ? window.innerHeight - padding * 2 : useBelow ? below : above);
       panel.style.maxHeight = `${available}px`;
       const height = Math.min(panel.scrollHeight, available);
       const left = align === "end" ? box.right - panelWidth : box.left;
       panel.style.left = `${Math.max(padding, Math.min(left, window.innerWidth - panelWidth - padding))}px`;
-      panel.style.top = `${useBelow ? box.bottom + padding : Math.max(padding, box.top - height - padding)}px`;
+      panel.style.top = `${overlap
+        ? Math.max(padding, Math.min(box.bottom + padding, window.innerHeight - height - padding))
+        : useBelow ? box.bottom + padding : Math.max(padding, box.top - height - padding)}px`;
       panel.style.opacity = "1";
     };
     update();
@@ -58,7 +64,7 @@ export function Popover({
       window.removeEventListener("scroll", update, true);
       panel.hidePopover();
     };
-  }, [anchorRef, matchAnchorWidth, width, align]);
+  }, [anchorRef, matchAnchorWidth, width, align, fitViewport]);
 
   return (
     <div

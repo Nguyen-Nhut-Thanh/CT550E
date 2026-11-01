@@ -3,7 +3,10 @@ import type { ScheduleAdminPayload } from 'shared';
 import { requireFields, validatePrice } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
-import { mapScheduleHotel, mapScheduleItinerary, mapSchedulePrice, mapScheduleResponse } from "./schedule.mapper";
+import { mapScheduleHotel, mapSchedulePrice, mapScheduleResponse } from "./schedule.mapper";
+import { departureId, normalizePickupPoints, pickupPointsEqual } from './schedule-departure';
+import { saveItineraryDays } from './itinerary-activities';
+import { saveScheduleAmenities } from './schedule-amenities';
 @Injectable()
 export class SchedulesAdminService {
     private readonly logger = new Logger(SchedulesAdminService.name);
@@ -13,6 +16,8 @@ export class SchedulesAdminService {
             where: { tour_id: tourId },
             orderBy: { start_date: 'asc' },
             include: {
+                departure_location: true,
+                pickup_points: { orderBy: { sort_order: 'asc' } },
                 _count: { select: { bookings: true } },
             },
         });
@@ -25,12 +30,16 @@ export class SchedulesAdminService {
         const schedule = await this.prisma.tour_schedules.findUnique({
             where: { tour_schedule_id: scheduleId },
             include: {
+                tour_schedule_amenities: { orderBy: { sort_order: 'asc' } },
+                departure_location: true,
+                pickup_points: { orderBy: { sort_order: 'asc' } },
+                _count: { select: { bookings: true } },
                 tour_schedule_prices: true,
                 tour_schedule_transports: { include: { transports: true } },
                 tour_schedule_hotels: {
                     include: { hotels: true, hotel_room_types: true },
                 },
-                tour_itineraries: { orderBy: { day_number: 'asc' } },
+                tour_itineraries: { orderBy: { day_number: 'asc' }, include: { activities: { orderBy: { sort_order: 'asc' } } } },
             },
         });
         if (!schedule) {
@@ -38,7 +47,7 @@ export class SchedulesAdminService {
         }
         return {
             ...schedule,
-            hasBookings: schedule.booked_count > 0,
+            hasBookings: schedule._count.bookings > 0,
             price: Number(schedule.price),
             tour_schedule_prices: schedule.tour_schedule_prices.map((price) => ({
                 ...price,
@@ -69,16 +78,23 @@ export class SchedulesAdminService {
         ]);
         const tour = await this.prisma.tours.findUnique({
             where: { tour_id: tourId },
-            select: { code: true },
+            select: { code: true, departure_location: true },
         });
         if (!tour) {
             throw new NotFoundException('Tour không tồn tại');
+        }
+        const locationId = departureId(body.departure_location_id === undefined ? tour.departure_location : body.departure_location_id);
+        const pickupPoints = normalizePickupPoints(body.pickup_points === undefined ? [] : body.pickup_points);
+        if (!await this.prisma.locations.findUnique({ where: { location_id: locationId }, select: { location_id: true } })) {
+            throw new BadRequestException('Nơi xuất phát không tồn tại.');
         }
         try {
             const result = await this.prisma.$transaction(async (tx) => {
                 const schedule = await tx.tour_schedules.create({
                     data: {
                         tour_id: tourId,
+                        departure_location_id: locationId,
+                        pickup_points: { create: pickupPoints },
                         start_date: new Date(body.start_date!),
                         end_date: new Date(body.end_date!),
                         price: validatePrice(body.price),
@@ -87,6 +103,7 @@ export class SchedulesAdminService {
                         cover_image_url: body.cover_image_url || null,
                     },
                 });
+                await saveScheduleAmenities(tx, schedule.tour_schedule_id, body, true);
                 const updatedSchedule = await tx.tour_schedules.update({
                     where: { tour_schedule_id: schedule.tour_schedule_id },
                     data: {
@@ -102,12 +119,7 @@ export class SchedulesAdminService {
                     });
                 }
                 if (Array.isArray(body.itinerary) && body.itinerary.length > 0) {
-                    await tx.tour_itineraries.createMany({
-                        data: body.itinerary.map((itinerary, index) => ({
-                            tour_schedule_id: schedule.tour_schedule_id,
-                            ...mapScheduleItinerary(itinerary, index),
-                        })),
-                    });
+                    await saveItineraryDays(tx, tourId, schedule.tour_schedule_id, body.itinerary);
                     const hotelEntries = body.itinerary
                         .map((itinerary, index) => mapScheduleHotel(itinerary, index, schedule.tour_schedule_id))
                         .filter((item): item is {
@@ -125,7 +137,10 @@ export class SchedulesAdminService {
                         });
                     }
                 }
-                return updatedSchedule;
+                return { ...updatedSchedule,
+                    use_tour_amenities: body.use_tour_amenities ?? true,
+                    tour_schedule_amenities: await tx.tour_schedule_amenities.findMany({ where: { tour_schedule_id: schedule.tour_schedule_id }, orderBy: { sort_order: 'asc' } }),
+                };
             });
             return mapScheduleResponse(result);
         }
@@ -185,9 +200,37 @@ export class SchedulesAdminService {
                 nextEndDate.getTime() !== oldEndDate.getTime());
         try {
             const result = await this.prisma.$transaction(async (tx) => {
+                // Coordinate with booking creation before changing departure/pickup data.
+                await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${scheduleId} FOR UPDATE`;
+                const current = await tx.tour_schedules.findUniqueOrThrow({
+                    where: { tour_schedule_id: scheduleId },
+                    include: { crew: true, pickup_points: { orderBy: { sort_order: 'asc' } }, _count: { select: { bookings: true } } },
+                });
+                const locationId = body.departure_location_id === undefined ? current.departure_location_id : departureId(body.departure_location_id);
+                const pickupPoints = body.pickup_points === undefined ? undefined : normalizePickupPoints(body.pickup_points);
+                const pickupsChanged = pickupPoints !== undefined && !pickupPointsEqual(current.pickup_points, pickupPoints);
+                const datesChanged = (body.start_date !== undefined && new Date(body.start_date).getTime() !== current.start_date.getTime()) || (body.end_date !== undefined && new Date(body.end_date).getTime() !== current.end_date.getTime());
+                if (current.crew.length && datesChanged) throw new BadRequestException('Chuyến đã có phân công nhân sự. Cần gỡ phân công trước khi đổi ngày giờ để kiểm tra lại lịch điều động.');
+                if (current._count.bookings > 0 && (locationId !== current.departure_location_id || pickupsChanged)) {
+                    throw new BadRequestException('Chuyến đã có đơn đặt: không thể thay đổi nơi xuất phát hoặc điểm đón.');
+                }
+                if (current._count.bookings > 0 && current.pickup_points.length > 0 &&
+                    ((body.start_date !== undefined && new Date(body.start_date).getTime() !== current.start_date.getTime()) ||
+                    (body.end_date !== undefined && new Date(body.end_date).getTime() !== current.end_date.getTime()))) {
+                    throw new BadRequestException('Chuyến đã có đơn đặt và điểm đón: không thể đổi ngày giờ vì sẽ làm sai thời gian đón đã xác nhận.');
+                }
+                if (!await tx.locations.findUnique({ where: { location_id: locationId }, select: { location_id: true } })) {
+                    throw new BadRequestException('Nơi xuất phát không tồn tại.');
+                }
+                await saveScheduleAmenities(tx, scheduleId, body);
+                if (pickupsChanged) {
+                    await tx.schedule_pickup_points.deleteMany({ where: { tour_schedule_id: scheduleId } });
+                    await tx.schedule_pickup_points.createMany({ data: pickupPoints!.map(point => ({ ...point, tour_schedule_id: scheduleId })) });
+                }
                 const schedule = await tx.tour_schedules.update({
                     where: { tour_schedule_id: scheduleId },
                     data: {
+                        departure_location_id: locationId,
                         start_date: body.start_date ? new Date(body.start_date) : undefined,
                         end_date: body.end_date ? new Date(body.end_date) : undefined,
                         price: body.price != null ? validatePrice(body.price) : undefined,
@@ -210,19 +253,11 @@ export class SchedulesAdminService {
                     }
                 }
                 if (Array.isArray(body.itinerary)) {
-                    await tx.tour_itineraries.deleteMany({
-                        where: { tour_schedule_id: scheduleId },
-                    });
+                    await saveItineraryDays(tx, current.tour_id, scheduleId, body.itinerary);
                     await tx.tour_schedule_hotels.deleteMany({
                         where: { tour_schedule_id: scheduleId },
                     });
                     if (body.itinerary.length > 0) {
-                        await tx.tour_itineraries.createMany({
-                            data: body.itinerary.map((itinerary, index) => ({
-                                tour_schedule_id: scheduleId,
-                                ...mapScheduleItinerary(itinerary, index),
-                            })),
-                        });
                         const hotelEntries = body.itinerary
                             .map((itinerary, index) => mapScheduleHotel(itinerary, index, scheduleId))
                             .filter((item): item is {
@@ -241,7 +276,9 @@ export class SchedulesAdminService {
                         }
                     }
                 }
-                return schedule;
+                return { ...schedule,
+                    tour_schedule_amenities: await tx.tour_schedule_amenities.findMany({ where: { tour_schedule_id: scheduleId }, orderBy: { sort_order: 'asc' } }),
+                };
             });
             if (shouldNotifyCustomers) {
                 await Promise.allSettled(existingSchedule.bookings
@@ -270,6 +307,7 @@ export class SchedulesAdminService {
         }
     }
     async deleteSchedule(scheduleId: number) {
+        if (await this.prisma.schedule_crew.count({ where: { tour_schedule_id: scheduleId } })) throw new BadRequestException('Cần gỡ phân công nhân sự trước khi xóa chuyến.');
         const bookingsCount = await this.prisma.bookings.count({
             where: { tour_schedule_id: scheduleId },
         });

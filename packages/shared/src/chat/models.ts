@@ -1,4 +1,6 @@
 export type Conversation = {
+    region_code?: import('../workforce/models').RegionCode | null;
+    handover_note?: string | null;
     conversation_id: number;
     user_id: number;
     status: string;
@@ -30,6 +32,8 @@ export type RealtimeMessage = {
     created_at: string;
 };
 export type ChatStaff = {
+    regions?: import('../workforce/models').RegionCode[];
+    on_duty?: boolean;
     user_id: number;
     full_name: string;
 };
@@ -55,6 +59,7 @@ export type ChatContextCard = {
 };
 
 export type ChatActor = {
+    workforce?: import('../workforce/models').WorkforceActor;
     userId: number;
     accountId: number;
     isStaff: boolean;

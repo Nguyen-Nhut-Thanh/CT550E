@@ -30,8 +30,12 @@ Trong mỗi nhóm, `api.ts` gửi request, `forms.ts` xử lý dữ liệu form;
 - `ui/`: xử lý tương tác giao diện dùng chung, như đóng popup khi bấm ngoài hoặc Escape.
 - `notifications/`: context, hook và trạng thái thông báo ngắn; giao diện nằm ở `components/common/feedback`.
 
-`http/config.ts` lấy địa chỉ API từ `NEXT_PUBLIC_API_BASE`, mặc định
-`http://localhost:4000`. Các request công khai, có token và admin giữ
+`http/config.ts` dùng `/api` cho mọi request từ trình duyệt. Next.js chuyển tiếp
+`/api/:path*` tới `API_INTERNAL_URL` (mặc định `http://127.0.0.1:4000`).
+Local, public và điện thoại đều gọi cùng origin với trang đang mở.
+Chat dùng namespace `/chat` với WebSocket path `/api/socket.io` qua cùng proxy.
+Server rendering gọi trực tiếp `API_INTERNAL_URL`.
+Các request công khai, có token và admin giữ
 cách xử lý response riêng để phù hợp với các API hiện tại.
 
 ## Quy ước thêm code

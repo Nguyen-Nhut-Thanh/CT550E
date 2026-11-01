@@ -4,6 +4,7 @@ import type { TourScheduleSummary } from "./models";
 export type TourDetailForm = {
     name?: string;
     code?: string;
+    summary?: string | null;
     description?: string | null;
     tour_type?: string;
     departure_location?: number;
@@ -12,10 +13,7 @@ export type TourDetailForm = {
     images?: string[] | string;
     duration_days?: number;
     duration_nights?: number;
-    cuisine_info?: string | null;
-    promotion_info?: string | null;
-    best_for?: string | null;
-    best_time?: string | null;
+    tour_amenities?: import('../../tours/amenities').TourAmenity[];
     policy_contents?: TourPolicyContentMap;
     cut_off_hours?: number;
     base_price?: number | string;

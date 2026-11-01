@@ -16,11 +16,17 @@ export function createEmptyItineraryDay(dayNumber: number): ItineraryFormItem {
     transport_id: "",
     hotel_id: "",
     room_type_id: "",
+    activities: [],
   };
 }
 
 export function createDefaultScheduleForm(): ScheduleFormState {
   return {
+    use_tour_amenities: true,
+    copy_tour_amenities: false,
+    tour_schedule_amenities: [],
+    departure_location_id: "",
+    pickup_points: [],
     start_date: "",
     start_time: "08:00",
     end_date: "",
@@ -47,6 +53,13 @@ export function formatTimeValue(value?: string | Date | null) {
   });
 }
 
+export function pickupDateTimeInput(value: string) {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(new Date(value)).replace(' ', 'T');
+}
+
 export function buildScheduleFormFromResponse(
   data: ScheduleDetailResponse,
 ): ScheduleFormState {
@@ -65,6 +78,14 @@ export function buildScheduleFormFromResponse(
   });
 
   return {
+    use_tour_amenities: data.use_tour_amenities ?? true,
+    copy_tour_amenities: false,
+    tour_schedule_amenities: (data.tour_schedule_amenities || []).map(item => ({ ...item })),
+    departure_location_id: data.departure_location_id ?? "",
+    pickup_points: (data.pickup_points || []).map(point => ({
+      name: point.name, address: point.address, note: point.note || "",
+      pickup_at: pickupDateTimeInput(point.pickup_at),
+    })),
     start_date: startDt ? formatDateString(startDt) : "",
     start_time: startDt ? formatTimeValue(startDt) : "08:00",
     end_date: endDt ? formatDateString(endDt) : "",
@@ -83,6 +104,7 @@ export function buildScheduleFormFromResponse(
         title: item.title ?? "",
         content: item.content ?? "",
         meals: item.meals ?? "",
+        activities: item.activities ?? [],
         transport_id: item.transport_id ?? "",
         hotel_id: item.hotel_id ?? hotelByDay.get(item.day_number ?? index + 1)?.hotel_id ?? "",
         room_type_id:
@@ -117,8 +139,12 @@ export function buildScheduleDateTime(date: string, time: string) {
 }
 
 export function buildSchedulePayload(form: ScheduleFormState) {
+  const { tour_schedule_amenities, copy_tour_amenities, ...base } = form;
   return {
-    ...form,
+    ...base,
+    ...(form.use_tour_amenities ? { copy_tour_amenities } : { tour_schedule_amenities }),
+    departure_location_id: Number(form.departure_location_id),
+    pickup_points: form.pickup_points.map(point => ({ ...point, pickup_at: new Date(`${point.pickup_at}:00+07:00`).toISOString() })),
     start_date: buildScheduleDateTime(form.start_date, form.start_time),
     end_date: buildScheduleDateTime(form.end_date, form.end_time),
     itinerary: form.itinerary.map((item) => ({

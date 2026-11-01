@@ -105,6 +105,8 @@ export class FlashDealsService {
             include: {
                 tour_schedules: {
                     include: {
+                        departure_location: true,
+                        tour_schedule_amenities: { where: { kind: 'promotion', is_visible: true }, select: { content: true } },
                         tours: {
                             include: {
                                 departure_locations: true,
@@ -151,7 +153,7 @@ export class FlashDealsService {
                 slug,
                 cover_image_url: schedule.cover_image_url || tour.tour_images[0]?.image_url || null,
                 image_url: tour.tour_images[0]?.image_url || null,
-                departure_name: tour.departure_locations?.name || 'Chưa cập nhật',
+                departure_name: schedule.departure_location.name,
                 start_date: schedule.start_date.toISOString(),
                 end_date: schedule.end_date.toISOString(),
                 duration_text: `${tour.duration_days}N${tour.duration_nights}Đ`,
@@ -163,7 +165,7 @@ export class FlashDealsService {
                 discount_percent: discountPercent,
                 countdown_to: deal.end_date.toISOString(),
                 link: `/tours/${tour.tour_id}-${slug}`,
-                promotion_info: tour.promotion_info || null,
+                promotion_info: schedule.tour_schedule_amenities[0]?.content || null,
                 transport_type: tour.transports?.name || null,
             };
         });

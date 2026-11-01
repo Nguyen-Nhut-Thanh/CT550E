@@ -15,12 +15,7 @@ export type TourAdminPayload = {
     departure_location?: number | string;
     transport_id?: number | string;
     status?: number | string | null;
-    sightseeing_summary?: string | null;
-    cuisine_info?: string | null;
-    best_for?: string | null;
-    best_time?: string | null;
-    transport_info?: string | null;
-    promotion_info?: string | null;
+    tour_amenities?: import('../../tours/amenities').TourAmenity[];
     policy_contents?: PolicyContentsPayload;
     destinations?: Array<number | string>;
     images?: string[];

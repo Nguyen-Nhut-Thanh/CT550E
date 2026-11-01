@@ -400,13 +400,19 @@ export default function AdminBookingsPage() {
                           Khởi hành từ
                         </div>
                         <div className="text-sm font-bold text-slate-900">
-                          {modal.booking.tour_schedules?.tours
-                            ?.departure_locations?.name || "—"}
+                          {modal.booking.departure_name || modal.booking.tour_schedules?.departure_location?.name || "—"}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {modal.booking.pickup_snapshot && <div className="rounded-2xl bg-sky-50 p-4 text-sm text-slate-700">
+                  <p className="font-bold">Điểm đón: {modal.booking.pickup_snapshot.name}</p>
+                  <p>{modal.booking.pickup_snapshot.address}</p>
+                  <p>{new Date(modal.booking.pickup_snapshot.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
+                  {modal.booking.pickup_snapshot.note && <p>{modal.booking.pickup_snapshot.note}</p>}
+                </div>}
 
                 <div>
                   <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">

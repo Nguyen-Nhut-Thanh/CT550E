@@ -21,6 +21,7 @@ export class BookingsAdminService {
         },
         tour_schedules: {
             include: {
+                departure_location: true,
                 tours: {
                     include: {
                         tour_images: { where: { is_cover: 1 }, take: 1 },

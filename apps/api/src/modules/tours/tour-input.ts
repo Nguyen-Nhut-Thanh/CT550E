@@ -1,4 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
+export function normalizeTourSummary(value: unknown): string | null | undefined {
+    if (value === undefined || value === null) return value;
+    if (typeof value !== 'string') throw new BadRequestException('Mô tả ngắn phải là văn bản.');
+    return value.trim() || null;
+}
 export function normalizePolicyEntries(policyContents?: Record<string, unknown>) {
     if (!policyContents || typeof policyContents !== 'object') {
         return [];
@@ -21,7 +26,11 @@ export function normalizeDestinationIds(destinations?: Array<number | string>) {
     if (!Array.isArray(destinations)) {
         return [];
     }
-    return destinations.map((locationId) => Number(locationId));
+    const ids = destinations.map((locationId) => Number(locationId));
+    if (ids.some(id => !Number.isSafeInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
+        throw new BadRequestException('Danh sách tỉnh/thành không hợp lệ hoặc bị trùng.');
+    }
+    return ids;
 }
 export function ensureMutableFieldChangeAllowed(field: string, oldValue: unknown, newValue: unknown, totalBookings: number) {
     const normalizeComparableValue = (value: unknown) => typeof value === 'string' ||

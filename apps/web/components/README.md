@@ -53,6 +53,7 @@ sửa danh sách yêu thích trong `account/favorites/AccountFavoritesTab.tsx`.
 | `layout/` | Header, footer, liên kết footer và nhãn menu |
 | `navigation/` | Phản hồi khi chuyển trang (`NavigationPending`) |
 | `calendar/` | Lịch, bộ chọn ngày tìm kiếm/lọc và ô nhập ngày sinh |
+| `date-time/` | Bộ chọn ngày–giờ riêng với lịch, giờ/phút và AM/PM |
 | `forms/` | Dropdown, nhãn biểu mẫu, giá tiền và upload ảnh |
 | `feedback/` | Toast provider, vùng hiển thị, từng toast và thông báo trong trang |
 | `overlays/` | Dialog, xác nhận thao tác và popover |

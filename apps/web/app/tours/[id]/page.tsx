@@ -8,7 +8,6 @@ import TourHighlightsList from "@/components/tours/detail/TourHighlightsList";
 import TourItineraryTimeline from "@/components/tours/detail/TourItineraryTimeline";
 import TourRecommendedList from "@/components/tours/recommendations/TourRecommendedList";
 import TourReviewsSection from "@/components/tours/reviews/TourReviewsSection";
-import TourSmartMap from "@/components/tours/detail/TourSmartMap";
 import TourVideoHighlights from "@/components/tours/detail/TourVideoHighlights";
 import { getPublicTourDetail } from "@/lib/tours/api";
 import { Loader2 } from "lucide-react";
@@ -61,6 +60,7 @@ export default function TourDetailPage({
     selectedScheduleId != null && tour?.tour_schedules
       ? tour.tour_schedules.find((s) => s.tour_schedule_id === selectedScheduleId) ?? null
       : null;
+  const displaySchedule = selectedSchedule || tour?.tour_schedules?.[0];
 
   if (loading) {
     return (
@@ -105,18 +105,15 @@ export default function TourDetailPage({
             />
 
             {/* 4. Tiện ích nổi bật (Amenities) */}
-            <TourAmenities />
+            <TourAmenities key={`amenities-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} amenities={tour.tour_amenities || []} schedule={displaySchedule} />
 
             {/* 5. Điểm nổi bật của chương trình (Tour Highlights) */}
             <TourHighlightsList />
 
             {/* 6. Lịch trình chi tiết (Itinerary Timeline) */}
-            <TourItineraryTimeline itineraries={selectedSchedule?.tour_itineraries} />
+            <TourItineraryTimeline key={`itinerary-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} itineraries={displaySchedule?.tour_itineraries} />
 
-            {/* 7. Bản đồ thông minh (Smart Map Widget) */}
-            <TourSmartMap tour={tour} />
-
-            {/* 8. Đánh giá của khách hàng (Reviews Widget) */}
+            {/* 7. Đánh giá của khách hàng (Reviews Widget) */}
             <TourReviewsSection
               averageRating={Number(tour.rating_avg) || 5}
               totalReviews={tour.rating_count ?? (tour.reviews ? tour.reviews.length : 0)}

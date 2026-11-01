@@ -4,6 +4,7 @@ import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
 import FormFieldLabel from "@/components/common/forms/FormFieldLabel";
 import { Info } from "lucide-react";
 import type { TourBasicInfoCardProps as Props } from 'shared';
+import { TourRouteOrder } from './TourRouteOrder';
 
 export function TourBasicInfoCard({
   tour,
@@ -64,14 +65,9 @@ export function TourBasicInfoCard({
         </div>
 
         <div className="space-y-2">
-          <FormFieldLabel>Điểm khởi hành</FormFieldLabel>
+          <FormFieldLabel>Nơi xuất phát mặc định</FormFieldLabel>
           <select
-            disabled={lockCoreFields}
-            className={`w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white ${
-              lockCoreFields
-                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-80"
-                : ""
-            }`}
+            className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none focus:border-blue-500"
             value={tour.departure_location}
             onChange={(event) =>
               onTourChange((prev) => ({
@@ -86,6 +82,7 @@ export function TourBasicInfoCard({
               </option>
             ))}
           </select>
+          <p className="text-xs text-slate-500">Điền sẵn khi tạo lịch khởi hành mới. Thay đổi này không áp dụng cho các chuyến đã tạo.</p>
         </div>
 
         <div className="space-y-2">
@@ -114,7 +111,7 @@ export function TourBasicInfoCard({
 
       <div className="space-y-4 border-t border-slate-50 pt-4">
         <div className="flex items-center justify-between">
-          <FormFieldLabel>Điểm đến hành trình</FormFieldLabel>
+          <FormFieldLabel>Tỉnh/thành trong hành trình</FormFieldLabel>
           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
             Đã chọn: {tour.destinations?.length || 0}
           </span>
@@ -129,6 +126,7 @@ export function TourBasicInfoCard({
         >
           {locations
             .filter((location) => {
+              if (location.level_id !== 5) return false;
               const isVietNam = location.country_code === "VN";
               if (tour.tour_type === "domestic") return isVietNam;
               if (tour.tour_type === "outbound") return !isVietNam;
@@ -184,6 +182,21 @@ export function TourBasicInfoCard({
               );
             })}
         </div>
+      </div>
+
+      <TourRouteOrder ids={tour.destinations || []} locations={locations} disabled={lockCoreFields} onChange={destinations => onTourChange(prev => ({ ...prev, destinations }))} />
+
+      <div className="space-y-2 border-t border-slate-50 pt-4">
+        <label htmlFor="tour-summary" className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Mô tả ngắn</label>
+        <textarea
+          id="tour-summary"
+          rows={3}
+          className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          placeholder="Viết 1–2 câu giới thiệu điểm hấp dẫn của tour..."
+          value={tour.summary || ""}
+          onChange={(event) => onTourChange(prev => ({ ...prev, summary: event.target.value }))}
+        />
+        <p className="text-xs text-slate-500">Hiển thị dưới tên tour trên thẻ tour ở trang danh sách.</p>
       </div>
 
       <div className="space-y-2 border-t border-slate-50 pt-4">

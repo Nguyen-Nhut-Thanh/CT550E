@@ -1,5 +1,8 @@
 # Chạy web
 
+Cấu hình tên miền và cổng để dùng đồng thời localhost/Cloudflare:
+[hướng dẫn local và public](../../docs/local-public.md).
+
 `npm run dev --workspace=web` chạy ở cổng 3000 bằng Turbopack để giảm thời gian
 biên dịch khi mở một trang mới. Sau khi thay đổi lệnh dev cần dừng và chạy lại
 tiến trình web đang dùng. API vẫn chạy riêng ở cổng 4000.

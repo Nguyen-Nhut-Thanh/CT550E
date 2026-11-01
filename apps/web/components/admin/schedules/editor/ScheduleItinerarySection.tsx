@@ -2,9 +2,11 @@
 
 import { Car, ChevronDown, Hotel, MapPin, Utensils } from "lucide-react";
 import type { ScheduleItinerarySectionProps as Props } from 'shared';
+import { ItineraryActivitiesEditor } from './ItineraryActivitiesEditor';
 
 export function ScheduleItinerarySection({
   form,
+  locations = [],
   isPast,
   expandedDay,
   tourInfo,
@@ -125,6 +127,14 @@ export function ScheduleItinerarySection({
                     }}
                   />
                 </div>
+
+                <ItineraryActivitiesEditor
+                  activities={itineraryDay.activities || []}
+                  locations={locations}
+                  destinations={tourInfo?.tour_destinations || []}
+                  disabled={isPast}
+                  onChange={(activities) => onFormChange(prev => ({ ...prev, itinerary: prev.itinerary.map((day, dayIndex) => dayIndex === index ? { ...day, activities } : day) }))}
+                />
 
                 <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
                   <div className="space-y-2">

@@ -18,8 +18,7 @@ export type ReadPayload = {
     through_message_id?: number;
 };
 export type ChatManageInput = {
-    action: 'claim' | 'close' | 'reopen' | 'transfer';
-    staff_id?: number;
+    action: 'close' | 'reopen';
 };
 export type ChatContextInput = {
     tour_id?: number;

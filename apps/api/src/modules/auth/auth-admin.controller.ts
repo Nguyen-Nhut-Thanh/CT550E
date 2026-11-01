@@ -1,6 +1,6 @@
 import { Body, Controller, ForbiddenException, Get, Post, Req, UseGuards } from '@nestjs/common';
 import type { AdminLoginPayload, AuthRequest } from 'shared';
-import { JwtAuthGuard } from './jwt.guard';
+import { StaffAuthGuard } from '../workforce/staff.guard';
 import { AuthService } from './auth.service';
 @Controller()
 export class AuthAdminController {
@@ -11,7 +11,7 @@ export class AuthAdminController {
     body: AdminLoginPayload) {
         return this.authService.adminLogin(body.email, body.password);
     }
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(StaffAuthGuard)
     @Get('admin/auth/me')
     async adminMe(
     @Req()

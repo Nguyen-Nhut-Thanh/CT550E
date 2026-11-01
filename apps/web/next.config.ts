@@ -4,6 +4,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_BUILD_DIR || ".next",
   transpilePackages: ["shared"],
+  allowedDevOrigins: ["nhutthanh.id.vn", "www.nhutthanh.id.vn", "127.0.0.1"],
+  async rewrites() {
+    const apiOrigin = (process.env.API_INTERNAL_URL || "http://127.0.0.1:4000").replace(/\/+$/, "");
+    return [
+      // Engine.IO requires the trailing slash on its transport endpoint.
+      { source: "/api/socket.io/:path*", destination: `${apiOrigin}/socket.io/` },
+      { source: "/api/:path*", destination: `${apiOrigin}/:path*` },
+    ];
+  },
   images: {
     remotePatterns: [
       {

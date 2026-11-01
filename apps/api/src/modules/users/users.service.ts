@@ -1,6 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
-import type { CreateStaffPayload } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class UsersService {
@@ -63,54 +61,6 @@ export class UsersService {
         }
         return user;
     }
-    async createStaff(dto: CreateStaffPayload) {
-        const existing = await this.prisma.accounts.findUnique({
-            where: { email: dto.email },
-        });
-        if (existing) {
-            throw new BadRequestException('Email đã tồn tại trên hệ thống');
-        }
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
-        return this.prisma.$transaction(async (tx) => {
-            const account = await tx.accounts.create({
-                data: {
-                    email: dto.email,
-                    password_hash: hashedPassword,
-                    provider: 'local',
-                    email_verified: true,
-                    email_verified_at: new Date(),
-                    status: 1,
-                },
-            });
-            const user = await tx.users.create({
-                data: {
-                    account_id: account.account_id,
-                    full_name: dto.full_name,
-                    phone: dto.phone,
-                    is_staff: true,
-                    profile_completed: true,
-                },
-            });
-            await tx.staff_profiles.create({
-                data: {
-                    user_id: user.user_id,
-                    employee_code: dto.employee_code || `STF${Date.now()}`,
-                    position: dto.position || 'Nhân viên',
-                    status: 1,
-                },
-            });
-            const adminRole = await tx.roles.findUnique({ where: { name: 'admin' } });
-            if (adminRole) {
-                await tx.role_users.create({
-                    data: {
-                        user_id: user.user_id,
-                        role_id: adminRole.role_id,
-                    },
-                });
-            }
-            return user;
-        });
-    }
     async updateStatus(userId: number, status: number) {
         const user = await this.findUserAccountOrThrow(userId);
         return this.prisma.accounts.update({
@@ -126,6 +76,7 @@ export class UsersService {
         });
     }
     async deleteUser(userId: number) {
+        if (await this.prisma.employee_profiles.findUnique({ where: { user_id: userId } })) throw new BadRequestException('Nhân viên có hồ sơ nhân sự. Hãy ngưng hoạt động để giữ lịch sử phân công thay vì xóa tài khoản.');
         const user = await this.findUserAccountOrThrow(userId);
         return this.prisma.$transaction(async (tx) => {
             await tx.staff_profiles.deleteMany({ where: { user_id: userId } });

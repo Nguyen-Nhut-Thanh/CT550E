@@ -7,10 +7,12 @@ import { createAdminStaff, getAdminUsers, updateAdminUserStatus } from "@/lib/ad
 import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { UserPlus } from "lucide-react";
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from "react";
 import type { StaffFormData, UserItem } from "shared";
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const pageSize = 10;
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +113,7 @@ export default function AdminUsersPage() {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => router.push('/admin/workforce')}
           className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
         >
           <UserPlus size={18} />

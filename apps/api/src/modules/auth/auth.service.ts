@@ -319,6 +319,8 @@ export class AuthService {
         if (!account.users?.is_staff) {
             throw new UnauthorizedException('Bạn không có quyền truy cập trang quản trị');
         }
+        const employee = await this.prisma.employee_profiles.findUnique({ where: { user_id: account.users.user_id } });
+        if (account.status !== 1 || employee?.status !== 'active') throw new UnauthorizedException('Tài khoản nhân viên không còn hoạt động.');
         return this.generateTokens(account);
     }
     private async generateTokens(account: AuthAccountWithUser) {

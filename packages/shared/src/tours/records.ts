@@ -8,12 +8,17 @@ export type PublicFlashDealRecord = {
     discount_value: unknown;
 };
 export type PublicItineraryRecord = {
+    activities?: import("./models").ItineraryActivity[];
     day_number: number;
     title: string | null;
     content: string | null;
     meals: string | null;
 };
 export type PublicScheduleRecord = {
+    tour_schedule_amenities?: Array<{ kind: string; title: string; content: string; sort_order: number; is_visible: boolean }>;
+    departure_location_id?: number;
+    departure_location?: { location_id: number; name: string; slug?: string | null } | null;
+    pickup_points?: Array<{ pickup_point_id: number; name: string; address: string; pickup_at: Date; sort_order: number; note: string | null }>;
     tour_schedule_id: number;
     code?: string | null;
     start_date: Date;
@@ -22,6 +27,7 @@ export type PublicScheduleRecord = {
     quota: number;
     booked_count: number;
     cover_image_url?: string | null;
+    tour_schedule_transports?: import('./models').TourScheduleTransport[];
     flash_deals?: PublicFlashDealRecord | null;
     tour_schedule_hotels?: Array<{
         schedule_hotel_id: number;
@@ -35,6 +41,8 @@ export type PublicScheduleRecord = {
             hotel_id: number;
             name: string;
             star_rating: number | null;
+            address?: string;
+            description?: string | null;
         } | null;
         hotel_room_types?: {
             room_type_id: number;

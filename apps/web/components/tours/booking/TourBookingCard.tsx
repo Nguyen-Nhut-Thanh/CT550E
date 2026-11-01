@@ -66,7 +66,7 @@ export default function TourBookingCard({
               <span>Khởi hành:</span>
             </div>
             <span className="font-bold text-slate-900">
-              {tour.departure_locations?.name || "Hồ Chí Minh"}
+              {selectedSchedule.departure_location?.name || "Chưa cập nhật"}
             </span>
           </div>
 

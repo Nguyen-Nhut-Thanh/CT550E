@@ -1,6 +1,10 @@
 "use client";
 
 import { ScheduleBasicInfoCard } from "@/components/admin/schedules/editor/ScheduleBasicInfoCard";
+import { ScheduleDepartureCard } from "@/components/admin/schedules/editor/ScheduleDepartureCard";
+import { ScheduleAmenitiesCard } from "@/components/admin/schedules/editor/ScheduleAmenitiesCard";
+import Link from 'next/link';
+import { getAdminLocations } from "@/lib/admin/locations/api";
 import { ScheduleItinerarySection } from "@/components/admin/schedules/editor/ScheduleItinerarySection";
 import { ScheduleSidebar } from "@/components/admin/schedules/editor/ScheduleSidebar";
 import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
@@ -29,11 +33,13 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   HotelItem,
+  LocationOption,
   RoomTypeItem,
   ScheduleDetailResponse,
   TourInfo,
   TransportItem,
 } from "shared";
+import { copyTourAmenities } from 'shared';
 
 export default function AdminScheduleDetailPage() {
   const { id } = useParams();
@@ -52,6 +58,7 @@ export default function AdminScheduleDetailPage() {
   const [bookedCount, setBookedCount] = useState(0);
   const [originalQuota, setOriginalQuota] = useState(0);
   const [hotels, setHotels] = useState<HotelItem[]>([]);
+  const [locations, setLocations] = useState<LocationOption[]>([]);
   const [transports, setTransports] = useState<TransportItem[]>([]);
   const [roomTypesMap, setRoomTypesMap] = useState<
     Record<number, RoomTypeItem[]>
@@ -86,12 +93,14 @@ export default function AdminScheduleDetailPage() {
       setLoading(true);
 
       try {
-        const [hotelData, transportData] = await Promise.all([
+        const [hotelData, transportData, locationData] = await Promise.all([
           getAdminHotels<HotelItem>(),
           getAdminCatalogTransports<TransportItem>(),
+          getAdminLocations<LocationOption>(),
         ]);
 
         setHotels(hotelData);
+        setLocations(locationData.items || []);
         setTransports(transportData);
 
         let currentTourId = tourId;
@@ -127,6 +136,9 @@ export default function AdminScheduleDetailPage() {
         if (currentTourId) {
           const tourData = await getAdminTourDetail<TourInfo>(currentTourId);
           setTourInfo(tourData.tour);
+          if (isNew) setForm(prev => ({ ...prev, departure_location_id: tourData.tour.departure_location || "",
+            tour_schedule_amenities: copyTourAmenities(tourData.tour.tour_amenities || []),
+          }));
         }
       } finally {
         setLoading(false);
@@ -161,6 +173,13 @@ export default function AdminScheduleDetailPage() {
   }, [tourInfo]);
 
   const handleSave = async () => {
+    if (form.itinerary.some(day => (day.activities || []).some(activity => !/^([01]\d|2[0-3]):[0-5]\d$/.test(activity.time) || !activity.title.trim()))) {
+      showError("Vui lòng nhập giờ và tiêu đề cho tất cả hoạt động trong lịch trình."); return;
+    }
+    if (!form.departure_location_id) { showError("Vui lòng chọn nơi xuất phát của chuyến."); return; }
+    if (form.pickup_points.some(point => !point.name.trim() || !point.address.trim() || !point.pickup_at || Number.isNaN(Date.parse(point.pickup_at)))) {
+      showError("Vui lòng điền tên, địa chỉ và thời gian cho tất cả điểm đón."); return;
+    }
     if (!form.start_date) {
       showError("Vui lòng chọn ngày khởi hành");
       return;
@@ -258,10 +277,9 @@ export default function AdminScheduleDetailPage() {
         <div className="space-y-8 lg:col-span-2">
           {hasBookings && !isPast ? (
             <div className="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
-              Đợt khởi hành này đã có {bookedCount} khách đặt. Bạn vẫn có thể
+              Đợt khởi hành này đã có đơn đặt, hiện có {bookedCount} khách giữ chỗ. Bạn vẫn có thể
               cập nhật ảnh, giá áp dụng cho đơn mới, quota theo hướng tăng, và
-              lịch trình theo ngày. Nếu đổi ngày hoặc giờ khởi hành, hệ thống sẽ
-              gửi email thông báo đến khách hàng.
+              lịch trình theo ngày. {form.pickup_points.length ? 'Nơi xuất phát, điểm đón và ngày giờ đã được khóa để bảo toàn thông tin khách đã xác nhận.' : 'Nếu đổi ngày hoặc giờ khởi hành, hệ thống sẽ gửi email thông báo đến khách hàng.'}
             </div>
           ) : null}
 
@@ -275,7 +293,12 @@ export default function AdminScheduleDetailPage() {
             onFormChange={setForm}
           />
 
+          <ScheduleDepartureCard form={form} locations={locations} disabled={isPast || hasBookings} onChange={setForm} />
+          <ScheduleAmenitiesCard form={form} template={tourInfo?.tour_amenities || []} disabled={isPast || hasBookings} onChange={setForm} />
+          {!isNew && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white p-5"><div><h2 className="font-bold text-slate-900">Nhân sự phụ trách chuyến</h2><p className="mt-1 text-xs text-slate-500">Chọn miền điều hành, hướng dẫn viên và trưởng đoàn trong phần điều hành.</p></div><Link href="/admin/workforce?tab=trips" className="rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700">Phân công nhân sự</Link></div>}
+
           <ScheduleItinerarySection
+            locations={locations}
             form={form}
             isPast={isPast}
             expandedDay={expandedDay}

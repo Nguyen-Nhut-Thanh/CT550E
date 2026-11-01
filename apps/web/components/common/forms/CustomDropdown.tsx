@@ -9,6 +9,7 @@ import { Popover } from "@/components/common/overlays/Popover";
 /** Hiển thị danh sách lựa chọn dạng popup, hỗ trợ chọn bằng chuột và bàn phím. */
 export default function CustomDropdown({
   label,
+  ariaLabel,
   placeholder = "Chọn một tùy chọn",
   options,
   selectedValue,
@@ -75,7 +76,7 @@ export default function CustomDropdown({
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           aria-controls={isOpen ? `${id}-options` : undefined}
-          aria-label={label ? undefined : (selectedOption?.label ?? placeholder)}
+          aria-label={ariaLabel ?? (label ? undefined : (selectedOption?.label ?? placeholder))}
           onKeyDown={event => {
             if (["ArrowDown", "ArrowUp"].includes(event.key)) {
               event.preventDefault();
@@ -121,7 +122,7 @@ export default function CustomDropdown({
             ref={listRef}
             id={`${id}-options`}
             role="listbox"
-            aria-label={label ?? placeholder}
+            aria-label={ariaLabel ?? label ?? placeholder}
             onKeyDown={event => {
               const items = Array.from(listRef.current?.querySelectorAll('[role="option"]') ?? []);
               const index = items.indexOf(document.activeElement as Element);

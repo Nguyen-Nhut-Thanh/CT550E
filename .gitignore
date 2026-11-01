@@ -14,6 +14,18 @@ __pycache__/
 ThamKhao/
 scripts/*
 !scripts/apply-membership.cjs
+!scripts/apply-schedule-departures.cjs
+!scripts/test-schedule-departures.ts
+!scripts/apply-workforce.cjs
+!scripts/apply-flexible-crew.cjs
+!scripts/apply-deputy-leader.cjs
+!scripts/test-workforce.ts
+!scripts/test-workforce-http.cjs
+!scripts/apply-tour-amenities.cjs
+!scripts/apply-tour-summary-cleanup.cjs
+!scripts/test-tour-amenities.ts
+!scripts/apply-schedule-amenities.cjs
+!scripts/test-schedule-amenities.ts
 
 # Isolated production performance build
 .next-perf/

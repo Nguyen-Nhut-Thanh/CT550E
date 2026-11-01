@@ -1,4 +1,6 @@
 export type LocationOption = {
+    level_id?: number;
+    parent_id?: number | null;
     location_id: number;
     name: string;
     country_code?: string | null;

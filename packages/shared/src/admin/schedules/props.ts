@@ -11,6 +11,7 @@ export type ScheduleBasicInfoCardProps = {
     onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
 };
 export type ScheduleItinerarySectionProps = {
+    locations?: import("../tours/models").LocationOption[];
     form: ScheduleFormState;
     isPast: boolean;
     expandedDay: number | null;

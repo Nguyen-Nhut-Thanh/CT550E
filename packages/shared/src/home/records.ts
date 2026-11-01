@@ -13,7 +13,6 @@ export type FlashDealTourRecord = {
     name: string;
     duration_days: number;
     duration_nights: number;
-    promotion_info: string | null;
     departure_locations?: {
         name: string | null;
     } | null;

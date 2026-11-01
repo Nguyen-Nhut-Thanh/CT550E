@@ -10,11 +10,25 @@ export type TourLocation = {
     name: string;
     slug?: string | null;
 };
+export type ItineraryActivity = {
+    time: string;
+    title: string;
+    description: string;
+    location_id?: number | null;
+    location?: {
+        location_id: number;
+        parent_id: number | null;
+        name: string;
+        note: string | null;
+        location_images?: { image_url: string }[];
+    } | null;
+};
 export type TourItinerary = {
     day_number: number;
     title: string;
     content: string;
     meals?: string | null;
+    activities?: ItineraryActivity[];
 };
 export type TourScheduleHotel = {
     schedule_hotel_id: number;
@@ -28,6 +42,8 @@ export type TourScheduleHotel = {
         hotel_id: number;
         name: string;
         star_rating?: number | null;
+        address?: string;
+        description?: string | null;
     } | null;
     hotel_room_types?: {
         room_type_id: number;
@@ -42,7 +58,19 @@ export type TourSchedulePrice = {
     currency: string;
     note?: string | null;
 };
+export type TourScheduleTransport = {
+    schedule_transport_id: number;
+    transport_role: string;
+    day_from: number | null;
+    day_to: number | null;
+    note: string | null;
+    transports: { name: string; transport_type: string; description: string | null };
+};
 export type TourSchedule = {
+    tour_schedule_amenities?: import('./amenities').ScheduleAmenity[];
+    departure_location_id?: number;
+    departure_location?: TourLocation | null;
+    pickup_points?: SchedulePickupPoint[];
     tour_schedule_id: number;
     start_date: string;
     end_date: string;
@@ -54,6 +82,15 @@ export type TourSchedule = {
     tour_itineraries?: TourItinerary[];
     tour_schedule_prices?: TourSchedulePrice[];
     tour_schedule_hotels?: TourScheduleHotel[];
+    tour_schedule_transports?: TourScheduleTransport[];
+};
+export type SchedulePickupPoint = {
+    pickup_point_id: number;
+    name: string;
+    address: string;
+    pickup_at: string;
+    sort_order: number;
+    note?: string | null;
 };
 export type TourImage = {
     image_id: number;
@@ -105,12 +142,7 @@ export type PublicTourDetail = {
     duration_nights: number;
     base_price: number;
     tour_type: string;
-    sightseeing_summary: string | null;
-    cuisine_info: string | null;
-    best_for: string | null;
-    best_time: string | null;
-    transport_info: string | null;
-    promotion_info: string | null;
+    tour_amenities: import('./amenities').TourAmenity[];
     transports?: {
         name: string;
         transport_type: string;

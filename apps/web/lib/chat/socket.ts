@@ -1,4 +1,3 @@
-import { API_BASE as API_BASE_URL } from "@/lib/http/config";
 import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
@@ -11,7 +10,9 @@ export const getSocket = (token: string) => {
     }
 
     currentToken = token;
-    socket = io(`${API_BASE_URL}/chat`, {
+    socket = io("/chat", {
+      path: "/api/socket.io",
+      addTrailingSlash: false,
       auth: { token },
       transports: ["websocket"],
       reconnection: true,

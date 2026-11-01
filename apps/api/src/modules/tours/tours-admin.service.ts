@@ -2,11 +2,21 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { TourAdminPayload, TourListParams } from 'shared';
 import { requireFields } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries } from "./tour-input";
+import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries, normalizeTourSummary } from "./tour-input";
 import { getTourCountries, tourCountrySelect } from './tour-list';
+import type { Prisma } from '@prisma/client';
+import { normalizeAmenities } from './tour-amenities';
 @Injectable()
 export class ToursAdminService {
     constructor(private readonly prisma: PrismaService) { }
+    private async validateRoute(tx: Prisma.TransactionClient, ids: number[], tourId?: number) {
+        const count = await tx.locations.count({ where: { location_id: { in: ids }, level_id: 5 } });
+        if (count !== ids.length) throw new BadRequestException('Tuyến tour chỉ được chọn tỉnh/thành phố.');
+        if (tourId && await tx.itinerary_activities.count({ where: {
+            itinerary: { tour_schedules: { tour_id: tourId } },
+            location: { is: { parent_id: { notIn: ids } } },
+        } })) throw new BadRequestException('Tỉnh/thành đang có điểm tham quan trong lịch trình. Hãy bỏ các điểm liên quan khỏi lịch trình trước khi thay đổi tuyến tour.');
+    }
     private async getTourOrThrow(id: number) {
         const tour = await this.prisma.tours.findUnique({
             where: { tour_id: id },
@@ -20,6 +30,7 @@ export class ToursAdminService {
         const tour = await this.prisma.tours.findUnique({
             where: { tour_id: id },
             include: {
+                tour_amenities: { orderBy: { sort_order: 'asc' } },
                 tour_destinations: {
                     include: {
                         locations: true,
@@ -112,6 +123,8 @@ export class ToursAdminService {
         };
     }
     async create(body: TourAdminPayload) {
+        const summary = normalizeTourSummary(body.summary);
+        const amenities = body.tour_amenities === undefined ? [] : normalizeAmenities(body.tour_amenities);
         requireFields(body as Record<string, unknown>, [
             'code',
             'name',
@@ -126,7 +139,7 @@ export class ToursAdminService {
                     data: {
                         code: String(body.code).trim(),
                         name: String(body.name).trim(),
-                        summary: body.summary ?? null,
+                        summary: summary ?? null,
                         description: String(body.description),
                         duration_days: Number(body.duration_days),
                         duration_nights: Number(body.duration_nights ?? 0),
@@ -135,12 +148,7 @@ export class ToursAdminService {
                         departure_location: Number(body.departure_location),
                         transport_id: Number(body.transport_id),
                         status: body.status != null ? Number(body.status) : 1,
-                        sightseeing_summary: body.sightseeing_summary ?? null,
-                        cuisine_info: body.cuisine_info ?? null,
-                        best_for: body.best_for ?? null,
-                        best_time: body.best_time ?? null,
-                        transport_info: body.transport_info ?? null,
-                        promotion_info: body.promotion_info ?? null,
+                        tour_amenities: { create: amenities },
                     },
                 });
                 const policyEntries = normalizePolicyEntries(body.policy_contents);
@@ -154,6 +162,7 @@ export class ToursAdminService {
                     });
                 }
                 const destinationIds = normalizeDestinationIds(body.destinations);
+                await this.validateRoute(tx, destinationIds);
                 if (destinationIds.length > 0) {
                     await tx.tour_destinations.createMany({
                         data: destinationIds.map((locationId, index) => ({
@@ -190,6 +199,8 @@ export class ToursAdminService {
         }
     }
     async update(id: number, body: TourAdminPayload) {
+        const summary = normalizeTourSummary(body.summary);
+        const amenities = body.tour_amenities === undefined ? undefined : normalizeAmenities(body.tour_amenities);
         const tour = await this.prisma.tours.findUnique({
             where: { tour_id: id },
             include: {
@@ -214,7 +225,6 @@ export class ToursAdminService {
                 'duration_days',
                 'duration_nights',
                 'tour_type',
-                'departure_location',
             ];
             for (const field of lockedFields) {
                 ensureMutableFieldChangeAllowed(field, tour[field as keyof typeof tour], body[field], totalBookings);
@@ -237,7 +247,7 @@ export class ToursAdminService {
                     where: { tour_id: id },
                     data: {
                         name: body.name ?? undefined,
-                        summary: body.summary ?? undefined,
+                        summary,
                         description: body.description ?? undefined,
                         duration_days: body.duration_days != null
                             ? Number(body.duration_days)
@@ -251,12 +261,10 @@ export class ToursAdminService {
                             ? Number(body.departure_location)
                             : undefined,
                         transport_id: body.transport_id != null ? Number(body.transport_id) : undefined,
-                        sightseeing_summary: body.sightseeing_summary ?? undefined,
-                        cuisine_info: body.cuisine_info ?? undefined,
-                        best_for: body.best_for ?? undefined,
-                        best_time: body.best_time ?? undefined,
-                        transport_info: body.transport_info ?? undefined,
-                        promotion_info: body.promotion_info ?? undefined,
+                        tour_amenities: amenities === undefined ? undefined : {
+                            deleteMany: {},
+                            create: amenities,
+                        },
                     },
                 });
                 if (body.policy_contents && typeof body.policy_contents === 'object') {
@@ -276,6 +284,7 @@ export class ToursAdminService {
                 }
                 if (Array.isArray(body.destinations)) {
                     const destinationIds = normalizeDestinationIds(body.destinations);
+                    await this.validateRoute(tx, destinationIds, id);
                     await tx.tour_destinations.deleteMany({ where: { tour_id: id } });
                     await tx.tour_destinations.createMany({
                         data: destinationIds.map((locationId, index) => ({
@@ -322,6 +331,7 @@ export class ToursAdminService {
         });
     }
     async deleteTour(id: number) {
+        if (await this.prisma.schedule_crew.count({ where: { schedule: { tour_id: id } } })) throw new BadRequestException('Cần gỡ phân công nhân sự của các chuyến trước khi xóa tour.');
         const tour = await this.prisma.tours.findUnique({
             where: { tour_id: id },
             include: {

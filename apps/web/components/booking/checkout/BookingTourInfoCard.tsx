@@ -30,10 +30,10 @@ export function BookingTourInfoCard({
         </Link>
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-teal-700">
-            {tour.departure_locations?.name && (
+            {selectedSchedule.departure_location?.name && (
               <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2.5 py-1">
                 <MapPin className="h-3 w-3" />
-                {tour.departure_locations.name}
+                {selectedSchedule.departure_location.name}
               </span>
             )}
             <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2.5 py-1">

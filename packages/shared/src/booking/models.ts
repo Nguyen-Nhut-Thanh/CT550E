@@ -27,6 +27,9 @@ export interface PricingSummary {
 }
 
 export interface BookingDetail {
+  departure_name?: string | null;
+  pickup_point_id?: number | null;
+  pickup_snapshot?: { name: string; address: string; pickup_at: string; note?: string | null } | null;
   booking_id: number;
   status: string;
   contact_name: string;
@@ -48,6 +51,7 @@ export interface BookingDetail {
   booking_travelers?: { traveler_id: number; full_name: string; dob?: string | null; gender: string; id_number?: string | null; traveler_type: string }[];
   payments?: { payment_id: number; method: string; status: string; transaction_code?: string | null; created_at: string; paid_at?: string | null }[];
   tour_schedules?: {
+    departure_location?: { name: string } | null;
     start_date: string;
     end_date?: string | null;
     tours?: { tour_id: number; code: string; name: string; duration_days: number; duration_nights: number; departure_locations?: { name: string } | null; tour_images?: { image_url?: string | null }[] } | null;

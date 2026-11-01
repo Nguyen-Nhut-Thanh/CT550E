@@ -1,4 +1,6 @@
 export type AdminBooking = {
+    departure_name?: string | null;
+    pickup_snapshot?: { name: string; address: string; pickup_at: string; note?: string | null } | null;
     booking_id: number;
     status: string;
     total_amount?: number | string | null;
@@ -15,6 +17,7 @@ export type AdminBooking = {
     infant_unit_price?: number | string;
     discount_amount?: number | string;
     tour_schedules?: {
+        departure_location?: { name: string } | null;
         tour_schedule_id?: number;
         tour_id?: number;
         code?: string | null;

@@ -2,6 +2,7 @@
 
 import { removeToken } from "@/lib/auth/session";
 import { NavigationPending } from "@/components/common/navigation/NavigationPending";
+import { useWorkforceIdentity } from './AdminGuard';
 import {
   ArrowLeft,
   Briefcase,
@@ -25,9 +26,15 @@ import { usePathname, useRouter } from "next/navigation";
 
 const menuItems = [
   {
-    group: "Điều hướng",
+    group: "Tổng quan",
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    ],
+  },
+  {
+    group: "Vận hành",
+    items: [
+      { name: "Quản lý Booking", href: "/admin/bookings", icon: Briefcase },
       { name: "Quản lý Tour", href: "/admin/tours", icon: Map },
       { name: "Lịch khởi hành", href: "/admin/schedules", icon: CalendarDays },
       { name: "Quản lý Địa điểm", href: "/admin/locations", icon: MapPin },
@@ -36,29 +43,37 @@ const menuItems = [
         href: "/admin/locations/featured",
         icon: Star,
       },
-      { name: "Quản lý Booking", href: "/admin/bookings", icon: Briefcase },
     ],
   },
   {
-    group: "Khách hàng & Marketing",
+    group: "Nhân sự",
+    items: [{ name: "Nhân sự & điều hành", href: "/admin/workforce", icon: Users }],
+  },
+  {
+    group: "Khách hàng",
     items: [
       { name: "Người dùng", href: "/admin/users", icon: Users },
       { name: "Hạng thành viên", href: "/admin/marketing/membership", icon: Gem },
+      { name: "Hỗ trợ khách hàng", href: "/admin/chats", icon: MessageSquare },
+    ],
+  },
+  {
+    group: "Marketing",
+    items: [
       { name: "Flash Deals", href: "/admin/marketing/flash-deals", icon: Zap },
       { name: "Mã giảm giá", href: "/admin/marketing/vouchers", icon: Ticket },
+    ],
+  },
+  {
+    group: "Nội dung",
+    items: [
+      { name: "Quản lý Banner", href: "/admin/banners", icon: ImageIcon },
       { name: "Bài viết", href: "/admin/marketing/posts", icon: FileText },
       {
         name: "Bố cục bài viết",
         href: "/admin/marketing/posts/layout",
         icon: LayoutDashboard,
       },
-    ],
-  },
-  {
-    group: "Nội dung & Giao tiếp",
-    items: [
-      { name: "Quản lý Banner", href: "/admin/banners", icon: ImageIcon },
-      { name: "Hỗ trợ khách hàng", href: "/admin/chats", icon: MessageSquare },
     ],
   },
 ];
@@ -72,6 +87,8 @@ export const AdminSidebar = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const identity = useWorkforceIdentity();
+  const visibleMenu = menuItems.map(group => ({ ...group, items: group.items.filter(item => identity?.isAdmin || item.href === '/admin/workforce' || (identity?.canChat && item.href === '/admin/chats')) })).filter(group => group.items.length);
 
   const handleLogout = () => {
     removeToken();
@@ -95,7 +112,7 @@ export const AdminSidebar = ({
             <div className="flex items-center gap-3">
               JourniTrip{" "}
               <span className="rounded-full bg-blue-500/25 px-2 py-0.5 text-[9px] tracking-normal text-blue-100">
-                ADMIN
+                {identity?.isAdmin ? 'ADMIN' : 'NHÂN VIÊN'}
               </span>
             </div>
             <p className="mt-0.5 text-[10px] font-normal tracking-normal text-blue-300/70">
@@ -118,7 +135,7 @@ export const AdminSidebar = ({
       </div>
 
       <div className="admin-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        {menuItems.map((group) => (
+        {visibleMenu.map((group) => (
           <div key={group.group} className="mb-6">
             <h3 className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
               {group.group}

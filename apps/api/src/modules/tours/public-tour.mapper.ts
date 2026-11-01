@@ -1,4 +1,5 @@
 import type { PublicDestinationRecord, PublicScheduleRecord, PublicTourCardRecord } from 'shared';
+import type { Prisma } from '@prisma/client';
 export function fixMojibakeText(value?: string | null) {
     if (!value)
         return value ?? null;
@@ -20,7 +21,7 @@ export function parseMoney(value?: string) {
         return undefined;
     return parsed;
 }
-export function buildCardSelect() {
+export function buildCardSelect(scheduleFilter: Prisma.tour_schedulesWhereInput = {}) {
     return {
         tour_id: true,
         code: true,
@@ -65,10 +66,13 @@ export function buildCardSelect() {
             where: {
                 status: 1,
                 start_date: { gte: new Date() },
+                ...scheduleFilter,
             },
             orderBy: { start_date: 'asc' as const },
             select: {
                 tour_schedule_id: true,
+                departure_location_id: true,
+                departure_location: { select: { location_id: true, name: true, slug: true } },
                 code: true,
                 start_date: true,
                 end_date: true,
@@ -147,11 +151,11 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
         tour_type: t.tour_type,
         updated_at: t.updated_at,
         cover_image: next_schedule?.cover_image_url || t.tour_images?.[0]?.image_url || null,
-        departure_location: t.departure_locations
+        departure_location: next_schedule?.departure_location
             ? {
-                location_id: t.departure_locations.location_id,
-                name: t.departure_locations.name,
-                slug: t.departure_locations.slug ?? null,
+                location_id: next_schedule.departure_location.location_id,
+                name: next_schedule.departure_location.name,
+                slug: next_schedule.departure_location.slug ?? null,
             }
             : null,
         destinations: Array.isArray(t.tour_destinations)

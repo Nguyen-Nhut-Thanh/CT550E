@@ -17,6 +17,7 @@ export type DropdownOption = {
 };
 export type CustomDropdownProps = {
     label?: string;
+    ariaLabel?: string;
     placeholder?: string;
     options: DropdownOption[];
     selectedValue: string;

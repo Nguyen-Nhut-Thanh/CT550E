@@ -1,6 +1,8 @@
 "use client";
 
 import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import { TourAmenitiesEditor } from "@/components/admin/tours/editor/TourAmenitiesEditor";
+import { TourRouteOrder } from '@/components/admin/tours/editor/TourRouteOrder';
 import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
 import FormFieldLabel from "@/components/common/forms/FormFieldLabel";
 import { ImageUpload } from "@/components/common/forms/ImageUpload";
@@ -9,10 +11,10 @@ import { getAdminTransports } from "@/lib/admin/catalogs/api";
 import { getAdminLocations } from "@/lib/admin/locations/api";
 import { createAdminTour } from "@/lib/admin/tours/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { AlertTriangle, Clock, Image as ImageIcon, Info, Loader2, MapPin, Save, Sparkles, Ticket, Utensils, } from "lucide-react";
+import { AlertTriangle, Clock, Image as ImageIcon, Info, Loader2, MapPin, Save, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { LocationOption, TransportOption } from 'shared';
+import type { LocationOption, TransportOption, TourAmenity } from 'shared';
 
 export default function AdminTourCreatePage() {
   const router = useRouter();
@@ -26,6 +28,7 @@ export default function AdminTourCreatePage() {
   const [form, setForm] = useState({
     code: "",
     name: "",
+    summary: "",
     description: "",
     duration_days: 1,
     duration_nights: 0,
@@ -35,10 +38,7 @@ export default function AdminTourCreatePage() {
     tour_type: "domestic",
     images: [] as string[],
     destinations: [] as number[],
-    best_time: "",
-    cuisine_info: "",
-    promotion_info: "",
-    best_for: "",
+    tour_amenities: [] as TourAmenity[],
     policy_contents: {},
     cut_off_hours: "" as number | "",
   });
@@ -186,7 +186,7 @@ export default function AdminTourCreatePage() {
               </div>
 
               <div className="space-y-2">
-                <FormFieldLabel>Điểm khởi hành</FormFieldLabel>
+                <FormFieldLabel>Nơi xuất phát mặc định</FormFieldLabel>
                 <select
                   className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white"
                   value={form.departure_location}
@@ -231,7 +231,7 @@ export default function AdminTourCreatePage() {
 
             <div className="space-y-4 border-t border-slate-50 pt-4">
               <div className="flex items-center justify-between">
-                <FormFieldLabel>Các điểm đến</FormFieldLabel>
+                <FormFieldLabel>Tỉnh/thành trong hành trình</FormFieldLabel>
                 <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
                   Đã chọn: {form.destinations.length}
                 </span>
@@ -240,6 +240,7 @@ export default function AdminTourCreatePage() {
               <div className="custom-scrollbar grid max-h-[250px] grid-cols-2 gap-3 overflow-y-auto rounded-3xl border border-slate-100 bg-slate-50 p-6 sm:grid-cols-3 md:grid-cols-4">
                 {locations
                   .filter((location) => {
+                    if (location.level_id !== 5) return false;
                     const isVietnam = location.country_code === "VN";
 
                     if (form.tour_type === "domestic") {
@@ -303,6 +304,21 @@ export default function AdminTourCreatePage() {
               </div>
             </div>
 
+            <TourRouteOrder ids={form.destinations} locations={locations} onChange={destinations => setForm(prev => ({ ...prev, destinations }))} />
+
+            <div className="space-y-2 border-t border-slate-50 pt-4">
+              <label htmlFor="tour-summary" className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Mô tả ngắn</label>
+              <textarea
+                id="tour-summary"
+                rows={3}
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none focus:border-blue-500 focus:bg-white"
+                placeholder="Viết 1–2 câu giới thiệu điểm hấp dẫn của tour..."
+                value={form.summary}
+                onChange={(event) => setForm({ ...form, summary: event.target.value })}
+              />
+              <p className="text-xs text-slate-500">Hiển thị dưới tên tour trên thẻ tour ở trang danh sách.</p>
+            </div>
+
             <div className="space-y-2 border-t border-slate-50 pt-4">
               <FormFieldLabel>Mô tả hành trình</FormFieldLabel>
               <textarea
@@ -316,64 +332,7 @@ export default function AdminTourCreatePage() {
             </div>
           </AdminFormCard>
 
-          <AdminFormCard bodyClassName="grid grid-cols-1 gap-8 p-8 md:grid-cols-2">
-            <div className="space-y-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Sparkles size={16} className="text-blue-500" /> Thời gian lý
-                tưởng
-              </h3>
-              <textarea
-                placeholder="VD: Tháng 3 - tháng 8, mùa khô rất thuận tiện..."
-                className="min-h-[80px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                value={form.best_time}
-                onChange={(e) =>
-                  setForm({ ...form, best_time: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Utensils size={16} className="text-emerald-500" /> Ẩm thực
-              </h3>
-              <textarea
-                placeholder="Thông tin về các bữa ăn, đặc sản..."
-                className="min-h-[80px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                value={form.cuisine_info}
-                onChange={(e) =>
-                  setForm({ ...form, cuisine_info: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Ticket size={16} className="text-amber-500" /> Khuyến mãi
-              </h3>
-              <textarea
-                placeholder="Các ưu đãi đi kèm..."
-                className="min-h-[80px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                value={form.promotion_info}
-                onChange={(e) =>
-                  setForm({ ...form, promotion_info: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <MapPin size={16} className="text-rose-500" /> Phù hợp với
-              </h3>
-              <textarea
-                placeholder="VD: Gia đình, cặp đôi..."
-                className="min-h-[80px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                value={form.best_for}
-                onChange={(e) =>
-                  setForm({ ...form, best_for: e.target.value })
-                }
-              />
-            </div>
-          </AdminFormCard>
+          <TourAmenitiesEditor value={form.tour_amenities} onChange={tour_amenities => setForm(prev => ({ ...prev, tour_amenities }))} />
         </div>
 
         <div className="space-y-8">
