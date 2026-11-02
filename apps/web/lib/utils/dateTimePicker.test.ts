@@ -5,14 +5,34 @@ import {
   minuteBounds, timeInHour,
 } from "./dateTimePicker";
 
-test("October reference includes adjacent dates and six Sunday-first weeks", () => {
+test("October reference uses five Sunday-first weeks without an extra trailing week", () => {
   const days = buildDateTimeDays(localDate(2026, 9, 1));
-  assert.equal(days.length, 42);
+  assert.equal(days.length, 35);
   assert.equal(days[0].getDay(), 0);
   assert.equal(days[0].getMonth(), 8);
   assert.equal(days[0].getDate(), 27);
-  assert.equal(days[41].getMonth(), 10);
-  assert.equal(days[41].getDate(), 7);
+  assert.equal(days.at(-1)!.getMonth(), 9);
+  assert.equal(days.at(-1)!.getDate(), 31);
+});
+
+test("November 2026 ends with the partial next-month week shown in the calendar", () => {
+  const days = buildDateTimeDays(localDate(2026, 10, 1));
+  assert.equal(days.length, 35);
+  assert.equal(days[0].getDate(), 1);
+  assert.equal(days.at(-1)!.getMonth(), 11);
+  assert.equal(days.at(-1)!.getDate(), 5);
+});
+
+test("months use four or six weeks when their actual dates require it", () => {
+  const february = buildDateTimeDays(localDate(2026, 1, 1));
+  assert.equal(february.length, 28);
+  assert.equal(february[0].getDate(), 1);
+  assert.equal(february.at(-1)!.getDate(), 28);
+  const august = buildDateTimeDays(localDate(2026, 7, 1));
+  assert.equal(august.length, 42);
+  assert.equal(august.filter(day => day.getMonth() === 7).length, 31);
+  assert.equal(august.at(-1)!.getMonth(), 8);
+  assert.equal(august.at(-1)!.getDate(), 5);
 });
 
 test("calendar handles leap years and December rollover", () => {

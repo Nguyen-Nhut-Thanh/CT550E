@@ -31,10 +31,12 @@ export function isDayAvailable(date: Date, minimum: number, maximum: number) {
   return minimum <= maximum && date.getTime() <= maximum && nextDay.getTime() - 1 >= minimum;
 }
 
-/** Lịch riêng có đủ 6 tuần, bắt đầu từ Chủ nhật và có ngày của tháng liền kề. */
+/** Chỉ hiển thị số tuần cần cho tháng, điền ngày liền kề đến hết hàng cuối. */
 export function buildDateTimeDays(month: Date) {
   const firstDay = localDate(month.getFullYear(), month.getMonth(), 1);
-  return Array.from({ length: 42 }, (_, index) =>
+  const daysInMonth = localDate(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const dayCount = Math.ceil((firstDay.getDay() + daysInMonth) / 7) * 7;
+  return Array.from({ length: dayCount }, (_, index) =>
     localDate(month.getFullYear(), month.getMonth(), index - firstDay.getDay() + 1),
   );
 }

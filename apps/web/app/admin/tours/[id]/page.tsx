@@ -4,17 +4,18 @@ import { ScheduleManagement } from "@/components/admin/tours/editor/ScheduleMana
 import { TourBasicInfoCard } from "@/components/admin/tours/editor/TourBasicInfoCard";
 import { TourDetailsCard } from "@/components/admin/tours/editor/TourDetailsCard";
 import { TourSidebar } from "@/components/admin/tours/editor/TourSidebar";
-import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
-import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
+import { TourEditorShell } from "@/components/admin/tours/editor/TourEditorShell";
+
 import { getAdminTransports } from "@/lib/admin/catalogs/api";
 import { getAdminLocations } from "@/lib/admin/locations/api";
 import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";
 import { getTotalTourBookings, normalizeTourDetailForm } from "@/lib/admin/tours/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LocationOption, TourDetailForm, TransportOption } from "shared";
+import { isValidTourDuration } from 'shared';
 
 export default function AdminTourDetailPage() {
   const { id } = useParams();
@@ -60,6 +61,10 @@ export default function AdminTourDetailPage() {
 
   const handleSave = async () => {
     if (!tour) return;
+    if (!hasLockedCoreFields && !isValidTourDuration(Number(tour.duration_days ?? 1), Number(tour.duration_nights ?? 0))) {
+      showError('Số đêm chỉ được chênh tối đa 1 so với số ngày.');
+      return;
+    }
 
     const payload = { ...tour };
 
@@ -96,55 +101,17 @@ export default function AdminTourDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-20">
-      <AdminBackPageHeader
-        title={tour.name || ""}
-        onBack={() => router.back()}
-        meta={
-          <div className="mt-1 flex items-center gap-3">
-            <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-              Mã: <span className="font-bold text-blue-600">{tour.code}</span>
-            </span>
-          </div>
-        }
-        actions={
-          saved ? (
-            <span className="flex animate-in items-center gap-1.5 text-sm font-bold text-emerald-600 fade-in slide-in-from-right-2">
-              <CheckCircle2 size={18} /> Đã lưu thành công
-            </span>
-          ) : null
-        }
-      />
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="space-y-8 lg:col-span-2">
-          <TourBasicInfoCard
-            tour={tour}
-            locations={locations}
-            transports={transports}
-            lockCoreFields={hasLockedCoreFields}
-            onTourChange={updateTour}
-          />
-
+    <TourEditorShell title="Chỉnh Sửa Tour" description={'Cập nhật thông tin và hoàn thiện hành trình: ' + (tour.name || '')} onBack={() => router.push('/admin/tours')}>
+      <div className="grid items-start gap-[22px] lg:grid-cols-[minmax(0,min(calc((100%_-_22px)*1.55/2.55),calc(100%_-_302px)))_minmax(260px,calc((100%_-_22px)/3.4))] lg:justify-start">
+        <div className="flex min-w-0 flex-col gap-[22px]">
+          <TourBasicInfoCard tour={tour} locations={locations} transports={transports} lockCoreFields={hasLockedCoreFields} onTourChange={updateTour} />
           <TourDetailsCard tour={tour} onTourChange={updateTour} />
         </div>
-
-        <TourSidebar
-          tour={tour}
-          saving={saving}
-          success={saved}
-          lockCoreFields={hasLockedCoreFields}
-          onSave={handleSave}
-          onTourChange={updateTour}
-        />
+        <TourSidebar tour={tour} saving={saving} success={saved} lockCoreFields={hasLockedCoreFields} onSave={handleSave} onTourChange={updateTour} />
       </div>
-
-      <AdminFormCard bodyClassName="p-8">
-        <ScheduleManagement
-          tourId={Number(id)}
-          durationDays={tour.duration_days}
-        />
-      </AdminFormCard>
-    </div>
+      <div className="mt-6">
+        <ScheduleManagement tourId={Number(id)} />
+      </div>
+    </TourEditorShell>
   );
 }

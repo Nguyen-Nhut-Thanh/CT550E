@@ -42,7 +42,7 @@ async function main() {
       assert.equal(locations.length, 2, 'Tests need at least two existing locations.');
       const key = `TEST-DEPARTURES-${Date.now()}`;
       const tour = await tx.tours.create({ data: {
-        code: key, name: key, description: 'Temporary departure test', duration_days: 3,
+        code: key, name: key, description: 'Temporary departure test', duration_days: 3, duration_nights: 2,
         duration_nights: 2, departure_location: locations[0].location_id, transport_id: transport.transport_id,
       } });
       const start = new Date(Date.now() + 14 * 86400000);

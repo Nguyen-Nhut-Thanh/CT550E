@@ -58,7 +58,7 @@ export type { ChatComposerProps, ChatTimelineProps } from "./chat/props";
 export type { AuthenticatedRequest, JwtChatPayload } from "./chat/server";
 export type { ChatDisplayMessage, PendingImage } from "./chat/view-models";
 export type { CalendarDay } from "./common/calendar";
-export type { DateTimePickerProps, DateTimeColumnProps, DateTimeInputProps } from "./common/date-time";
+export type { DateTimePickerProps, DateTimeColumnProps, DateTimeInputProps, TimePickerProps, TimeInputProps } from "./common/date-time";
 export type { AuthJsonRequestOptions, ListResponse, TimestampedListResponse } from "./common/http";
 export { slugify } from "./common/strings";
 export type { DateFilterInputProps, SearchDateInputProps, ConfirmDialogProps, CustomDropdownProps, DropdownOption, FavoriteButtonProps, FormFieldLabelProps, ImageWithFallbackProps, InlineNoticeProps, Toast, ToastContextType, ToastListener, ToastType, TransportIconProps } from "./common/ui";
@@ -90,3 +90,5 @@ export type { ArticleIcon, ArticleBlock, ArticleDocument, CoverPosition } from '
 export type { BookingDetail } from "./booking/models";
 export { TOUR_AMENITY_DEFINITIONS, copyTourAmenities } from './tours/amenities';
 export type { TourAmenity, TourAmenityKind, ScheduleAmenity } from './tours/amenities';
+export { getTourNightRange, isValidTourDuration } from './tours/duration';
+export { MAX_TOUR_IMAGES } from './tours/images';

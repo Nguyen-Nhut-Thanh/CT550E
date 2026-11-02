@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { ToursAdminService } from '../apps/api/src/modules/tours/tours-admin.service';
 import { ToursPublicService } from '../apps/api/src/modules/tours/tours-public.service';
 import { normalizeAmenities } from '../apps/api/src/modules/tours/tour-amenities';
+import { normalizeCutOffHours, normalizeTourDuration, normalizeTourImages } from '../apps/api/src/modules/tours/tour-input';
 import { getTourAmenities } from '../apps/web/lib/tours/amenities';
 import type { TourAmenity, TourSchedule } from 'shared';
 
@@ -17,6 +18,12 @@ let assertions = 0;
 function check(value: unknown) { assert.ok(value); assertions++; }
 
 async function main() {
+  const tenImages = Array.from({ length: 10 }, (_, index) => `/fixture-${index + 1}.jpg`);
+  check(normalizeTourImages(tenImages)?.length === 10);
+  for (const value of [[...tenImages, '/extra.jpg'], 'image.jpg', [null], ['']]) { assert.throws(() => normalizeTourImages(value)); assertions++; }
+  for (const value of [-1, 1.5, '', null, {}, 'abc']) { assert.throws(() => normalizeCutOffHours(value)); assertions++; }
+  for (const [days, nights] of [[1, 0], [1, 1], [1, 2], [8, 7], [8, 8], [8, 9]]) { check(normalizeTourDuration(days, nights).nights === nights); }
+  for (const [days, nights] of [[8, 1], [0, 0], [1, 3], [8, 10], [1.5, 1], [1, -1]]) { assert.throws(() => normalizeTourDuration(days, nights)); assertions++; }
   const insurance: TourAmenity = { kind: 'insurance', title: 'Bảo hiểm du lịch', content: 'Phạm vi và điều kiện bảo hiểm đã xác nhận.' };
   for (const input of [null, {}, [null], [{ kind: 'invalid', title: 'A', content: 'B' }], [insurance, insurance], [{ ...insurance, title: ' ' }], [{ ...insurance, content: '' }], [{ ...insurance, title: 'A'.repeat(151) }], [{ ...insurance, content: 'A'.repeat(20001) }]]) {
     assert.throws(() => normalizeAmenities(input)); assertions++;
@@ -37,10 +44,29 @@ async function main() {
       const key = `AM-${Date.now()}`;
       const province = await tx.locations.findFirstOrThrow({ where: { level_id: 5 } });
       const transport = await tx.transports.findFirstOrThrow();
-      const tour = await admin.create({ code: key, name: key, summary: '  Mô tả ngắn trên thẻ tour.  ', description: 'Fixture', duration_days: 2, departure_location: province.location_id, transport_id: transport.transport_id,
+      const tour = await admin.create({ code: key, name: key, summary: '  Mô tả ngắn trên thẻ tour.  ', description: 'Fixture', duration_days: 2, duration_nights: 1, cut_off_hours: 36, departure_location: province.location_id, transport_id: transport.transport_id,
+        images: tenImages,
         tour_amenities: [insurance, { kind: 'cuisine', title: 'Ẩm thực địa phương', content: 'Bữa sáng và bữa trưa.' }],
       });
       let detail = (await admin.detail(tour.tour_id)).tour;
+      check(detail.tour_images.length === 10 && detail.tour_images[0].is_cover === 1 && detail.tour_images[9].sort_order === 10);
+      await assert.rejects(admin.update(tour.tour_id, { images: [...tenImages, '/extra.jpg'] })); assertions++;
+      check((await admin.detail(tour.tour_id)).tour.tour_images.length === 10);
+      await admin.update(tour.tour_id, { images: [tenImages[9], tenImages[0]] });
+      check((await admin.detail(tour.tour_id)).tour.tour_images[0].image_url === tenImages[9]);
+      await admin.update(tour.tour_id, { images: [] });
+      check((await admin.detail(tour.tour_id)).tour.tour_images.length === 0);
+      await assert.rejects(admin.create({ code: key + '-BAD', name: key, description: 'Invalid', duration_days: 8, duration_nights: 1, departure_location: province.location_id, transport_id: transport.transport_id })); assertions++;
+      check(await tx.tours.count({ where: { code: key + '-BAD' } }) === 0);
+      await assert.rejects(admin.update(tour.tour_id, { duration_days: 8 })); assertions++;
+      check((await admin.detail(tour.tour_id)).tour.duration_days === 2);
+      await admin.update(tour.tour_id, { duration_days: 8, duration_nights: 7 });
+      check((await admin.detail(tour.tour_id)).tour.duration_nights === 7);
+      await assert.rejects(admin.update(tour.tour_id, { duration_nights: 1 })); assertions++;
+      await admin.update(tour.tour_id, { duration_days: 2, duration_nights: 1 });
+      check(detail.cut_off_hours === 36);
+      await admin.update(tour.tour_id, { cut_off_hours: 0 });
+      check((await admin.detail(tour.tour_id)).tour.cut_off_hours === 0);
       check(detail.summary === 'Mô tả ngắn trên thẻ tour.');
       check(detail.tour_amenities.length === 2 && detail.tour_amenities[0].kind === 'insurance');
       await admin.update(tour.tour_id, { description: 'Updated without amenities' });

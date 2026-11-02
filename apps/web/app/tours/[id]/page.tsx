@@ -6,6 +6,7 @@ import TourDepartureCalendar from "@/components/tours/booking/TourDepartureCalen
 import TourDetailHero from "@/components/tours/detail/TourDetailHero";
 import TourHighlightsList from "@/components/tours/detail/TourHighlightsList";
 import TourItineraryTimeline from "@/components/tours/detail/TourItineraryTimeline";
+import TourSmartMap from "@/components/tours/detail/TourSmartMap";
 import TourRecommendedList from "@/components/tours/recommendations/TourRecommendedList";
 import TourReviewsSection from "@/components/tours/reviews/TourReviewsSection";
 import TourVideoHighlights from "@/components/tours/detail/TourVideoHighlights";
@@ -109,6 +110,7 @@ export default function TourDetailPage({
 
             {/* 5. Điểm nổi bật của chương trình (Tour Highlights) */}
             <TourHighlightsList />
+            <TourSmartMap tour={tour} attractions={displaySchedule?.tour_schedule_attractions} />
 
             {/* 6. Lịch trình chi tiết (Itinerary Timeline) */}
             <TourItineraryTimeline key={`itinerary-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} itineraries={displaySchedule?.tour_itineraries} />

@@ -26,6 +26,9 @@ scripts/*
 !scripts/test-tour-amenities.ts
 !scripts/apply-schedule-amenities.cjs
 !scripts/test-schedule-amenities.ts
+!scripts/apply-schedule-attractions.cjs
+!scripts/apply-itinerary-activities.cjs
+!scripts/test-itinerary-activities.ts
 
 # Isolated production performance build
 .next-perf/

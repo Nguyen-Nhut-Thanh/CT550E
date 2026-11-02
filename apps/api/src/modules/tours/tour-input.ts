@@ -1,4 +1,36 @@
 import { BadRequestException } from '@nestjs/common';
+import { isValidTourDuration, MAX_TOUR_IMAGES } from 'shared';
+
+export function normalizeTourImages(value: unknown): string[] | undefined {
+    if (value === undefined) return undefined;
+    if (!Array.isArray(value) || value.length > MAX_TOUR_IMAGES || value.some(item => typeof item !== 'string' || !item.trim())) {
+        throw new BadRequestException(`Danh sách ảnh không hợp lệ. Mỗi tour được tải tối đa ${MAX_TOUR_IMAGES} ảnh.`);
+    }
+    return value.map(item => (item as string).trim());
+}
+
+export function normalizeTourDuration(daysValue: unknown, nightsValue: unknown) {
+    for (const value of [daysValue, nightsValue]) {
+        if ((typeof value !== 'number' && typeof value !== 'string') || (typeof value === 'string' && !value.trim())) {
+            throw new BadRequestException('Số ngày và số đêm phải là số nguyên hợp lệ.');
+        }
+    }
+    const days = Number(daysValue);
+    const nights = Number(nightsValue);
+    if (!isValidTourDuration(days, nights) || days > 2147483647 || nights > 2147483647) {
+        throw new BadRequestException('Tour phải có ít nhất 1 ngày; số đêm không âm và chỉ được chênh tối đa 1 so với số ngày.');
+    }
+    return { days, nights };
+}
+export function normalizeCutOffHours(value: unknown): number | undefined {
+    if (value === undefined) return undefined;
+    if ((typeof value !== 'number' && typeof value !== 'string') || (typeof value === 'string' && !value.trim())) {
+        throw new BadRequestException('Giờ chốt khách phải là số nguyên không âm.');
+    }
+    const hours = Number(value);
+    if (!Number.isInteger(hours) || hours < 0 || hours > 2147483647) throw new BadRequestException('Giờ chốt khách phải là số nguyên không âm hợp lệ.');
+    return hours;
+}
 export function normalizeTourSummary(value: unknown): string | null | undefined {
     if (value === undefined || value === null) return value;
     if (typeof value !== 'string') throw new BadRequestException('Mô tả ngắn phải là văn bản.');

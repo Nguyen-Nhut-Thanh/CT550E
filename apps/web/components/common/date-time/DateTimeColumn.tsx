@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef } from "react";
 import type { DateTimeColumnProps } from "shared";
-import styles from "./DateTimePicker.module.css";
 
 /** Cột chọn thời gian có cuộn, tự đưa giá trị đã chọn vào giữa và hỗ trợ bàn phím. */
 export function DateTimeColumn({ label, options, value, onChange, disabled, compact }: DateTimeColumnProps) {
@@ -24,8 +23,8 @@ export function DateTimeColumn({ label, options, value, onChange, disabled, comp
   }, [value, compact]);
 
   return (
-    <div className={styles.timeColumn}>
-      <span id={`${id}-label`} className={styles.columnLabel}>{label}</span>
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-[11px] bg-[#f7faff] border border-[var(--dt-border)] border-solid [[data-date-time-density=compact]_&]:rounded-[8px]">
+      <span id={`${id}-label`} className="pt-3.5 pb-2.5 text-[var(--dt-muted)] text-[14px] font-[550] text-center px-[3px] [[data-date-time-density=compact]_&]:pt-[9px] [[data-date-time-density=compact]_&]:pb-1.5 [[data-date-time-density=compact]_&]:text-[11px] [[data-date-time-density=compact]_&]:px-0.5">{label}</span>
       <div
         ref={listRef}
         role="listbox"
@@ -33,7 +32,7 @@ export function DateTimeColumn({ label, options, value, onChange, disabled, comp
         aria-activedescendant={selectedIndex >= 0 ? `${id}-${value}` : undefined}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
-        className={`${styles.timeList} ${compact ? styles.periodList : ""}`}
+        className={`[--row-height:52px] relative h-[calc(var(--row-height)_*_5)] overflow-y-auto overscroll-contain [scrollbar-width:none] [scroll-snap-type:y_proximity] [&::-webkit-scrollbar]:hidden focus-visible:[outline:2px_solid_var(--dt-blue)] focus-visible:[outline-offset:3px] @max-[680px]/date-time:[--row-height:44px] [[data-date-time-density=compact]_&]:[--row-height:36px] ${(compact) ? ("flex flex-col justify-center p-[7px] gap-3 [[data-date-time-density=compact]_&]:p-1 [[data-date-time-density=compact]_&]:gap-2") : ("px-[7px] py-[calc(var(--row-height)_*_2)] [[data-date-time-density=compact]_&]:px-1")}`} data-time-period={compact}
         onKeyDown={(event) => {
           if (disabled) return;
           const enabled = options.filter((option) => !option.disabled);
@@ -60,7 +59,7 @@ export function DateTimeColumn({ label, options, value, onChange, disabled, comp
             disabled={disabled || option.disabled}
             tabIndex={-1}
             data-value={option.value}
-            className={styles.timeOption}
+            className="[&[aria-selected=true]]:[background:var(--dt-blue)] [&[aria-selected=true]]:text-[#fff] [&[aria-selected=true]]:font-bold [&[aria-selected=true]]:shadow-[inset_0_1px_3px_#ffffff22] block w-full h-[var(--row-height)] rounded-[9px] text-[var(--dt-muted)] text-[20px] tabular-nums snap-center [[data-time-period=true]_&]:shrink-0 [[data-date-time-density=compact]_&]:rounded-[6px] [[data-date-time-density=compact]_&]:text-[15px]"
             onClick={() => {
               onChange(option.value);
               listRef.current?.focus({ preventScroll: true });

@@ -1,6 +1,7 @@
 # DateTimePicker
 
 Bộ chọn ngày và giờ riêng, không phụ thuộc `common/calendar/Calendar`.
+Lịch hiển thị 4–6 hàng tuần theo từng tháng, không thêm hàng chỉ gồm ngày của tháng sau.
 Giao diện mặc định là một panel để nhúng trực tiếp trong form, dialog hoặc popover.
 
 `DateTimeInput` bọc panel trong một ô nhập có nhãn và popover, dùng cùng props
@@ -42,3 +43,9 @@ Home/End để chọn bằng bàn phím. AM/PM được chuyển thành giờ 24
 Panel tự xếp dọc khi khung chứa rộng tối đa 680px.
 
 Kiểm tra logic ngày–giờ: `npx tsx --test apps/web/lib/utils/dateTimePicker.test.ts`.
+
+`TimeInput` là ô chọn riêng giờ/phút/AM–PM, dùng chung `DateTimeColumn` với
+`DateTimePicker`. `value` / `onChange` dùng chuỗi 24 giờ `HH:mm`, ví dụ `20:30`;
+ô nhập hiển thị `08:30 PM`. Truyền `disabled` để khóa, `id` hoặc `label` để gắn
+nhãn. Popup hỗ trợ các phím mũi tên, Home/End, Escape và nút Xong.
+`TimePicker` có thể nhúng trực tiếp khi không cần ô nhập và popup.

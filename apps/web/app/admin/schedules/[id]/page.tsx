@@ -3,11 +3,12 @@
 import { ScheduleBasicInfoCard } from "@/components/admin/schedules/editor/ScheduleBasicInfoCard";
 import { ScheduleDepartureCard } from "@/components/admin/schedules/editor/ScheduleDepartureCard";
 import { ScheduleAmenitiesCard } from "@/components/admin/schedules/editor/ScheduleAmenitiesCard";
+import { ScheduleAttractionsCard } from "@/components/admin/schedules/editor/ScheduleAttractionsCard";
 import Link from 'next/link';
 import { getAdminLocations } from "@/lib/admin/locations/api";
 import { ScheduleItinerarySection } from "@/components/admin/schedules/editor/ScheduleItinerarySection";
 import { ScheduleSidebar } from "@/components/admin/schedules/editor/ScheduleSidebar";
-import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
+import { TourEditorShell } from "@/components/admin/tours/editor/TourEditorShell";
 import {
   getAdminCatalogTransports,
   getAdminHotels,
@@ -21,16 +22,14 @@ import {
   buildScheduleFormFromResponse,
   buildSchedulePayload,
   createDefaultScheduleForm,
+  createEmptyPickupPoint,
   ensureItineraryDays,
 } from "@/lib/admin/schedules/forms";
 import { getAdminTourDetail } from "@/lib/admin/tours/api";
-import { getToken } from "@/lib/auth/session";
-import { API_BASE } from "@/lib/http/config";
-import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
 import { useToast } from "@/lib/notifications/useToast";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   HotelItem,
   LocationOption,
@@ -48,11 +47,11 @@ export default function AdminScheduleDetailPage() {
   const { success, error: showError } = useToast();
   const isNew = id === "new";
   const tourId = searchParams.get("tourId");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [tourInfo, setTourInfo] = useState<TourInfo | null>(null);
   const [hasBookings, setHasBookings] = useState(false);
   const [bookedCount, setBookedCount] = useState(0);
@@ -91,6 +90,7 @@ export default function AdminScheduleDetailPage() {
   useEffect(() => {
     const initPage = async () => {
       setLoading(true);
+      setLoadError("");
 
       try {
         const [hotelData, transportData, locationData] = await Promise.all([
@@ -113,26 +113,23 @@ export default function AdminScheduleDetailPage() {
           currentTourId = scheduleData.tour_id
             ? String(scheduleData.tour_id)
             : currentTourId;
-          setHasBookings(
-            Boolean(
-              scheduleData.hasBookings ??
-              Number(scheduleData.booked_count || 0) > 0,
-            ),
-          );
+          const booked = Boolean(scheduleData.hasBookings ?? Number(scheduleData.booked_count || 0) > 0);
+          setHasBookings(booked);
           setBookedCount(Number(scheduleData.booked_count || 0));
           setOriginalQuota(Number(scheduleData.quota || 0));
 
-          scheduleData.tour_itineraries?.forEach((day) => {
-            if (day.hotel_id) {
-              void fetchRoomTypes(day.hotel_id);
-            }
-          });
-
-          setForm(buildScheduleFormFromResponse(scheduleData));
+          const restored = buildScheduleFormFromResponse(scheduleData);
+          const hotelIds = new Set(restored.itinerary.map(day => Number(day.hotel_id)).filter(Boolean));
+          await Promise.all([...hotelIds].map(fetchRoomTypes));
+          const locked = booked || Date.parse(scheduleData.start_date || "") < Date.now();
+          setForm(!locked && !restored.pickup_points.length
+            ? { ...restored, pickup_points: [createEmptyPickupPoint(restored)] }
+            : restored);
         } else {
           setForm(createDefaultScheduleForm());
         }
 
+        if (!currentTourId) throw new Error("Vui lòng chọn tour trước khi thêm lịch khởi hành.");
         if (currentTourId) {
           const tourData = await getAdminTourDetail<TourInfo>(currentTourId);
           setTourInfo(tourData.tour);
@@ -140,6 +137,8 @@ export default function AdminScheduleDetailPage() {
             tour_schedule_amenities: copyTourAmenities(tourData.tour.tour_amenities || []),
           }));
         }
+      } catch (error) {
+        setLoadError(error instanceof Error ? error.message : "Không thể tải thông tin lịch khởi hành.");
       } finally {
         setLoading(false);
       }
@@ -173,10 +172,13 @@ export default function AdminScheduleDetailPage() {
   }, [tourInfo]);
 
   const handleSave = async () => {
+    if (saving || uploading || isPast || loadError) return;
+    const incompleteHotel = form.itinerary.find(day => Boolean(day.hotel_id) !== Boolean(day.room_type_id));
+    if (incompleteHotel) { showError(`Ngày ${incompleteHotel.day_number}: vui lòng chọn đủ khách sạn và loại phòng trước khi lưu.`); return; }
     if (form.itinerary.some(day => (day.activities || []).some(activity => !/^([01]\d|2[0-3]):[0-5]\d$/.test(activity.time) || !activity.title.trim()))) {
       showError("Vui lòng nhập giờ và tiêu đề cho tất cả hoạt động trong lịch trình."); return;
     }
-    if (!form.departure_location_id) { showError("Vui lòng chọn nơi xuất phát của chuyến."); return; }
+    if (!form.departure_location_id) { showError("Tour gốc chưa có nơi xuất phát. Vui lòng cập nhật tour trước khi thêm lịch khởi hành."); return; }
     if (form.pickup_points.some(point => !point.name.trim() || !point.address.trim() || !point.pickup_at || Number.isNaN(Date.parse(point.pickup_at)))) {
       showError("Vui lòng điền tên, địa chỉ và thời gian cho tất cả điểm đón."); return;
     }
@@ -228,35 +230,6 @@ export default function AdminScheduleDetailPage() {
     }
   };
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const token = getToken();
-    if (!token) {
-      showError("Bạn chưa đăng nhập");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const data = await uploadAuthenticatedFile(
-        `${API_BASE}/admin/tours/upload-schedule-image`,
-        token,
-        file,
-        "Lỗi upload",
-      );
-      setForm((prev) => ({ ...prev, cover_image_url: data?.url || "" }));
-      success("Tải ảnh lên thành công");
-    } catch {
-      showError("Lỗi upload");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -265,16 +238,17 @@ export default function AdminScheduleDetailPage() {
     );
   }
 
+  if (loadError) return <div role="alert" className="mx-auto max-w-3xl rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-700"><p>{loadError}</p><Link href="/admin/schedules" className="mt-4 inline-block font-bold underline">Quay lại quản lý lịch khởi hành</Link></div>;
+
   return (
-    <div className="mx-auto max-w-5xl space-y-4 pb-20">
-      <AdminBackPageHeader
+    <TourEditorShell
         title={isNew ? "Thiết lập lịch mới" : "Chỉnh sửa lịch khởi hành"}
         description={tourInfo?.name || ""}
         onBack={() => router.back()}
-      />
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="space-y-8 lg:col-span-2">
+        sections={[{ id: "schedule-info", label: "Thông tin & Giá" }, { id: "schedule-pickups", label: "Điểm đón" }, { id: "schedule-attractions", label: "Tham quan" }, { id: "schedule-itinerary", label: "Lịch trình" }]}
+    >
+      <div className="grid items-start gap-[22px] lg:grid-cols-[minmax(0,min(calc((100%_-_22px)*1.55/2.55),calc(100%_-_302px)))_minmax(260px,calc((100%_-_22px)/3.4))] lg:justify-start">
+        <div className="flex min-w-0 flex-col gap-[22px]">
           {hasBookings && !isPast ? (
             <div className="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
               Đợt khởi hành này đã có đơn đặt, hiện có {bookedCount} khách giữ chỗ. Bạn vẫn có thể
@@ -293,10 +267,12 @@ export default function AdminScheduleDetailPage() {
             onFormChange={setForm}
           />
 
-          <ScheduleDepartureCard form={form} locations={locations} disabled={isPast || hasBookings} onChange={setForm} />
+          <ScheduleDepartureCard form={form} disabled={isPast || hasBookings} onChange={setForm} />
+          <ScheduleAttractionsCard form={form} locations={locations} tourInfo={tourInfo} disabled={isPast} onChange={setForm} />
           <ScheduleAmenitiesCard form={form} template={tourInfo?.tour_amenities || []} disabled={isPast || hasBookings} onChange={setForm} />
           {!isNew && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white p-5"><div><h2 className="font-bold text-slate-900">Nhân sự phụ trách chuyến</h2><p className="mt-1 text-xs text-slate-500">Chọn miền điều hành, hướng dẫn viên và trưởng đoàn trong phần điều hành.</p></div><Link href="/admin/workforce?tab=trips" className="rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700">Phân công nhân sự</Link></div>}
 
+          <div id="schedule-itinerary" className="scroll-mt-5">
           <ScheduleItinerarySection
             locations={locations}
             form={form}
@@ -310,6 +286,7 @@ export default function AdminScheduleDetailPage() {
             onFormChange={setForm}
             onHotelSelect={(hotelId) => void fetchRoomTypes(hotelId)}
           />
+          </div>
         </div>
 
         <ScheduleSidebar
@@ -317,12 +294,11 @@ export default function AdminScheduleDetailPage() {
           isPast={isPast}
           saving={saving}
           uploading={uploading}
-          fileInputRef={fileInputRef}
           onSave={handleSave}
-          onFileUpload={handleFileUpload}
+          onUploadingChange={setUploading}
           onFormChange={setForm}
         />
       </div>
-    </div>
+    </TourEditorShell>
   );
 }

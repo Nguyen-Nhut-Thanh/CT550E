@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { TourAdminPayload, TourListParams } from 'shared';
 import { requireFields } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries, normalizeTourSummary } from "./tour-input";
+import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries, normalizeTourSummary, normalizeCutOffHours, normalizeTourDuration, normalizeTourImages } from "./tour-input";
 import { getTourCountries, tourCountrySelect } from './tour-list';
 import type { Prisma } from '@prisma/client';
 import { normalizeAmenities } from './tour-amenities';
@@ -12,6 +12,9 @@ export class ToursAdminService {
     private async validateRoute(tx: Prisma.TransactionClient, ids: number[], tourId?: number) {
         const count = await tx.locations.count({ where: { location_id: { in: ids }, level_id: 5 } });
         if (count !== ids.length) throw new BadRequestException('Tuyến tour chỉ được chọn tỉnh/thành phố.');
+        if (tourId && await tx.tour_schedule_attractions.count({ where: {
+            schedule: { tour_id: tourId }, location: { parent_id: { notIn: ids } },
+        } })) throw new BadRequestException('Tỉnh/thành đang có điểm tham quan được chọn cho chuyến. Hãy bỏ các điểm liên quan trong lịch khởi hành trước khi đổi tuyến tour.');
         if (tourId && await tx.itinerary_activities.count({ where: {
             itinerary: { tour_schedules: { tour_id: tourId } },
             location: { is: { parent_id: { notIn: ids } } },
@@ -123,6 +126,9 @@ export class ToursAdminService {
         };
     }
     async create(body: TourAdminPayload) {
+        const images = normalizeTourImages(body.images);
+        const duration = normalizeTourDuration(body.duration_days, body.duration_nights === undefined ? 0 : body.duration_nights);
+        const cutOffHours = normalizeCutOffHours(body.cut_off_hours);
         const summary = normalizeTourSummary(body.summary);
         const amenities = body.tour_amenities === undefined ? [] : normalizeAmenities(body.tour_amenities);
         requireFields(body as Record<string, unknown>, [
@@ -141,9 +147,10 @@ export class ToursAdminService {
                         name: String(body.name).trim(),
                         summary: summary ?? null,
                         description: String(body.description),
-                        duration_days: Number(body.duration_days),
-                        duration_nights: Number(body.duration_nights ?? 0),
+                        duration_days: duration.days,
+                        duration_nights: duration.nights,
                         base_price: Number(body.base_price ?? 0),
+                        cut_off_hours: cutOffHours ?? 24,
                         tour_type: body.tour_type ?? 'domestic',
                         departure_location: Number(body.departure_location),
                         transport_id: Number(body.transport_id),
@@ -172,9 +179,9 @@ export class ToursAdminService {
                         })),
                     });
                 }
-                if (Array.isArray(body.images) && body.images.length > 0) {
+                if (images && images.length > 0) {
                     await tx.tour_images.createMany({
-                        data: body.images.map((url, index) => ({
+                        data: images.map((url, index) => ({
                             tour_id: tour.tour_id,
                             image_url: url,
                             is_cover: index === 0 ? 1 : 0,
@@ -199,6 +206,8 @@ export class ToursAdminService {
         }
     }
     async update(id: number, body: TourAdminPayload) {
+        const images = normalizeTourImages(body.images);
+        const cutOffHours = normalizeCutOffHours(body.cut_off_hours);
         const summary = normalizeTourSummary(body.summary);
         const amenities = body.tour_amenities === undefined ? undefined : normalizeAmenities(body.tour_amenities);
         const tour = await this.prisma.tours.findUnique({
@@ -216,6 +225,9 @@ export class ToursAdminService {
         if (!tour) {
             throw new NotFoundException('Tour không tồn tại');
         }
+        const duration = body.duration_days !== undefined || body.duration_nights !== undefined
+            ? normalizeTourDuration(body.duration_days === undefined ? tour.duration_days : body.duration_days, body.duration_nights === undefined ? tour.duration_nights : body.duration_nights)
+            : undefined;
         const scheduleIds = tour.tour_schedules.map((schedule) => schedule.tour_schedule_id);
         const totalBookings = await this.countTourBookings(scheduleIds);
         if (totalBookings > 0) {
@@ -249,13 +261,10 @@ export class ToursAdminService {
                         name: body.name ?? undefined,
                         summary,
                         description: body.description ?? undefined,
-                        duration_days: body.duration_days != null
-                            ? Number(body.duration_days)
-                            : undefined,
-                        duration_nights: body.duration_nights != null
-                            ? Number(body.duration_nights)
-                            : undefined,
+                        duration_days: duration?.days,
+                        duration_nights: duration?.nights,
                         base_price: body.base_price != null ? Number(body.base_price) : undefined,
+                        cut_off_hours: cutOffHours,
                         tour_type: body.tour_type ?? undefined,
                         departure_location: body.departure_location != null
                             ? Number(body.departure_location)
@@ -294,10 +303,10 @@ export class ToursAdminService {
                         })),
                     });
                 }
-                if (Array.isArray(body.images)) {
+                if (images !== undefined) {
                     await tx.tour_images.deleteMany({ where: { tour_id: id } });
                     await tx.tour_images.createMany({
-                        data: body.images.map((url, index) => ({
+                        data: images.map((url, index) => ({
                             tour_id: id,
                             image_url: url,
                             is_cover: index === 0 ? 1 : 0,

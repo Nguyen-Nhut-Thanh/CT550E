@@ -1,235 +1,72 @@
 "use client";
 
 import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
-import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
-import { startOfDay } from "@/lib/utils/calendar";
-import { formatCurrencyInput, parseCurrencyInput } from "@/lib/utils/currency";
-import { formatLocalDate as formatDateString } from "@/lib/utils/dateTime";
-import { Calendar, DollarSign, Users } from "lucide-react";
-import type { ScheduleBasicInfoCardProps as Props } from 'shared';
+import { PriceInput } from "@/components/common/forms/PriceInput";
+import { VndPriceInput } from "@/components/common/forms/VndPriceInput";
+import { TimeInput } from "@/components/common/date-time/TimeInput";
+import { updateScheduleBasePrice, updateScheduleStart } from "@/lib/admin/schedules/forms";
+import { parseCalendarDate, startOfDay } from "@/lib/utils/calendar";
+import { formatLocalDate } from "@/lib/utils/dateTime";
+import { Baby, CalendarDays, Clock3, Coins, Plane, Tag, UserRound, UsersRound } from "lucide-react";
+import { FaChild } from "react-icons/fa6";
+import type { ScheduleBasicInfoCardProps } from "shared";
+import { TourEditorCard as ScheduleEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 
-export function ScheduleBasicInfoCard({
-  form,
-  isPast,
-  hasBookings,
-  bookedCount,
-  originalQuota,
-  tourInfo,
-  onFormChange,
-}: Props) {
+export function ScheduleBasicInfoCard({ form, isPast, hasBookings, bookedCount, originalQuota, tourInfo, onFormChange }: ScheduleBasicInfoCardProps) {
   const lockedDates = isPast || (hasBookings && form.pickup_points.length > 0);
-  const minScheduleDate = (() => {
-    const base = new Date();
-    const cutOffHours = Number(tourInfo?.cut_off_hours ?? 0);
-    if (cutOffHours > 0) {
-      base.setHours(base.getHours() + cutOffHours);
-    }
-    return formatDateString(base);
-  })();
-
-  const handleStartDateChange = (value: string) => {
-    const nextDate = new Date(value);
-    if (Number.isNaN(nextDate.getTime())) return;
-
-    const today = startOfDay(new Date());
-    const effectiveMinDate = new Date(`${minScheduleDate}T00:00:00`);
-    if (nextDate <= today || nextDate < effectiveMinDate) return;
-
-    const durationDays = Number(tourInfo?.duration_days ?? 0) || 1;
-    const endDate = new Date(
-      nextDate.getTime() + (durationDays - 1) * 24 * 60 * 60 * 1000,
-    );
-
-    onFormChange((prev) => ({
-      ...prev,
-      start_date: formatDateString(nextDate),
-      end_date: formatDateString(endDate),
-    }));
+  const minimum = new Date(Date.now() + Number(tourInfo?.cut_off_hours ?? 0) * 60 * 60 * 1000);
+  const minScheduleDate = formatLocalDate(minimum);
+  const changeDate = (value: string) => {
+    const date = parseCalendarDate(value);
+    const minDate = parseCalendarDate(minScheduleDate);
+    if (!date || date < startOfDay(new Date()) || (minDate && date < minDate)) return;
+    onFormChange(previous => updateScheduleStart(previous, value, previous.start_time, Number(tourInfo?.duration_days) || 1));
   };
 
-  return (
-    <AdminFormCard
-      title="Thông tin cơ bản & Giá"
-      icon={
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-          <Calendar size={18} />
+  return <ScheduleEditorCard id="schedule-info" title="Thông tin cơ bản & Giá" description="Thiết lập ngày khởi hành, giờ khởi hành, giá vé và số lượng chỗ cho đợt tour." icon={Plane}>
+    <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2">
+      <div className="space-y-2">
+        <p className="flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><CalendarDays size={18} className="text-[#0868f9]" />Ngày khởi hành</p>
+        <div className="[&_button[aria-expanded]]:min-h-[48px] [&_button[aria-expanded]]:rounded-[11px] [&_button[aria-expanded]]:border-[#dfe6f1] [&_button[aria-expanded]]:shadow-[0_3px_8px_#308ac80a]">
+          <AdminDatePicker value={form.start_date} minDate={minScheduleDate} disabled={lockedDates} placeholder="Chọn ngày khởi hành" onChange={changeDate} />
         </div>
-      }
-      bodyClassName="space-y-8 p-8"
-    >
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-            <Calendar size={16} className="text-blue-600" />
-            Ngày khởi hành
-          </label>
-          <AdminDatePicker
-            value={form.start_date}
-            minDate={minScheduleDate}
-            disabled={lockedDates}
-            onChange={handleStartDateChange}
-          />
-          {hasBookings && !isPast ? (
-            <p className="px-1 text-xs font-medium text-amber-700">
-              {lockedDates ? 'Ngày giờ được khóa để giữ đúng thời gian đón đã xác nhận cho khách.' : 'Nếu thay đổi ngày hoặc giờ khởi hành, hệ thống sẽ gửi email thông báo đến khách đã đặt.'}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label className="ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-            <Calendar size={16} className="text-blue-600" />
-            Giờ khởi hành
-          </label>
-          <div className="flex min-h-[64px] flex-col justify-center rounded-[20px] border border-[#e4ebf4] bg-white px-4 py-2 shadow-[0_8px_20px_rgba(15,23,42,0.06)]">
-            <input
-              type="time"
-              disabled={lockedDates}
-              className={`w-full border-0 bg-transparent p-0 text-sm font-bold outline-none focus:ring-0 ${
-                isPast ? "cursor-not-allowed text-slate-400" : "text-blue-600"
-              }`}
-              value={form.start_time}
-              onChange={(event) =>
-                onFormChange((prev) => ({
-                  ...prev,
-                  start_time: event.target.value,
-                }))
-              }
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-            Giá đợt khởi hành (Người lớn)
-          </label>
-          <div className="relative">
-            <DollarSign
-              size={18}
-              className={`absolute left-4 top-1/2 -translate-y-1/2 ${
-                isPast ? "text-slate-300" : "text-emerald-500"
-              }`}
-            />
-            <input
-              type="text"
-              disabled={isPast}
-              className={`w-full rounded-2xl border py-3.5 pl-11 pr-12 font-black shadow-sm outline-none transition-all focus:bg-white ${
-                isPast
-                  ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300"
-                  : "border-emerald-100 bg-emerald-50 text-emerald-700 focus:border-emerald-500"
-              }`}
-              value={formatCurrencyInput(form.price)}
-              placeholder="0"
-              onChange={(event) => {
-                const value =
-                  event.target.value === "" ? 0 : parseCurrencyInput(event.target.value);
-                onFormChange((prev) => ({
-                  ...prev,
-                  price: value,
-                  prices: prev.prices.map((item) =>
-                    item.passenger_type === "adult"
-                      ? { ...item, price: value }
-                      : item,
-                  ),
-                }));
-              }}
-            />
-            <span
-              className={`absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black ${
-                isPast ? "text-slate-300" : "text-emerald-600"
-              }`}
-            >
-              VND
-            </span>
-          </div>
-          {hasBookings && !isPast ? (
-            <p className="px-1 text-xs font-medium text-emerald-700">
-              Giá mới chỉ áp dụng cho booking phát sinh sau khi cập nhật. Các booking cũ
-              vẫn giữ nguyên đơn giá đã chốt.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-            Số lượng chỗ tối đa
-          </label>
-          <div className="relative">
-            <Users
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="number"
-              disabled={isPast}
-              className={`w-full rounded-2xl border border-slate-100 bg-slate-50 py-3.5 pl-11 pr-4 font-bold shadow-sm outline-none transition-all focus:border-blue-500 focus:bg-white ${
-                isPast ? "cursor-not-allowed text-slate-300" : "text-slate-700"
-              }`}
-              value={form.quota === 0 ? "" : form.quota}
-              placeholder="VD: 20"
-              onChange={(event) =>
-                onFormChange((prev) => ({
-                  ...prev,
-                  quota: event.target.value === "" ? 0 : Number(event.target.value),
-                }))
-              }
-            />
-          </div>
-          {hasBookings && !isPast ? (
-            <p className="px-1 text-xs font-medium text-amber-700">
-              Đợt này đã có {bookedCount} khách đặt. Nếu chỉnh quota, bạn chỉ được tăng
-              cao hơn mức hiện tại {originalQuota}.
-            </p>
-          ) : null}
-        </div>
+        {form.end_date && <p className="text-[11px] text-[#8293ac]">Ngày về: {parseCalendarDate(form.end_date)?.toLocaleDateString("vi-VN")}</p>}
+        {hasBookings && !isPast && <p className="text-[11px] leading-[1.6] text-amber-700">{lockedDates ? "Ngày giờ đã khóa theo thông tin đón khách đã xác nhận." : "Đổi ngày giờ sẽ gửi thông báo đến khách đã đặt."}</p>}
       </div>
-
-      <div className="space-y-4 border-t border-slate-50 pt-4">
-        <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          <DollarSign size={14} className={isPast ? "text-slate-300" : "text-emerald-500"} />
-          Bảng giá chi tiết (VND)
-        </h3>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {form.prices.map((priceItem, index) => (
-            <div
-              key={priceItem.passenger_type}
-              className={`group space-y-2 rounded-2xl border p-4 transition-all ${
-                isPast
-                  ? "border-slate-100 bg-slate-50"
-                  : "border-slate-100 bg-slate-50 hover:border-blue-100 hover:bg-white"
-              }`}
-            >
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                {priceItem.passenger_type === "adult"
-                  ? "Người lớn"
-                  : priceItem.passenger_type === "child"
-                    ? "Trẻ em"
-                    : "Em bé"}
-              </label>
-              <input
-                type="text"
-                className={`w-full rounded-xl border px-3 py-2 text-sm font-black outline-none transition-all ${
-                  isPast || priceItem.passenger_type === "adult"
-                    ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300"
-                    : "border-slate-200 bg-white text-blue-600 focus:border-blue-500"
-                }`}
-                value={formatCurrencyInput(priceItem.price)}
-                placeholder="0"
-                disabled={isPast || priceItem.passenger_type === "adult"}
-                onChange={(event) => {
-                  const nextPrices = [...form.prices];
-                  nextPrices[index].price =
-                    event.target.value === ""
-                      ? 0
-                      : parseCurrencyInput(event.target.value);
-                  onFormChange((prev) => ({ ...prev, prices: nextPrices }));
-                }}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="space-y-2">
+        <label htmlFor="schedule-start-time" className="flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><Clock3 size={18} className="text-[#0868f9]" />Giờ khởi hành</label>
+        <TimeInput id="schedule-start-time" ariaLabel="Giờ khởi hành" disabled={lockedDates} value={form.start_time} onChange={time => {
+            onFormChange(previous => previous.start_date ? updateScheduleStart(previous, previous.start_date, time, Number(tourInfo?.duration_days) || 1) : { ...previous, start_time: time });
+          }} />
       </div>
-    </AdminFormCard>
-  );
+      <div className="space-y-2">
+        <label htmlFor="schedule-base-price" className="flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><Tag size={18} className="text-[#0868f9]" />Giá đợt khởi hành (Người lớn)</label>
+        <VndPriceInput id="schedule-base-price" disabled={isPast} value={form.price} placeholder="Ví dụ: 11.100.000" onChange={price => onFormChange(previous => updateScheduleBasePrice(previous, price))} />
+        {hasBookings && !isPast && <p className="text-[11px] leading-[1.6] text-[#7287a4]">Giá mới áp dụng cho đơn mới. Đơn đã đặt giữ nguyên giá đã chốt.</p>}
+      </div>
+      <div className="space-y-2">
+        <label htmlFor="schedule-quota" className="flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><UsersRound size={18} className="text-[#0868f9]" />Số lượng chỗ tối đa</label>
+        <div className="relative"><UsersRound size={18} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[#0868f9]" />
+          <input id="schedule-quota" type="number" min={hasBookings ? originalQuota : 1} step={1} disabled={isPast} value={form.quota || ""} placeholder="VD: 20" onChange={event => onFormChange(previous => ({ ...previous, quota: Number(event.target.value) }))} className="min-h-[48px] w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] py-3 pr-3 pl-11 text-[14px] text-[#203553] shadow-[0_3px_8px_#308ac80a] outline-none focus:border-[#79a8f5] disabled:cursor-not-allowed disabled:text-slate-400" />
+        </div>
+        {hasBookings && !isPast && <p className="text-[11px] leading-[1.6] text-amber-700">Đã có {bookedCount} khách. Chỉ được tăng số chỗ so với mức hiện tại {originalQuota}.</p>}
+      </div>
+    </div>
+
+    <div className="mt-7">
+      <h3 className="mb-4 flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><Coins size={18} className="text-[#0868f9]" />Bảng giá chi tiết (VNĐ)<span aria-hidden="true" className="ml-2 h-px flex-1 bg-[#dfebf8]" /></h3>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {form.prices.map(item => {
+          const adult = item.passenger_type === "adult";
+          const Icon = adult ? UserRound : item.passenger_type === "child" ? FaChild : Baby;
+          const label = adult ? "Người lớn" : item.passenger_type === "child" ? "Trẻ em" : "Em bé";
+          const inputId = `schedule-price-${item.passenger_type}`;
+          return <div key={item.passenger_type} className="min-w-0 rounded-[17px] bg-[linear-gradient(135deg,#f6faff,#edf5ff)] p-3.5">
+            <label htmlFor={inputId} className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><Icon size={19} className="text-[#0868f9]" />{label}</label>
+            <PriceInput id={inputId} label="" icon={null} suffix="" value={adult ? form.price : item.price} disabled={isPast || adult} placeholder="0" inputClassName="min-h-10 w-full min-w-0 rounded-[11px] border border-[#d8e4f4] bg-white/65 px-3 py-2 text-[14px] font-bold text-[#0865e9] outline-none focus:border-[#79a8f5] disabled:cursor-not-allowed disabled:bg-[#f5f8fc] disabled:text-[#9ba7b8]" onChange={price => onFormChange(previous => ({ ...previous, prices: previous.prices.map(row => row.passenger_type === item.passenger_type ? { ...row, price } : row) }))} />
+          </div>;
+        })}
+      </div>
+    </div>
+  </ScheduleEditorCard>;
 }

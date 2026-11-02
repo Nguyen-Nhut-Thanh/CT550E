@@ -50,9 +50,9 @@ export function PriceInput({
               : "border-slate-100 focus:border-blue-500 focus:bg-white"
           } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+        {suffix && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
           {suffix}
-        </div>
+        </div>}
       </div>
       {error && <p id={`${inputId}-error`} role="alert" className="ml-1 text-[10px] font-bold text-rose-500">{error}</p>}
     </div>

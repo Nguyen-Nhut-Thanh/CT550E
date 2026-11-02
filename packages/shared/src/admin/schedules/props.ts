@@ -1,4 +1,3 @@
-import type * as ReactTypes from 'react';
 import type { ScheduleFormState } from "./forms";
 import type { AdminSchedule, HotelItem, RoomTypeItem, ScheduleOverviewTour, ScheduleTablePanelTour, TourInfo, TransportItem } from "./models";
 export type ScheduleBasicInfoCardProps = {
@@ -28,9 +27,8 @@ export type ScheduleSidebarProps = {
     isPast: boolean;
     saving: boolean;
     uploading: boolean;
-    fileInputRef: ReactTypes.RefObject<HTMLInputElement | null>;
     onSave: () => void;
-    onFileUpload: (event: ReactTypes.ChangeEvent<HTMLInputElement>) => void;
+    onUploadingChange: (uploading: boolean) => void;
     onFormChange: (updater: (prev: ScheduleFormState) => ScheduleFormState) => void;
 };
 export type ScheduleTablePanelProps = {

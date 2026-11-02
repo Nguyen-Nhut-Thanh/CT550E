@@ -15,6 +15,7 @@ export type ItineraryFormItem = {
     room_type_id: string | number;
 };
 export type ScheduleFormState = {
+    attraction_ids: number[];
     use_tour_amenities: boolean;
     copy_tour_amenities: boolean;
     tour_schedule_amenities: import('../../tours/amenities').ScheduleAmenity[];

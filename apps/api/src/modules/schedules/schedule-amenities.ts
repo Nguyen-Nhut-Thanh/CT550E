@@ -21,7 +21,8 @@ export async function saveScheduleAmenities(tx: Prisma.TransactionClient, schedu
     const rows = shouldCopy
         ? template.map((item, sort_order) => ({ kind: item.kind, title: item.title, content: item.content, sort_order, is_visible: true, source_amenity_id: item.amenity_id }))
         : body.tour_schedule_amenities !== undefined
-            ? normalizeAmenities(body.tour_schedule_amenities, true).map(item => ({ ...item, is_visible: item.is_visible ?? true,
+            ? normalizeAmenities(body.tour_schedule_amenities, true).map(item => ({
+                ...item, is_visible: item.is_visible ?? true,
                 source_amenity_id: current.tour_schedule_amenities.find(old => old.kind === item.kind)?.source_amenity_id ?? (creating ? template.find(source => source.kind === item.kind)?.amenity_id : null) ?? null,
             }))
             : current.tour_schedule_amenities;
@@ -32,10 +33,12 @@ export async function saveScheduleAmenities(tx: Prisma.TransactionClient, schedu
     }
     if (changed || (shouldCopy && current._count.bookings === 0)) {
         await tx.tour_schedule_amenities.deleteMany({ where: { tour_schedule_id: scheduleId } });
-        if (rows.length) await tx.tour_schedule_amenities.createMany({ data: rows.map(item => ({
-            tour_schedule_id: scheduleId, source_amenity_id: item.source_amenity_id,
-            kind: item.kind, title: item.title, content: item.content, sort_order: item.sort_order, is_visible: item.is_visible,
-        })) });
+        if (rows.length) await tx.tour_schedule_amenities.createMany({
+            data: rows.map(item => ({
+                tour_schedule_id: scheduleId, source_amenity_id: item.source_amenity_id,
+                kind: item.kind, title: item.title, content: item.content, sort_order: item.sort_order, is_visible: item.is_visible,
+            }))
+        });
     }
     if (useTemplate !== current.use_tour_amenities) await tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { use_tour_amenities: useTemplate } });
 }

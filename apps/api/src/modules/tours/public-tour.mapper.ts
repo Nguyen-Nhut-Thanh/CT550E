@@ -101,7 +101,7 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
     onlyFlashDeal?: boolean;
 }) {
     const now = new Date();
-    const cutOffHours = t.cut_off_hours || 24;
+    const cutOffHours = t.cut_off_hours ?? 24;
     const onlyFlashDeal = options?.onlyFlashDeal === true;
     const schedules = Array.isArray(t.tour_schedules)
         ? t.tour_schedules

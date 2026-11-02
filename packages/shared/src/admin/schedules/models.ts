@@ -46,6 +46,7 @@ export type ScheduleHotelItem = {
     } | null;
 };
 export type ScheduleDetailResponse = {
+    tour_schedule_attractions?: NonNullable<import('../../tours/models').TourSchedule['tour_schedule_attractions']>;
     use_tour_amenities?: boolean;
     tour_schedule_amenities?: import('../../tours/amenities').ScheduleAmenity[];
     departure_location_id?: number;

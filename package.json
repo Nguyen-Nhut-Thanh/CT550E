@@ -18,6 +18,7 @@
     "db:tour-summary-cleanup": "node scripts/apply-tour-summary-cleanup.cjs",
     "test:amenities": "tsx --tsconfig apps/api/tsconfig.json scripts/test-tour-amenities.ts",
     "db:itinerary": "node scripts/apply-itinerary-activities.cjs",
+    "db:schedule-attractions": "node scripts/apply-schedule-attractions.cjs",
     "test:itinerary": "tsx --tsconfig apps/api/tsconfig.json scripts/test-itinerary-activities.ts",
     "db:push": "npm run prisma:push --workspace=database",
     "db:membership": "node scripts/apply-membership.cjs",

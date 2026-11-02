@@ -67,6 +67,7 @@ export type TourScheduleTransport = {
     transports: { name: string; transport_type: string; description: string | null };
 };
 export type TourSchedule = {
+    tour_schedule_attractions?: Array<{ location_id: number; sort_order: number; location?: ItineraryActivity['location'] }>;
     tour_schedule_amenities?: import('./amenities').ScheduleAmenity[];
     departure_location_id?: number;
     departure_location?: TourLocation | null;

@@ -1,59 +1,57 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from 'react';
-import type { LocationOption, ScheduleFormState } from 'shared';
-import { AdminFormCard } from '@/components/admin/common/AdminFormCard';
-import { MapPin, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { createEmptyPickupPoint, pickupDateToInput, pickupInputToDate } from "@/lib/admin/schedules/forms";
+import { DateTimeInput } from "@/components/common/date-time/DateTimeInput";
+import { ArrowDown, ArrowUp, CalendarDays, Flag, Info, MapPin, NotebookText, Plus, Trash2 } from "lucide-react";
+import { useId, type Dispatch, type SetStateAction } from "react";
+import type { ScheduleFormState } from "shared";
+import { TourEditorCard as ScheduleEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 
-export function ScheduleDepartureCard({ form, locations, disabled, onChange }: {
-  form: ScheduleFormState;
-  locations: LocationOption[];
-  disabled: boolean;
-  onChange: Dispatch<SetStateAction<ScheduleFormState>>;
+export function ScheduleDepartureCard({ form, disabled, onChange }: {
+  form: ScheduleFormState; disabled: boolean; onChange: Dispatch<SetStateAction<ScheduleFormState>>;
 }) {
-  const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50 disabled:text-slate-500';
-  function update(index: number, field: 'name' | 'address' | 'pickup_at' | 'note', value: string) {
-    onChange(prev => ({ ...prev, pickup_points: prev.pickup_points.map((point, i) => i === index ? { ...point, [field]: value } : point) }));
+  const id = useId();
+  function update(index: number, field: keyof ScheduleFormState["pickup_points"][number], value: string) {
+    onChange(previous => ({ ...previous, pickup_points: previous.pickup_points.map((point, i) => i === index ? { ...point, [field]: value } : point) }));
   }
   function move(index: number, offset: number) {
-    onChange(prev => {
-      const points = [...prev.pickup_points];
+    onChange(previous => {
+      if (index + offset < 0 || index + offset >= previous.pickup_points.length) return previous;
+      const points = [...previous.pickup_points];
       [points[index], points[index + offset]] = [points[index + offset], points[index]];
-      return { ...prev, pickup_points: points };
+      return { ...previous, pickup_points: points };
     });
   }
-  return <AdminFormCard title="Nơi xuất phát & Điểm đón" icon={<MapPin size={20} className="text-blue-600" />} bodyClassName="space-y-5 p-6">
-    <label className="block space-y-2 text-sm font-semibold text-slate-700">
-      <span>Nơi xuất phát của chuyến</span>
-      <select className={inputClass} disabled={disabled} value={form.departure_location_id}
-        onChange={event => onChange(prev => ({ ...prev, departure_location_id: event.target.value ? Number(event.target.value) : '' }))}>
-        <option value="">Chọn nơi xuất phát</option>
-        {locations.map(location => <option key={location.location_id} value={location.location_id}>{location.name}</option>)}
-      </select>
-    </label>
-    <p className="text-xs text-slate-500">Nơi xuất phát được lưu riêng cho chuyến này. Các điểm đón bên dưới dùng chung quỹ chỗ của chuyến.</p>
-    {disabled && <p className="text-sm text-amber-700">Chuyến đã khởi hành hoặc đã có đơn đặt nên không thể thay đổi nơi xuất phát và điểm đón.</p>}
+  return <ScheduleEditorCard id="schedule-pickups" title="Địa điểm đón khách" description="Thiết lập thông tin và thời gian đón khách cho chuyến đi." icon={MapPin}>
+    {disabled && <p className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[12px] leading-[1.7] text-amber-800"><Info size={16} className="mt-0.5 shrink-0" />Điểm đón đã được khóa vì chuyến đã khởi hành hoặc có đơn đặt.</p>}
     <div className="space-y-4">
-      {form.pickup_points.map((point, index) => <div key={index} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-slate-700">Điểm đón {index + 1}</span>
-          <div className="flex gap-2">
-            <button type="button" aria-label={`Đưa điểm đón ${index + 1} lên`} disabled={disabled || index === 0} onClick={() => move(index, -1)} className="p-1 disabled:opacity-30"><ArrowUp size={17} /></button>
-            <button type="button" aria-label={`Đưa điểm đón ${index + 1} xuống`} disabled={disabled || index === form.pickup_points.length - 1} onClick={() => move(index, 1)} className="p-1 disabled:opacity-30"><ArrowDown size={17} /></button>
-            <button type="button" aria-label={`Xóa điểm đón ${index + 1}`} disabled={disabled} className="p-1 text-red-600 disabled:opacity-30"
-              onClick={() => onChange(prev => ({ ...prev, pickup_points: prev.pickup_points.filter((_, i) => i !== index) }))}><Trash2 size={17} /></button>
+      {form.pickup_points.map((point, index) => <fieldset key={index} disabled={disabled} className="overflow-hidden rounded-[16px] border border-[#cfe1f8] bg-[linear-gradient(145deg,#fff,#f5f9ff)]">
+        <legend className="sr-only">Điểm đón {index + 1}</legend>
+        <div className="flex items-center justify-between gap-2 border-b border-[#e0ecfa] bg-[linear-gradient(110deg,#f4faff,#eaf4ff)] px-4 py-3">
+          <h3 className="flex items-center gap-2 text-[14px] font-bold text-[#17304e]"><MapPin size={20} className="text-[#0868f9]" />Điểm đón {index + 1}</h3>
+          <div className="flex items-center gap-1">
+            <button type="button" aria-label={`Đưa điểm đón ${index + 1} lên`} disabled={disabled || index === 0} onClick={() => move(index, -1)} className="rounded-lg p-1.5 text-[#7790ac] hover:bg-white disabled:opacity-30"><ArrowUp size={17} /></button>
+            <button type="button" aria-label={`Đưa điểm đón ${index + 1} xuống`} disabled={disabled || index === form.pickup_points.length - 1} onClick={() => move(index, 1)} className="rounded-lg p-1.5 text-[#7790ac] hover:bg-white disabled:opacity-30"><ArrowDown size={17} /></button>
+            <button type="button" aria-label={`Xóa điểm đón ${index + 1}`} onClick={() => onChange(previous => ({ ...previous, pickup_points: previous.pickup_points.filter((_, i) => i !== index) }))} className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 disabled:opacity-30"><Trash2 size={17} /></button>
           </div>
         </div>
-        <label className="block space-y-1 text-xs text-slate-600"><span>Tên điểm đón</span><input className={inputClass} disabled={disabled} maxLength={150} value={point.name} onChange={e => update(index, 'name', e.target.value)} placeholder="Ví dụ: Bến xe Cần Thơ" /></label>
-        <label className="block space-y-1 text-xs text-slate-600"><span>Địa chỉ cụ thể</span><input className={inputClass} disabled={disabled} maxLength={500} value={point.address} onChange={e => update(index, 'address', e.target.value)} /></label>
-        <label className="block space-y-1 text-xs text-slate-600"><span>Ngày và giờ đón (giờ Việt Nam)</span><input type="datetime-local" className={inputClass} disabled={disabled} value={point.pickup_at} onChange={e => update(index, 'pickup_at', e.target.value)} /></label>
-        <label className="block space-y-1 text-xs text-slate-600"><span>Hướng dẫn đón khách</span><input className={inputClass} disabled={disabled} maxLength={1000} value={point.note} onChange={e => update(index, 'note', e.target.value)} placeholder="Ví dụ: Có mặt trước 15 phút" /></label>
-      </div>)}
+        <div className="space-y-4 p-4">
+          {([
+            { field: "name", label: "Tên điểm đón", placeholder: "Ví dụ: Bến xe Cần Thơ", icon: Flag, max: 150 },
+            { field: "address", label: "Địa chỉ chi tiết", placeholder: "Nhập địa chỉ đón khách", icon: MapPin, max: 500 },
+            { field: "pickup_at", label: "Ngày và giờ đón (giờ Việt Nam)", placeholder: "", icon: CalendarDays, max: undefined },
+            { field: "note", label: "Hướng dẫn đón khách", placeholder: "Ví dụ: Có mặt trước 15 phút", icon: NotebookText, max: 1000 },
+          ] as const).map(({ field, label, placeholder, icon: Icon, max }) => <div key={field} className="flex items-start gap-3">
+            <Icon size={19} className="mt-0.5 shrink-0 text-[#0868f9]" />
+            <div className="min-w-0 flex-1">
+              <label htmlFor={`${id}-${index}-${field}`} className="mb-1.5 block text-[13px] font-semibold text-[#26324e]">{label}{field !== "note" && <span className="ml-1 text-rose-500">*</span>}</label>
+              {field === "pickup_at" ? <DateTimeInput id={`${id}-${index}-${field}`} ariaLabel={`${label} - Điểm đón ${index + 1}`} value={pickupInputToDate(point.pickup_at)} onChange={value => update(index, field, pickupDateToInput(value))} disabled={disabled} placeholder="Chọn ngày và giờ đón" className="[&>button]:min-h-10 [&>button]:rounded-[11px] [&>button]:border-[#dfe6f1] [&>button]:bg-[#f8faff] [&>button]:py-2" /> : <input id={`${id}-${index}-${field}`} type="text" maxLength={max} value={point[field]} onChange={event => update(index, field, event.target.value)} placeholder={placeholder} className="min-h-10 w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-2 text-[14px] text-[#233455] outline-none placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:ring-2 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500" />}
+            </div>
+          </div>)}
+        </div>
+      </fieldset>)}
     </div>
-    <button type="button" disabled={disabled || form.pickup_points.length >= 50} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 disabled:opacity-40"
-      onClick={() => onChange(prev => ({ ...prev, pickup_points: [...prev.pickup_points, { name: '', address: '', pickup_at: prev.start_date ? `${prev.start_date}T${prev.start_time}` : '', note: '' }] }))}>
-      <Plus size={16} /> Thêm điểm đón
-    </button>
-    {!form.pickup_points.length && <p className="text-xs text-slate-500">Chưa thiết lập điểm đón cụ thể. Khách vẫn có thể đặt chuyến và liên hệ để được hướng dẫn.</p>}
-  </AdminFormCard>;
+    <button type="button" disabled={disabled || form.pickup_points.length >= 50} onClick={() => onChange(previous => ({ ...previous, pickup_points: [...previous.pickup_points, createEmptyPickupPoint(previous)] }))} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-[13px] font-bold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={18} />Thêm điểm đón</button>
+    {!form.pickup_points.length && <p className="mt-3 text-[12px] leading-[1.7] text-[#8493ab]">Chưa có điểm đón cụ thể cho chuyến này.</p>}
+  </ScheduleEditorCard>;
 }

@@ -1,4 +1,5 @@
 import { formatLocalDate as formatDateString } from "@/lib/utils/dateTime";
+import { parseCalendarDate } from "@/lib/utils/calendar";
 import type { ItineraryFormItem, ScheduleEditorScheduleDetailResponse as ScheduleDetailResponse, ScheduleFormState, SchedulePriceItem } from 'shared';
 
 export const DEFAULT_SCHEDULE_PRICES: SchedulePriceItem[] = [
@@ -6,6 +7,26 @@ export const DEFAULT_SCHEDULE_PRICES: SchedulePriceItem[] = [
   { passenger_type: "child", price: 0, currency: "VND", note: "Giá trẻ em" },
   { passenger_type: "infant", price: 0, currency: "VND", note: "Giá em bé" },
 ];
+
+export function createEmptyPickupPoint(form?: Pick<ScheduleFormState, "start_date" | "start_time">): ScheduleFormState["pickup_points"][number] {
+  return { name: "", address: "", pickup_at: form?.start_date ? `${form.start_date}T${form.start_time || '08:00'}` : "", note: "" };
+}
+
+export function updateScheduleStart(form: ScheduleFormState, date: string, time: string, durationDays: number): ScheduleFormState {
+  const start = parseCalendarDate(date);
+  if (!start) return form;
+  const end = new Date(start);
+  end.setDate(end.getDate() + Math.max(0, (durationDays || 1) - 1));
+  const previousStart = form.start_date ? `${form.start_date}T${form.start_time}` : "";
+  const nextStart = `${date}T${time || '08:00'}`;
+  return { ...form, start_date: date, start_time: time, end_date: formatDateString(end),
+    pickup_points: form.pickup_points.map(point => !point.pickup_at || point.pickup_at === previousStart ? { ...point, pickup_at: nextStart } : point),
+  };
+}
+
+export function updateScheduleBasePrice(form: ScheduleFormState, price: number): ScheduleFormState {
+  return { ...form, price, prices: form.prices.map(item => item.passenger_type === "adult" ? { ...item, price } : item) };
+}
 
 export function createEmptyItineraryDay(dayNumber: number): ItineraryFormItem {
   return {
@@ -22,11 +43,12 @@ export function createEmptyItineraryDay(dayNumber: number): ItineraryFormItem {
 
 export function createDefaultScheduleForm(): ScheduleFormState {
   return {
+    attraction_ids: [],
     use_tour_amenities: true,
     copy_tour_amenities: false,
     tour_schedule_amenities: [],
     departure_location_id: "",
-    pickup_points: [],
+    pickup_points: [createEmptyPickupPoint()],
     start_date: "",
     start_time: "08:00",
     end_date: "",
@@ -60,6 +82,22 @@ export function pickupDateTimeInput(value: string) {
   }).format(new Date(value)).replace(' ', 'T');
 }
 
+/** Chuyển giờ hiển thị của điểm đón sang Date cục bộ cho bộ chọn ngày–giờ. */
+export function pickupInputToDate(value: string): Date | null {
+  const matched = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
+  if (!matched) return null;
+  const date = parseCalendarDate(matched[1]);
+  if (!date) return null;
+  date.setHours(Number(matched[2]), Number(matched[3]), 0, 0);
+  return date;
+}
+
+/** Giữ nguyên giờ trên bộ chọn; buildSchedulePayload áp dụng múi giờ +07:00 khi lưu. */
+export function pickupDateToInput(value: Date | null) {
+  if (!value || Number.isNaN(value.getTime())) return "";
+  return `${formatDateString(value)}T${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
+}
+
 export function buildScheduleFormFromResponse(
   data: ScheduleDetailResponse,
 ): ScheduleFormState {
@@ -79,6 +117,7 @@ export function buildScheduleFormFromResponse(
 
   return {
     use_tour_amenities: data.use_tour_amenities ?? true,
+    attraction_ids: (data.tour_schedule_attractions || []).map(item => item.location_id),
     copy_tour_amenities: false,
     tour_schedule_amenities: (data.tour_schedule_amenities || []).map(item => ({ ...item })),
     departure_location_id: data.departure_location_id ?? "",

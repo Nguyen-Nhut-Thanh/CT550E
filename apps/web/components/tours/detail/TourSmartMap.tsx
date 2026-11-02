@@ -5,16 +5,14 @@ import { useState } from 'react';
 import type { TourSmartMapProps } from 'shared';
 import { ImageWithFallback } from '@/components/common/media/ImageWithFallback';
 
-export default function TourSmartMap({ tour, itineraries = [] }: TourSmartMapProps) {
+export default function TourSmartMap({ tour, attractions: scheduleAttractions = [] }: TourSmartMapProps) {
   const [activeProvince, setActiveProvince] = useState<number | null>(null);
   const provinces = [...(tour?.tour_destinations || [])].sort((a, b) => a.visit_order - b.visit_order).map(item => ({
     id: item.location_id ?? item.locations?.location_id,
     name: item.name || item.locations?.name || 'Điểm đến',
   })).filter((item, index, items) => item.id != null && items.findIndex(other => other.id === item.id) === index);
   const selected = provinces.find(item => item.id === activeProvince) || provinces[0];
-  const visits = [...itineraries].sort((a, b) => a.day_number - b.day_number).flatMap(day =>
-    [...(day.activities || [])].sort((a, b) => a.time.localeCompare(b.time)).filter(activity => activity.location?.parent_id === selected?.id).map(activity => ({ ...activity, day: day.day_number })));
-  const attractions = visits.filter((visit, index) => visits.findIndex(other => other.location_id === visit.location_id) === index);
+  const attractions = [...scheduleAttractions].sort((a, b) => a.sort_order - b.sort_order).filter(item => item.location?.parent_id === selected?.id);
 
   return <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
     <div className="flex items-start gap-3"><span className="rounded-2xl bg-sky-100 p-3 text-sky-600"><Route className="h-5 w-5" /></span><div><h2 className="text-xl font-bold text-slate-900">Khám phá điểm đến</h2><p className="mt-1 text-sm leading-6 text-slate-500">Chọn từng tỉnh/thành để xem các điểm tham quan trong tour.</p></div></div>
@@ -24,12 +22,10 @@ export default function TourSmartMap({ tour, itineraries = [] }: TourSmartMapPro
           <div><h3 className="text-lg font-bold text-slate-900">{selected.name}</h3><p className="mt-1 text-xs text-slate-500">{attractions.length} điểm tham quan trong hành trình</p></div>
           {attractions.length ? attractions.map(visit => {
             const location = visit.location!;
-            const occurrences = visits.filter(item => item.location_id === visit.location_id);
             return <article key={visit.location_id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
               {location.location_images?.[0]?.image_url && <ImageWithFallback src={location.location_images[0].image_url} alt={location.name} loading="lazy" className="aspect-[16/8] w-full object-cover" />}
               <div className="space-y-2 p-4"><h4 className="flex items-center gap-2 font-bold text-slate-900"><MapPin className="h-4 w-4 shrink-0 text-sky-600" />{location.name}</h4>
                 <p className="whitespace-pre-line text-sm leading-6 text-slate-600">{location.note || 'Thông tin giới thiệu địa điểm đang được cập nhật.'}</p>
-                <div className="space-y-2 border-t border-slate-100 pt-3">{occurrences.map((item, index) => <div key={index}><p className="text-xs font-bold text-sky-700">Ngày {item.day} · {item.time} · {item.title}</p>{item.description && <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-500">{item.description}</p>}</div>)}</div>
               </div>
             </article>;
           }) : <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm leading-6 text-slate-500">Chưa có điểm tham quan được chọn tại {selected.name} trong lịch trình này.</div>}
@@ -39,7 +35,7 @@ export default function TourSmartMap({ tour, itineraries = [] }: TourSmartMapPro
           <p className="mb-4 mt-1 text-xs leading-5 text-slate-500">Theo thứ tự tuyến tour</p>
           <div className="flex gap-2 overflow-x-auto pb-1 md:flex-col">
             {provinces.map((province, index) => {
-              const count = new Set(itineraries.flatMap(day => (day.activities || []).filter(item => item.location?.parent_id === province.id).map(item => item.location_id))).size;
+              const count = scheduleAttractions.filter(item => item.location?.parent_id === province.id).length;
               const active = selected.id === province.id;
               return <button type="button" key={province.id} onClick={() => setActiveProvince(province.id!)} aria-pressed={active} className={`flex min-w-44 shrink-0 items-center gap-3 rounded-2xl border p-3 text-left transition-colors md:min-w-0 ${active ? 'border-sky-500 bg-white shadow-sm' : 'border-transparent bg-white hover:border-slate-200'}`}>
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${active ? 'bg-sky-600 text-white' : 'border border-slate-200 text-slate-600'}`}>{index + 1}</span>

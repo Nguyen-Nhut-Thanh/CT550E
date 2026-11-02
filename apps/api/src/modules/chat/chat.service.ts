@@ -97,7 +97,7 @@ export class ChatService {
             const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true, summary: true, transports: { select: { name: true } }, tour_type: true, rating_avg: true, rating_count: true, tour_destinations: { orderBy: { visit_order: 'asc' }, take: 1, select: { locations: { select: { name: true } } } }, base_price: true, duration_days: true, duration_nights: true, cut_off_hours: true, tour_schedules: { where: { status: 1, start_date: { gte: new Date() } }, orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], include: { tour_schedule_amenities: { where: { kind: { in: ['cuisine', 'transport', 'hotel'] } }, select: { kind: true, content: true, is_visible: true } }, tour_schedule_transports: { select: { transports: { select: { name: true } } } }, flash_deals: true, tour_schedule_hotels: { select: { hotels: { select: { star_rating: true } } } } } }, tour_images: { orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } } } });
             if (!tour)
                 throw new NotFoundException('Tour không còn hiển thị');
-            const schedule = tour.tour_schedules.find(item => item.quota > item.booked_count && item.start_date.getTime() - Date.now() >= (tour.cut_off_hours || 24) * 3600000);
+            const schedule = tour.tour_schedules.find(item => item.quota > item.booked_count && item.start_date.getTime() - Date.now() >= (tour.cut_off_hours ?? 24) * 3600000);
             if (!schedule) throw new BadRequestException('Tour chưa có lịch khởi hành còn chỗ phù hợp');
             const originalPrice = Number(schedule.price);
             const deal = schedule.flash_deals;

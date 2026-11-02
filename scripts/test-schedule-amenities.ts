@@ -41,7 +41,7 @@ async function main() {
       const province = await tx.locations.findFirstOrThrow({ where: { level_id: 5 } });
       const transport = await tx.transports.findFirstOrThrow();
       const key = `SA-${Date.now()}`;
-      const tour = await tours.create({ code: key, name: key, description: 'Fixture', duration_days: 2, departure_location: province.location_id, transport_id: transport.transport_id, tour_amenities: template(1) });
+      const tour = await tours.create({ code: key, name: key, description: 'Fixture', duration_days: 2, duration_nights: 1, departure_location: province.location_id, transport_id: transport.transport_id, tour_amenities: template(1) });
       const payload = { start_date: new Date(Date.now() + 14 * 86400000).toISOString(), end_date: new Date(Date.now() + 15 * 86400000).toISOString(), price: 1000000, quota: 10 };
       const create = () => schedules.createSchedule(tour.tour_id, payload);
       const a = (await create())!;

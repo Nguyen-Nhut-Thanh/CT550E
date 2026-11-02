@@ -6,6 +6,7 @@ import { MailService } from '../../infrastructure/mail/mail.service';
 import { mapScheduleHotel, mapSchedulePrice, mapScheduleResponse } from "./schedule.mapper";
 import { departureId, normalizePickupPoints, pickupPointsEqual } from './schedule-departure';
 import { saveItineraryDays } from './itinerary-activities';
+import { saveScheduleAttractions } from './schedule-attractions';
 import { saveScheduleAmenities } from './schedule-amenities';
 @Injectable()
 export class SchedulesAdminService {
@@ -31,6 +32,7 @@ export class SchedulesAdminService {
             where: { tour_schedule_id: scheduleId },
             include: {
                 tour_schedule_amenities: { orderBy: { sort_order: 'asc' } },
+                tour_schedule_attractions: { orderBy: { sort_order: 'asc' } },
                 departure_location: true,
                 pickup_points: { orderBy: { sort_order: 'asc' } },
                 _count: { select: { bookings: true } },
@@ -104,6 +106,7 @@ export class SchedulesAdminService {
                     },
                 });
                 await saveScheduleAmenities(tx, schedule.tour_schedule_id, body, true);
+                await saveScheduleAttractions(tx, tourId, schedule.tour_schedule_id, body.attraction_ids);
                 const updatedSchedule = await tx.tour_schedules.update({
                     where: { tour_schedule_id: schedule.tour_schedule_id },
                     data: {
@@ -139,6 +142,7 @@ export class SchedulesAdminService {
                 }
                 return { ...updatedSchedule,
                     use_tour_amenities: body.use_tour_amenities ?? true,
+                    tour_schedule_attractions: await tx.tour_schedule_attractions.findMany({ where: { tour_schedule_id: schedule.tour_schedule_id }, orderBy: { sort_order: 'asc' } }),
                     tour_schedule_amenities: await tx.tour_schedule_amenities.findMany({ where: { tour_schedule_id: schedule.tour_schedule_id }, orderBy: { sort_order: 'asc' } }),
                 };
             });
@@ -223,6 +227,7 @@ export class SchedulesAdminService {
                     throw new BadRequestException('Nơi xuất phát không tồn tại.');
                 }
                 await saveScheduleAmenities(tx, scheduleId, body);
+                await saveScheduleAttractions(tx, current.tour_id, scheduleId, body.attraction_ids);
                 if (pickupsChanged) {
                     await tx.schedule_pickup_points.deleteMany({ where: { tour_schedule_id: scheduleId } });
                     await tx.schedule_pickup_points.createMany({ data: pickupPoints!.map(point => ({ ...point, tour_schedule_id: scheduleId })) });
@@ -277,6 +282,7 @@ export class SchedulesAdminService {
                     }
                 }
                 return { ...schedule,
+                    tour_schedule_attractions: await tx.tour_schedule_attractions.findMany({ where: { tour_schedule_id: scheduleId }, orderBy: { sort_order: 'asc' } }),
                     tour_schedule_amenities: await tx.tour_schedule_amenities.findMany({ where: { tour_schedule_id: scheduleId }, orderBy: { sort_order: 'asc' } }),
                 };
             });

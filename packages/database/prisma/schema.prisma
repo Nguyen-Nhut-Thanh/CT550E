@@ -305,6 +305,7 @@ model locations {
   other_locations                              locations[]          @relation("locationsTolocations")
   tour_destinations                            tour_destinations[]
   itinerary_activities                         itinerary_activities[]
+  schedule_attractions                         tour_schedule_attractions[]
   departing_schedules                          tour_schedules[] @relation("ScheduleDeparture")
   tours_tours_departure_location_idTolocations tours[]              @relation("tours_departure_location_idTolocations")
 
@@ -588,6 +589,7 @@ model tour_schedules {
   tour_id                  Int
   use_tour_amenities        Boolean @default(true)
   tour_schedule_amenities   tour_schedule_amenities[]
+  tour_schedule_attractions tour_schedule_attractions[]
   departure_location_id    Int
   departure_location       locations @relation("ScheduleDeparture", fields: [departure_location_id], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   pickup_points            schedule_pickup_points[]
@@ -614,6 +616,17 @@ model tour_schedules {
 
   @@index([tour_id, start_date], map: "idx_tour_schedules_tour_date")
   @@index([departure_location_id, status, start_date], map: "idx_schedules_departure")
+}
+
+model tour_schedule_attractions {
+  tour_schedule_id Int
+  location_id      Int
+  sort_order       Int @default(0)
+  schedule         tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade, map: "tour_schedule_attractions_schedule_fkey")
+  location         locations @relation(fields: [location_id], references: [location_id], onDelete: Restrict, map: "tour_schedule_attractions_location_fkey")
+
+  @@id([tour_schedule_id, location_id])
+  @@index([location_id])
 }
 
 model schedule_pickup_points {

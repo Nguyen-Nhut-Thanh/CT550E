@@ -1,217 +1,61 @@
 "use client";
 
-import { AdminFormCard } from "@/components/admin/common/AdminFormCard";
-import FormFieldLabel from "@/components/common/forms/FormFieldLabel";
-import { Info } from "lucide-react";
-import type { TourBasicInfoCardProps as Props } from 'shared';
-import { TourRouteOrder } from './TourRouteOrder';
+import CustomDropdown from '@/components/common/forms/CustomDropdown';
+import { Compass, Layers, LockKeyhole, Map, MapPin, Plane, Tag, TextCursorInput } from 'lucide-react';
+import type { TourBasicInfoCardProps, TourDetailForm } from 'shared';
+import { TourDestinationPicker } from './TourDestinationPicker';
+import { TourEditorCard } from './TourEditorCard';
 
-export function TourBasicInfoCard({
-  tour,
-  locations,
-  transports,
-  lockCoreFields = false,
-  onTourChange,
-}: Props) {
-  return (
-    <AdminFormCard
-      title="Thông tin cơ bản"
-      titleClassName="text-sm uppercase tracking-wider"
-      icon={
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-          <Info size={18} />
+export function TourBasicInfoCard<T extends TourDetailForm>({
+  tour, locations, transports, mode = 'edit', lockCoreFields = false, onTourChange,
+}: TourBasicInfoCardProps<T>) {
+  const departureOptions = locations.filter(location => location.level_id === 5 || location.location_id === tour.departure_location);
+  return <TourEditorCard id="tour-info" title="Thông tin cơ bản" description="Thông tin nhận diện và lộ trình chính của tour." icon={Compass} art={Map}>
+    <div className="flex flex-col gap-[22px]">
+      <div className="border-t border-[#edf1f8]" />
+      {lockCoreFields && <p className="flex gap-2 rounded-[11px] bg-[#fff8e9] px-3 py-[11px] text-[11px] leading-[1.65] text-[#a37a28]"><LockKeyhole size={16} className="mt-0.5 shrink-0" />Tour đã có đơn đặt. Các thông tin nhận diện, thời lượng và tuyến hành trình đã được khóa.</p>}
+      <div className="grid gap-[18px] sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-[7px]">
+          <label className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]" htmlFor="tour-code">Mã tour <span className="text-[#ed5f6c]">*</span></label>
+          <div className="relative"><Tag size={17} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[#7e8da5]" />
+            <input id="tour-code" className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[11px] text-[14px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff] disabled:cursor-not-allowed disabled:bg-[#f0f3f8] disabled:text-[#8a96aa] read-only:cursor-not-allowed read-only:bg-[#f0f3f8] read-only:text-[#8a96aa] pl-[38px]" value={tour.code || ''} readOnly={mode === 'edit'} placeholder="VD: VN-MB-001" onChange={event => onTourChange(previous => ({ ...previous, code: event.target.value }))} />
+          </div>
         </div>
-      }
-      bodyClassName="space-y-6 p-8"
-    >
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2">
-          <FormFieldLabel>Tên tour du lịch</FormFieldLabel>
-          <input
-            disabled={lockCoreFields}
-            className={`w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white ${
-              lockCoreFields
-                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-80"
-                : ""
-            }`}
-            value={tour.name || ""}
-            onChange={(event) =>
-              onTourChange((prev) => ({ ...prev, name: event.target.value }))
-            }
-          />
+        <div className="flex min-w-0 flex-col gap-[7px]">
+          <span className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Loại tour <span className="text-[#ed5f6c]">*</span></span>
+          <fieldset disabled={lockCoreFields}>
+            <CustomDropdown ariaLabel="Loại tour" selectedValue={tour.tour_type || 'domestic'} options={[{ value: 'domestic', label: 'Trong nước' }, { value: 'outbound', label: 'Nước ngoài' }, { value: 'international', label: 'Quốc tế' }]} onSelect={tour_type => onTourChange(previous => ({ ...previous, tour_type }))} icon={Layers} variant="compact" matchTriggerWidth className="min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:rounded-[11px] [&_button[aria-haspopup=listbox]]:border [&_button[aria-haspopup=listbox]]:border-[#dfe6f1] [&_button[aria-haspopup=listbox]]:bg-[#f8faff] [&_button[aria-haspopup=listbox]]:px-3 [&_button[aria-haspopup=listbox]]:py-[11px] [&_button[aria-haspopup=listbox]]:text-[14px] [&_button[aria-haspopup=listbox]]:font-medium [&_button[aria-haspopup=listbox]]:shadow-none [&_button[aria-haspopup=listbox]:disabled]:cursor-not-allowed [&_button[aria-haspopup=listbox]:disabled]:opacity-60" />
+          </fieldset>
         </div>
-
-        <div className="space-y-2">
-          <FormFieldLabel>Loại tour</FormFieldLabel>
-          <select
-            disabled={lockCoreFields}
-            className={`w-full appearance-none rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white ${
-              lockCoreFields
-                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-80"
-                : ""
-            }`}
-            value={tour.tour_type || ""}
-            onChange={(event) =>
-              onTourChange((prev) => ({
-                ...prev,
-                tour_type: event.target.value,
-              }))
-            }
-          >
-            <option value="domestic">Trong nước</option>
-            <option value="outbound">Nước ngoài</option>
-            <option value="international">Quốc tế</option>
-          </select>
+        <div className="flex min-w-0 flex-col gap-[7px] col-span-full">
+          <label className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]" htmlFor="tour-name">Tên tour <span className="text-[#ed5f6c]">*</span></label>
+          <div className="relative"><TextCursorInput size={17} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[#7e8da5]" />
+            <input id="tour-name" disabled={lockCoreFields} className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[11px] text-[14px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff] disabled:cursor-not-allowed disabled:bg-[#f0f3f8] disabled:text-[#8a96aa] read-only:cursor-not-allowed read-only:bg-[#f0f3f8] read-only:text-[#8a96aa] pl-[38px]" value={tour.name || ''} placeholder="VD: Hà Nội - Hạ Long 3N2Đ" onChange={event => onTourChange(previous => ({ ...previous, name: event.target.value }))} />
+          </div>
         </div>
-
-        <div className="space-y-2">
-          <FormFieldLabel>Nơi xuất phát mặc định</FormFieldLabel>
-          <select
-            className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none focus:border-blue-500"
-            value={tour.departure_location}
-            onChange={(event) =>
-              onTourChange((prev) => ({
-                ...prev,
-                departure_location: Number(event.target.value),
-              }))
-            }
-          >
-            {locations.map((location) => (
-              <option key={location.location_id} value={location.location_id}>
-                {location.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-500">Điền sẵn khi tạo lịch khởi hành mới. Thay đổi này không áp dụng cho các chuyến đã tạo.</p>
+        <div className="flex min-w-0 flex-col gap-[7px]">
+          <span className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Nơi xuất phát mặc định <span className="text-[#ed5f6c]">*</span></span>
+          <CustomDropdown ariaLabel="Nơi xuất phát mặc định" selectedValue={String(tour.departure_location || '')} placeholder="Chọn nơi xuất phát" options={departureOptions.map(location => ({ value: String(location.location_id), label: location.name }))} onSelect={value => onTourChange(previous => ({ ...previous, departure_location: Number(value) }))} icon={MapPin} variant="compact" matchTriggerWidth className="min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:rounded-[11px] [&_button[aria-haspopup=listbox]]:border [&_button[aria-haspopup=listbox]]:border-[#dfe6f1] [&_button[aria-haspopup=listbox]]:bg-[#f8faff] [&_button[aria-haspopup=listbox]]:px-3 [&_button[aria-haspopup=listbox]]:py-[11px] [&_button[aria-haspopup=listbox]]:text-[14px] [&_button[aria-haspopup=listbox]]:font-medium [&_button[aria-haspopup=listbox]]:shadow-none [&_button[aria-haspopup=listbox]:disabled]:cursor-not-allowed [&_button[aria-haspopup=listbox]:disabled]:opacity-60" />
+          <p className="text-[12px] leading-[1.65] text-[#8490a5]">Điền sẵn cho lịch khởi hành mới.</p>
         </div>
-
-        <div className="space-y-2">
-          <FormFieldLabel>Phương tiện</FormFieldLabel>
-          <select
-            className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white"
-            value={tour.transport_id}
-            onChange={(event) =>
-              onTourChange((prev) => ({
-                ...prev,
-                transport_id: Number(event.target.value),
-              }))
-            }
-          >
-            {transports.map((transport) => (
-              <option
-                key={transport.transport_id}
-                value={transport.transport_id}
-              >
-                {transport.name} ({transport.transport_type})
-              </option>
-            ))}
-          </select>
+        <div className="flex min-w-0 flex-col gap-[7px]">
+          <span className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Phương tiện <span className="text-[#ed5f6c]">*</span></span>
+          <CustomDropdown ariaLabel="Phương tiện" selectedValue={String(tour.transport_id || '')} placeholder="Chọn phương tiện" options={transports.map(transport => ({ value: String(transport.transport_id), label: transport.name + ' (' + transport.transport_type + ')' }))} onSelect={value => onTourChange(previous => ({ ...previous, transport_id: Number(value) }))} icon={Plane} variant="compact" matchTriggerWidth className="min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:rounded-[11px] [&_button[aria-haspopup=listbox]]:border [&_button[aria-haspopup=listbox]]:border-[#dfe6f1] [&_button[aria-haspopup=listbox]]:bg-[#f8faff] [&_button[aria-haspopup=listbox]]:px-3 [&_button[aria-haspopup=listbox]]:py-[11px] [&_button[aria-haspopup=listbox]]:text-[14px] [&_button[aria-haspopup=listbox]]:font-medium [&_button[aria-haspopup=listbox]]:shadow-none [&_button[aria-haspopup=listbox]:disabled]:cursor-not-allowed [&_button[aria-haspopup=listbox]:disabled]:opacity-60" />
         </div>
       </div>
 
-      <div className="space-y-4 border-t border-slate-50 pt-4">
-        <div className="flex items-center justify-between">
-          <FormFieldLabel>Tỉnh/thành trong hành trình</FormFieldLabel>
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-            Đã chọn: {tour.destinations?.length || 0}
-          </span>
-        </div>
+      <TourDestinationPicker locations={locations} value={tour.destinations || []} tourType={tour.tour_type} disabled={lockCoreFields} onChange={destinations => onTourChange(previous => ({ ...previous, destinations }))} />
 
-        <div
-          className={`custom-scrollbar grid max-h-[300px] grid-cols-2 gap-3 overflow-y-auto rounded-3xl border p-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 ${
-            lockCoreFields
-              ? "border-slate-200 bg-slate-100 opacity-80"
-              : "border-slate-100 bg-slate-50"
-          }`}
-        >
-          {locations
-            .filter((location) => {
-              if (location.level_id !== 5) return false;
-              const isVietNam = location.country_code === "VN";
-              if (tour.tour_type === "domestic") return isVietNam;
-              if (tour.tour_type === "outbound") return !isVietNam;
-              return true;
-            })
-            .map((location) => {
-              const isSelected = tour.destinations?.includes(
-                location.location_id,
-              );
-
-              return (
-                <label
-                  key={location.location_id}
-                  className={`group flex items-center gap-2 rounded-xl border p-2 transition-all ${
-                    lockCoreFields
-                      ? "cursor-not-allowed"
-                      : "cursor-pointer"
-                  } ${
-                    isSelected
-                      ? "border-blue-100 bg-white shadow-sm"
-                      : lockCoreFields
-                        ? "border-transparent"
-                        : "border-transparent hover:bg-white"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    disabled={lockCoreFields}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    checked={isSelected || false}
-                    onChange={(event) => {
-                      const currentDestinations = tour.destinations || [];
-                      onTourChange((prev) => ({
-                        ...prev,
-                        destinations: event.target.checked
-                          ? [...currentDestinations, location.location_id]
-                          : currentDestinations.filter(
-                              (id) => id !== location.location_id,
-                            ),
-                      }));
-                    }}
-                  />
-                  <span
-                    className={`text-[11px] font-medium transition-colors ${
-                      isSelected
-                        ? "font-extrabold text-blue-600"
-                        : "text-slate-600"
-                    }`}
-                  >
-                    {location.name}
-                  </span>
-                </label>
-              );
-            })}
-        </div>
+      <div className="flex min-w-0 flex-col gap-[7px]">
+        <label htmlFor="tour-summary" className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Mô tả ngắn</label>
+        <textarea id="tour-summary" rows={3} className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[11px] text-[14px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff] min-h-[90px] resize-y" placeholder="Một vài điểm hấp dẫn để khách muốn khám phá tour..." value={tour.summary || ''} onChange={event => onTourChange(previous => ({ ...previous, summary: event.target.value }))} />
+        <p className="text-[12px] leading-[1.65] text-[#8490a5]">Hiển thị dưới tên tour trên thẻ tour ở trang danh sách.</p>
       </div>
-
-      <TourRouteOrder ids={tour.destinations || []} locations={locations} disabled={lockCoreFields} onChange={destinations => onTourChange(prev => ({ ...prev, destinations }))} />
-
-      <div className="space-y-2 border-t border-slate-50 pt-4">
-        <label htmlFor="tour-summary" className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Mô tả ngắn</label>
-        <textarea
-          id="tour-summary"
-          rows={3}
-          className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none focus:border-blue-500 focus:bg-white"
-          placeholder="Viết 1–2 câu giới thiệu điểm hấp dẫn của tour..."
-          value={tour.summary || ""}
-          onChange={(event) => onTourChange(prev => ({ ...prev, summary: event.target.value }))}
-        />
-        <p className="text-xs text-slate-500">Hiển thị dưới tên tour trên thẻ tour ở trang danh sách.</p>
+      <div className="flex min-w-0 flex-col gap-[7px]">
+        <label htmlFor="tour-description" className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Mô tả hành trình <span className="text-[#ed5f6c]">*</span></label>
+        <textarea id="tour-description" rows={5} className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[11px] text-[14px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff] min-h-[90px] resize-y" placeholder="Giới thiệu sơ lược về lộ trình, các điểm tham quan chính, hoạt động nổi bật..." value={tour.description || ''} onChange={event => onTourChange(previous => ({ ...previous, description: event.target.value }))} />
+        <div className="flex justify-between gap-3 text-[12px] text-[#929cb0]"><span>Giới thiệu đầy đủ về chuyến đi của bạn.</span><span>{(tour.description || '').length.toLocaleString('vi-VN')} ký tự</span></div>
       </div>
-
-      <div className="space-y-2 border-t border-slate-50 pt-4">
-        <FormFieldLabel>Mô tả hành trình</FormFieldLabel>
-        <textarea
-          className="min-h-[120px] w-full resize-none rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium outline-none transition-all focus:border-blue-500 focus:bg-white"
-          value={tour.description || ""}
-          onChange={(event) =>
-            onTourChange((prev) => ({
-              ...prev,
-              description: event.target.value,
-            }))
-          }
-        />
-      </div>
-    </AdminFormCard>
-  );
+    </div>
+  </TourEditorCard>;
 }

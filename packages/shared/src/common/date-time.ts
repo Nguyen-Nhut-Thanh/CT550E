@@ -5,6 +5,8 @@ export type DateTimePickerProps = {
   /** Giới hạn cả ngày và giờ, với độ chính xác đến phút. */
   minDate?: Date;
   maxDate?: Date;
+  /** Ẩn dòng tóm tắt khi khung chứa có thanh xác nhận riêng. */
+  showSummary?: boolean;
   disabled?: boolean;
   locale?: "vi-VN" | "en-US";
   className?: string;
@@ -21,7 +23,25 @@ export type DateTimeColumnProps = {
 };
 
 export type DateTimeInputProps = DateTimePickerProps & {
-  label: string;
+  id?: string;
+  label?: string;
+  placeholder?: string;
+  error?: string;
+};
+
+export type TimePickerProps = {
+  /** Giá trị theo định dạng 24 giờ HH:mm; giao diện hiển thị AM/PM. */
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  locale?: "vi-VN" | "en-US";
+  ariaLabel?: string;
+  className?: string;
+};
+
+export type TimeInputProps = TimePickerProps & {
+  id?: string;
+  label?: string;
   placeholder?: string;
   error?: string;
 };

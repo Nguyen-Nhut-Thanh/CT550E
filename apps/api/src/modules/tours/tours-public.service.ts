@@ -339,6 +339,16 @@ export class ToursPublicService {
                                 end_date: { gte: new Date() },
                             },
                         },
+                        tour_schedule_attractions: {
+                            orderBy: { sort_order: 'asc' },
+                            select: {
+                                location_id: true, sort_order: true,
+                                location: { select: {
+                                    location_id: true, parent_id: true, name: true, note: true,
+                                    location_images: { where: { status: 1 }, orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } },
+                                } },
+                            },
+                        },
                         tour_itineraries: {
                             orderBy: { day_number: 'asc' },
                             select: {
@@ -423,7 +433,7 @@ export class ToursPublicService {
             throw new NotFoundException('Tour not found');
         }
         const now = new Date();
-        const cutOffHours = tour.cut_off_hours || 24;
+        const cutOffHours = tour.cut_off_hours ?? 24;
         const processedSchedules = tour.tour_schedules
             .filter((s: PublicScheduleRecord) => {
             const departureDate = new Date(s.start_date);

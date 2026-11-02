@@ -15,6 +15,7 @@ export type ScheduleItineraryPayload = {
     nights?: number | string | null;
 };
 export type ScheduleAdminPayload = {
+    attraction_ids?: number[];
     use_tour_amenities?: boolean;
     copy_tour_amenities?: boolean;
     tour_schedule_amenities?: import('../../tours/amenities').ScheduleAmenity[];
