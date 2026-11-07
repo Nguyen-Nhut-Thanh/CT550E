@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { MEMBERSHIP_TIERS, type MembershipTier } from "shared";
+import { MEMBERSHIP_TIERS, membershipBenefits, type MembershipTier } from "shared";
 
 export function normalizeMembershipTiers(value: unknown): MembershipTier[] {
   if (!Array.isArray(value) || value.length !== MEMBERSHIP_TIERS.length)
@@ -38,22 +38,32 @@ export function normalizeMembershipTiers(value: unknown): MembershipTier[] {
       );
     }
     previous = item.threshold;
-    const discount =
-      item.discountType === "percentage"
-        ? `Voucher giảm ${item.discountValue}%, tối đa ${item.maxDiscount.toLocaleString("vi-VN")}đ`
-        : `Voucher ${item.discountValue.toLocaleString("vi-VN")}đ khi đạt hạng`;
-    return {
+    const benefits = {
+      tourDiscountPercent: item.tourDiscountPercent ?? defaults.tourDiscountPercent,
+      pointMultiplier: item.pointMultiplier ?? defaults.pointMultiplier,
+      birthdayVoucherAmount: item.birthdayVoucherAmount ?? defaults.birthdayVoucherAmount,
+      serviceDiscountPercent: item.serviceDiscountPercent ?? defaults.serviceDiscountPercent,
+      priorityReservation: item.priorityReservation ?? defaults.priorityReservation,
+    };
+    if (![benefits.tourDiscountPercent, benefits.serviceDiscountPercent].every(value => Number.isFinite(value) && value >= 0 && value <= 100) ||
+      !Number.isFinite(benefits.pointMultiplier) || benefits.pointMultiplier < 1 || benefits.pointMultiplier > 10 ||
+      Math.abs(benefits.pointMultiplier * 10 - Math.round(benefits.pointMultiplier * 10)) > 0.000001 ||
+      !Number.isSafeInteger(benefits.birthdayVoucherAmount) || benefits.birthdayVoucherAmount < 0 || benefits.birthdayVoucherAmount > 1_000_000_000 ||
+      typeof benefits.priorityReservation !== 'boolean') {
+      throw new BadRequestException('Phần trăm phải từ 0–100, hệ số điểm từ 1–10 (tối đa 1 chữ số thập phân), voucher sinh nhật là số tiền nguyên không âm.');
+    }
+    const result: MembershipTier = {
       ...defaults,
+      ...benefits,
       threshold: item.threshold,
       discountType: item.discountType,
       discountValue: item.discountValue,
       maxDiscount:
         item.discountType === "fixed" ? item.discountValue : item.maxDiscount,
       minOrder: item.minOrder,
-      benefits:
-        index === 0
-          ? defaults.benefits
-          : [discount, ...defaults.benefits.slice(1)],
+      benefits: [],
     };
+    result.benefits = membershipBenefits(result);
+    return result;
   });
 }

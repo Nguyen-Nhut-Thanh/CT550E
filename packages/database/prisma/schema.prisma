@@ -113,6 +113,7 @@ model booking_travelers {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model bookings {
+  crew_notifications membership_notifications[]
   booking_id        Int                 @id @default(autoincrement())
   user_id           Int
   tour_schedule_id  Int
@@ -136,6 +137,7 @@ model bookings {
   discount_amount   Decimal             @default(0) @db.Decimal(12, 2)
   voucher_id        Int?
   additional_services Json?
+  membership_snapshot Json?
   services_total    Decimal             @default(0) @db.Decimal(12, 2)
   booking_travelers booking_travelers[]
   tour_schedules    tour_schedules      @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
@@ -164,6 +166,8 @@ model flash_deals {
 }
 
 model vouchers {
+  eligible_tiers      String[]   @default([])
+  notifications       membership_notifications[]
   owner_user_id       Int?
   reward_key          String?    @unique @db.VarChar(150)
   owner               users?     @relation("membership_vouchers", fields: [owner_user_id], references: [user_id], onDelete: Cascade)
@@ -204,6 +208,10 @@ model membership_program {
 }
 
 model membership_notifications {
+  booking_id      Int?
+  booking         bookings? @relation(fields: [booking_id], references: [booking_id], onDelete: SetNull)
+  voucher_id      Int?
+  voucher         vouchers? @relation(fields: [voucher_id], references: [voucher_id], onDelete: SetNull)
   notification_id Int       @id @default(autoincrement())
   user_id         Int
   event_key       String    @unique @db.VarChar(150)
@@ -214,6 +222,8 @@ model membership_notifications {
   user            users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([user_id, created_at])
+  @@index([voucher_id])
+  @@index([booking_id])
 }
 
 model destinations_detail {
@@ -342,6 +352,10 @@ model payments {
   amount           Decimal   @default(0) @db.Decimal(12, 2)
   status           String    @default("pending") @db.VarChar(50)
   transaction_code String?   @db.VarChar(100)
+  provider_reference String? @unique @db.VarChar(100)
+  response_code    String?   @db.VarChar(2)
+  provider_status  String?   @db.VarChar(2)
+  expires_at       DateTime? @db.Timestamp(6)
   paid_at          DateTime? @db.Timestamp(6)
   created_at       DateTime  @default(now()) @db.Timestamp(6)
   bookings         bookings  @relation(fields: [booking_id], references: [booking_id], onDelete: NoAction, onUpdate: NoAction)
@@ -475,6 +489,7 @@ model tour_itineraries {
   title             String         @db.VarChar(255)
   content           String
   meals             String?        @db.VarChar(100)
+  draft_data        Json?
   activities        itinerary_activities[]
   created_at        DateTime       @default(now()) @db.Timestamp(6)
   updated_at        DateTime       @updatedAt @db.Timestamp(6)
@@ -594,6 +609,11 @@ model tour_schedules {
   departure_location       locations @relation("ScheduleDeparture", fields: [departure_location_id], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   pickup_points            schedule_pickup_points[]
   operating_region         String? @db.VarChar(10)
+  operating_region_source  String @default("departure") @db.VarChar(20)
+  crew_locked_at           DateTime? @db.Timestamp(6)
+  crew_locked_by           Int?
+  crew_revision            Int @default(0)
+  crew_snapshot            Json?
   crew_required_count      Int @default(1)
   crew                     schedule_crew[]
   start_date               DateTime                   @db.Timestamp(6)
@@ -674,11 +694,19 @@ model tours {
   tour_policies       tour_policies[]
   tour_amenities      tour_amenities[]
   tour_schedules      tour_schedules[]
+  schedule_template   tour_schedule_templates?
   departure_locations locations           @relation("tours_departure_location_idTolocations", fields: [departure_location], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   transports          transports          @relation(fields: [transport_id], references: [transport_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tour_schedule_templates {
+  tour_id    Int @id
+  data       Json
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+  tour       tours @relation(fields: [tour_id], references: [tour_id], onDelete: Cascade)
+}
+
 model transports {
   transport_id             Int                        @id @default(autoincrement())
   transport_type           String                     @default("car") @db.VarChar(50)

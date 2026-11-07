@@ -97,12 +97,10 @@ export function BookingOrderSummary({
                   {formatVND(pricing.servicesTotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-emerald-600">
-                <span>Giảm giá</span>
-                <span className="font-semibold">
-                  - {formatVND(pricing.discount)}
-                </span>
-              </div>
+              <div className="flex items-center justify-between text-emerald-600"><span>Voucher</span><span className="font-semibold">− {formatVND(pricing.voucherDiscount ?? pricing.discount)}</span></div>
+              {!!pricing.tourDiscount && <div className="flex items-center justify-between gap-3 text-emerald-600"><span>Ưu đãi hạng {pricing.membershipName}</span><span className="font-semibold">− {formatVND(pricing.tourDiscount)}</span></div>}
+              {!!pricing.serviceDiscount && <div className="flex items-center justify-between gap-3 text-emerald-600"><span>Ưu đãi dịch vụ</span><span className="font-semibold">− {formatVND(pricing.serviceDiscount)}</span></div>}
+              {!!pricing.tourDiscount && <p className="text-[10px] leading-4 text-slate-400">Giảm theo hạng trên tiền tour sau khi trừ voucher.</p>}
             </div>
           </div>
 

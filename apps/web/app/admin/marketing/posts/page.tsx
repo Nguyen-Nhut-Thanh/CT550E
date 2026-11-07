@@ -151,6 +151,7 @@ export default function AdminPostsPage() {
           <AdminRowActions label={`Thao tác với ${post.title}`} actions={[
             ...(post.status === 1 ? [{
               label: 'Xem bài viết',
+              access: 'view' as const,
               icon: <ExternalLink size={16} />,
               onClick: () => { window.open(`/blog/${post.slug}`, '_blank', 'noopener,noreferrer'); },
             }] : []),

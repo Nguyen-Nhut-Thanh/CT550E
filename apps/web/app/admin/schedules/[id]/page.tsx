@@ -9,6 +9,8 @@ import { getAdminLocations } from "@/lib/admin/locations/api";
 import { ScheduleItinerarySection } from "@/components/admin/schedules/editor/ScheduleItinerarySection";
 import { ScheduleSidebar } from "@/components/admin/schedules/editor/ScheduleSidebar";
 import { TourEditorShell } from "@/components/admin/tours/editor/TourEditorShell";
+import { IncompleteItineraryDialog } from "@/components/admin/schedules/editor/IncompleteItineraryDialog";
+import { getIncompleteItineraryDays } from "@/lib/admin/schedules/itinerary";
 import {
   getAdminCatalogTransports,
   getAdminHotels,
@@ -16,20 +18,24 @@ import {
 } from "@/lib/admin/catalogs/api";
 import {
   getAdminScheduleDetail,
+  getTourScheduleTemplate,
   saveAdminSchedule,
 } from "@/lib/admin/schedules/api";
 import {
   buildScheduleFormFromResponse,
+  buildScheduleDateTime,
   buildSchedulePayload,
   createDefaultScheduleForm,
   createEmptyPickupPoint,
   ensureItineraryDays,
+  getSchedulePickupError,
 } from "@/lib/admin/schedules/forms";
 import { getAdminTourDetail } from "@/lib/admin/tours/api";
+import { applyScheduleTemplate } from "@/lib/admin/schedules/template";
 import { useToast } from "@/lib/notifications/useToast";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   HotelItem,
   LocationOption,
@@ -38,7 +44,7 @@ import type {
   TourInfo,
   TransportItem,
 } from "shared";
-import { copyTourAmenities } from 'shared';
+import { copyTourAmenities, getScheduleEditRestriction } from 'shared';
 
 export default function AdminScheduleDetailPage() {
   const { id } = useParams();
@@ -50,12 +56,15 @@ export default function AdminScheduleDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [incompleteDays, setIncompleteDays] = useState<number[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [tourInfo, setTourInfo] = useState<TourInfo | null>(null);
   const [hasBookings, setHasBookings] = useState(false);
   const [bookedCount, setBookedCount] = useState(0);
   const [originalQuota, setOriginalQuota] = useState(0);
+  const [originalStartDate, setOriginalStartDate] = useState<string | null>(null);
   const [hotels, setHotels] = useState<HotelItem[]>([]);
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [transports, setTransports] = useState<TransportItem[]>([]);
@@ -66,17 +75,8 @@ export default function AdminScheduleDetailPage() {
   const [form, setForm] = useState(createDefaultScheduleForm);
 
   const isPast = useMemo(() => {
-    if (isNew || !form.start_date) return false;
-
-    try {
-      const startDt = new Date(
-        `${form.start_date}T${form.start_time || "00:00"}:00`,
-      );
-      return startDt.getTime() < Date.now();
-    } catch {
-      return false;
-    }
-  }, [form.start_date, form.start_time, isNew]);
+    return !isNew && originalStartDate != null && Date.parse(originalStartDate) <= Date.now();
+  }, [originalStartDate, isNew]);
 
   const fetchRoomTypes = useCallback(async (hotelId: number) => {
     try {
@@ -88,6 +88,7 @@ export default function AdminScheduleDetailPage() {
   }, []);
 
   useEffect(() => {
+    let active = true;
     const initPage = async () => {
       setLoading(true);
       setLoadError("");
@@ -98,6 +99,7 @@ export default function AdminScheduleDetailPage() {
           getAdminCatalogTransports<TransportItem>(),
           getAdminLocations<LocationOption>(),
         ]);
+        if (!active) return;
 
         setHotels(hotelData);
         setLocations(locationData.items || []);
@@ -110,6 +112,7 @@ export default function AdminScheduleDetailPage() {
           scheduleData = await getAdminScheduleDetail<ScheduleDetailResponse>(
             String(id),
           );
+          if (!active) return;
           currentTourId = scheduleData.tour_id
             ? String(scheduleData.tour_id)
             : currentTourId;
@@ -117,34 +120,48 @@ export default function AdminScheduleDetailPage() {
           setHasBookings(booked);
           setBookedCount(Number(scheduleData.booked_count || 0));
           setOriginalQuota(Number(scheduleData.quota || 0));
+          setOriginalStartDate(scheduleData.start_date ?? null);
 
           const restored = buildScheduleFormFromResponse(scheduleData);
           const hotelIds = new Set(restored.itinerary.map(day => Number(day.hotel_id)).filter(Boolean));
           await Promise.all([...hotelIds].map(fetchRoomTypes));
+          if (!active) return;
           const locked = booked || Date.parse(scheduleData.start_date || "") < Date.now();
           setForm(!locked && !restored.pickup_points.length
             ? { ...restored, pickup_points: [createEmptyPickupPoint(restored)] }
             : restored);
         } else {
+          setOriginalStartDate(null);
           setForm(createDefaultScheduleForm());
         }
 
         if (!currentTourId) throw new Error("Vui lòng chọn tour trước khi thêm lịch khởi hành.");
         if (currentTourId) {
-          const tourData = await getAdminTourDetail<TourInfo>(currentTourId);
+          const [tourData, savedTemplate] = await Promise.all([
+            getAdminTourDetail<TourInfo>(currentTourId),
+            isNew ? getTourScheduleTemplate(currentTourId) : Promise.resolve(null),
+          ]);
+          if (!active) return;
+          if (isNew) {
+            const initial = { ...createDefaultScheduleForm(), departure_location_id: tourData.tour.departure_location || "" as const,
+              tour_schedule_amenities: copyTourAmenities(tourData.tour.tour_amenities || []),
+            };
+            const next = savedTemplate?.template ? applyScheduleTemplate(initial, savedTemplate.template, Number(tourData.tour.duration_days) || 1) : initial;
+            await Promise.all([...new Set(next.itinerary.map(day => Number(day.hotel_id)).filter(Boolean))].map(fetchRoomTypes));
+            if (!active) return;
+            setForm(next);
+          }
           setTourInfo(tourData.tour);
-          if (isNew) setForm(prev => ({ ...prev, departure_location_id: tourData.tour.departure_location || "",
-            tour_schedule_amenities: copyTourAmenities(tourData.tour.tour_amenities || []),
-          }));
         }
       } catch (error) {
-        setLoadError(error instanceof Error ? error.message : "Không thể tải thông tin lịch khởi hành.");
+        if (active) setLoadError(error instanceof Error ? error.message : "Không thể tải thông tin lịch khởi hành.");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     void initPage();
+    return () => { active = false; };
   }, [fetchRoomTypes, id, isNew, tourId]);
 
   useEffect(() => {
@@ -171,12 +188,11 @@ export default function AdminScheduleDetailPage() {
     });
   }, [tourInfo]);
 
-  const handleSave = async () => {
-    if (saving || uploading || isPast || loadError) return;
-    const incompleteHotel = form.itinerary.find(day => Boolean(day.hotel_id) !== Boolean(day.room_type_id));
-    if (incompleteHotel) { showError(`Ngày ${incompleteHotel.day_number}: vui lòng chọn đủ khách sạn và loại phòng trước khi lưu.`); return; }
-    if (form.itinerary.some(day => (day.activities || []).some(activity => !/^([01]\d|2[0-3]):[0-5]\d$/.test(activity.time) || !activity.title.trim()))) {
-      showError("Vui lòng nhập giờ và tiêu đề cho tất cả hoạt động trong lịch trình."); return;
+  const handleSave = async (allowIncomplete = false) => {
+    if (savingRef.current || saving || uploading || loadError) return;
+    if (!isNew && originalStartDate) {
+      const restriction = getScheduleEditRestriction(originalStartDate, Number(tourInfo?.cut_off_hours ?? 0));
+      if (restriction) { showError(restriction); return; }
     }
     if (!form.departure_location_id) { showError("Tour gốc chưa có nơi xuất phát. Vui lòng cập nhật tour trước khi thêm lịch khởi hành."); return; }
     if (form.pickup_points.some(point => !point.name.trim() || !point.address.trim() || !point.pickup_at || Number.isNaN(Date.parse(point.pickup_at)))) {
@@ -188,7 +204,7 @@ export default function AdminScheduleDetailPage() {
     }
 
     const selectedStartDate = new Date(
-      `${form.start_date}T${form.start_time || "00:00"}:00`,
+      buildScheduleDateTime(form.start_date, form.start_time || "00:00"),
     );
     const cutOffHours = Number(tourInfo?.cut_off_hours || 0);
     const minAllowedDateTime = new Date(
@@ -202,6 +218,12 @@ export default function AdminScheduleDetailPage() {
       return;
     }
 
+    const pickupError = getSchedulePickupError(form);
+    if (pickupError) { showError(pickupError); return; }
+
+    const missing = getIncompleteItineraryDays(form.itinerary, Number(tourInfo?.duration_days) || 1);
+    if (missing.length && !allowIncomplete) { setIncompleteDays(missing); return; }
+    savingRef.current = true;
     setSaving(true);
 
     try {
@@ -210,7 +232,7 @@ export default function AdminScheduleDetailPage() {
           ? `/admin/tours/${tourId}/schedules`
           : `/admin/tours/schedules/${id}`,
         isNew ? "POST" : "PATCH",
-        buildSchedulePayload(form),
+        { ...buildSchedulePayload(form), allow_incomplete_itinerary: allowIncomplete && missing.length > 0 },
       )) as ScheduleDetailResponse;
 
       success(
@@ -226,6 +248,7 @@ export default function AdminScheduleDetailPage() {
           : "Lỗi kết nối server",
       );
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -294,11 +317,12 @@ export default function AdminScheduleDetailPage() {
           isPast={isPast}
           saving={saving}
           uploading={uploading}
-          onSave={handleSave}
+          onSave={() => void handleSave()}
           onUploadingChange={setUploading}
           onFormChange={setForm}
         />
       </div>
+      <IncompleteItineraryDialog days={incompleteDays} destination="quản lý lịch khởi hành" onCancel={() => setIncompleteDays(null)} onConfirm={() => { setIncompleteDays(null); void handleSave(true); }} />
     </TourEditorShell>
   );
 }

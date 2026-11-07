@@ -1,7 +1,10 @@
+"use client";
+
 import InlineNotice from "@/components/common/feedback/InlineNotice";
 import { PAYMENT_METHODS } from "@/lib/booking/paymentMethods";
 import { formatVND } from "@/lib/utils/currency";
-import { CalendarDays, TicketPercent } from "lucide-react";
+import { CalendarDays, ChevronRight, TicketPercent } from "lucide-react";
+import { useId } from "react";
 import type { BookingVoucherAndPaymentProps } from "shared";
 
 export function BookingVoucherAndPayment({
@@ -12,8 +15,11 @@ export function BookingVoucherAndPayment({
   paymentMethod,
   onVoucherCodeChange,
   onApplyVoucher,
+  onOpenAvailableVouchers,
+  availableVouchersOpen = false,
   onPaymentMethodChange,
 }: BookingVoucherAndPaymentProps) {
+  const voucherInputId = useId();
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5">
@@ -27,16 +33,20 @@ export function BookingVoucherAndPayment({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <TicketPercent className="h-4 w-4 text-blue-600" />
-            Mã ưu đãi
-          </label>
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor={voucherInputId} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-slate-800">
+              <TicketPercent className="h-4 w-4 text-blue-600" />
+              Mã ưu đãi
+            </label>
+            {onOpenAvailableVouchers && <button type="button" aria-haspopup="dialog" aria-expanded={availableVouchersOpen} onClick={onOpenAvailableVouchers} className="flex items-center justify-end gap-1 text-right text-xs font-semibold text-blue-600 transition hover:text-blue-700 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-blue-500">Chọn mã giảm giá đang có<ChevronRight className="h-3.5 w-3.5 shrink-0" /></button>}
+          </div>
           <div className="flex gap-3">
             <input
+              id={voucherInputId}
               value={voucherCode}
               onChange={(event) => onVoucherCodeChange(event.target.value)}
               placeholder="Nhập mã voucher"
-              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
             />
             <button
               type="button"

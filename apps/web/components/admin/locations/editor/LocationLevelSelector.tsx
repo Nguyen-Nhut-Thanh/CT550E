@@ -1,70 +1,45 @@
 "use client";
 
-import { LOCATION_LEVEL_DESCRIPTIONS, LOCATION_LEVEL_LABELS } from "@/lib/admin/locations/hierarchy";
-import { CheckCircle2, Layers } from "lucide-react";
-import type { LocationLevelSelectorProps as Props } from 'shared';
+import { LOCATION_LEVEL_LABELS } from "@/lib/admin/locations/hierarchy";
+import { Building2, Flag, Globe2, Layers, Map, Mountain } from "lucide-react";
+import type { LocationLevelSelectorProps } from "shared";
 
-export function LocationLevelSelector({ form, onLevelChange }: Props) {
+const levels = [
+  { value: 1, icon: Globe2, hint: "Cấp độ cao nhất" },
+  { value: 2, icon: Layers, hint: "Ví dụ: Châu Á" },
+  { value: 3, icon: Flag, hint: "Ví dụ: Việt Nam" },
+  { value: 4, icon: Map, hint: "Ví dụ: Miền Nam" },
+  { value: 5, icon: Building2, hint: "Ví dụ: An Giang" },
+  { value: 6, icon: Mountain, hint: "Danh lam, thắng cảnh" },
+];
+
+export function LocationLevelSelector({ form, onLevelChange, disabled = false }: LocationLevelSelectorProps & { disabled?: boolean }) {
   return (
-    <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-50 bg-slate-50/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-blue-100 p-2 text-blue-600">
-            <Layers size={18} />
-          </div>
-          <h3 className="text-sm font-bold text-slate-900">Chọn cấp địa điểm quản lý</h3>
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bắt buộc</span>
-      </div>
-      <div className="p-4">
-        <div className="flex flex-col gap-2">
-          {[1, 2, 3, 4, 5, 6].map((level) => {
-            const isDisabled = level < 3;
-            const isSelected = form.level_id === level;
-
-            return (
-              <button
-                key={level}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => onLevelChange(level)}
-                className={`group flex items-center justify-between rounded-2xl border-2 p-4 transition-all ${
-                  isDisabled
-                    ? "cursor-not-allowed border-slate-50 bg-slate-50 opacity-40"
-                    : isSelected
-                      ? "border-blue-600 bg-blue-50/50 shadow-md shadow-blue-50"
-                      : "border-transparent hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-black ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400"
-                    }`}
-                  >
-                    {level}
-                  </div>
-                  <div className="text-left">
-                    <h4 className={`text-sm font-bold ${isSelected ? "text-blue-900" : "text-slate-900"}`}>
-                      {LOCATION_LEVEL_LABELS[level]}
-                    </h4>
-                    <p className="text-[10px] font-medium text-slate-500">
-                      {isDisabled ? "Cấp độ gốc, không thể tạo" : LOCATION_LEVEL_DESCRIPTIONS[level]}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all ${
-                    isSelected ? "scale-110 border-blue-600 bg-blue-600 text-white" : "border-slate-200"
-                  }`}
-                >
-                  {isSelected && <CheckCircle2 size={12} />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div role="radiogroup" aria-label="Phân loại địa điểm" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      {levels.map(({ value, icon: Icon, hint }) => {
+        const selected = form.level_id === value;
+        return (
+          <button key={value} type="button" role="radio" aria-checked={selected} disabled={disabled || value < 3}
+            onClick={() => { if (!selected) onLevelChange(value); }}
+            onKeyDown={event => {
+              if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+              event.preventDefault();
+              const choices = Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+              const direction = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+              const next = choices[(choices.indexOf(event.currentTarget) + direction + choices.length) % choices.length];
+              next?.focus();
+              next?.click();
+            }}
+            className={`flex min-w-0 flex-col items-center gap-2 rounded-[9px] border px-1.5 py-3 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-45 ${selected ? "border-[#8cb8ff] bg-[#edf5ff] text-[#0766ff]" : "border-[#dfe7f4] bg-white text-[#536583] hover:border-blue-300 hover:bg-blue-50/50"}`}>
+            <span className={`grid size-3.5 place-items-center rounded-full border ${selected ? "border-[#0766ff] bg-[#0766ff]" : "border-[#93a3bf]"}`}>
+              {selected && <span className="size-1.5 rounded-full bg-white" />}
+            </span>
+            <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+            <span className={`text-[12px] leading-4 font-semibold ${selected ? "text-[#102044]" : ""}`}>{LOCATION_LEVEL_LABELS[value]}</span>
+            <span className="text-[10px] leading-4 text-[#8191ad]">{hint}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

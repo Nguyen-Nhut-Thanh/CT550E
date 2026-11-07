@@ -1,6 +1,35 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildScheduleFormFromResponse, buildSchedulePayload, createDefaultScheduleForm, createEmptyPickupPoint, pickupDateToInput, pickupInputToDate, updateScheduleBasePrice, updateScheduleStart } from "./forms";
+import { buildScheduleFormFromResponse, buildSchedulePayload, createDefaultScheduleForm, createEmptyPickupPoint, getSchedulePickupError, pickupDateToInput, pickupInputToDate, updateScheduleBasePrice, updateScheduleStart } from "./forms";
+
+test("pickup validation compares Vietnam date and time and rejects equal or later times", () => {
+  const form = updateScheduleStart(createDefaultScheduleForm(), '2027-01-01', '00:05', 2);
+  form.pickup_points[0].pickup_at = '2026-12-31T23:59';
+  assert.equal(getSchedulePickupError(form), null);
+  assert.equal(new Date(buildSchedulePayload(form).start_date).toISOString(), '2026-12-31T17:05:00.000Z');
+  for (const pickup of ['2027-01-01T00:05', '2027-01-01T00:06', '2027-01-02T00:00']) {
+    form.pickup_points[0].pickup_at = pickup;
+    assert.match(getSchedulePickupError(form)!, /Điểm đón 1:.*phải sớm hơn/);
+  }
+  form.pickup_points[0].pickup_at = '2026-12-31T23:59';
+  form.start_date = '2026-12-31';
+  assert.match(getSchedulePickupError(form)!, /phải sớm hơn/);
+});
+
+test("saved unfinished days restore the exact inputs rather than filled defaults or old allocations", () => {
+  const draft = { day_number: 1, title: '', content: 'Đang nhập', meals: '', hotel_id: 7, room_type_id: null, transport_id: null, activities: [{ time: '', title: 'Đang viết', description: 'Mô tả dở' }, { time: '08:00', title: '', description: '' }] };
+  const form = buildScheduleFormFromResponse({
+    duration_days: 1,
+    tour_itineraries: [{ day_number: 1, title: 'Ngày 1', meals: 'Sáng', draft_data: draft }],
+    tour_schedule_hotels: [{ hotel_id: 99, room_type_id: 999, day_from: 1 }],
+    tour_schedule_transports: [{ transport_id: 99, transport_role: 'main', day_from: 1, day_to: 1 }],
+  });
+  assert.equal(form.itinerary[0].title, '');
+  assert.equal(form.itinerary[0].meals, '');
+  assert.deepEqual([form.itinerary[0].hotel_id, form.itinerary[0].room_type_id, form.itinerary[0].transport_id], [7, '', '']);
+  assert.deepEqual(form.itinerary[0].activities, draft.activities);
+  assert.deepEqual(buildSchedulePayload(form).itinerary[0].activities, draft.activities);
+});
 
 test("schedule attraction selection survives reopening and clearing independently of daily activities", () => {
   const response = { tour_schedule_attractions: [{ location_id: 10, sort_order: 0 }], tour_itineraries: [{ day_number: 1, activities: [{ time: "08:00", title: "Ăn sáng", description: "", location_id: 20 }] }] };
@@ -72,4 +101,33 @@ test("hotel and room selections are restored from their separate per-day allocat
   assert.deepEqual(form.itinerary.map(day => [day.hotel_id, day.room_type_id]), [[10, 101], [20, 202]]);
   const payload = buildSchedulePayload(form);
   assert.deepEqual(payload.itinerary.map(day => [day.day_number, day.hotel_id, day.room_type_id]), [[1, 10, 101], [2, 20, 202]]);
+});
+
+test("each day restores its own optional transport and clearing a choice sends null", () => {
+  const form = buildScheduleFormFromResponse({
+    duration_days: 3,
+    tour_itineraries: [{ day_number: 1, title: "Ngày 1" }, { day_number: 2, title: "Ngày 2" }, { day_number: 3, title: "Ngày 3" }],
+    tour_schedule_transports: [
+      { transport_id: 11, transport_role: "main", day_from: 1, day_to: 1 },
+      { transport_id: 22, transport_role: "main", day_from: 2, day_to: 2 },
+      { transport_id: 33, transport_role: "transfer", day_from: 3, day_to: 3 },
+    ],
+  });
+  assert.deepEqual(form.itinerary.map(day => day.transport_id), [11, 22, ""]);
+  assert.deepEqual(buildSchedulePayload(form).itinerary.map(day => day.transport_id), [11, 22, null]);
+  form.itinerary[0].transport_id = "";
+  assert.deepEqual(buildSchedulePayload(form).itinerary.map(day => day.transport_id), [null, 22, null]);
+});
+
+test("legacy transport ranges fill days without itinerary rows and specific days take precedence", () => {
+  const form = buildScheduleFormFromResponse({
+    duration_days: 3,
+    tour_schedule_transports: [
+      { schedule_transport_id: 1, transport_id: 11, transport_role: "main", day_from: null, day_to: null },
+      { schedule_transport_id: 2, transport_id: 22, transport_role: "main", day_from: 2, day_to: 2 },
+    ],
+  });
+  assert.deepEqual(form.itinerary.map(day => [day.day_number, day.transport_id]), [[1, 11], [2, 22], [3, 11]]);
+  const empty = buildScheduleFormFromResponse({ duration_days: 2, tour_schedule_transports: [] });
+  assert.deepEqual(empty.itinerary.map(day => day.transport_id), ["", ""]);
 });

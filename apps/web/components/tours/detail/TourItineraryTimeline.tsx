@@ -22,7 +22,7 @@ export default function TourItineraryTimeline({ itineraries = [] }: TourItinerar
   return <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`} className="flex items-center gap-2 text-xl font-bold text-slate-900"><CalendarDays className="h-5 w-5 text-sky-600" />Lịch trình chi tiết</h2>
     {!currentDay ? <p className="py-4 text-sm text-slate-500">Lịch trình chi tiết đang được cập nhật cho tour này.</p> : <>
-      <div role="tablist" aria-label="Ngày trong hành trình" className="flex gap-2 overflow-x-auto border-b border-slate-100 pb-1">
+      <div role="tablist" aria-label="Ngày trong hành trình" className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain border-b border-slate-100 pb-1">
         {days.map((day, index) => {
           const selected = day.day_number === currentDay.day_number;
           return <button key={day.day_number} id={`${id}-day-${day.day_number}`} role="tab" aria-selected={selected} aria-controls={`${id}-panel`} tabIndex={selected ? 0 : -1} type="button"

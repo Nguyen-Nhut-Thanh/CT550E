@@ -14,12 +14,20 @@ __pycache__/
 ThamKhao/
 scripts/*
 !scripts/apply-membership.cjs
+!scripts/apply-membership-benefits.cjs
+!scripts/apply-voucher-audiences.cjs
+!scripts/test-voucher-audiences.ts
+!scripts/test-membership.ts
 !scripts/apply-schedule-departures.cjs
 !scripts/test-schedule-departures.ts
 !scripts/apply-workforce.cjs
+!scripts/apply-crew-finalization.cjs
+!scripts/test-crew-finalization.ts
 !scripts/apply-flexible-crew.cjs
 !scripts/apply-deputy-leader.cjs
 !scripts/test-workforce.ts
+!scripts/test-admin-access.ts
+!scripts/test-admin-access-http.cjs
 !scripts/test-workforce-http.cjs
 !scripts/apply-tour-amenities.cjs
 !scripts/apply-tour-summary-cleanup.cjs
@@ -29,6 +37,11 @@ scripts/*
 !scripts/apply-schedule-attractions.cjs
 !scripts/apply-itinerary-activities.cjs
 !scripts/test-itinerary-activities.ts
+!scripts/apply-schedule-templates.cjs
+!scripts/test-schedule-templates.ts
+!scripts/apply-itinerary-drafts.cjs
+!scripts/apply-vnpay.cjs
+!scripts/test-vnpay.ts
 
 # Isolated production performance build
 .next-perf/

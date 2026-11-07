@@ -50,7 +50,6 @@ export function buildCardSelect(scheduleFilter: Prisma.tour_schedulesWhereInput 
         },
         tour_destinations: {
             orderBy: { visit_order: 'asc' as const },
-            take: 5,
             select: {
                 visit_order: true,
                 locations: {

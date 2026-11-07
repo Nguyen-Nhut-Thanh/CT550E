@@ -7,10 +7,12 @@ export function BookingGenderSelect({
   value,
   onChange,
   label,
+  compact = false,
 }: {
   value: "male" | "female";
   onChange: (value: "male" | "female") => void;
   label: string;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -49,11 +51,15 @@ export function BookingGenderSelect({
             setOpen(true);
           }
         }}
-        className={`flex min-h-[46px] w-full items-center justify-between rounded-xl border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-blue-100 ${open ? "border-blue-400 bg-white" : "border-slate-200 bg-slate-50"}`}
+        className={`flex ${
+          compact ? "h-[38px] px-3 py-1.5 text-xs rounded-xl" : "min-h-[46px] px-4 py-3 text-sm rounded-xl"
+        } w-full items-center justify-between gap-1.5 border outline-none transition focus:ring-2 focus:ring-blue-100 ${
+          open ? "border-blue-400 bg-white" : "border-slate-200 bg-slate-50"
+        }`}
       >
-        {value === "male" ? "Nam" : "Nữ"}
+        <span className="font-medium text-slate-800">{value === "male" ? "Nam" : "Nữ"}</span>
         <ChevronDown
-          className={`h-4 w-4 text-slate-400 transition ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
@@ -61,7 +67,7 @@ export function BookingGenderSelect({
           id={id}
           role="listbox"
           aria-label={label}
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 rounded-xl border border-blue-100 bg-white p-1.5 shadow-lg"
+          className="absolute right-0 top-[calc(100%+4px)] z-30 min-w-[95px] w-full rounded-xl border border-blue-100 bg-white p-1 shadow-lg"
         >
           {(
             [

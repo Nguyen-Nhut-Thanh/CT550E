@@ -7,6 +7,7 @@ import { useAccountResource } from "@/lib/account/useAccountResource";
 import { getMembership } from "@/lib/membership/api";
 import { formatVND } from "@/lib/utils/currency";
 import type { MembershipVoucher } from "shared";
+import { voucherAudienceLabel } from "shared";
 
 export function AccountWalletTab() {
   const { data, loading, error, refresh } = useAccountResource(
@@ -38,12 +39,10 @@ export function AccountWalletTab() {
             Ưu đãi dành riêng cho những hành trình tiếp theo của bạn.
           </p>
         </div>
-        <Link
-          href="/account/membership"
-          className="self-start rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700"
-        >
-          Xem hạng thành viên
-        </Link>
+        <div className="flex flex-wrap gap-2 self-start">
+          <button type="button" onClick={refresh} disabled={loading} className="rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">Làm mới voucher</button>
+          <Link href="/account/membership" className="rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">Xem hạng thành viên</Link>
+        </div>
       </header>
       <div
         className="flex flex-wrap gap-2"
@@ -53,6 +52,7 @@ export function AccountWalletTab() {
         {(
           [
             ["available", "Có thể dùng"],
+            ["upcoming", "Sắp có hiệu lực"],
             ["used", "Đã dùng"],
             ["expired", "Hết hạn"],
           ] as const
@@ -94,7 +94,7 @@ export function AccountWalletTab() {
             .map((voucher) => (
               <article
                 key={voucher.voucher_id}
-                className={`overflow-hidden rounded-2xl border border-slate-200 bg-white ${filter !== "available" ? "opacity-70" : ""}`}
+                className={`overflow-hidden rounded-2xl border border-slate-200 bg-white ${filter === "used" || filter === "expired" ? "opacity-70" : ""}`}
               >
                 <div className="flex items-start gap-4 p-5">
                   <div className="rounded-2xl bg-sky-50 p-3 text-blue-600">
@@ -102,7 +102,7 @@ export function AccountWalletTab() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
-                      Ưu đãi thành viên
+                      {voucher.is_birthday ? "Quà sinh nhật" : "Ưu đãi thành viên"}
                     </p>
                     <h2 className="mt-1 text-xl font-extrabold text-slate-900">
                       {voucher.discount_type === "percentage"
@@ -118,6 +118,8 @@ export function AccountWalletTab() {
                     <p className="mt-2 text-sm text-slate-500">
                       Đơn từ {formatVND(voucher.min_order_value)}
                     </p>
+                    {!!voucher.eligible_tiers?.length && <p className="mt-1 text-xs text-blue-600">Dành cho: {voucherAudienceLabel(voucher.eligible_tiers)}</p>}
+                    {filter === "upcoming" && <p className="mt-1 text-xs font-semibold text-amber-600">Bắt đầu: {new Date(voucher.start_date).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</p>}
                     <p className="mt-1 text-xs text-slate-500">
                       Hạn dùng:{" "}
                       {new Date(voucher.expiry_date).toLocaleString("vi-VN", {

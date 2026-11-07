@@ -5,6 +5,7 @@ export interface MembershipCredit {
   tourName: string;
   completedAt: Date;
   amount: number;
+  points?: number;
 }
 
 export function tierForSpending(
@@ -103,6 +104,7 @@ export function creditForBooking(
       paid_at: Date | null;
       created_at: Date;
     }[];
+    membership_snapshot?: unknown;
   },
   now: Date,
 ): MembershipCredit | null {
@@ -139,6 +141,27 @@ export function creditForBooking(
     tourName: booking.tour_schedules.tours.name,
     completedAt: new Date(Math.max(completionAt.getTime(), paidAt)),
     amount,
+    points: bookingPoints(amount, booking.membership_snapshot),
+  };
+}
+
+export function bookingPoints(amount: number, snapshot: unknown): number {
+  const value = snapshot && typeof snapshot === 'object' && 'pointMultiplier' in snapshot ? snapshot.pointMultiplier : 1;
+  const multiplier = typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 10 ? value : 1;
+  return Math.floor(amount * Math.round(multiplier * 10) / 1_000_000);
+}
+
+// Birthday vouchers are valid for the calendar month in Vietnam.
+export function birthdayWindow(birthday: Date | null, now: Date) {
+  if (!birthday) return null;
+  const local = new Date(now.getTime() + 7 * 3600_000);
+  if (birthday.getUTCMonth() !== local.getUTCMonth()) return null;
+  const year = local.getUTCFullYear();
+  const month = local.getUTCMonth();
+  return {
+    year,
+    start: new Date(Date.UTC(year, month, 1) - 7 * 3600_000),
+    end: new Date(Date.UTC(year, month + 1, 1) - 7 * 3600_000),
   };
 }
 

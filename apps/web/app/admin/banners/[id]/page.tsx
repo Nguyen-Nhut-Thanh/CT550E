@@ -1,5 +1,8 @@
 "use client";
 
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+
+
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/admin/banners/api";
 import { useToast } from "@/lib/notifications/useToast";
@@ -8,6 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function AdminBannerDetailPage() {
+  const readOnly = useAdminContentReadOnly();
   const { id } = useParams();
   const router = useRouter();
   const { success, error: showError } = useToast();
@@ -112,7 +116,7 @@ export default function AdminBannerDetailPage() {
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || !form.header || !form.image_url}
+          disabled={readOnly || saving || !form.header || !form.image_url}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
         >
           {saving ? (

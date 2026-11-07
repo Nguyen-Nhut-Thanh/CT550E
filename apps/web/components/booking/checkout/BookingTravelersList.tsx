@@ -25,10 +25,6 @@ export function BookingTravelersList({
         <h2 className="text-xl font-bold text-slate-900">
           Danh sách hành khách
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Có thể hoàn thiện sau, nhưng nên nhập trước để giảm thao tác khi chốt
-          booking.
-        </p>
       </div>
 
       <p className="mb-4 text-sm text-slate-500">
@@ -50,9 +46,9 @@ export function BookingTravelersList({
               key={`${traveler.type}-${index}`}
               className="rounded-xl border border-slate-200 p-4"
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
                     <UserRound className="h-5 w-5" />
                   </div>
                   <div>
@@ -64,13 +60,45 @@ export function BookingTravelersList({
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-[#ef3b2d]">
-                  {formatVND(getUnitPrice(selectedSchedule, traveler.type))}
-                </span>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {traveler.type === "adult" && (
+                    <label
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 transition min-h-[46px] min-w-[165px] sm:min-w-[175px] ${
+                        singleRoomSelections[adultIndex]
+                          ? "border-blue-300 bg-blue-50/70"
+                          : "border-slate-200 bg-slate-50 hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        checked={singleRoomSelections[adultIndex] ?? false}
+                        onChange={(event) =>
+                          onUpdateSingleRoomSelection(
+                            adultIndex,
+                            event.target.checked,
+                          )
+                        }
+                      />
+                      <div className="min-w-0 leading-tight">
+                        <p className="text-[13px] font-bold text-slate-900">
+                          Phòng đơn
+                        </p>
+                        <p className="text-[10px] font-bold text-[#ef3b2d]">
+                          + {formatVND(singleRoomUnitPrice)}
+                        </p>
+                      </div>
+                    </label>
+                  )}
+                  <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-[#ef3b2d]">
+                    {formatVND(getUnitPrice(selectedSchedule, traveler.type))}
+                  </span>
+                </div>
               </div>
 
               <div
-                className={`grid gap-4 ${
+                className={`grid items-start gap-3.5 ${
                   traveler.type === "adult"
                     ? "md:grid-cols-4"
                     : "md:grid-cols-3"
@@ -82,7 +110,7 @@ export function BookingTravelersList({
                     onUpdateTraveler(index, "fullName", event.target.value)
                   }
                   placeholder="Họ và tên"
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
+                  className="min-h-[46px] min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
                 />
                 <BookingGenderSelect
                   value={traveler.gender}
@@ -90,35 +118,17 @@ export function BookingTravelersList({
                   onChange={(gender) => onUpdateTraveler(index, "gender", gender)}
                 />
                 <BirthdayInput value={traveler.birthday} label={`Ngày sinh hành khách ${index + 1}`} onChange={(value) => onUpdateTraveler(index, "birthday", value)} />
-                {traveler.type === "adult" ? (
-                  <label
-                    className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-1.5 transition min-h-[46px] ${
-                      singleRoomSelections[adultIndex]
-                        ? "border-blue-300 bg-blue-50/70"
-                        : "border-slate-200 bg-slate-50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      checked={singleRoomSelections[adultIndex] ?? false}
-                      onChange={(event) =>
-                        onUpdateSingleRoomSelection(
-                          adultIndex,
-                          event.target.checked,
-                        )
-                      }
-                    />
-                    <div className="min-w-0 leading-tight">
-                      <p className="text-[13px] font-bold text-slate-900">
-                        Phòng đơn
-                      </p>
-                      <p className="text-[10px] font-bold text-[#ef3b2d]">
-                        + {formatVND(singleRoomUnitPrice)}
-                      </p>
-                    </div>
-                  </label>
-                ) : null}
+                {traveler.type === "adult" && (
+                  <input
+                    value={traveler.idNumber || ""}
+                    maxLength={12}
+                    onChange={(event) =>
+                      onUpdateTraveler(index, "idNumber", event.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="Số CCCD (12 số) *"
+                    className="min-h-[46px] min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
+                  />
+                )}
               </div>
             </div>
           );

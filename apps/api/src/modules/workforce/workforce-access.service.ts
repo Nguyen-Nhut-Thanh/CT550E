@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { WORKFORCE_REGIONS, WORKFORCE_ROLES, type RegionCode, type WorkforceActor, type WorkforceRole } from 'shared';
+import { ADMIN_CONTENT_DENIED, WORKFORCE_REGIONS, WORKFORCE_ROLES, type RegionCode, type WorkforceActor, type WorkforceRole } from 'shared';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
@@ -24,7 +24,7 @@ export class WorkforceAccessService {
         if (!actor.isManager) throw new ForbiddenException('Chỉ quản lý miền hoặc quản trị viên được thực hiện.');
     }
     region(actor: WorkforceActor, region: string | null) {
-        if (!actor.isAdmin && (!region || !actor.regions.includes(region as RegionCode))) throw new ForbiddenException('Ngoài miền được phân công quản lý.');
+        if (!actor.isAdmin && (!region || !actor.regions.includes(region as RegionCode))) throw new ForbiddenException(`${ADMIN_CONTENT_DENIED} Ngoài miền được phân công quản lý.`);
     }
     async customer(actor: WorkforceActor, customerId: number) {
         if (actor.isAdmin) return;

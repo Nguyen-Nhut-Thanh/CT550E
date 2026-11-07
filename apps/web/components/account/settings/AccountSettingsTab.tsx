@@ -5,6 +5,8 @@ import { AccountPasswordForm } from "@/components/account/settings/AccountPasswo
 import { BirthdayInput } from "@/components/common/calendar/BirthdayInput";
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { updateUserProfile, uploadUserAvatar } from "@/lib/account/api";
+import { ResourceContext } from "@/lib/account/resource-context";
+import { getMembership } from "@/lib/membership/api";
 import { displayBirthday, parseBirthday } from "@/lib/booking/birthday";
 import { useToast } from "@/lib/notifications/useToast";
 import {
@@ -21,7 +23,7 @@ import {
   Save,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import type {
   AccountUserProps as AccountSettingsTabProps,
   UserProfile,
@@ -46,6 +48,7 @@ export function AccountSettingsTab({
   const [saving, setSaving] = useState(false);
 
   const toast = useToast();
+  const resourceCache = useContext(ResourceContext);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +94,22 @@ export function AccountSettingsTab({
       await updateUserProfile(updates);
       setAvatarUrl(nextAvatar);
       onProfileSaved?.(updates);
-      toast.success("Đã cập nhật thông tin cá nhân!");
+      // Refresh after the profile write so the wallet includes any newly eligible birthday gift.
+      resourceCache?.delete("membership");
+      if (parsedBirthday) {
+        try {
+          const membership = await getMembership();
+          resourceCache?.set("membership", { data: membership, loaded: true, updatedAt: Date.now() });
+          const birthdayVoucher = membership.vouchers.find(voucher => voucher.is_birthday && voucher.state === "available");
+          toast.success(birthdayVoucher
+            ? "Đã lưu thông tin. Voucher sinh nhật của bạn đã có trong Ví voucher & ưu đãi!"
+            : "Đã cập nhật thông tin cá nhân!");
+        } catch {
+          toast.warning("Đã lưu thông tin cá nhân. Chưa kiểm tra được quà sinh nhật; bạn có thể mở Ví voucher & ưu đãi để thử lại.");
+        }
+      } else {
+        toast.success("Đã cập nhật thông tin cá nhân!");
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Không thể lưu thông tin.",

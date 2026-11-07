@@ -1,19 +1,14 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { CREW_ROLES, WORKFORCE_REGIONS, WORKFORCE_ROLES, type CrewPayload, type CrewRole, type EmployeePayload, type RegionCode, type StaffShiftPayload, type WorkforceActor } from 'shared';
+import { ADMIN_CONTENT_DENIED, CREW_ROLES, WORKFORCE_REGIONS, WORKFORCE_ROLES, type CrewPayload, type CrewRole, type EmployeePayload, type RegionCode, type StaffShiftPayload, type WorkforceActor } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { WorkforceAccessService } from './workforce-access.service';
+import { CREW_LOCK_LEAD_MS, crewDetails, crewReadiness, finalizeCrewIfReady, readCrewSnapshot } from './crew-finalization';
+import { inferOperatingRegion } from './operating-region';
 
 const rosterInclude = { user: { select: { full_name: true, phone: true } } };
-const crewInclude = {
-    user: { select: {
-        full_name: true, phone: true, is_staff: true,
-        accounts: { select: { status: true } },
-        employee_profile: { select: { status: true, regions: true } },
-        role_users: { select: { roles: { select: { name: true } } } },
-    } },
-};
+const crewInclude = crewDetails;
 const employeeInclude = { user: { include: { accounts: { select: { email: true, status: true } }, role_users: { include: { roles: true } } } } };
 const busyStatuses = ['pending', 'confirmed', 'completed'];
 function text(value: unknown, label: string, max: number, required = false): string {
@@ -38,8 +33,8 @@ function id(value: unknown) {
 export class WorkforceService {
     constructor(private readonly prisma: PrismaService, private readonly access: WorkforceAccessService) {}
     private scoped(actor: WorkforceActor, region?: string) {
-        if (region) { const code = regionCode(region); this.access.region(actor, code); return code; }
-        return actor.isAdmin ? undefined : { in: actor.regions };
+        if (region) { const code = regionCode(region); if (!actor.isManager) this.access.region(actor, code); return code; }
+        return actor.isManager ? undefined : { in: actor.regions };
     }
     private async lockPeople(tx: Prisma.TransactionClient, ids: number[]) {
         const sorted = [...new Set(ids)].sort((a, b) => a - b);
@@ -166,39 +161,28 @@ export class WorkforceService {
         const rows = await this.prisma.tour_schedules.findMany({ where: {
             ...(actor.isManager ? { ...(scope === undefined ? {} : { operating_region: scope }) } : { crew: { some: { user_id: actor.userId } } }),
             end_date: { gte: new Date(Date.now() - 30 * 86400000) },
-        }, select: { tour_schedule_id: true, code: true, start_date: true, end_date: true, status: true, booked_count: true, operating_region: true, crew_required_count: true, cover_image_url: true,
-            departure_location: { select: { name: true } }, tours: { select: { name: true, tour_images: { select: { image_url: true }, orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }, { image_id: 'asc' }], take: 1 } } }, crew: { include: crewInclude, orderBy: { assignment_id: 'asc' } } },
+        }, select: { tour_schedule_id: true, code: true, start_date: true, end_date: true, status: true, booked_count: true, operating_region: true, operating_region_source: true, crew_locked_at: true, crew_locked_by: true, crew_revision: true, crew_snapshot: true, crew_required_count: true, cover_image_url: true,
+            departure_location: { select: { name: true } }, tours: { select: { name: true, summary: true, tour_images: { select: { image_url: true }, orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }, { image_id: 'asc' }], take: 1 } } }, crew: { include: crewInclude, orderBy: { assignment_id: 'asc' } } },
         orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], take: 500 });
         return rows.map(row => {
-            const eligible = row.crew.filter(item => item.user.is_staff && item.user.accounts.status === 1 && item.user.employee_profile?.status === 'active'
-                && (item.user.role_users.some(link => link.roles.name === 'admin') || item.user.employee_profile.regions.includes(row.operating_region!))
-                && item.roles.every(role => item.user.role_users.some(link => link.roles.name === role)));
-            const confirmed = eligible.filter(item => ['confirmed', 'completed'].includes(item.status));
-            const issues: string[] = [];
-            if (row.crew.length < row.crew_required_count) issues.push(`Cần thêm ${row.crew_required_count - row.crew.length} nhân sự để đạt mức tối thiểu.`);
-            for (const role of ['tour_leader', 'guide'] as const) {
-                const label = CREW_ROLES[role];
-                if (!row.crew.some(item => item.roles.includes(role))) issues.push(`Chưa phân công vai trò ${label}.`);
-            }
-            const pending = eligible.filter(item => item.status === 'pending').length;
-            const declined = eligible.filter(item => item.status === 'declined').length;
-            if (pending) issues.push(`${pending} nhân sự đang chờ nhận chuyến.`);
-            if (declined) issues.push(`${declined} nhân sự đã từ chối; cần thay người hoặc gỡ phân công.`);
-            if (eligible.length < row.crew.length) issues.push(`${row.crew.length - eligible.length} phân công không còn hợp lệ do tài khoản, vai trò hoặc miền hỗ trợ.`);
-            return { ...row, cover_image_url: row.cover_image_url || row.tours.tour_images[0]?.image_url || null, tours: { name: row.tours.name }, crew_ready: issues.length === 0, crew_confirmed_count: confirmed.length, crew_issues: issues };
+            const assessment = crewReadiness(row);
+            return { ...row, crew_snapshot: readCrewSnapshot(row.crew_snapshot), crew_lock_deadline: new Date(row.start_date.getTime() - CREW_LOCK_LEAD_MS).toISOString(), cover_image_url: row.cover_image_url || row.tours.tour_images[0]?.image_url || null, tours: { name: row.tours.name, summary: row.tours.summary }, crew_ready: assessment.ready, crew_confirmed_count: assessment.confirmed.length, crew_issues: assessment.issues };
         });
     }
-    async setRegion(actor: WorkforceActor, scheduleId: number, value: unknown) {
-        if (!actor.isAdmin) throw new ForbiddenException('Chỉ quản trị viên được chỉ định miền điều hành của chuyến.');
+    async setRegion(actor: WorkforceActor, scheduleId: number, value: unknown, overrideReason?: unknown) {
+        if (!actor.isAdmin) throw new ForbiddenException(`${ADMIN_CONTENT_DENIED} Chỉ quản trị viên được chỉ định miền điều hành của chuyến.`);
         const region = regionCode(value);
         return this.prisma.$transaction(async tx => {
             await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${scheduleId} FOR UPDATE`;
             const schedule = await tx.tour_schedules.findUnique({ where: { tour_schedule_id: scheduleId }, include: { crew: true } });
             if (!schedule) throw new NotFoundException('Không tìm thấy chuyến.');
-            if (schedule.start_date <= new Date()) throw new BadRequestException('Không thể đổi miền của chuyến đã khởi hành.');
-            if (schedule.crew.length && schedule.operating_region !== region) throw new ConflictException('Cần gỡ phân công nhân sự trước khi đổi miền điều hành.');
-            await this.event(tx, actor, 'schedule_region_updated', { before: schedule.operating_region, after: region }, { tour_schedule_id: scheduleId, region_code: region });
-            return tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { operating_region: region } });
+            const changed = schedule.operating_region !== region;
+            const protectedData = Boolean(schedule.crew_locked_at || readCrewSnapshot(schedule.crew_snapshot)) || schedule.start_date.getTime() - Date.now() <= CREW_LOCK_LEAD_MS;
+            const reason = text(overrideReason, 'Lý do thay đổi miền', 1000, changed && protectedData);
+            await this.event(tx, actor, 'schedule_region_updated', { before: schedule.operating_region, after: region, reason }, { tour_schedule_id: scheduleId, region_code: region });
+            const updated = await tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { operating_region: region, operating_region_source: 'admin', ...(changed ? { crew_locked_at: null, crew_locked_by: null } : {}) } });
+            if (changed) await finalizeCrewIfReady(tx, scheduleId, actor.userId);
+            return updated;
         });
     }
     async assignCrew(actor: WorkforceActor, scheduleId: number, body: CrewPayload) {
@@ -211,9 +195,18 @@ export class WorkforceService {
             await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${scheduleId} FOR UPDATE`;
             const schedule = await tx.tour_schedules.findUnique({ where: { tour_schedule_id: scheduleId }, include: { crew: true } });
             if (!schedule) throw new NotFoundException('Không tìm thấy chuyến.');
-            if (!schedule.operating_region) throw new BadRequestException('Cần chọn miền điều hành trước khi phân công.');
+            if (!schedule.operating_region) {
+                const inferred = await inferOperatingRegion(tx, schedule.departure_location_id);
+                if (!inferred) throw new BadRequestException('Cần chọn miền điều hành trước khi phân công.');
+                schedule.operating_region = inferred;
+                await tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { operating_region: inferred, operating_region_source: 'departure' } });
+            }
             this.access.region(actor, schedule.operating_region);
             if (schedule.start_date <= new Date()) throw new BadRequestException('Không thể thay đổi phân công của chuyến đã khởi hành.');
+            const protectedData = Boolean(schedule.crew_locked_at || readCrewSnapshot(schedule.crew_snapshot)) || schedule.start_date.getTime() - Date.now() <= CREW_LOCK_LEAD_MS;
+            if (protectedData && !actor.isAdmin) throw new ForbiddenException('Phân công đã chốt hoặc đã đến hạn 24 giờ trước khởi hành. Chỉ admin được sửa ngoại lệ có lý do.');
+            const reason = text(body.override_reason, 'Lý do sửa phân công', 1000, protectedData);
+            if (protectedData) await this.event(tx, actor, 'crew_override', { reason, previous_revision: schedule.crew_revision }, { tour_schedule_id: scheduleId, region_code: schedule.operating_region });
             await this.lockPeople(tx, [...assignments.map(item => item.user_id), ...schedule.crew.map(item => item.user_id)]);
             for (const item of assignments) {
                 if (item.release_at <= item.report_at || item.report_at > schedule.start_date || item.release_at < schedule.end_date) throw new BadRequestException('Thời gian điều động phải bao gồm toàn bộ chuyến (có thể mở rộng để di chuyển và nghỉ).');
@@ -231,8 +224,9 @@ export class WorkforceService {
                     update: { ...item, assigned_by: actor.userId, ...(!unchanged ? { status: 'pending', confirmed_at: null, response_note: null } : {}) } });
             }
             const requiredCount = body.crew_required_count ?? schedule.crew_required_count;
-            await tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { crew_required_count: requiredCount } });
+            await tx.tour_schedules.update({ where: { tour_schedule_id: scheduleId }, data: { crew_required_count: requiredCount, ...(protectedData ? { crew_locked_at: null, crew_locked_by: null } : {}) } });
             await this.event(tx, actor, 'crew_assigned', { before: schedule.crew, after: assignments, requirement_before: schedule.crew_required_count, requirement_after: requiredCount }, { tour_schedule_id: scheduleId, region_code: schedule.operating_region });
+            await finalizeCrewIfReady(tx, scheduleId, actor.userId);
             return { success: true };
         });
     }
@@ -252,6 +246,7 @@ export class WorkforceService {
             const status = action === 'confirm' ? 'confirmed' : action === 'decline' ? 'declined' : 'completed';
             const result = await tx.schedule_crew.update({ where: { assignment_id: assignmentId }, data: { status, response_note, ...(action === 'confirm' ? { confirmed_at: new Date() } : {}) } });
             await this.event(tx, actor, `crew_${status}`, { assignment_id: assignmentId, response_note }, { target_user_id: actor.userId, tour_schedule_id: assignment.tour_schedule_id, region_code: assignment.schedule.operating_region });
+            if (action === 'confirm') await finalizeCrewIfReady(tx, assignment.tour_schedule_id);
             return result;
         });
     }
@@ -261,13 +256,13 @@ export class WorkforceService {
         const schedules = await this.schedules(actor);
         const upcoming = schedules.filter(item => new Date(item.end_date) >= now);
         const [employees, on_duty] = await Promise.all([
-            this.prisma.employee_profiles.count({ where: { status: 'active', ...(actor.isAdmin ? {} : actor.isManager ? { regions: { hasSome: actor.regions } } : { user_id: actor.userId }) } }),
+            this.prisma.employee_profiles.count({ where: { status: 'active', ...(actor.isManager ? {} : { user_id: actor.userId }) } }),
             this.prisma.staff_shifts.count({ where: { duty_type: 'page', status: 'scheduled', starts_at: { lte: now }, ends_at: { gt: now }, ...(actor.isManager ? { ...(scope === undefined ? {} : { region_code: scope }) } : { user_id: actor.userId }) } }),
         ]);
         return { employees, on_duty, upcoming: upcoming.length, missing_crew: upcoming.filter(item => !item.crew_ready).length };
     }
     async events(actor: WorkforceActor, scheduleId?: number) {
         this.access.manager(actor);
-        return this.prisma.workforce_events.findMany({ where: { ...(scheduleId ? { tour_schedule_id: scheduleId } : {}), ...(actor.isAdmin ? {} : { region_code: { in: actor.regions } }) }, orderBy: { created_at: 'desc' }, take: 100 });
+        return this.prisma.workforce_events.findMany({ where: { ...(scheduleId ? { tour_schedule_id: scheduleId } : {}) }, orderBy: { created_at: 'desc' }, take: 100 });
     }
 }

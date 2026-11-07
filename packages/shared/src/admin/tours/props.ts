@@ -13,9 +13,12 @@ export type TourDetailsCardProps = {
     tour: TourDetailForm;
     onTourChange: (updater: (prev: TourDetailForm) => TourDetailForm) => void;
 };
-export type TourPoliciesAccordionEditorProps = {
+export type TourPoliciesEditorProps = {
     value: TourPolicyContentMap | undefined;
     onChange: (next: TourPolicyContentMap) => void;
+    activeKey: import('../../tours/policies').TourPolicyKey;
+    onActiveChange: (key: import('../../tours/policies').TourPolicyKey) => void;
+    disabled?: boolean;
 };
 export type TourSidebarProps<T extends TourDetailForm = TourDetailForm> = {
     tour: T;

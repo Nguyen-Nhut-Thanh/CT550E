@@ -3,6 +3,7 @@
 import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
+import { buildTourBookingHref, resolvePickupPoint } from '@/lib/booking/departure';
 import { Calendar, Clock, CreditCard, Hash, MapPin, MessageCircle, RefreshCw, ShieldCheck, Users, } from "lucide-react";
 import Link from "next/link";
 import type { TourBookingCardProps } from 'shared';
@@ -10,6 +11,7 @@ import type { TourBookingCardProps } from 'shared';
 export default function TourBookingCard({
   tour,
   selectedSchedule = null,
+  selectedPickupPointId = null,
 }: TourBookingCardProps) {
 
   const displayPrice = Number(selectedSchedule?.price ?? tour.base_price);
@@ -22,8 +24,9 @@ export default function TourBookingCard({
     : null;
 
   const bookingHref = selectedSchedule
-    ? `/booking?tourId=${tour.tour_id}&scheduleId=${selectedSchedule.tour_schedule_id}`
+    ? buildTourBookingHref(tour.tour_id, selectedSchedule, selectedPickupPointId)
     : null;
+  const selectedPickup = resolvePickupPoint(selectedSchedule, selectedPickupPointId);
 
   const scrollToSchedules = () => {
     const element = document.getElementById("tour-schedules");
@@ -52,6 +55,10 @@ export default function TourBookingCard({
       {/* State 1: Đã chọn ngày khởi hành */}
       {selectedSchedule ? (
         <div className="space-y-3 rounded-2xl bg-slate-50/80 p-4 text-xs sm:text-sm text-slate-700 border border-slate-100">
+          {selectedPickup && <div className="flex items-start justify-between gap-3">
+            <span className="flex shrink-0 items-center gap-2 text-slate-500"><MapPin className="h-4 w-4 text-sky-600" />Điểm đón:</span>
+            <span className="text-right font-bold text-slate-900">{selectedPickup.name}</span>
+          </div>}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-500">
               <Hash className="h-4 w-4 text-sky-600" />

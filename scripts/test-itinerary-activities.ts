@@ -23,10 +23,24 @@ async function main() {
   check(normalizeActivities([{ time: '18:00', title: 'Later' }, { time: '05:30', title: 'Earlier' }])[0].title === 'Earlier');
   const before = await prisma.itinerary_activities.count();
   const attractionsBefore = await prisma.tour_schedule_attractions.count();
+  const transportsBefore = await prisma.tour_schedule_transports.count();
   try {
     await prisma.$transaction(async tx => {
+      let savepointNumber = 0;
       const db = new Proxy(tx, { get(target, key) {
-        if (key === '$transaction') return (callback: (client: typeof tx) => Promise<unknown>) => callback(tx);
+        if (key === '$transaction') return async (callback: (client: typeof tx) => Promise<unknown>) => {
+          const name = `itinerary_test_${++savepointNumber}`;
+          await tx.$executeRawUnsafe(`SAVEPOINT ${name}`);
+          try {
+            const result = await callback(tx);
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${name}`);
+            return result;
+          } catch (error) {
+            await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${name}`);
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${name}`);
+            throw error;
+          }
+        };
         const value = Reflect.get(target, key);
         return typeof value === 'function' ? value.bind(target) : value;
       } });
@@ -59,6 +73,47 @@ async function main() {
       check(detail.tour_itineraries[0].activities[1].location_id === null);
       check(detail.tour_itineraries[1].content === 'Nội dung cũ' && detail.tour_itineraries[1].activities.length === 0);
       const second = await schedules.createSchedule(tour.tour_id, { ...payload, itinerary: [{ day_number: 1, activities: [{ ...activity, location_id: unselected.location_id }] }] });
+      const alternateTransport = await tx.transports.create({ data: { name: `${key}-Boat`, provider_id: transport.provider_id, transport_type: 'boat' } });
+      const dailyTransportSchedule = await schedules.createSchedule(tour.tour_id, { ...payload, itinerary: [
+        { day_number: 1, title: 'Đi đường bộ', transport_id: transport.transport_id },
+        { day_number: 2, title: 'Đi thuyền', transport_id: String(alternateTransport.transport_id) },
+      ] });
+      const transportScheduleId = dailyTransportSchedule.tour_schedule_id;
+      let transportDetail = await schedules.findOneSchedule(transportScheduleId);
+      check(transportDetail.duration_days === 2);
+      assert.deepEqual(transportDetail.tour_schedule_transports.map(row => [row.day_from, row.day_to, row.transport_id]), [[1, 1, transport.transport_id], [2, 2, alternateTransport.transport_id]]); assertions++;
+      const publicTransportSchedule = (await publicTours.publicDetail(tour.tour_id)).tour_schedules.find(item => item.tour_schedule_id === transportScheduleId)!;
+      check(publicTransportSchedule.tour_schedule_transports.length === 2 && publicTransportSchedule.tour_schedule_transports[1].transports.name === alternateTransport.name);
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, transport_id: null }, { day_number: 2 }] });
+      transportDetail = await schedules.findOneSchedule(transportScheduleId);
+      check(transportDetail.tour_schedule_transports.length === 1 && transportDetail.tour_schedule_transports[0].day_from === 2 && transportDetail.tour_schedule_transports[0].transport_id === alternateTransport.transport_id);
+      await schedules.updateSchedule(transportScheduleId, { price: 1200000 });
+      check((await schedules.findOneSchedule(transportScheduleId)).tour_schedule_transports.length === 1);
+      for (const transport_id of [-1, 0, 'abc', false, {}, [transport.transport_id]]) {
+        await assert.rejects(() => schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, title: 'Must rollback', transport_id }] } as never)); assertions++;
+      }
+      const unknownId = (await tx.transports.aggregate({ _max: { transport_id: true } }))._max.transport_id! + 1;
+      await assert.rejects(() => schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, title: 'Must rollback', transport_id: unknownId }] })); assertions++;
+      transportDetail = await schedules.findOneSchedule(transportScheduleId);
+      check(transportDetail.tour_itineraries[0].title !== 'Must rollback' && transportDetail.tour_schedule_transports[0].transport_id === alternateTransport.transport_id);
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, transport_id: '' }, { day_number: 2, transport_id: null }] });
+      check((await schedules.findOneSchedule(transportScheduleId)).tour_schedule_transports.length === 0);
+      check((await schedules.findOneSchedule(schedule.tour_schedule_id)).tour_schedule_transports.length === 0);
+      await tx.tour_schedule_transports.create({ data: { tour_schedule_id: transportScheduleId, transport_id: transport.transport_id, transport_role: 'main', note: 'Legacy note' } });
+      const transfer = await tx.tour_schedule_transports.create({ data: { tour_schedule_id: transportScheduleId, transport_id: alternateTransport.transport_id, transport_role: 'transfer', day_from: 1, day_to: 1, note: 'Auxiliary transport' } });
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, transport_id: null }, { day_number: 2 }] });
+      transportDetail = await schedules.findOneSchedule(transportScheduleId);
+      const mainTransport = transportDetail.tour_schedule_transports.filter(row => row.transport_role === 'main');
+      check(mainTransport.length === 1 && mainTransport[0].day_from === 2 && mainTransport[0].day_to === 2 && mainTransport[0].note === 'Legacy note');
+      check(transportDetail.tour_schedule_transports.some(row => row.schedule_transport_id === transfer.schedule_transport_id && row.note === 'Auxiliary transport'));
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, transport_id: transport.transport_id }, { day_number: 2, transport_id: transport.transport_id }] });
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [{ day_number: 1, transport_id: transport.transport_id }, { day_number: 2, transport_id: transport.transport_id }] });
+      check((await schedules.findOneSchedule(transportScheduleId)).tour_schedule_transports.filter(row => row.transport_role === 'main').length === 2);
+      await schedules.updateSchedule(transportScheduleId, { itinerary: [] });
+      transportDetail = await schedules.findOneSchedule(transportScheduleId);
+      check(transportDetail.tour_itineraries.length === 0 && transportDetail.tour_schedule_transports.length === 1 && transportDetail.tour_schedule_transports[0].transport_role === 'transfer');
+      await schedules.deleteSchedule(transportScheduleId);
+      check(await tx.tour_schedule_transports.count({ where: { tour_schedule_id: transportScheduleId } }) === 0);
       const publicDetail = await publicTours.publicDetail(tour.tour_id);
       const publicDay = publicDetail.tour_schedules.find(item => item.tour_schedule_id === schedule.tour_schedule_id)!.tour_itineraries![0];
       check(publicDay.activities?.length === 2);
@@ -110,9 +165,11 @@ async function main() {
   } catch (error) { if (error !== rollback) throw error; }
   check(await prisma.itinerary_activities.count() === before);
   check(await prisma.tour_schedule_attractions.count() === attractionsBefore);
+  check(await prisma.tour_schedule_transports.count() === transportsBefore);
   console.log(`Passed ${assertions} itinerary assertions; all fixtures rolled back.`);
 }
 main().catch(error => {
+  if (error instanceof assert.AssertionError) console.error(error.stack);
   console.error('Itinerary test failed:', error instanceof assert.AssertionError ? error.message : error?.constructor?.name, error?.code || '', error?.meta?.modelName || '', error?.meta?.constraint || '');
   process.exitCode = 1;
 }).finally(() => prisma.$disconnect());

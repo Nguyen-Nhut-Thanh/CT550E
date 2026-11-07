@@ -13,7 +13,11 @@ export type StaffShiftPayload = { user_id: number; duty_type: 'page' | 'leave'; 
 export type StaffShift = StaffShiftPayload & { shift_id: number; status: string; user: { full_name: string } };
 export const CREW_ROLES = { tour_leader: 'Trưởng đoàn', deputy_leader: 'Phó đoàn', guide: 'Hướng dẫn viên' } as const;
 export type CrewRole = keyof typeof CREW_ROLES;
-export type CrewPayload = { crew_required_count?: number; assignments: Array<{ roles: CrewRole[]; user_id: number; report_at: string; release_at: string; note?: string }> };
+export type CrewPayload = { crew_required_count?: number; override_reason?: string; assignments: Array<{ roles: CrewRole[]; user_id: number; report_at: string; release_at: string; note?: string }> };
+export type CrewContactSnapshot = {
+  revision: number; published_at: string; operating_region: RegionCode;
+  members: Array<{ user_id: number; full_name: string; phone: string | null; roles: CrewRole[] }>;
+};
 export type CrewAssignment = {
   assignment_id: number; tour_schedule_id: number; user_id: number; roles: CrewRole[]; status: 'pending' | 'confirmed' | 'declined' | 'completed';
   report_at: string; release_at: string; note?: string | null; response_note?: string | null; user: { full_name: string; phone?: string | null };
@@ -21,7 +25,11 @@ export type CrewAssignment = {
 export type WorkforceSchedule = {
   tour_schedule_id: number; code: string | null; start_date: string; end_date: string; status: number; booked_count: number;
   cover_image_url?: string | null;
-  operating_region: RegionCode | null; departure_location: { name: string }; tours: { name: string }; crew: CrewAssignment[]; crew_ready: boolean;
+  operating_region: RegionCode | null; departure_location: { name: string }; tours: { name: string; summary?: string | null }; crew: CrewAssignment[]; crew_ready: boolean;
   crew_required_count: number; crew_confirmed_count: number; crew_issues: string[];
+  operating_region_source?: 'departure' | 'admin';
+  crew_locked_at?: string | null; crew_locked_by?: number | null;
+  crew_revision?: number; crew_snapshot?: CrewContactSnapshot | null;
+  crew_lock_deadline?: string;
 };
 export type WorkforceOverview = { employees: number; on_duty: number; upcoming: number; missing_crew: number };

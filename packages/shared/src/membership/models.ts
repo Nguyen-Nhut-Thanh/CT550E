@@ -14,12 +14,18 @@ export interface MembershipTier {
   maxDiscount: number;
   minOrder: number;
   benefits: string[];
+  tourDiscountPercent: number;
+  pointMultiplier: number;
+  birthdayVoucherAmount: number;
+  serviceDiscountPercent: number;
+  priorityReservation: boolean;
 }
 
 export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "bronze",
     name: "Đồng",
+    tourDiscountPercent: 0, pointMultiplier: 1, birthdayVoucherAmount: 50_000, serviceDiscountPercent: 0, priorityReservation: false,
     threshold: 0,
     discountType: "fixed",
     discountValue: 0,
@@ -33,6 +39,7 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "silver",
     name: "Bạc",
+    tourDiscountPercent: 2, pointMultiplier: 1.2, birthdayVoucherAmount: 100_000, serviceDiscountPercent: 5, priorityReservation: false,
     threshold: 5_000_000,
     discountType: "fixed",
     discountValue: 100_000,
@@ -43,6 +50,7 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "gold",
     name: "Vàng",
+    tourDiscountPercent: 3, pointMultiplier: 1.5, birthdayVoucherAmount: 200_000, serviceDiscountPercent: 10, priorityReservation: true,
     threshold: 15_000_000,
     discountType: "percentage",
     discountValue: 3,
@@ -56,6 +64,7 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "platinum",
     name: "Bạch kim",
+    tourDiscountPercent: 5, pointMultiplier: 2, birthdayVoucherAmount: 300_000, serviceDiscountPercent: 15, priorityReservation: true,
     threshold: 30_000_000,
     discountType: "percentage",
     discountValue: 5,
@@ -66,6 +75,7 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "diamond",
     name: "Kim cương",
+    tourDiscountPercent: 7, pointMultiplier: 3, birthdayVoucherAmount: 500_000, serviceDiscountPercent: 20, priorityReservation: true,
     threshold: 60_000_000,
     discountType: "percentage",
     discountValue: 7,
@@ -87,10 +97,14 @@ export interface MembershipVoucher {
   max_discount_amount: number | null;
   start_date: string;
   expiry_date: string;
-  state: "available" | "used" | "expired";
+  state: "available" | "used" | "expired" | "upcoming";
+  eligible_tiers?: MembershipTierId[];
+  is_birthday?: boolean;
 }
 
 export interface MembershipNotification {
+  booking_id?: number | null;
+  voucher_id?: number | null;
   notification_id: number;
   title: string;
   message: string;
@@ -135,6 +149,8 @@ export interface MembershipAdminList {
     spending: number;
     cycleEnd: string | null;
     voucherCount: number;
+    phone: string | null;
+    bookingCount: number;
   }[];
   total: number;
   page: number;
@@ -142,6 +158,35 @@ export interface MembershipAdminList {
   issued: number;
   used: number;
   discountTotal: number;
+  memberTotal: number;
+}
+
+export interface MembershipBookingSnapshot {
+  tier: MembershipTierId;
+  name: string;
+  pointMultiplier: number;
+  priorityReservation: boolean;
+  tourDiscountPercent: number;
+  serviceDiscountPercent: number;
+  tourDiscount: number;
+  serviceDiscount: number;
+  voucherDiscount: number;
+}
+
+export function membershipBenefits(tier: MembershipTier): string[] {
+  return [
+    ...(tier.tourDiscountPercent ? [`Giảm ${tier.tourDiscountPercent}% giá tour`] : []),
+    `Tích điểm ×${tier.pointMultiplier.toLocaleString("vi-VN")}`,
+    ...(tier.birthdayVoucherAmount ? [`Voucher sinh nhật ${tier.birthdayVoucherAmount.toLocaleString("vi-VN")}đ`] : []),
+    ...(tier.serviceDiscountPercent ? [`Giảm ${tier.serviceDiscountPercent}% dịch vụ đi kèm`] : []),
+    ...(tier.priorityReservation ? ["Ưu tiên xử lý yêu cầu giữ chỗ"] : []),
+  ];
+}
+
+export function membershipPrice(tier: MembershipTier | null, subtotal: number, servicesTotal: number, voucherDiscount = 0) {
+  const tourDiscount = Math.floor(Math.max(0, subtotal - voucherDiscount) * (tier?.tourDiscountPercent ?? 0) / 100);
+  const serviceDiscount = Math.floor(servicesTotal * (tier?.serviceDiscountPercent ?? 0) / 100);
+  return { tourDiscount, serviceDiscount };
 }
 
 export function membershipDiscount(

@@ -46,6 +46,15 @@ export type ScheduleHotelItem = {
     } | null;
 };
 export type ScheduleDetailResponse = {
+    duration_days?: number;
+    tour_schedule_transports?: Array<{
+        schedule_transport_id?: number;
+        transport_id: number;
+        transport_role?: string;
+        day_from?: number | null;
+        day_to?: number | null;
+        note?: string | null;
+    }>;
     tour_schedule_attractions?: NonNullable<import('../../tours/models').TourSchedule['tour_schedule_attractions']>;
     use_tour_amenities?: boolean;
     tour_schedule_amenities?: import('../../tours/amenities').ScheduleAmenity[];
@@ -65,6 +74,7 @@ export type ScheduleDetailResponse = {
     hasBookings?: boolean;
     tour_schedule_prices?: SchedulePriceItem[] | null;
     tour_itineraries?: Array<Partial<ItineraryFormItem> & {
+        draft_data?: import('./contracts').ScheduleItineraryPayload | null;
         hotel_id?: number | null;
     }> | null;
     tour_schedule_hotels?: ScheduleHotelItem[] | null;

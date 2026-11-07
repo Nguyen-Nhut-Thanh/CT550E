@@ -6,6 +6,8 @@ import { Popover } from "@/components/common/overlays/Popover";
 import { useDismiss } from "@/lib/ui/useDismiss";
 import { getScheduleBookedCount } from "@/lib/admin/schedules/status";
 import type { AdminSchedule, ScheduleTablePanelProps } from "shared";
+import { ADMIN_CONTENT_DENIED } from 'shared';
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
 
 export function ScheduleRowActions({
   schedule,
@@ -18,6 +20,7 @@ export function ScheduleRowActions({
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const readOnly = useAdminContentReadOnly();
   const wrapper = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
   useDismiss(wrapper, open, () => setOpen(false));
@@ -50,10 +53,12 @@ export function ScheduleRowActions({
               }}
             >
               <Pencil size={16} />
-              Chỉnh sửa lịch
+              {readOnly ? 'Xem chi tiết lịch' : 'Chỉnh sửa lịch'}
             </button>
             <button
               type="button"
+              disabled={readOnly}
+              title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
               onClick={() => {
                 setOpen(false);
                 anchor.current?.focus();
@@ -69,6 +74,8 @@ export function ScheduleRowActions({
             </button>
             <button
               type="button"
+              disabled={readOnly}
+              title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
               className="ui-schedule-overview-danger"
               onClick={() => {
                 setOpen(false);
@@ -78,6 +85,7 @@ export function ScheduleRowActions({
               <Trash2 size={16} />
               Xóa lịch khởi hành
             </button>
+            {readOnly && <p role="note" className="px-2 py-2 text-[11px] leading-5 text-amber-700">{ADMIN_CONTENT_DENIED}</p>}
           </div>
         </Popover>
       )}

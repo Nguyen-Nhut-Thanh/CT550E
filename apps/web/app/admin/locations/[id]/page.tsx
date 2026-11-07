@@ -4,16 +4,16 @@ import { LocationDetailsCard } from "@/components/admin/locations/editor/Locatio
 import { LocationHierarchyCard } from "@/components/admin/locations/editor/LocationHierarchyCard";
 import { LocationImageSidebar } from "@/components/admin/locations/editor/LocationImageSidebar";
 import { LocationLevelSelector } from "@/components/admin/locations/editor/LocationLevelSelector";
-import { AdminBackPageHeader } from "@/components/admin/common/AdminBackPageHeader";
 import InlineNotice from "@/components/common/feedback/InlineNotice";
 import { getAdminLocationDetail, saveAdminLocation } from "@/lib/admin/locations/api";
-import { LOCATION_LEVEL_LABELS, buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/admin/locations/hierarchy";
+import { buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/admin/locations/hierarchy";
 import { getToken } from "@/lib/auth/session";
 import { adminFetch } from "@/lib/http/adminFetch";
 import { API_BASE } from "@/lib/http/config";
 import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
 import { useToast } from "@/lib/notifications/useToast";
-import { Layers, Loader2 } from "lucide-react";
+import { ChevronRight, Home, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LOCATION_TYPE_BY_LEVEL, type AdminLocationItem, type LocationDetailForm } from "shared";
@@ -171,7 +171,16 @@ export default function AdminLocationDetailPage() {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      showError("Vui lòng chọn ảnh JPG, PNG hoặc WebP");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showError("Ảnh bìa không được vượt quá 5 MB");
+      return;
+    }
     const token = getToken();
     if (!token) {
       showError("Bạn chưa đăng nhập");
@@ -196,7 +205,7 @@ export default function AdminLocationDetailPage() {
   };
 
   const validate = () => {
-    if (!form.name) {
+    if (!form.name.trim()) {
       showError("Vui lòng nhập tên địa điểm");
       return false;
     }
@@ -218,6 +227,7 @@ export default function AdminLocationDetailPage() {
   };
 
   const handleSave = async () => {
+    if (saving || uploading) return;
     if (!validate()) return;
 
     setSaving(true);
@@ -244,28 +254,27 @@ export default function AdminLocationDetailPage() {
     );
   }
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-4 pb-20">
-      <AdminBackPageHeader
-        title={isNew ? "Thêm địa điểm mới" : "Cập nhật địa điểm"}
-        onBack={() => router.push("/admin/locations")}
-        meta={
-          <div className="mt-1 flex items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-blue-600">
-              <Layers size={10} />
-              {LOCATION_LEVEL_LABELS[form.level_id]}
-            </div>
-            {!isNew && (
-              <span className="text-[10px] font-bold text-slate-400">
-                ID: {id}
-              </span>
-            )}
-          </div>
-        }
-      />
+  const structureLocked = !isNew && usageSummary?.can_change_structure === false;
+  const countryName = level3List.find(item => String(item.location_id) === level3Id)?.name;
+  const regionName = level4List.find(item => String(item.location_id) === level4Id)?.name;
+  const provinceName = level5List.find(item => String(item.location_id) === level5Id)?.name;
+  const parentLabel = [form.level_id > 5 ? provinceName : form.level_id > 4 ? regionName : null, countryName].filter(Boolean).join(", ");
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="space-y-8 lg:col-span-8">
+  return (
+    <div className="relative isolate space-y-5 pb-6 text-[#102044] before:absolute before:inset-x-[-24px] before:inset-y-0 before:-z-[1] before:bg-[radial-gradient(ellipse_at_15%_0%,#f6fbff_0%,#edf6ff_65%,#e8f3ff_100%)] before:content-['']">
+      <header className="space-y-4">
+        <nav aria-label="Đường dẫn điều hướng" className="flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[#7186a8]">
+          <Link href="/admin" aria-label="Tổng quan" className="rounded hover:text-blue-600"><Home size={13} /></Link>
+          <ChevronRight size={12} aria-hidden="true" />
+          <Link href="/admin/locations" className="hover:text-blue-600">Địa điểm</Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="font-medium text-[#0766ff]">{isNew ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"}</span>
+        </nav>
+        <div><h1 className="text-[24px] leading-tight font-extrabold tracking-[-.6px]">{isNew ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"}</h1><p className="mt-1.5 text-[13px] leading-5 text-[#7d8eac]">{isNew ? "Xây dựng hệ thống điểm đến cho hành trình du lịch." : "Cập nhật thông tin điểm đến trong hệ thống du lịch."}</p></div>
+      </header>
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-4">
           {!isNew && usageSummary && !usageSummary.can_change_structure && (
             <InlineNotice tone="error">
               Địa điểm này đang được ràng buộc dữ liệu nên không thể đổi cấp,
@@ -274,33 +283,41 @@ export default function AdminLocationDetailPage() {
             </InlineNotice>
           )}
 
-          <LocationLevelSelector
-            form={form}
-            onLevelChange={(level) => {
-              setForm((prev) => ({ ...prev, level_id: level, location_type: LOCATION_TYPE_BY_LEVEL[level], parent_id: "" }));
-              setLevel3Id("");
-              setLevel4Id("");
-              setLevel5Id("");
-            }}
-          />
-
-          {form.level_id > 3 && (
-            <LocationHierarchyCard
+          <section className="rounded-[14px] border border-[#e0ebf9] bg-white/95 p-4 shadow-[0_3px_14px_#3869a705] sm:p-5">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#eaf3ff] text-[14px] font-bold text-[#0766ff]">01</span>
+              <div><h2 className="text-[16px] font-bold text-[#102044]">Phân loại địa điểm</h2><p className="mt-0.5 text-[12px] leading-5 text-[#7d8eac]">Chọn cấp độ phân loại phù hợp cho địa điểm này trong hệ thống.</p></div>
+            </div>
+            <LocationLevelSelector
               form={form}
-              level3Id={level3Id}
-              level4Id={level4Id}
-              level5Id={level5Id}
-              level3List={level3List}
-              level4List={level4List}
-              level5List={level5List}
-              loadingL3={loadingL3}
-              loadingL4={loadingL4}
-              loadingL5={loadingL5}
-              onLevel3Change={setLevel3Id}
-              onLevel4Change={setLevel4Id}
-              onLevel5Change={setLevel5Id}
+              disabled={structureLocked || saving}
+              onLevelChange={(level) => {
+                setForm((prev) => ({ ...prev, level_id: level, location_type: LOCATION_TYPE_BY_LEVEL[level], parent_id: "" }));
+                setLevel3Id("");
+                setLevel4Id("");
+                setLevel5Id("");
+              }}
             />
-          )}
+
+            {form.level_id > 3 && (
+              <LocationHierarchyCard
+                form={form}
+                disabled={structureLocked || saving}
+                level3Id={level3Id}
+                level4Id={level4Id}
+                level5Id={level5Id}
+                level3List={level3List}
+                level4List={level4List}
+                level5List={level5List}
+                loadingL3={loadingL3}
+                loadingL4={loadingL4}
+                loadingL5={loadingL5}
+                onLevel3Change={value => { setLevel3Id(value); setLevel4Id(""); setLevel5Id(""); setLevel4List([]); setLevel5List([]); }}
+                onLevel4Change={value => { setLevel4Id(value); setLevel5Id(""); setLevel5List([]); }}
+                onLevel5Change={setLevel5Id}
+              />
+            )}
+          </section>
 
           <LocationDetailsCard
             form={form}
@@ -311,9 +328,10 @@ export default function AdminLocationDetailPage() {
           />
         </div>
 
-        <div className="space-y-8 lg:col-span-4">
+        <div className="min-w-0">
           <LocationImageSidebar
             form={form}
+            parentLabel={parentLabel}
             uploading={uploading}
             saving={saving}
             fileInputRef={fileInputRef}

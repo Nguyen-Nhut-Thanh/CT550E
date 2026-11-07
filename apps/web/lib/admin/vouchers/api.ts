@@ -10,7 +10,7 @@ export function getAdminVouchers() {
 }
 
 export function createAdminVoucher(payload: VoucherForm | Record<string, unknown>) {
-  return requestAdminJson(
+  return requestAdminJson<Voucher>(
     "/admin/marketing/vouchers",
     {
       method: "POST",
@@ -25,5 +25,13 @@ export function deleteAdminVoucher(voucherId: number) {
     `/admin/marketing/vouchers/${voucherId}`,
     { method: "DELETE" },
     "Không thể xóa voucher.",
+  );
+}
+
+export function setAdminVoucherStatus(voucherId: number, status: 0 | 1) {
+  return requestAdminJson<Voucher>(
+    `/admin/marketing/vouchers/${voucherId}`,
+    { method: "PATCH", body: JSON.stringify({ status }) },
+    "Không thể thay đổi trạng thái voucher.",
   );
 }

@@ -1,7 +1,8 @@
 // Public package entry point. Internal modules import directly from one another.
 export { CREW_ROLES, WORKFORCE_REGIONS, WORKFORCE_ROLES } from './workforce/models';
 export type { CrewRole, RegionCode, WorkforceRole, WorkforceActor, EmployeePayload, Employee, StaffShiftPayload, StaffShift, CrewPayload, CrewAssignment, WorkforceSchedule, WorkforceOverview } from './workforce/models';
-export { MEMBERSHIP_TIERS, membershipDiscount } from "./membership/models";
+export { MEMBERSHIP_TIERS, membershipDiscount, membershipBenefits, membershipPrice } from "./membership/models";
+export type { MembershipBookingSnapshot } from "./membership/models";
 export type { MembershipTierId, MembershipTier, MembershipSummary, MembershipVoucher, MembershipNotification, MembershipAdminList } from "./membership/models";
 import "./common/browser";
 export type { AccountResourceCache, AccountResourceEntry } from "./account/cache";
@@ -36,7 +37,7 @@ export type { ScheduleBasicInfoCardProps, ScheduleItinerarySectionProps, Schedul
 export type { PolicyContentsPayload, TourAdminPayload, TourListParams } from "./admin/tours/contracts";
 export type { TourDetailForm } from "./admin/tours/forms";
 export type { LocationOption, TourLike, TourScheduleSummary, ToursPageTour, TransportOption } from "./admin/tours/models";
-export type { TourBasicInfoCardProps, TourDetailsCardProps, TourPoliciesAccordionEditorProps, TourSidebarProps } from "./admin/tours/props";
+export type { TourBasicInfoCardProps, TourDetailsCardProps, TourPoliciesEditorProps, TourSidebarProps } from "./admin/tours/props";
 export type { CreateStaffPayload } from "./admin/users/contracts";
 export type { StaffFormData } from "./admin/users/forms";
 export type { UserItem } from "./admin/users/models";
@@ -49,8 +50,9 @@ export type { AuthAccountWithUser, AuthRequest, AuthRequestUser, JwtRequest } fr
 export type { Banner } from "./banners/models";
 export type { BlogHeroProps, RelatedPost } from "./blog/types";
 export { BOOKING_EXTRAS } from "./booking/constants";
+export { isValidVietnamesePhone, isValidEmail, isValidCitizenId } from "./booking/validation";
 export type { BookingBasePayload, BookingPayload } from "./booking/contracts";
-export type { BookingExtraService, PaymentMethod, PricingSummary, TravelerForm, TravelerType } from "./booking/models";
+export type { BookingExtraService, PaymentMethod, PricingSummary, ScheduleConflict, TravelerForm, TravelerType } from "./booking/models";
 export type { BookingContactFormProps, BookingOrderSummaryProps, BookingPassengerCountsProps, BookingTourInfoCardProps, BookingTravelersListProps, BookingVoucherAndPaymentProps } from "./booking/props";
 export type { ChatAck, ChatContextInput, ChatManageInput, ChatMessagePage, ChatTypingEvent, ChatUpdate, JoinPayload, ReadPayload, SendPayload, TypingPayload } from "./chat/contracts";
 export type { ChatActor, ChatContextCard, ChatStaff, Conversation, RealtimeMessage } from "./chat/models";
@@ -84,11 +86,18 @@ export type { TourPolicyContentMap, TourPolicyKey } from "./tours/policies";
 export type { TourBookingCardProps, TourCardProps, TourDepartureCalendarProps, TourDetailHeroProps, TourEmptyStateProps, TourFilterSidebarProps, TourHighlightsListProps, TourItineraryTimelineProps, TourSmartMapProps, TourSortControlProps, TourVideoHighlightsProps } from "./tours/props";
 export type { BestSellerStat, PublicDestinationRecord, PublicFlashDealRecord, PublicItineraryRecord, PublicScheduleRecord, PublicTourCardRecord } from "./tours/records";
 export type { VoucherPayload, VoucherValidationApiResponse } from "./vouchers/contracts";
+export { VOUCHER_CUSTOMER_TYPES, voucherAudienceLabel, voucherAudienceAllows } from "./vouchers/audience";
+export type { CrewContactSnapshot } from "./workforce/models";
 export type { Voucher, VoucherLike, VoucherValidationResult } from "./vouchers/models";
 export { ARTICLE_ICONS, isArticleUrl, articleBlockText, articleText, hasArticleContent, createArticleBlock, createDestinationTemplate } from './blog/blocks';
 export type { ArticleIcon, ArticleBlock, ArticleDocument, CoverPosition } from './blog/blocks';
 export type { BookingDetail } from "./booking/models";
+export type { PaymentResultStatus, PaymentStatusResponse, PaymentUrlResponse } from "./booking/payment";
 export { TOUR_AMENITY_DEFINITIONS, copyTourAmenities } from './tours/amenities';
 export type { TourAmenity, TourAmenityKind, ScheduleAmenity } from './tours/amenities';
 export { getTourNightRange, isValidTourDuration } from './tours/duration';
 export { MAX_TOUR_IMAGES } from './tours/images';
+export { getDayTransport } from "./admin/schedules/transports";
+export { getScheduleEditRestriction, getSchedulePickupTimeError } from "./admin/schedules/timing";
+export type { TourScheduleTemplate, TourScheduleTemplateResponse } from "./admin/schedules/template";
+export { ADMIN_CONTENT_DENIED, canAccessAdminContent, canManageWorkforceRegion } from './workforce/permissions';

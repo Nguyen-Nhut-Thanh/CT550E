@@ -23,7 +23,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     window.addEventListener('focus', check); window.addEventListener('auth-change', check);
     return () => { active = false; window.removeEventListener('focus', check); window.removeEventListener('auth-change', check); };
   }, [pathname]);
-  const allowed = identity && (identity.isAdmin || pathname.startsWith('/admin/workforce') || (identity.canChat && pathname.startsWith('/admin/chats')));
+  const allowed = identity && (identity.isManager || pathname.startsWith('/admin/workforce') || (identity.canChat && pathname.startsWith('/admin/chats')));
   useEffect(() => { if (identity && !allowed) router.replace('/admin/workforce'); }, [identity, allowed, router]);
   if (error) return <div className="fixed inset-0 z-[9999] grid place-items-center bg-slate-950 p-6 text-white">
     <div className="max-w-md space-y-5 rounded-3xl bg-slate-900 p-8 text-center"><ShieldAlert className="mx-auto text-rose-400" size={42} />

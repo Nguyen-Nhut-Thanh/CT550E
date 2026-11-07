@@ -30,7 +30,7 @@ export function ConfirmDialog({
           <h3 id={titleId} className="text-xl font-black tracking-tight text-slate-900">
             {title}
           </h3>
-          <p id={descriptionId} className="mt-3 px-2 text-sm font-medium leading-relaxed text-slate-500">
+          <p id={descriptionId} className="mt-3 px-2 text-sm font-medium leading-relaxed text-slate-500 whitespace-pre-line">
             {description}
           </p>
 

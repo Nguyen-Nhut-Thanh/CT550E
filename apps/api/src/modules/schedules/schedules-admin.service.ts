@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, } from '@nestjs/common';
 import type { ScheduleAdminPayload } from 'shared';
+import { getScheduleEditRestriction, getSchedulePickupTimeError } from 'shared';
 import { requireFields, validatePrice } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
@@ -8,10 +9,27 @@ import { departureId, normalizePickupPoints, pickupPointsEqual } from './schedul
 import { saveItineraryDays } from './itinerary-activities';
 import { saveScheduleAttractions } from './schedule-attractions';
 import { saveScheduleAmenities } from './schedule-amenities';
+import { saveDayTransports } from './schedule-transports';
+import { normalizeScheduleTemplate } from './schedule-template';
+import type { Prisma } from '@prisma/client';
+import { inferOperatingRegion } from '../workforce/operating-region';
 @Injectable()
 export class SchedulesAdminService {
     private readonly logger = new Logger(SchedulesAdminService.name);
     constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) { }
+    async getScheduleTemplate(tourId: number) {
+        if (!await this.prisma.tours.count({ where: { tour_id: tourId } })) throw new NotFoundException('Tour không tồn tại.');
+        const row = await this.prisma.tour_schedule_templates.findUnique({ where: { tour_id: tourId } });
+        return { template: row?.data ?? null, updated_at: row?.updated_at.toISOString() ?? null };
+    }
+    async saveScheduleTemplate(tourId: number, body: unknown) {
+        return this.prisma.$transaction(async tx => {
+            const template = await normalizeScheduleTemplate(tx, tourId, body);
+            const data = template as unknown as Prisma.InputJsonValue;
+            const row = await tx.tour_schedule_templates.upsert({ where: { tour_id: tourId }, create: { tour_id: tourId, data }, update: { data } });
+            return { template, updated_at: row.updated_at.toISOString() };
+        });
+    }
     async listSchedules(tourId: number) {
         const items = await this.prisma.tour_schedules.findMany({
             where: { tour_id: tourId },
@@ -33,11 +51,12 @@ export class SchedulesAdminService {
             include: {
                 tour_schedule_amenities: { orderBy: { sort_order: 'asc' } },
                 tour_schedule_attractions: { orderBy: { sort_order: 'asc' } },
+                tours: { select: { duration_days: true } },
                 departure_location: true,
                 pickup_points: { orderBy: { sort_order: 'asc' } },
                 _count: { select: { bookings: true } },
                 tour_schedule_prices: true,
-                tour_schedule_transports: { include: { transports: true } },
+                tour_schedule_transports: { orderBy: [{ day_from: 'asc' }, { schedule_transport_id: 'asc' }], include: { transports: true } },
                 tour_schedule_hotels: {
                     include: { hotels: true, hotel_room_types: true },
                 },
@@ -49,6 +68,7 @@ export class SchedulesAdminService {
         }
         return {
             ...schedule,
+            duration_days: schedule.tours.duration_days,
             hasBookings: schedule._count.bookings > 0,
             price: Number(schedule.price),
             tour_schedule_prices: schedule.tour_schedule_prices.map((price) => ({
@@ -87,6 +107,8 @@ export class SchedulesAdminService {
         }
         const locationId = departureId(body.departure_location_id === undefined ? tour.departure_location : body.departure_location_id);
         const pickupPoints = normalizePickupPoints(body.pickup_points === undefined ? [] : body.pickup_points);
+        const pickupError = getSchedulePickupTimeError(body.start_date!, pickupPoints);
+        if (pickupError) throw new BadRequestException(pickupError);
         if (!await this.prisma.locations.findUnique({ where: { location_id: locationId }, select: { location_id: true } })) {
             throw new BadRequestException('Nơi xuất phát không tồn tại.');
         }
@@ -96,6 +118,8 @@ export class SchedulesAdminService {
                     data: {
                         tour_id: tourId,
                         departure_location_id: locationId,
+                        operating_region: await inferOperatingRegion(tx, locationId),
+                        operating_region_source: 'departure',
                         pickup_points: { create: pickupPoints },
                         start_date: new Date(body.start_date!),
                         end_date: new Date(body.end_date!),
@@ -122,7 +146,8 @@ export class SchedulesAdminService {
                     });
                 }
                 if (Array.isArray(body.itinerary) && body.itinerary.length > 0) {
-                    await saveItineraryDays(tx, tourId, schedule.tour_schedule_id, body.itinerary);
+                    await saveItineraryDays(tx, tourId, schedule.tour_schedule_id, body.itinerary, body.allow_incomplete_itinerary === true);
+                    await saveDayTransports(tx, tourId, schedule.tour_schedule_id, body.itinerary);
                     const hotelEntries = body.itinerary
                         .map((itinerary, index) => mapScheduleHotel(itinerary, index, schedule.tour_schedule_id))
                         .filter((item): item is {
@@ -164,7 +189,7 @@ export class SchedulesAdminService {
         const existingSchedule = await this.prisma.tour_schedules.findUnique({
             where: { tour_schedule_id: scheduleId },
             include: {
-                tours: { select: { name: true } },
+                tours: { select: { name: true, cut_off_hours: true } },
                 bookings: {
                     where: { status: { not: 'cancelled' } },
                     select: {
@@ -178,13 +203,11 @@ export class SchedulesAdminService {
         if (!existingSchedule) {
             throw new NotFoundException('Lịch khởi hành không tồn tại');
         }
-        const now = new Date();
         const oldStartDate = new Date(existingSchedule.start_date);
         const oldEndDate = new Date(existingSchedule.end_date);
         const hasBookings = existingSchedule.bookings.length > 0;
-        if (oldStartDate < now) {
-            throw new BadRequestException('Không thể chỉnh sửa lịch trình đã khởi hành.');
-        }
+        const restriction = getScheduleEditRestriction(oldStartDate, existingSchedule.tours.cut_off_hours);
+        if (restriction) throw new BadRequestException(restriction);
         if (hasBookings && body.quota !== undefined && body.quota !== null) {
             const newQuota = Number(body.quota);
             if (newQuota < existingSchedule.booked_count) {
@@ -208,12 +231,21 @@ export class SchedulesAdminService {
                 await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${scheduleId} FOR UPDATE`;
                 const current = await tx.tour_schedules.findUniqueOrThrow({
                     where: { tour_schedule_id: scheduleId },
-                    include: { crew: true, pickup_points: { orderBy: { sort_order: 'asc' } }, _count: { select: { bookings: true } } },
+                    include: { tours: { select: { cut_off_hours: true } }, crew: true, pickup_points: { orderBy: { sort_order: 'asc' } }, _count: { select: { bookings: true } } },
                 });
+                const currentRestriction = getScheduleEditRestriction(current.start_date, current.tours.cut_off_hours);
+                if (currentRestriction) throw new BadRequestException(currentRestriction);
                 const locationId = body.departure_location_id === undefined ? current.departure_location_id : departureId(body.departure_location_id);
                 const pickupPoints = body.pickup_points === undefined ? undefined : normalizePickupPoints(body.pickup_points);
+                if (body.start_date !== undefined || pickupPoints !== undefined) {
+                    const pickupError = getSchedulePickupTimeError(body.start_date ?? current.start_date, pickupPoints ?? current.pickup_points);
+                    if (pickupError) throw new BadRequestException(pickupError);
+                }
                 const pickupsChanged = pickupPoints !== undefined && !pickupPointsEqual(current.pickup_points, pickupPoints);
                 const datesChanged = (body.start_date !== undefined && new Date(body.start_date).getTime() !== current.start_date.getTime()) || (body.end_date !== undefined && new Date(body.end_date).getTime() !== current.end_date.getTime());
+                if ((current.crew_locked_at || current.crew_snapshot) && datesChanged) throw new BadRequestException('Nhân sự chuyến đã chốt/công bố; không thể đổi ngày giờ làm sai thông tin đã gửi cho khách.');
+                const nextRegion = locationId !== current.departure_location_id && current.operating_region_source !== 'admin' ? await inferOperatingRegion(tx, locationId) : current.operating_region;
+                if (current.crew.length && nextRegion !== current.operating_region) throw new BadRequestException('Nơi xuất phát mới thuộc miền khác. Cần admin xác nhận lại miền điều hành và nhân sự.');
                 if (current.crew.length && datesChanged) throw new BadRequestException('Chuyến đã có phân công nhân sự. Cần gỡ phân công trước khi đổi ngày giờ để kiểm tra lại lịch điều động.');
                 if (current._count.bookings > 0 && (locationId !== current.departure_location_id || pickupsChanged)) {
                     throw new BadRequestException('Chuyến đã có đơn đặt: không thể thay đổi nơi xuất phát hoặc điểm đón.');
@@ -236,6 +268,7 @@ export class SchedulesAdminService {
                     where: { tour_schedule_id: scheduleId },
                     data: {
                         departure_location_id: locationId,
+                        operating_region: nextRegion,
                         start_date: body.start_date ? new Date(body.start_date) : undefined,
                         end_date: body.end_date ? new Date(body.end_date) : undefined,
                         price: body.price != null ? validatePrice(body.price) : undefined,
@@ -258,7 +291,8 @@ export class SchedulesAdminService {
                     }
                 }
                 if (Array.isArray(body.itinerary)) {
-                    await saveItineraryDays(tx, current.tour_id, scheduleId, body.itinerary);
+                    await saveItineraryDays(tx, current.tour_id, scheduleId, body.itinerary, body.allow_incomplete_itinerary === true);
+                    await saveDayTransports(tx, current.tour_id, scheduleId, body.itinerary);
                     await tx.tour_schedule_hotels.deleteMany({
                         where: { tour_schedule_id: scheduleId },
                     });

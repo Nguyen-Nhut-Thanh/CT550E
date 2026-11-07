@@ -1,9 +1,10 @@
 import { formatLocalDate, formatLocalDateTime, formatLocalTime } from "@/lib/utils/dateTime";
-import { isVoucherExpired } from "@/lib/vouchers/status";
+import { getVoucherStatus } from "@/lib/vouchers/status";
 import type { Voucher, VoucherForm, VoucherStatusFilter } from 'shared';
 
 export function createDefaultVoucherForm(now = new Date()): VoucherForm {
   return {
+    customer_types: ["all"],
     code: "",
     discount_type: "percentage",
     discount_value: 0,
@@ -18,6 +19,7 @@ export function createDefaultVoucherForm(now = new Date()): VoucherForm {
 
 export function buildVoucherForm(voucher: Voucher): VoucherForm {
   return {
+    customer_types: voucher.eligible_tiers?.length ? [...voucher.eligible_tiers] : ["all"],
     code: voucher.code,
     discount_type: voucher.discount_type,
     discount_value: Number(voucher.discount_value),
@@ -26,7 +28,7 @@ export function buildVoucherForm(voucher: Voucher): VoucherForm {
       ? Number(voucher.max_discount_amount)
       : null,
     usage_limit: voucher.usage_limit,
-    start_date: voucher.start_date.substring(0, 16),
+    start_date: formatLocalDateTime(new Date(voucher.start_date)),
     duration_hours: getVoucherDurationHours(voucher),
     status: voucher.status,
   };
@@ -47,24 +49,28 @@ export function filterVouchers(
 
   return vouchers.filter((voucher) => {
     const matchesSearch = voucher.code.toLowerCase().includes(normalizedSearch);
-    const expired = isVoucherExpired(voucher);
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && voucher.status === 1 && !expired) ||
-      (statusFilter === "expired" && expired);
+    const matchesStatus = statusFilter === "all" || getVoucherStatus(voucher) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 }
 
 export function buildVoucherPayload(form: VoucherForm) {
+  if (!form.customer_types.length) throw new Error("Vui lòng chọn ít nhất một đối tượng áp dụng.");
   const startDate = new Date(form.start_date);
   const expiryDate = new Date(
     startDate.getTime() + form.duration_hours * 60 * 60 * 1000,
   );
 
   return {
-    ...form,
+    code: form.code,
+    discount_type: form.discount_type,
+    discount_value: form.discount_value,
+    min_order_value: form.min_order_value,
+    max_discount_amount: form.max_discount_amount,
+    status: form.status,
+    eligible_tiers: form.customer_types.includes("all") ? [] : form.customer_types,
+    start_date: startDate.toISOString(),
     usage_limit: Number(form.usage_limit),
     expiry_date: expiryDate.toISOString(),
   };

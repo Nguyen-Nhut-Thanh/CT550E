@@ -58,6 +58,7 @@ export class BookingsAdminService {
             where: { booking_id: bookingId },
             include: {
                 payments: {
+                    where: { status: { in: ['completed', 'review'] } },
                     orderBy: { payment_id: 'desc' },
                     take: 1,
                 },
@@ -180,16 +181,21 @@ export class BookingsAdminService {
         if (booking.status !== 'cancel_requested') {
             throw new BadRequestException('Booking này không ở trạng thái yêu cầu hủy.');
         }
-        const rollbackStatus = resolveRollbackStatus(booking.payments?.[0]?.status);
         const adminNote = note?.trim();
-        const updated = await this.prisma.bookings.update({
-            where: { booking_id: bookingId },
-            data: {
-                status: rollbackStatus,
-                note: adminNote
-                    ? mergeBookingNote(booking.note, `[ADMIN_CANCEL_REJECTED]\nGhi chú: ${adminNote}`)
-                    : booking.note,
-            },
+        const updated = await this.prisma.$transaction(async tx => {
+            // Read paid funds after the same lock used by VNPay callbacks.
+            await tx.$queryRaw`SELECT booking_id FROM bookings WHERE booking_id = ${bookingId} FOR UPDATE`;
+            const current = await tx.bookings.findUniqueOrThrow({ where: { booking_id: bookingId }, include: {
+                payments: { where: { status: { in: ['completed', 'review'] } }, orderBy: { payment_id: 'desc' }, take: 1 },
+            } });
+            if (current.status !== 'cancel_requested') throw new BadRequestException('Yêu cầu hủy này đã được xử lý.');
+            return tx.bookings.update({
+                where: { booking_id: bookingId },
+                data: {
+                    status: resolveRollbackStatus(current.payments[0]?.status),
+                    note: adminNote ? mergeBookingNote(current.note, `[ADMIN_CANCEL_REJECTED]\nGhi chú: ${adminNote}`) : current.note,
+                },
+            });
         });
         await this.mailService.sendCancelRejectedEmail({
             email: booking.contact_email,

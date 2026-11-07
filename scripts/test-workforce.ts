@@ -60,7 +60,8 @@ async function main() {
       await rejects(() => service.employees(guide), /Chỉ quản lý/);
       const people = await service.employees(manager);
       check(people.some(item => item.user_id === pageUser.user_id));
-      check(!people.some(item => item.user_id === southUser.user_id));
+      check(people.some(item => item.user_id === southUser.user_id));
+      check((await service.employees(manager, 'south')).every(item => item.regions.includes('south')));
       const employeeBody: EmployeePayload = { full_name: `${key} New`, email: `${key}-new@example.invalid`, password: 'Temporary-test-password-47', phone: null,
         employee_code: `${key}-new`, position: 'Tư vấn', primary_region: 'north', regions: ['north'], roles: ['page_staff'], employment_type: 'contractor', status: 'active', languages: ['Tiếng Anh'], note: 'Fixture only' };
       await rejects(() => service.createEmployee(manager, { ...employeeBody, roles: ['admin'] }), /chỉ được cấp/);
@@ -76,7 +77,7 @@ async function main() {
       await rejects(() => access.actor(created.user_id), /không còn hoạt động/);
       await tx.accounts.update({ where: { account_id: (await tx.users.findUniqueOrThrow({ where: { user_id: created.user_id } })).account_id }, data: { status: 1 } });
 
-      const location = await tx.locations.findFirstOrThrow();
+      const location = await tx.locations.findFirstOrThrow({ where: { slug: 'ha-noi' } });
       const transport = await tx.transports.findFirstOrThrow();
       const tour = await tx.tours.create({ data: { code: key, name: `${key} Tour`, description: 'Fixture', duration_days: 2, departure_location: location.location_id, transport_id: transport.transport_id } });
       const start = new Date(Date.now() + 7 * 86400000); start.setUTCHours(1, 0, 0, 0);
@@ -91,7 +92,7 @@ async function main() {
         { roles: ['tour_leader'], user_id: leaderUser.user_id, report_at: start.toISOString(), release_at: end.toISOString() },
       ] };
       await rejects(() => service.setRegion(manager, unknown.tour_schedule_id, 'north'), /Chỉ quản trị/);
-      await rejects(() => service.assignCrew(manager, unknown.tour_schedule_id, body), /chọn miền/);
+      // Region is inferred from departure for unclassified schedules; exercised separately.
       await service.setRegion(admin, unknown.tour_schedule_id, 'north');
       await rejects(() => service.assignCrew(manager, southern.tour_schedule_id, body), /Ngoài miền/);
       await rejects(() => service.assignCrew(manager, schedule.tour_schedule_id, { assignments: body.assignments.map(item => ({ ...item, user_id: dualUser.user_id })) }), /một lần/);
@@ -104,7 +105,9 @@ async function main() {
       check((await service.schedules(manager)).find(row => row.tour_schedule_id === schedule.tour_schedule_id)?.crew_ready === false);
       await rejects(() => service.assignCrew(manager, overlapping.tour_schedule_id, body), /trùng ca trực/);
       await rejects(() => service.createShift(manager, { user_id: guideUser.user_id, duty_type: 'leave', region_code: 'north', starts_at: start.toISOString(), ends_at: end.toISOString() }), /trùng ca trực/);
-      await rejects(() => service.setRegion(admin, schedule.tour_schedule_id, 'south'), /gỡ phân công/);
+      await service.setRegion(admin, schedule.tour_schedule_id, 'south');
+      check((await tx.tour_schedules.findUniqueOrThrow({ where: { tour_schedule_id: schedule.tour_schedule_id } })).operating_region === 'south');
+      await service.setRegion(admin, schedule.tour_schedule_id, 'north');
       const crew = await tx.schedule_crew.findMany({ where: { tour_schedule_id: schedule.tour_schedule_id } });
       const guideAssignment = crew.find(item => item.roles.includes('guide'))!;
       const leaderAssignment = crew.find(item => item.roles.includes('tour_leader'))!;
@@ -112,15 +115,19 @@ async function main() {
       await service.respond(guide, guideAssignment.assignment_id, 'confirm');
       await service.respond(leader, leaderAssignment.assignment_id, 'confirm');
       check((await service.schedules(manager)).find(row => row.tour_schedule_id === schedule.tour_schedule_id)?.crew_ready);
-      await service.assignCrew(manager, schedule.tour_schedule_id, body);
+      await rejects(() => service.assignCrew(manager, schedule.tour_schedule_id, body), /đã chốt|24 giờ/);
+      const revise = (scheduleId: number, payload: CrewPayload) => service.assignCrew(admin, scheduleId, { ...payload, override_reason: 'Điều chỉnh phục vụ kiểm thử' });
+      await revise(schedule.tour_schedule_id, body);
       check((await tx.schedule_crew.findUniqueOrThrow({ where: { assignment_id: guideAssignment.assignment_id } })).status === 'confirmed');
-      await service.assignCrew(manager, schedule.tour_schedule_id, { assignments: body.assignments.map(item => item.roles.includes('guide') ? { ...item, report_at: new Date(start.getTime() - 3600000).toISOString() } : item) });
+      await revise(schedule.tour_schedule_id, { assignments: body.assignments.map(item => item.roles.includes('guide') ? { ...item, report_at: new Date(start.getTime() - 3600000).toISOString() } : item) });
       check((await tx.schedule_crew.findUniqueOrThrow({ where: { assignment_id: guideAssignment.assignment_id } })).status === 'pending');
       await rejects(() => service.respond(guide, guideAssignment.assignment_id, 'decline'), /Lý do/);
       await service.respond(guide, guideAssignment.assignment_id, 'decline', 'Bận lịch cá nhân');
       check((await tx.schedule_crew.findUniqueOrThrow({ where: { assignment_id: guideAssignment.assignment_id } })).response_note === 'Bận lịch cá nhân');
       await rejects(() => service.respond(leader, leaderAssignment.assignment_id, 'complete'), /không cho phép/);
-      check(!(await service.schedules(manager)).some(row => row.tour_schedule_id === southern.tour_schedule_id));
+      check((await service.schedules(manager)).some(row => row.tour_schedule_id === southern.tour_schedule_id));
+      check((await service.schedules(manager, 'south')).every(row => row.operating_region === 'south'));
+      await rejects(() => service.assignCrew(manager, southern.tour_schedule_id, body), /Bạn không có quyền quản lý nội dung này/);
       check((await service.schedules(leader)).every(row => row.crew.some(item => item.user_id === leader.userId)));
       // Flexible crews: a dual-role employee counts as one person and confirms once.
       const dual = await access.actor(dualUser.user_id);
@@ -138,18 +145,18 @@ async function main() {
       await service.respond(dual, dualAssignment, 'confirm');
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(flexible.crew_ready && flexible.crew_confirmed_count === 1 && flexible.crew_issues.length === 0);
-      await service.assignCrew(manager, unknown.tour_schedule_id, { ...solo, assignments: [{ ...solo.assignments[0], roles: ['guide', 'tour_leader'] }] });
+      await revise(unknown.tour_schedule_id, { ...solo, assignments: [{ ...solo.assignments[0], roles: ['guide', 'tour_leader'] }] });
       check((await tx.schedule_crew.findUniqueOrThrow({ where: { assignment_id: dualAssignment } })).status === 'confirmed');
       const dualProfile = (await service.employees(manager)).find(item => item.user_id === dual.userId)!;
       await rejects(() => service.updateEmployee(manager, dual.userId, { ...dualProfile, roles: ['tour_leader'] } as EmployeePayload), /hủy hoặc chuyển/);
-      await service.assignCrew(manager, unknown.tour_schedule_id, { ...solo, crew_required_count: 3 });
+      await revise(unknown.tour_schedule_id, { ...solo, crew_required_count: 3 });
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(!flexible.crew_ready && flexible.crew_confirmed_count === 1 && flexible.crew_issues.some(issue => issue.includes('2 nhân sự')));
       // Multiple employees may hold the same role, including more than two staff.
       const extraGuide1 = await fixture(['guide'], ['north']);
       const extraGuide2 = await fixture(['guide'], ['north']);
       const triple: CrewPayload = { crew_required_count: 3, assignments: [solo.assignments[0], ...[extraGuide1, extraGuide2].map(user => ({ roles: ['guide'] as ['guide'], user_id: user.user_id, report_at: start.toISOString(), release_at: end.toISOString() }))] };
-      await service.assignCrew(manager, unknown.tour_schedule_id, triple);
+      await revise(unknown.tour_schedule_id, triple);
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(flexible.crew.length === 3 && !flexible.crew_ready && flexible.crew_confirmed_count === 1);
       check(flexible.crew_issues.some(issue => issue.includes('2 nhân sự đang chờ')));
@@ -163,33 +170,33 @@ async function main() {
       check(!flexible.crew_ready && flexible.crew_issues.some(issue => issue.includes('không còn hợp lệ')));
       await tx.accounts.update({ where: { account_id: extraGuide1.account_id }, data: { status: 1 } });
       // Changing roles resets acceptance; an unchanged save preserves it.
-      await service.assignCrew(manager, unknown.tour_schedule_id, { ...triple, assignments: triple.assignments.map(item => item.user_id === dual.userId ? { ...item, roles: ['tour_leader'] } : item) });
+      await revise(unknown.tour_schedule_id, { ...triple, assignments: triple.assignments.map(item => item.user_id === dual.userId ? { ...item, roles: ['tour_leader'] } : item) });
       check((await tx.schedule_crew.findUniqueOrThrow({ where: { assignment_id: dualAssignment } })).status === 'pending');
       await service.respond(dual, dualAssignment, 'decline', 'Không thể nhận chuyến');
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(!flexible.crew_ready && flexible.crew_issues.some(issue => issue.includes('đã từ chối')));
-      await service.assignCrew(manager, unknown.tour_schedule_id, { crew_required_count: 1, assignments: [] });
+      await revise(unknown.tour_schedule_id, { crew_required_count: 1, assignments: [] });
       check(await tx.schedule_crew.count({ where: { tour_schedule_id: unknown.tour_schedule_id } }) === 0);
-      await service.assignCrew(manager, unknown.tour_schedule_id, { ...solo, assignments: [{ ...solo.assignments[0], roles: ['guide'] }] });
+      await revise(unknown.tour_schedule_id, { ...solo, assignments: [{ ...solo.assignments[0], roles: ['guide'] }] });
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       await service.respond(dual, flexible.crew[0].assignment_id, 'confirm');
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(!flexible.crew_ready && flexible.crew_issues.some(issue => issue.includes('Trưởng đoàn')));
-      await service.assignCrew(manager, unknown.tour_schedule_id, { assignments: [] });
+      await revise(unknown.tour_schedule_id, { assignments: [] });
       const deputyCreated = await service.createEmployee(manager, { ...employeeBody, email: `${key}-deputy@example.invalid`, employee_code: `${key}-deputy`, roles: ['deputy_leader', 'guide'], position: 'Phó đoàn' });
       const deputy = await access.actor(deputyCreated.user_id);
       check(deputy.roles.includes('deputy_leader') && !deputy.isManager && !deputy.canChat);
       const deputyItem: CrewPayload['assignments'][number] = { roles: ['deputy_leader'], user_id: deputy.userId, report_at: start.toISOString(), release_at: end.toISOString() };
-      await rejects(() => service.assignCrew(manager, unknown.tour_schedule_id, { assignments: [{ ...deputyItem, user_id: guide.userId }] }), /đủ vai trò/);
+      await rejects(() => revise(unknown.tour_schedule_id, { assignments: [{ ...deputyItem, user_id: guide.userId }] }), /đủ vai trò/);
       const withDeputy: CrewPayload = { crew_required_count: 2, assignments: [solo.assignments[0], deputyItem] };
-      await service.assignCrew(manager, unknown.tour_schedule_id, withDeputy);
+      await revise(unknown.tour_schedule_id, withDeputy);
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       for (const actor of [dual, deputy]) await service.respond(actor, flexible.crew.find(item => item.user_id === actor.userId)!.assignment_id, 'confirm');
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(flexible.crew_ready && flexible.crew_confirmed_count === 2 && flexible.crew.some(item => item.roles.includes('deputy_leader')));
       // A deputy can also guide, but cannot replace the required tour leader.
       const deputyCombined: CrewPayload = { crew_required_count: 1, assignments: [{ ...deputyItem, roles: ['deputy_leader', 'guide'] }] };
-      await service.assignCrew(manager, unknown.tour_schedule_id, deputyCombined);
+      await revise(unknown.tour_schedule_id, deputyCombined);
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(flexible.crew[0].status === 'pending');
       await service.respond(deputy, flexible.crew[0].assignment_id, 'confirm');
@@ -198,18 +205,18 @@ async function main() {
       await rejects(() => service.assignCrew(manager, overlapping.tour_schedule_id, deputyCombined), /trùng ca trực/);
       const deputyProfile = (await service.employees(manager)).find(item => item.user_id === deputy.userId)!;
       await rejects(() => service.updateEmployee(manager, deputy.userId, { ...deputyProfile, roles: ['guide'] } as EmployeePayload), /hủy hoặc chuyển/);
-      await service.assignCrew(manager, unknown.tour_schedule_id, { assignments: [] });
+      await revise(unknown.tour_schedule_id, { assignments: [] });
       const allRolesUser = await fixture(['tour_leader', 'deputy_leader', 'guide'], ['north']);
       const allRoles: CrewPayload = { crew_required_count: 1, assignments: [{ ...deputyItem, user_id: allRolesUser.user_id, roles: ['guide', 'deputy_leader', 'tour_leader'] }] };
-      await service.assignCrew(manager, unknown.tour_schedule_id, allRoles);
+      await revise(unknown.tour_schedule_id, allRoles);
       flexible = (await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!;
       check(flexible.crew[0].roles.length === 3);
       await service.respond(await access.actor(allRolesUser.user_id), flexible.crew[0].assignment_id, 'confirm');
       check((await service.schedules(manager)).find(row => row.tour_schedule_id === unknown.tour_schedule_id)!.crew_ready);
-      await service.assignCrew(manager, unknown.tour_schedule_id, { assignments: [] });
+      await revise(unknown.tour_schedule_id, { assignments: [] });
       const scheduleService = new SchedulesAdminService(db as never, {} as never);
       (scheduleService as any).logger = { error() {} };
-      await rejects(() => scheduleService.updateSchedule(schedule.tour_schedule_id, { start_date: new Date(start.getTime() + 3600000).toISOString() }), /gỡ phân công/);
+      await rejects(() => scheduleService.updateSchedule(schedule.tour_schedule_id, { start_date: new Date(start.getTime() + 3600000).toISOString() }), /gỡ phân công|đã chốt/);
       await rejects(() => scheduleService.deleteSchedule(schedule.tour_schedule_id), /gỡ phân công/);
 
       const now = Date.now();
@@ -280,7 +287,7 @@ async function main() {
       check(events.length >= 4);
       check(!JSON.stringify(await service.events(admin)).includes('Temporary-test-password-47'));
       const stats = await service.overview(manager);
-      check(stats.employees >= 1 && stats.on_duty === 0 && stats.missing_crew >= 1);
+      check(stats.employees >= 1 && stats.on_duty >= 1 && stats.missing_crew >= 1);
       throw rollback;
     }, { timeout: 60000 });
   } catch (error) { if (error !== rollback) throw error; }

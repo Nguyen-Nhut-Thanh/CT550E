@@ -2,7 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { LocationOption } from "shared";
 import { createDefaultScheduleForm, createEmptyItineraryDay } from "./forms";
-import { getItineraryProvinces, getProvinceAttractions, toggleScheduleAttraction, updateItineraryActivity } from "./itinerary";
+import { getIncompleteItineraryDays, getItineraryProvinces, getProvinceAttractions, toggleScheduleAttraction, updateItineraryActivity } from "./itinerary";
+
+test("completeness checks every expected day and keeps transport and hotel allocation optional", () => {
+  const first = { ...createEmptyItineraryDay(1), title: 'Khám phá', meals: 'Sáng, trưa', activities: [{ time: '08:00', title: 'Tham quan', description: '' }] };
+  const second = { ...createEmptyItineraryDay(2), title: 'Ngày về', meals: 'Không bao gồm', content: 'Nội dung lịch trình cũ' };
+  assert.deepEqual(getIncompleteItineraryDays([first, second], 2), []);
+  assert.deepEqual(getIncompleteItineraryDays([first], 3), [2, 3]);
+  assert.deepEqual(getIncompleteItineraryDays([], 2), [1, 2]);
+  assert.deepEqual(getIncompleteItineraryDays([{ ...first, title: ' ' }, { ...second, meals: ' ' }], 2), [1, 2]);
+});
+
+test("missing daily content, activity times and titles or half-selected hotel details trigger confirmation", () => {
+  const complete = { ...createEmptyItineraryDay(1), title: 'Ngày 1', meals: 'Sáng', activities: [{ time: '08:00', title: 'Ăn sáng', description: '' }] };
+  for (const day of [
+    { ...complete, activities: [] }, { ...complete, activities: [{ time: '', title: 'Ăn sáng', description: '' }] },
+    { ...complete, activities: [{ time: '08:00', title: ' ', description: 'Nội dung' }] },
+    { ...complete, hotel_id: 7, room_type_id: '' }, { ...complete, hotel_id: '', room_type_id: 70 },
+  ]) assert.deepEqual(getIncompleteItineraryDays([day], 1), [1]);
+  assert.deepEqual(getIncompleteItineraryDays([{ ...complete, hotel_id: 7, room_type_id: 70 }], 1), []);
+});
 
 const locations: LocationOption[] = [
   { location_id: 1, level_id: 5, name: "Đà Nẵng" }, { location_id: 2, level_id: 5, name: "Quảng Ninh" },

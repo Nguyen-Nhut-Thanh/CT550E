@@ -6,7 +6,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 export class LocationsAdminService {
     constructor(private readonly prisma: PrismaService) { }
     private async getLocationUsageSummary(locationId: number, db: Prisma.TransactionClient | PrismaService = this.prisma): Promise<LocationUsageSummary> {
-        const [child_locations_count, destination_tours_count, departure_tours_count, hotel_count, destination_detail_count, location_images_count, departure_schedules_count, itinerary_activities_count, schedule_attractions_count] = await Promise.all([
+        const [child_locations_count, destination_tours_count, departure_tours_count, hotel_count, destination_detail_count, location_images_count, departure_schedules_count, itinerary_activities_count, schedule_attractions_count, schedule_templates_count] = await Promise.all([
             db.locations.count({ where: { parent_id: locationId } }),
             db.tour_destinations.count({ where: { location_id: locationId } }),
             db.tours.count({ where: { departure_location: locationId } }),
@@ -16,11 +16,13 @@ export class LocationsAdminService {
             db.tour_schedules.count({ where: { departure_location_id: locationId } }),
             db.itinerary_activities.count({ where: { location_id: locationId } }),
             db.tour_schedule_attractions.count({ where: { location_id: locationId } }),
+            db.$queryRaw<Array<{ count: number }>>`SELECT COUNT(*)::int AS count FROM tour_schedule_templates WHERE data @> ${JSON.stringify({ departure_location_id: locationId })}::jsonb OR data @> ${JSON.stringify({ attraction_ids: [locationId] })}::jsonb OR data @> ${JSON.stringify({ itinerary: [{ activities: [{ location_id: locationId }] }] })}::jsonb`.then(rows => rows[0].count),
         ]);
         const has_children = child_locations_count > 0;
-        const is_used_in_tours = destination_tours_count > 0 || departure_tours_count > 0 || departure_schedules_count > 0 || itinerary_activities_count > 0 || schedule_attractions_count > 0;
+        const is_used_in_tours = destination_tours_count > 0 || departure_tours_count > 0 || departure_schedules_count > 0 || itinerary_activities_count > 0 || schedule_attractions_count > 0 || schedule_templates_count > 0;
         const has_dependencies = has_children || is_used_in_tours || hotel_count > 0;
         return {
+            schedule_templates_count,
             schedule_attractions_count,
             itinerary_activities_count,
             child_locations_count,
@@ -51,6 +53,7 @@ export class LocationsAdminService {
         if (usage.departure_schedules_count) reasons.push(`${usage.departure_schedules_count} chuyến dùng làm nơi xuất phát`);
         if (usage.itinerary_activities_count) reasons.push(`${usage.itinerary_activities_count} hoạt động tham quan trong lịch trình`);
         if (usage.schedule_attractions_count) reasons.push(`${usage.schedule_attractions_count} chuyến chọn làm điểm tham quan`);
+        if (usage.schedule_templates_count) reasons.push(`${usage.schedule_templates_count} mẫu lịch trình đang sử dụng`);
         if (usage.hotel_count > 0) {
             reasons.push(`${usage.hotel_count} khách sạn liên kết`);
         }
@@ -67,7 +70,7 @@ export class LocationsAdminService {
         if (usage.child_locations_count > 0) {
             reasons.push('đang có địa điểm con');
         }
-        if (usage.destination_tours_count > 0 || usage.departure_tours_count > 0 || usage.departure_schedules_count || usage.itinerary_activities_count || usage.schedule_attractions_count) {
+        if (usage.destination_tours_count > 0 || usage.departure_tours_count > 0 || usage.departure_schedules_count || usage.itinerary_activities_count || usage.schedule_attractions_count || usage.schedule_templates_count) {
             reasons.push('đang được tour sử dụng');
         }
         if (usage.hotel_count > 0) {
@@ -93,7 +96,8 @@ export class LocationsAdminService {
                 geographic_levels: true,
                 locations: { select: { name: true } },
                 location_images: {
-                    where: { is_cover: 1 },
+                    where: { status: 1 },
+                    orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }],
                     take: 1,
                 },
             },

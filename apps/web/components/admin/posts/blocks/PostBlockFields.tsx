@@ -6,7 +6,7 @@ import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { ARTICLE_ICONS, type ArticleBlock } from "shared";
 import { ImageUpload } from "@/components/common/forms/ImageUpload";
 import { ArticleBlockIcon } from "@/components/blog/article/ArticleBlockIcon";
-import { PostRichTextInput } from "@/components/admin/posts/editor/PostRichTextInput";
+import { RichTextInput } from "@/components/common/forms/RichTextInput";
 import { PostTourPicker } from "@/components/admin/posts/editor/PostTourPicker";
 
 const icons = {
@@ -31,7 +31,7 @@ export function PostBlockFields({
   switch (block.type) {
     case "paragraph":
       return (
-        <PostRichTextInput
+        <RichTextInput
           label="Nội dung đoạn văn"
           value={block.text}
           onChange={(text) => onChange({ ...block, text })}

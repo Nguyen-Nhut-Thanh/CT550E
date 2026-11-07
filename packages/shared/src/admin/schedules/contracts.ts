@@ -10,11 +10,13 @@ export type ScheduleItineraryPayload = {
     content?: string;
     description?: string;
     meals?: string | null;
+    transport_id?: number | string | null;
     hotel_id?: number | string | null;
     room_type_id?: number | string | null;
     nights?: number | string | null;
 };
 export type ScheduleAdminPayload = {
+    allow_incomplete_itinerary?: boolean;
     attraction_ids?: number[];
     use_tour_amenities?: boolean;
     copy_tour_amenities?: boolean;

@@ -11,7 +11,8 @@ import { Calendar, Clock, Hotel, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { TourCardProps, TourSchedule } from 'shared';
+import type { TourCardProps } from 'shared';
+import TourCardTagStrip from "./TourCardTagStrip";
 
 export default function TourCard({ tour, onTourClick }: TourCardProps) {
   const router = useRouter();
@@ -20,6 +21,13 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
 
   const tourPrice = getTourPriceValue(tour.base_price, tour.next_schedule?.price);
   const imageSrc = normalizeImageSrc(tour.cover_image) || PLACEHOLDER_IMAGE;
+  const departureDates = new Map<string, Date>();
+  for (const schedule of tour.upcoming_schedules ?? []) {
+    const date = new Date(schedule.start_date);
+    if (!Number.isNaN(date.getTime())) {
+      departureDates.set(date.toDateString(), date);
+    }
+  }
 
   const handleFavoriteClick = async (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -93,8 +101,8 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
         </div>
 
         {/* Thông tin chi tiết Tour */}
-        <div className="flex flex-col justify-between p-3.5 md:p-4">
-          <div>
+        <div className="flex min-w-0 flex-col justify-between p-3.5 md:p-4">
+          <div className="min-w-0">
             <h2
               className="truncate text-[18px] font-bold leading-tight text-[#0f172a]"
               title={tour.name}
@@ -165,17 +173,17 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
                   Ngày khởi hành:
                 </span>
               </div>
-              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
-                {tour.upcoming_schedules && tour.upcoming_schedules.length > 0 ? (
-                  tour.upcoming_schedules.map((s: TourSchedule) => {
-                    const date = new Date(s.start_date);
+              <TourCardTagStrip label="Các ngày khởi hành">
+                {departureDates.size > 0 ? (
+                  [...departureDates].map(([key, date]) => {
                     const day = String(date.getDate()).padStart(2, "0");
                     const month = String(date.getMonth() + 1).padStart(2, "0");
 
                     return (
                       <span
-                        key={s.tour_schedule_id}
-                        className="whitespace-nowrap rounded-lg border border-sky-100 bg-sky-50 px-2 py-0.5 text-[11.5px] font-bold text-sky-700 shadow-sm"
+                        key={key}
+                        title={date.toLocaleDateString("vi-VN")}
+                        className="shrink-0 whitespace-nowrap rounded-lg border border-sky-100 bg-sky-50 px-2 py-0.5 text-[11.5px] font-bold text-sky-700 shadow-sm"
                       >
                         {day}/{month}
                       </span>
@@ -186,23 +194,23 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
                     Liên hệ để biết thêm chi tiết
                   </span>
                 )}
-              </div>
+              </TourCardTagStrip>
             </div>
           </div>
 
           {/* Danh sách các điểm đến */}
           {tour.destinations && tour.destinations.length > 0 && (
-            <div className="mt-2 flex max-h-[22px] flex-wrap gap-1 overflow-hidden">
+            <TourCardTagStrip label="Các địa điểm trong tour" className="mt-2 gap-1">
               {tour.destinations.map((item, index) => (
                 <span
                   key={`${tour.tour_id}-${item.location_id}-${index}`}
-                  className="inline-flex items-center gap-1 whitespace-nowrap rounded bg-[#eef5ff] px-2 py-0.5 text-[11px] font-bold text-[#0d63b9]"
+                  className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-[#eef5ff] px-2 py-0.5 text-[11px] font-bold text-[#0d63b9]"
                 >
                   <MapPin size={10} className="shrink-0" />
                   {item.name}
                 </span>
               ))}
-            </div>
+            </TourCardTagStrip>
           )}
 
           {/* Footer Card: Giá và Nút CTA */}

@@ -6,6 +6,16 @@ import { BookingsService } from "./bookings.service";
 @Controller("bookings")
 export class BookingsController {
     constructor(private readonly service: BookingsService) { }
+    @Post("check-conflicts")
+    checkConflicts(
+        @Body()
+        dto: {
+            tour_schedule_id: number;
+            travelers: Array<{ fullName: string; idNumber?: string }>;
+        },
+    ) {
+        return this.service.checkScheduleConflicts(dto.tour_schedule_id, dto.travelers || []);
+    }
     @Post()
     create(
     @Body()

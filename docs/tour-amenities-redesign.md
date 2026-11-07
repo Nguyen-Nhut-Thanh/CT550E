@@ -59,7 +59,7 @@ The detail page displays the amenities of its currently displayed departure
 own saved entries. With no departure available, tour defaults are general info.
 Hidden entries are omitted, including automatic hotel/transport cards. Hotel
 stars are derived from assigned hotels even if a copied title names other stars.
-The popup includes the departure date. Chat service descriptions and flash-deal
+Each amenity expands inline as a dropdown and includes the departure date. Chat service descriptions and flash-deal
 promotion text also read the applicable departure's saved content.
 
 ## Migration and verification

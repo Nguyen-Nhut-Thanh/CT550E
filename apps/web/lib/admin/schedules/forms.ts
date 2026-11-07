@@ -1,5 +1,6 @@
 import { formatLocalDate as formatDateString } from "@/lib/utils/dateTime";
 import { parseCalendarDate } from "@/lib/utils/calendar";
+import { getDayTransport, getSchedulePickupTimeError } from "shared";
 import type { ItineraryFormItem, ScheduleEditorScheduleDetailResponse as ScheduleDetailResponse, ScheduleFormState, SchedulePriceItem } from 'shared';
 
 export const DEFAULT_SCHEDULE_PRICES: SchedulePriceItem[] = [
@@ -20,7 +21,14 @@ export function updateScheduleStart(form: ScheduleFormState, date: string, time:
   const previousStart = form.start_date ? `${form.start_date}T${form.start_time}` : "";
   const nextStart = `${date}T${time || '08:00'}`;
   return { ...form, start_date: date, start_time: time, end_date: formatDateString(end),
-    pickup_points: form.pickup_points.map(point => !point.pickup_at || point.pickup_at === previousStart ? { ...point, pickup_at: nextStart } : point),
+    pickup_points: form.pickup_points.map(point => {
+      if (point.day_offset !== undefined && point.pickup_time) {
+        const pickupDay = new Date(start);
+        pickupDay.setDate(pickupDay.getDate() + point.day_offset);
+        return { ...point, pickup_at: `${formatDateString(pickupDay)}T${point.pickup_time}` };
+      }
+      return !point.pickup_at || point.pickup_at === previousStart ? { ...point, pickup_at: nextStart } : point;
+    }),
   };
 }
 
@@ -104,6 +112,7 @@ export function buildScheduleFormFromResponse(
   const startDt = data.start_date ? new Date(data.start_date) : null;
   const endDt = data.end_date ? new Date(data.end_date) : null;
   const hotelByDay = new Map<number, { hotel_id: string | number; room_type_id: string | number }>();
+  const draftDays = new Set((data.tour_itineraries || []).filter(item => item.draft_data).map((item, index) => item.day_number ?? index + 1));
 
   data.tour_schedule_hotels?.forEach((item, index) => {
     const dayNumber = Number(item.day_from ?? item.day_to ?? index + 1);
@@ -114,6 +123,15 @@ export function buildScheduleFormFromResponse(
       room_type_id: item.room_type_id ?? "",
     });
   });
+
+  const itinerary = ensureItineraryDays((data.tour_itineraries || []).map(item => ({ ...item, ...(item.draft_data || {}) })).map((item, index) => ({
+    day_number: item.day_number ?? index + 1,
+    title: item.title ?? "", content: item.content ?? "", meals: item.meals ?? "", activities: item.activities ?? [],
+    transport_id: item.transport_id ?? "",
+    hotel_id: item.draft_data ? item.hotel_id ?? "" : item.hotel_id ?? hotelByDay.get(item.day_number ?? index + 1)?.hotel_id ?? "",
+    room_type_id: item.draft_data ? item.room_type_id ?? "" : item.room_type_id ?? hotelByDay.get(item.day_number ?? index + 1)?.room_type_id ?? "",
+  })), data.duration_days || 0);
+  const durationDays = data.duration_days || Math.max(1, ...itinerary.map(day => day.day_number));
 
   return {
     use_tour_amenities: data.use_tour_amenities ?? true,
@@ -137,20 +155,7 @@ export function buildScheduleFormFromResponse(
     prices: data.tour_schedule_prices?.length
       ? data.tour_schedule_prices
       : DEFAULT_SCHEDULE_PRICES.map((item) => ({ ...item })),
-    itinerary:
-      data.tour_itineraries?.map((item, index) => ({
-        day_number: item.day_number ?? index + 1,
-        title: item.title ?? "",
-        content: item.content ?? "",
-        meals: item.meals ?? "",
-        activities: item.activities ?? [],
-        transport_id: item.transport_id ?? "",
-        hotel_id: item.hotel_id ?? hotelByDay.get(item.day_number ?? index + 1)?.hotel_id ?? "",
-        room_type_id:
-          item.room_type_id ??
-          hotelByDay.get(item.day_number ?? index + 1)?.room_type_id ??
-          "",
-      })) || [],
+    itinerary: itinerary.map(day => ({ ...day, transport_id: draftDays.has(day.day_number) ? day.transport_id : getDayTransport(data.tour_schedule_transports || [], day.day_number, durationDays)?.transport_id ?? day.transport_id })),
   };
 }
 
@@ -174,7 +179,12 @@ export function ensureItineraryDays(
 }
 
 export function buildScheduleDateTime(date: string, time: string) {
-  return `${date}T${time}:00`;
+  return `${date}T${time}:00+07:00`;
+}
+
+export function getSchedulePickupError(form: Pick<ScheduleFormState, "start_date" | "start_time" | "pickup_points">) {
+  return getSchedulePickupTimeError(buildScheduleDateTime(form.start_date, form.start_time || '00:00'),
+    form.pickup_points.map(point => ({ pickup_at: `${point.pickup_at}:00+07:00` })));
 }
 
 export function buildSchedulePayload(form: ScheduleFormState) {
@@ -183,7 +193,7 @@ export function buildSchedulePayload(form: ScheduleFormState) {
     ...base,
     ...(form.use_tour_amenities ? { copy_tour_amenities } : { tour_schedule_amenities }),
     departure_location_id: Number(form.departure_location_id),
-    pickup_points: form.pickup_points.map(point => ({ ...point, pickup_at: new Date(`${point.pickup_at}:00+07:00`).toISOString() })),
+    pickup_points: form.pickup_points.map(point => ({ name: point.name, address: point.address, note: point.note, pickup_at: new Date(`${point.pickup_at}:00+07:00`).toISOString() })),
     start_date: buildScheduleDateTime(form.start_date, form.start_time),
     end_date: buildScheduleDateTime(form.end_date, form.end_time),
     itinerary: form.itinerary.map((item) => ({

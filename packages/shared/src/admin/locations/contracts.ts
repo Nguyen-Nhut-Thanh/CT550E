@@ -1,4 +1,5 @@
 export type LocationUsageSummary = {
+    schedule_templates_count?: number;
     schedule_attractions_count?: number;
     itinerary_activities_count?: number;
     child_locations_count: number;

@@ -70,9 +70,12 @@ async function main() {
     status(await request('/admin/workforce/me', admin.token), 200);
     status(await request('/admin/users', admin.token), 200);
     status(await request('/admin/workforce/employees', manager.token), 200);
-    status(await request('/admin/workforce/employees?region=south', manager.token), 403);
-    status(await request('/admin/users', manager.token), 403);
-    status(await request('/bookings/admin/list', manager.token), 403);
+    status(await request('/admin/workforce/employees?region=south', manager.token), 200);
+    status(await request('/admin/users', manager.token), 200);
+    status(await request('/bookings/admin/list', manager.token), 200);
+    const deniedEdit = await request(`/admin/users/${manager.user_id}/status`, manager.token, 'PATCH', { status: 0 });
+    status(deniedEdit, 403);
+    assert.equal(deniedEdit.data.message, 'Bạn không có quyền quản lý nội dung này.'); passed++;
     status(await request('/admin/membership', page.token), 403);
     status(await request('/admin/workforce/schedules', guide.token), 200);
     status(await request('/admin/workforce/employees', guide.token), 403);
@@ -117,10 +120,10 @@ async function main() {
     status(await request(`/admin/workforce/assignments/${flexible.crew[0].assignment_id}/respond`, dual.token, 'POST', { action: 'confirm' }), 201);
     flexible = (await request('/admin/workforce/schedules', admin.token)).data.find(row => row.tour_schedule_id === other.tour_schedule_id);
     assert.equal(flexible.crew_ready, true); assert.equal(flexible.crew_confirmed_count, 1); passed++;
-    status(await request(`/admin/workforce/schedules/${other.tour_schedule_id}/crew`, admin.token, 'PUT', { ...solo, crew_required_count: 3 }), 200);
+    status(await request(`/admin/workforce/schedules/${other.tour_schedule_id}/crew`, admin.token, 'PUT', { ...solo, crew_required_count: 3, override_reason: 'Kiểm thử điều chỉnh số lượng' }), 200);
     flexible = (await request('/admin/workforce/schedules', admin.token)).data.find(row => row.tour_schedule_id === other.tour_schedule_id);
     assert.equal(flexible.crew_ready, false); assert.equal(flexible.crew_confirmed_count, 1); passed++;
-    const triple = { crew_required_count: 3, assignments: [...solo.assignments, ...[extraGuide, page].map(user => ({ roles: user.user_id === extraGuide.user_id ? ['deputy_leader', 'guide'] : ['guide'], user_id: user.user_id, report_at: start.toISOString(), release_at: end.toISOString() }))] };
+    const triple = { override_reason: 'Kiểm thử bổ sung nhân sự', crew_required_count: 3, assignments: [...solo.assignments, ...[extraGuide, page].map(user => ({ roles: user.user_id === extraGuide.user_id ? ['deputy_leader', 'guide'] : ['guide'], user_id: user.user_id, report_at: start.toISOString(), release_at: end.toISOString() }))] };
     status(await request(`/admin/workforce/schedules/${other.tour_schedule_id}/crew`, admin.token, 'PUT', triple), 200);
     flexible = (await request('/admin/workforce/schedules', admin.token)).data.find(row => row.tour_schedule_id === other.tour_schedule_id);
     for (const user of [extraGuide, page]) status(await request(`/admin/workforce/assignments/${flexible.crew.find(item => item.user_id === user.user_id).assignment_id}/respond`, user.token, 'POST', { action: 'confirm' }), 201);

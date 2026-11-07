@@ -9,6 +9,14 @@ import { SchedulesAdminService } from "./schedules-admin.service";
 @UseGuards(AdminAuthGuard)
 export class SchedulesAdminController {
     constructor(private readonly toursAdminService: SchedulesAdminService, private readonly cloudinaryService: CloudinaryService) { }
+    @Get('admin/tours/:id/schedule-template')
+    getScheduleTemplate(@Param('id') id: string) {
+        return this.toursAdminService.getScheduleTemplate(Number(id));
+    }
+    @Patch('admin/tours/:id/schedule-template')
+    saveScheduleTemplate(@Param('id') id: string, @Body() body: unknown) {
+        return this.toursAdminService.saveScheduleTemplate(Number(id), body);
+    }
     @Post('admin/tours/upload-schedule-image')
     @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
     async uploadScheduleImage(

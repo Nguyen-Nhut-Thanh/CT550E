@@ -20,7 +20,7 @@ export function priceBookingExtras(ids: unknown, guests: number) {
     return { items, total: items.reduce((sum, item) => sum + item.amount, 0) };
 }
 export function resolveRollbackStatus(paymentStatus: any) {
-    return paymentStatus === 'completed' ? 'paid' : 'pending';
+    return ['completed', 'review'].includes(paymentStatus) ? 'paid' : 'pending';
 }
 export function formatCurrency(amount: any) {
     return new Intl.NumberFormat('vi-VN').format(amount);

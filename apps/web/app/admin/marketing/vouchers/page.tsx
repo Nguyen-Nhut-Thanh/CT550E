@@ -6,11 +6,13 @@ import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
 import { AdminStatusBadge } from "@/components/admin/common/AdminStatusBadge";
 import { AdminTable } from "@/components/admin/common/AdminTable";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
 import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
   createAdminVoucher,
   deleteAdminVoucher,
   getAdminVouchers,
+  setAdminVoucherStatus,
 } from "@/lib/admin/vouchers/api";
 import {
   buildVoucherForm,
@@ -21,14 +23,50 @@ import {
 } from "@/lib/admin/vouchers/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { formatVND } from "@/lib/utils/currency";
-import { isVoucherLocked } from "@/lib/vouchers/status";
-import { AlertTriangle, CheckCircle2, Clock, Tag } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { getVoucherStatus } from "@/lib/vouchers/status";
+import { AlertTriangle, CheckCircle2, Clock, Eye, Lock, LockOpen, Tag, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Voucher, VoucherForm, VoucherStatusFilter } from "shared";
+
+const voucherDateFormatter = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", year: "numeric",
+});
+const voucherTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+});
+
+function VoucherDateCell({ value, label, muted = false }: { value: string; label: string; muted?: boolean }) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return <span className="text-slate-400">—</span>;
+  return <time dateTime={date.toISOString()} title={label} className={`block whitespace-nowrap text-xs tabular-nums ${muted ? "text-slate-400" : "font-medium text-slate-700"}`}>
+    <span className="sr-only">{label}: </span>
+    {voucherTimeFormatter.format(date)} <span aria-hidden="true">–</span> {voucherDateFormatter.format(date)}
+  </time>;
+}
+
+function VoucherStatusBadge({ voucher }: { voucher: Voucher }) {
+  const status = getVoucherStatus(voucher);
+  const badges = {
+    active: { label: "Hoạt động", tone: "success", icon: CheckCircle2 },
+    locked: { label: "Tạm khóa", tone: "muted", icon: Lock },
+    upcoming: { label: "Sắp có hiệu lực", tone: "muted", icon: Clock },
+    expired: { label: "Hết hạn", tone: "warning", icon: Clock },
+    exhausted: { label: "Hết lượt", tone: "warning", icon: AlertTriangle },
+  } as const;
+  const { label, tone, icon: Icon } = badges[status];
+  const color = status === "locked"
+    ? "[&&]:border-red-200 [&&]:bg-red-50 [&&]:text-red-600"
+    : status === "upcoming"
+      ? "[&&]:border-blue-200 [&&]:bg-blue-50 [&&]:text-blue-600"
+      : undefined;
+  return <AdminStatusBadge tone={tone} className={color} icon={<Icon size={12} />}>{label}</AdminStatusBadge>;
+}
 
 export default function AdminVouchersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pendingIds, setPendingIds] = useState<number[]>([]);
+  const busyIds = useRef(new Set<number>());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<VoucherStatusFilter>("all");
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -77,6 +115,8 @@ export default function AdminVouchersPage() {
   };
 
   const handleSaveVoucher = async () => {
+    if (saving) return;
+    if (!form.customer_types.length) { showError("Vui lòng chọn ít nhất một đối tượng áp dụng"); return; }
     if (editingVoucher) {
       showError("Voucher đã tạo không thể chỉnh sửa, hãy tạo voucher mới");
       return;
@@ -101,24 +141,27 @@ export default function AdminVouchersPage() {
     setSaving(true);
 
     try {
-      await createAdminVoucher(buildVoucherPayload(form));
-      success("Đã tạo voucher mới");
+      const created = await createAdminVoucher(buildVoucherPayload(form));
+      success(form.status === 1 ? `Đã tạo voucher và gửi ${created.notification_count ?? 0} thông báo đến nhóm khách đã chọn` : "Đã tạo voucher tạm dừng, chưa gửi thông báo");
       closeModal();
       void loadData();
-    } catch {
-      showError("Lỗi kết nối máy chủ");
+    } catch (cause) {
+      showError(cause instanceof Error ? cause.message : "Không thể tạo voucher");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteVoucher = async (voucher: Voucher) => {
-    if (isVoucherLocked(voucher)) {
-      showError("Voucher đã bị khóa, không thể chỉnh sửa hoặc xóa");
+    if (busyIds.current.has(voucher.voucher_id)) return;
+    if (voucher.used_count > 0) {
+      showError("Voucher đã có lượt sử dụng, không thể xóa.");
       setPendingDeleteVoucher(null);
       return;
     }
 
+    busyIds.current.add(voucher.voucher_id);
+    setPendingIds(current => [...current, voucher.voucher_id]);
     try {
       await deleteAdminVoucher(voucher.voucher_id);
       success("Đã xóa voucher thành công");
@@ -128,6 +171,31 @@ export default function AdminVouchersPage() {
       setPendingDeleteVoucher(null);
     } catch {
       showError("Lỗi kết nối");
+    } finally {
+      busyIds.current.delete(voucher.voucher_id);
+      setPendingIds(current => current.filter(id => id !== voucher.voucher_id));
+    }
+  };
+
+  const handleToggleVoucher = async (voucher: Voucher) => {
+    if (busyIds.current.has(voucher.voucher_id)) return;
+    const status = voucher.status === 1 ? 0 : 1;
+    const currentStatus = getVoucherStatus(voucher);
+    if (status === 1 && (currentStatus === "expired" || currentStatus === "exhausted")) {
+      showError(currentStatus === "expired" ? "Voucher đã hết hạn, không thể mở lại." : "Voucher đã hết lượt, không thể mở lại.");
+      return;
+    }
+    busyIds.current.add(voucher.voucher_id);
+    setPendingIds(current => [...current, voucher.voucher_id]);
+    try {
+      const updated = await setAdminVoucherStatus(voucher.voucher_id, status);
+      setVouchers(current => current.map(item => item.voucher_id === voucher.voucher_id ? { ...item, ...updated, notification_count: (item.notification_count ?? 0) + (updated.notification_count ?? 0) } : item));
+      success(status === 0 ? "Đã khóa voucher. Các đơn mới không thể sử dụng mã này." : `Đã mở voucher${updated.notification_count ? ` và gửi ${updated.notification_count} thông báo` : ""}.`);
+    } catch (cause) {
+      showError(cause instanceof Error ? cause.message : "Không thể thay đổi trạng thái voucher.");
+    } finally {
+      busyIds.current.delete(voucher.voucher_id);
+      setPendingIds(current => current.filter(id => id !== voucher.voucher_id));
     }
   };
 
@@ -180,6 +248,14 @@ export default function AdminVouchersPage() {
       ),
     },
     {
+      header: "Thời gian áp dụng",
+      className: "whitespace-nowrap",
+      render: (voucher: Voucher) => <div className="space-y-1.5">
+        <VoucherDateCell value={voucher.start_date} label="Bắt đầu" />
+        <VoucherDateCell value={voucher.expiry_date} label="Kết thúc" muted />
+      </div>,
+    },
+    {
       header: "Đã dùng / GH",
       align: "center" as const,
       render: (voucher: Voucher) => (
@@ -191,20 +267,34 @@ export default function AdminVouchersPage() {
     {
       header: "Trạng thái",
       align: "center" as const,
-      render: (voucher: Voucher) =>
-        isVoucherLocked(voucher) ? (
-          <AdminStatusBadge tone="warning" icon={<Clock size={12} />}>
-            Đã khóa
-          </AdminStatusBadge>
-        ) : voucher.status === 1 ? (
-          <AdminStatusBadge tone="success" icon={<CheckCircle2 size={12} />}>
-            Hoạt động
-          </AdminStatusBadge>
-        ) : (
-          <AdminStatusBadge tone="muted" icon={<Clock size={12} />}>
-            Tạm dừng
-          </AdminStatusBadge>
-        ),
+      render: (voucher: Voucher) => <VoucherStatusBadge voucher={voucher} />,
+    },
+    {
+      header: "Thao tác",
+      align: "right" as const,
+      className: "w-[100px] whitespace-nowrap",
+      render: (voucher: Voucher) => <AdminRowActions
+        label={`Thao tác với voucher ${voucher.code}`}
+        disabled={loading || saving || pendingIds.includes(voucher.voucher_id)}
+        actions={[
+          { label: "Xem chi tiết", access: 'view', icon: <Eye size={16} />, onClick: () => openVoucherModal(voucher) },
+          {
+            label: voucher.status === 1 ? "Khóa voucher" : "Mở voucher",
+            icon: voucher.status === 1 ? <Lock size={16} /> : <LockOpen size={16} />,
+            disabled: voucher.status !== 1 && ["expired", "exhausted"].includes(getVoucherStatus(voucher)),
+            title: getVoucherStatus(voucher) === "expired" ? "Voucher đã hết hạn" : getVoucherStatus(voucher) === "exhausted" ? "Voucher đã hết lượt" : undefined,
+            onClick: () => void handleToggleVoucher(voucher),
+          },
+          {
+            label: "Xóa voucher",
+            icon: <Trash2 size={16} />,
+            danger: true,
+            disabled: voucher.used_count > 0,
+            title: voucher.used_count > 0 ? "Voucher đã có lượt sử dụng, không thể xóa" : undefined,
+            onClick: () => setPendingDeleteVoucher(voucher),
+          },
+        ]}
+      />,
     },
   ];
 
@@ -237,8 +327,6 @@ export default function AdminVouchersPage() {
         rowKey={(voucher) => voucher.voucher_id}
         pageSize={10}
         itemLabel="voucher"
-        onEdit={(voucher) => openVoucherModal(voucher)}
-        onDelete={(voucher) => setPendingDeleteVoucher(voucher)}
         emptyMessage="Không tìm thấy voucher nào phù hợp"
       />
 

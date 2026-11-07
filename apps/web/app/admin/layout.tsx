@@ -2,6 +2,7 @@
 
 import { AdminGuard } from "@/components/admin/layout/AdminGuard";
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
+import { AdminContentPermission } from "@/components/admin/common/AdminContentPermission";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +16,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isChatWorkspace = pathname.startsWith("/admin/chats");
   const isScheduleOverview = pathname === "/admin/schedules";
+  const isTourPolicies = /^\/admin\/tours\/[^/]+\/policies$/.test(pathname);
 
   if (pathname === "/admin/login") {
     return (
@@ -36,7 +38,8 @@ export default function AdminLayout({
           </div>
 
           <main className="admin-content-scroll flex-1 min-h-0">
-            <div className={isChatWorkspace ? "h-full w-full" : isScheduleOverview ? "mx-auto h-full min-h-0 w-full max-w-[1520px] px-4 py-3 md:px-6" : pathname === "/admin" ? "mx-auto w-full max-w-[1720px] px-4 pb-4 pt-3 lg:px-6 lg:pb-6" : "mx-auto w-full max-w-[1520px] px-4 pb-6 pt-3 md:px-6 md:pb-8"}>
+            <div className={isChatWorkspace ? "h-full w-full" : isScheduleOverview ? "mx-auto h-full min-h-0 w-full max-w-[1520px] px-4 py-3 md:px-6" : isTourPolicies ? "mx-auto w-full max-w-[1520px] px-4 py-3 md:px-6 lg:h-full lg:min-h-0" : pathname === "/admin" ? "mx-auto w-full max-w-[1720px] px-4 pb-4 pt-3 lg:px-6 lg:pb-6" : "mx-auto w-full max-w-[1520px] px-4 pb-6 pt-3 md:px-6 md:pb-8"}>
+              <AdminContentPermission />
               {children}
             </div>
           </main>

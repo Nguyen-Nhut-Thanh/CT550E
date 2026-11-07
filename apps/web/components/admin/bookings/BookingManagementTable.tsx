@@ -160,6 +160,7 @@ export function BookingManagementTable({
                       <strong className="ui-booking-management-customer block max-w-[160px] overflow-hidden text-ellipsis text-[12px] font-[650] text-[#1c3153] min-[1400px]:text-[13px]">
                         {item.contact_name || "—"}
                       </strong>
+                      {item.membership_snapshot?.priorityReservation && <span className="mt-1 inline-block rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Ưu tiên giữ chỗ · {item.membership_snapshot.name}</span>}
                       <span className="ui-booking-management-subtext block text-[11px] text-[#93a4bd] mt-[4px] max-w-[170px] overflow-hidden text-ellipsis">
                         {item.contact_phone || item.contact_email || "—"}
                       </span>

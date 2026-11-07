@@ -19,6 +19,8 @@ import {
 import type { ScheduleTablePanelProps } from "shared";
 import { ScheduleRowActions } from "./ScheduleRowActions";
 import { ScheduleTableSkeleton } from "./ScheduleTableSkeleton";
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { ADMIN_CONTENT_DENIED } from 'shared';
 
 export function ScheduleTablePanel({
   selectedTourId,
@@ -38,6 +40,7 @@ export function ScheduleTablePanel({
   onPageChange,
   pendingIds = [],
 }: ScheduleTablePanelProps) {
+  const readOnly = useAdminContentReadOnly();
   const tabs = [
     { id: "upcoming", label: "Sắp khởi hành" },
     { id: "past", label: "Đã đi" },
@@ -97,6 +100,8 @@ export function ScheduleTablePanel({
         <button
           type="button"
           onClick={onCreate}
+          disabled={readOnly}
+          title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
           className="ui-schedule-overview-primary inline-flex items-center justify-center gap-[8px] rounded-[12px] p-[12px_16px] [background:#075bff] text-[#fff] text-[13px] font-semibold whitespace-nowrap [box-shadow:0_5px_12px_#075bff22] [&:hover]:[background:#0646ce] admin-max-600:text-[12px] admin-max-600:p-[10px_13px]"
         >
           <Plus size={20} />

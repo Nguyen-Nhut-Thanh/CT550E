@@ -42,9 +42,10 @@ export function AccountNotificationsTab() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Thông báo</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Cập nhật hạng thành viên, voucher mới và nhắc ngày xét hạng.
+            Cập nhật chuyến đi, người phụ trách, hạng thành viên và voucher mới.
           </p>
         </div>
+        <button type="button" onClick={refresh} disabled={loading} className="self-start rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">Làm mới thông báo</button>
         {data?.notifications.some((item) => !item.read_at) && (
           <button
             disabled={saving}
@@ -94,10 +95,10 @@ export function AccountNotificationsTab() {
                     })}
                   </p>
                   <Link
-                    href="/account/membership"
+                    href={item.booking_id ? `/booking/${item.booking_id}` : item.voucher_id ? "/account/wallet" : "/account/membership"}
                     className="mt-3 inline-block text-xs font-bold text-blue-700"
                   >
-                    Xem hạng & quyền lợi →
+                    {item.booking_id ? "Xem chi tiết chuyến đi →" : item.voucher_id ? "Xem voucher →" : "Xem hạng & quyền lợi →"}
                   </Link>
                 </div>
               </div>

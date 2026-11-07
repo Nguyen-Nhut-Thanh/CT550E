@@ -25,6 +25,7 @@ import {
 } from "shared";
 import { useEffect, useRef } from "react";
 import { TourEditorCard } from "./TourEditorCard";
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
 
 export function TourSidebar<T extends TourDetailForm>({
   tour,
@@ -35,6 +36,7 @@ export function TourSidebar<T extends TourDetailForm>({
   onSave,
   onTourChange,
 }: TourSidebarProps<T>) {
+  const readOnly = useAdminContentReadOnly();
   const controlsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const controls = controlsRef.current;
@@ -256,7 +258,7 @@ export function TourSidebar<T extends TourDetailForm>({
         <button
           type="button"
           onClick={onSave}
-          disabled={saving}
+          disabled={readOnly || saving}
           className="relative mt-[2px] flex min-h-[54px] w-full items-center justify-center gap-[11px] rounded-[15px] border border-[#1c69f2] bg-[linear-gradient(135deg,#4c92ff,#1258ef_65%,#0646db)] px-10 py-[14px] text-[15px] font-bold text-white shadow-[0_6px_14px_#1a6af328,inset_0_1px_0_#ffffff50] transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-[0_9px_18px_#1a6af33a] disabled:cursor-wait disabled:opacity-[.65]"
         >
           {saving ? (

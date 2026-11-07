@@ -1,6 +1,7 @@
 import {
   Injectable,
   Logger,
+  NotFoundException,
   type OnApplicationBootstrap,
   type OnModuleDestroy,
 } from "@nestjs/common";
@@ -10,11 +11,12 @@ import {
   type MembershipSummary,
   type MembershipTier,
   type MembershipAdminList,
+  type MembershipTierId,
 } from "shared";
 import { normalizeMembershipTiers } from "./membership.settings";
 import { getAccountUserId } from "../../common/auth/account-user";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { calculateMembership, creditForBooking } from "./membership.rules";
+import { birthdayWindow, calculateMembership, creditForBooking } from "./membership.rules";
 
 @Injectable()
 export class MembershipService
@@ -48,6 +50,7 @@ export class MembershipService
             user_id: { gt: cursor },
             OR: [
               { membership: { isNot: null } },
+              { birthday: { not: null } },
               {
                 bookings: {
                   some: {
@@ -100,6 +103,8 @@ export class MembershipService
       async (tx) => {
         // Serialize reward issuance across HTTP requests and multiple API processes.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(73129, ${userId}::integer)`;
+        const user = await tx.users.findUnique({ where: { user_id: userId }, select: { birthday: true } });
+        if (!user) throw new NotFoundException("Không tìm thấy thành viên.");
         const existing = await tx.memberships.findUnique({
           where: { user_id: userId },
         });
@@ -108,7 +113,7 @@ export class MembershipService
         });
         const tiers = program
           ? normalizeMembershipTiers(program.tiers)
-          : MEMBERSHIP_TIERS;
+          : normalizeMembershipTiers(MEMBERSHIP_TIERS);
         const bookings = await tx.bookings.findMany({
           where: {
             user_id: userId,
@@ -147,11 +152,12 @@ export class MembershipService
             spending: state.spending,
           },
         });
-        const notify = async (key: string, title: string, message: string) =>
+        const notify = async (key: string, title: string, message: string, voucherId?: number) =>
           tx.membership_notifications.upsert({
             where: { event_key: key },
             create: {
               user_id: userId,
+              voucher_id: voucherId,
               event_key: key,
               title,
               message,
@@ -159,33 +165,23 @@ export class MembershipService
             },
             update: {},
           });
+        const birthday = birthdayWindow(user.birthday, now);
+        if (birthday && state.tier.birthdayVoucherAmount > 0) {
+          const rewardKey = 'birthday:' + userId + ':' + birthday.year;
+          const voucher = await tx.vouchers.upsert({
+            where: { reward_key: rewardKey }, update: {},
+            create: {
+              owner_user_id: userId, reward_key: rewardKey,
+              code: 'BD-' + randomBytes(10).toString('hex').toUpperCase(),
+              discount_type: 'fixed', discount_value: state.tier.birthdayVoucherAmount,
+              min_order_value: 0, max_discount_amount: state.tier.birthdayVoucherAmount,
+              usage_limit: 1, start_date: birthday.start, expiry_date: new Date(birthday.end.getTime() - 1),
+            },
+          });
+          await notify(rewardKey, 'Chúc mừng sinh nhật!', 'JourniTrip tặng bạn voucher ' + Number(voucher.discount_value).toLocaleString('vi-VN') + 'đ, dùng trong tháng sinh nhật của bạn.', voucher.voucher_id);
+        }
         if (state.start && state.end) {
           const cycleKey = `${userId}:${state.start.toISOString()}`;
-          if (state.tier.id !== "bronze") {
-            const rewardKey = `rank:${cycleKey}:${state.tier.id}`;
-            const expires = new Date(now.getTime() + 90 * 86400_000);
-            await tx.vouchers.upsert({
-              where: { reward_key: rewardKey },
-              update: {},
-              create: {
-                owner_user_id: userId,
-                reward_key: rewardKey,
-                code: `JT-${randomBytes(10).toString("hex").toUpperCase()}`,
-                discount_type: state.tier.discountType,
-                discount_value: state.tier.discountValue,
-                min_order_value: state.tier.minOrder,
-                max_discount_amount: state.tier.maxDiscount,
-                usage_limit: 1,
-                start_date: now,
-                expiry_date: expires,
-              },
-            });
-            await notify(
-              rewardKey,
-              `Quyền lợi hạng ${state.tier.name}`,
-              `Bạn đang ở hạng ${state.tier.name}. Một voucher dành riêng cho bạn đã có trong ví, hiệu lực đến ${expires.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}.`,
-            );
-          }
           if (existing?.cycle_start && existing.cycle_start < state.start) {
             await notify(
               `renew:${cycleKey}`,
@@ -208,7 +204,10 @@ export class MembershipService
         }
         const [vouchers, notifications] = await Promise.all([
           tx.vouchers.findMany({
-            where: { owner_user_id: userId },
+            where: { OR: [
+              { owner_user_id: userId },
+              { owner_user_id: null, status: 1, expiry_date: { gt: now }, OR: [{ eligible_tiers: { isEmpty: true } }, { eligible_tiers: { has: state.tier.id } }] },
+            ] },
             orderBy: { created_at: "desc" },
           }),
           tx.membership_notifications.findMany({
@@ -227,7 +226,7 @@ export class MembershipService
           cycleStart: state.start?.toISOString() ?? null,
           cycleEnd: state.end?.toISOString() ?? null,
           spending: state.spending,
-          points: Math.floor(state.spending / 100_000),
+          points: state.history.reduce((sum, credit) => sum + (credit.points ?? Math.floor(credit.amount / 100_000)), 0),
           nextTier,
           toNextTier: nextTier
             ? Math.max(0, nextTier.threshold - state.spending)
@@ -246,15 +245,19 @@ export class MembershipService
                 : Number(voucher.max_discount_amount),
             start_date: voucher.start_date.toISOString(),
             expiry_date: voucher.expiry_date.toISOString(),
+            eligible_tiers: voucher.eligible_tiers as MembershipTierId[],
+            is_birthday: voucher.reward_key?.startsWith('birthday:') ?? false,
             state:
               voucher.used_count >= voucher.usage_limit
-                ? ("used" as const)
+                ? (voucher.owner_user_id === userId ? "used" as const : "expired" as const)
                 : voucher.expiry_date <= now || voucher.status !== 1
                   ? ("expired" as const)
-                  : ("available" as const),
+                  : voucher.start_date > now ? ("upcoming" as const) : ("available" as const),
           })),
           notifications: notifications.map((item) => ({
             notification_id: item.notification_id,
+            voucher_id: item.voucher_id,
+            booking_id: item.booking_id,
             title: item.title,
             message: item.message,
             created_at: item.created_at.toISOString(),
@@ -263,7 +266,7 @@ export class MembershipService
           history: state.history.map((credit) => ({
             ...credit,
             completedAt: credit.completedAt.toISOString(),
-            points: Math.floor(credit.amount / 100_000),
+            points: credit.points ?? Math.floor(credit.amount / 100_000),
           })),
           cycles: state.cycles,
         };
@@ -295,35 +298,42 @@ export class MembershipService
     return tiers;
   }
 
-  async adminList(page: number): Promise<MembershipAdminList> {
-    const [members, total, issued, used, discounts, program] =
+  async adminList(page: number, search = '', tier = 'all', limit = 20): Promise<MembershipAdminList> {
+    const text = { contains: search.trim(), mode: 'insensitive' as const };
+    const where = {
+      ...(tier !== 'all' ? { tier } : {}),
+      ...(search.trim() ? { user: { OR: [{ full_name: text }, { phone: text }, { accounts: { email: text } }, ...(/^\d+$/.test(search.trim()) && Number(search) <= 2147483647 ? [{ user_id: Number(search) }] : [])] } } : {}),
+    };
+    const [members, total, issued, used, discounts, program, memberTotal] =
       await Promise.all([
         this.prisma.memberships.findMany({
           orderBy: { user_id: "asc" },
-          skip: (page - 1) * 20,
-          take: 20,
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
           include: {
             user: {
               include: {
                 accounts: { select: { email: true } },
-                _count: { select: { member_vouchers: true } },
+                _count: { select: { member_vouchers: true, bookings: true } },
               },
             },
           },
         }),
-        this.prisma.memberships.count(),
+        this.prisma.memberships.count({ where }),
         this.prisma.vouchers.count({ where: { owner_user_id: { not: null } } }),
         this.prisma.vouchers.count({
           where: { owner_user_id: { not: null }, used_count: { gt: 0 } },
         }),
         this.prisma.bookings.aggregate({
           where: {
-            vouchers: { owner_user_id: { not: null } },
+            OR: [{ vouchers: { owner_user_id: { not: null } } }, { membership_snapshot: { path: ["tourDiscount"], gt: 0 } }, { membership_snapshot: { path: ["serviceDiscount"], gt: 0 } }],
             status: { in: ["paid", "confirmed", "completed"] },
           },
           _sum: { discount_amount: true },
         }),
         this.prisma.membership_program.findUnique({ where: { id: 1 } }),
+        this.prisma.memberships.count(),
       ]);
     return {
       items: members.map((member) => ({
@@ -334,12 +344,15 @@ export class MembershipService
         spending: Number(member.spending),
         cycleEnd: member.cycle_end?.toISOString() ?? null,
         voucherCount: member.user._count.member_vouchers,
+        phone: member.user.phone,
+        bookingCount: member.user._count.bookings,
       })),
       total,
+      memberTotal,
       page,
       tiers: program
         ? normalizeMembershipTiers(program.tiers)
-        : MEMBERSHIP_TIERS,
+        : normalizeMembershipTiers(MEMBERSHIP_TIERS),
       issued,
       used,
       discountTotal: Number(discounts._sum.discount_amount ?? 0),

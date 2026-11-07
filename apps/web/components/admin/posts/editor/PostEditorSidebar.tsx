@@ -1,5 +1,8 @@
 "use client";
 
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+
+
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 
 import { ImageUpload } from "@/components/common/forms/ImageUpload";
@@ -17,6 +20,7 @@ export function PostEditorSidebar({
   onCancel,
   onFormChange,
 }: Props) {
+  const readOnly = useAdminContentReadOnly();
   return (
     <div className="space-y-6">
       <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -145,7 +149,7 @@ export function PostEditorSidebar({
         <div className="ui-post-editor-sidebar-publishActions shrink-0 flex flex-col gap-3">
           <button
             onClick={onSave}
-            disabled={saving}
+            disabled={readOnly || saving}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 text-[13px] font-black uppercase tracking-widest text-white shadow-xl shadow-blue-100 transition-all hover:bg-blue-700"
           >
             {saving ? (

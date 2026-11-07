@@ -3,10 +3,16 @@ import type { Prisma } from "@prisma/client";
 import type { ScheduleItineraryPayload } from "shared";
 import { mapScheduleItinerary } from "./schedule.mapper";
 
-export function normalizeActivities(value: unknown) {
+function optionalServiceId(value: unknown) {
+  if (value === undefined || value === null || value === '') return null;
+  if ((typeof value !== 'number' && typeof value !== 'string') || (typeof value === 'string' && !/^[1-9]\d*$/.test(value)) || !Number.isSafeInteger(Number(value)) || Number(value) <= 0) throw new BadRequestException('ID dịch vụ trong ngày không hợp lệ.');
+  return Number(value);
+}
+
+export function normalizeActivities(value: unknown, allowIncomplete = false) {
   if (!Array.isArray(value))
     throw new BadRequestException("Danh sách hoạt động không hợp lệ.");
-  return value
+  const normalized = value
     .map((item: Record<string, unknown>, index) => {
       if (!item || typeof item !== "object")
         throw new BadRequestException("Hoạt động không hợp lệ.");
@@ -16,9 +22,9 @@ export function normalizeActivities(value: unknown) {
         typeof item.description === "string" ? item.description.trim() : "";
       const location_id =
         item.location_id == null ? null : Number(item.location_id);
-      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
+      if (!(allowIncomplete && time === '') && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
         throw new BadRequestException("Giờ hoạt động phải có dạng HH:mm.");
-      if (!title || title.length > 255)
+      if ((!allowIncomplete && !title) || title.length > 255)
         throw new BadRequestException(
           "Tiêu đề hoạt động phải có từ 1 đến 255 ký tự."
         );
@@ -28,8 +34,8 @@ export function normalizeActivities(value: unknown) {
       )
         throw new BadRequestException("Điểm tham quan không hợp lệ.");
       return { time, title, description, location_id, sort_order: index + 1 };
-    })
-    .sort((a, b) => a.time.localeCompare(b.time) || a.sort_order - b.sort_order)
+    });
+  return (allowIncomplete ? normalized : normalized.sort((a, b) => a.time.localeCompare(b.time) || a.sort_order - b.sort_order))
     .map((activity, index) => ({ ...activity, sort_order: index + 1 }));
 }
 
@@ -37,7 +43,8 @@ export async function saveItineraryDays(
   tx: Prisma.TransactionClient,
   tourId: number,
   scheduleId: number,
-  days: ScheduleItineraryPayload[]
+  days: ScheduleItineraryPayload[],
+  allowIncomplete = false,
 ) {
   const tour = await tx.tours.findUniqueOrThrow({
     where: { tour_id: tourId },
@@ -63,18 +70,37 @@ export async function saveItineraryDays(
         "Ngày lịch trình bị trùng hoặc nằm ngoài thời lượng tour."
       );
     seen.add(dayNumber);
+    const oldDay = previous.find(item => item.day_number === dayNumber);
+    const oldDraft = oldDay?.draft_data as unknown as ScheduleItineraryPayload | null;
+    const source = day.activities === undefined && oldDraft ? { ...oldDraft, ...day } : day;
+    const keepDraft = allowIncomplete || Boolean(oldDraft && day.activities === undefined);
+    const hotelId = optionalServiceId(source.hotel_id);
+    const roomTypeId = optionalServiceId(source.room_type_id);
+    const transportId = optionalServiceId(source.transport_id);
+    if (!keepDraft && Boolean(hotelId) !== Boolean(roomTypeId)) throw new BadRequestException('Vui lòng chọn đủ khách sạn và loại phòng cho ngày đã nhập.');
     const activities = normalizeActivities(
-      day.activities === undefined
-        ? previous.find((item) => item.day_number === dayNumber)?.activities ??
+      source.activities === undefined
+        ? oldDay?.activities ??
             []
-        : day.activities
+        : source.activities,
+      keepDraft,
     );
     return {
-      ...mapScheduleItinerary(day, index),
+      ...mapScheduleItinerary(source, index),
       day_number: dayNumber,
       activities,
+      draft_data: keepDraft ? {
+        day_number: dayNumber, title: source.title || '', content: source.content || '', meals: source.meals || '',
+        hotel_id: hotelId, room_type_id: roomTypeId, transport_id: transportId,
+        activities: activities.map(({ time, title, description, location_id }) => ({ time, title, description, location_id })),
+      } : undefined,
     };
   });
+  for (const day of normalized) {
+    const draft = day.draft_data;
+    if (draft?.hotel_id && !await tx.hotels.count({ where: { hotel_id: draft.hotel_id } })) throw new BadRequestException('Khách sạn trong lịch trình không tồn tại.');
+    if (draft?.room_type_id && !await tx.hotel_room_types.count({ where: { ...(draft.hotel_id ? { hotel_id: draft.hotel_id } : {}), room_type_id: draft.room_type_id } })) throw new BadRequestException('Loại phòng trong lịch trình không hợp lệ.');
+  }
   const ids = [
     ...new Set(
       normalized.flatMap((day) =>
@@ -112,7 +138,7 @@ export async function saveItineraryDays(
       data: {
         ...day,
         tour_schedule_id: scheduleId,
-        activities: { create: activities },
+        activities: { create: activities.filter(activity => activity.time && activity.title).map((activity, index) => ({ ...activity, sort_order: index + 1 })) },
       },
     });
   }

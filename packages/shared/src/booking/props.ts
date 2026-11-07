@@ -6,6 +6,11 @@ export interface BookingContactFormProps {
     contactPhone: string;
     contactEmail: string;
     note: string;
+    errors?: {
+        name?: string;
+        phone?: string;
+        email?: string;
+    };
     onContactNameChange: (value: string) => void;
     onContactPhoneChange: (value: string) => void;
     onContactEmailChange: (value: string) => void;
@@ -58,5 +63,7 @@ export interface BookingVoucherAndPaymentProps {
     paymentMethod: PaymentMethod;
     onVoucherCodeChange: (code: string) => void;
     onApplyVoucher: () => void;
+    onOpenAvailableVouchers?: () => void;
+    availableVouchersOpen?: boolean;
     onPaymentMethodChange: (method: PaymentMethod) => void;
 }

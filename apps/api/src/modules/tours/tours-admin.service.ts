@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { TourAdminPayload, TourListParams } from 'shared';
+import type { TourAdminPayload, TourListParams, TourScheduleTemplate } from 'shared';
 import { requireFields } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries, normalizeTourSummary, normalizeCutOffHours, normalizeTourDuration, normalizeTourImages } from "./tour-input";
@@ -12,6 +12,12 @@ export class ToursAdminService {
     private async validateRoute(tx: Prisma.TransactionClient, ids: number[], tourId?: number) {
         const count = await tx.locations.count({ where: { location_id: { in: ids }, level_id: 5 } });
         if (count !== ids.length) throw new BadRequestException('Tuyến tour chỉ được chọn tỉnh/thành phố.');
+        if (tourId) {
+            const row = await tx.tour_schedule_templates.findUnique({ where: { tour_id: tourId } });
+            const template = row?.data as unknown as TourScheduleTemplate | undefined;
+            const places = template ? [...template.attraction_ids, ...template.itinerary.flatMap(day => (day.activities || []).flatMap(activity => activity.location_id ? [activity.location_id] : []))] : [];
+            if (places.length && await tx.locations.count({ where: { location_id: { in: places }, parent_id: { notIn: ids } } })) throw new BadRequestException('Tỉnh/thành đang có điểm tham quan trong mẫu lịch trình. Hãy cập nhật mẫu trước khi thay đổi tuyến tour.');
+        }
         if (tourId && await tx.tour_schedule_attractions.count({ where: {
             schedule: { tour_id: tourId }, location: { parent_id: { notIn: ids } },
         } })) throw new BadRequestException('Tỉnh/thành đang có điểm tham quan được chọn cho chuyến. Hãy bỏ các điểm liên quan trong lịch khởi hành trước khi đổi tuyến tour.');

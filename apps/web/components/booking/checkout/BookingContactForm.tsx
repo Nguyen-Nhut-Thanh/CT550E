@@ -1,17 +1,26 @@
 import { UserRound } from "lucide-react";
 import type { BookingContactFormProps } from "shared";
+
 export function BookingContactForm({
   contactName,
   contactPhone,
   contactEmail,
   note,
+  errors = {},
   onContactNameChange,
   onContactPhoneChange,
   onContactEmailChange,
   onNoteChange,
 }: BookingContactFormProps) {
-  const inputClass =
-    "mt-2 block w-full rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-50";
+  const getInputClass = (hasError?: boolean) =>
+    `mt-2 block w-full rounded-lg border ${
+      hasError ? "border-rose-300 bg-rose-50/30" : "border-slate-100 bg-slate-50/70"
+    } px-3 py-3 text-sm font-normal text-slate-900 outline-none transition ${
+      hasError
+        ? "focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-50"
+        : "focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-50"
+    }`;
+
   return (
     <section className="rounded-2xl border border-blue-100/60 bg-white p-5 shadow-[0_4px_24px_rgba(37,99,235,0.04)] sm:p-6">
       <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -29,8 +38,13 @@ export function BookingContactForm({
             value={contactName}
             onChange={(event) => onContactNameChange(event.target.value)}
             placeholder="Họ và tên liên hệ"
-            className={inputClass}
+            className={getInputClass(Boolean(errors.name))}
           />
+          {errors.name && (
+            <span className="mt-1.5 block text-xs font-normal text-rose-500">
+              {errors.name}
+            </span>
+          )}
         </label>
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">
           Số điện thoại <span className="text-rose-500">*</span>
@@ -40,8 +54,13 @@ export function BookingContactForm({
             value={contactPhone}
             onChange={(event) => onContactPhoneChange(event.target.value)}
             placeholder="Số điện thoại"
-            className={inputClass}
+            className={getInputClass(Boolean(errors.phone))}
           />
+          {errors.phone && (
+            <span className="mt-1.5 block text-xs font-normal text-rose-500">
+              {errors.phone}
+            </span>
+          )}
         </label>
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600 sm:col-span-2">
           Email <span className="text-rose-500">*</span>
@@ -51,8 +70,13 @@ export function BookingContactForm({
             value={contactEmail}
             onChange={(event) => onContactEmailChange(event.target.value)}
             placeholder="Email nhận xác nhận"
-            className={inputClass}
+            className={getInputClass(Boolean(errors.email))}
           />
+          {errors.email && (
+            <span className="mt-1.5 block text-xs font-normal text-rose-500">
+              {errors.email}
+            </span>
+          )}
         </label>
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600 sm:col-span-2">
           Ghi chú (yêu cầu đặc biệt, dị ứng, ...)
@@ -60,7 +84,7 @@ export function BookingContactForm({
             value={note}
             onChange={(event) => onNoteChange(event.target.value)}
             placeholder="Ví dụ: yêu cầu phòng gần nhau, ăn chay, ..."
-            className={`${inputClass} min-h-[110px] resize-y`}
+            className={`${getInputClass(false)} min-h-[110px] resize-y`}
           />
         </label>
       </div>

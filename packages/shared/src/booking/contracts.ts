@@ -8,6 +8,8 @@ export type BookingBasePayload = {
     contact_name: string;
     contact_phone: string;
     contact_email: string;
+    contact_id_card?: string;
+    confirmed_schedule_conflict?: boolean;
     adult_count: number;
     child_count: number;
     infant_count: number;
@@ -15,6 +17,7 @@ export type BookingBasePayload = {
         fullName: string;
         gender: string;
         birthday: string;
+        idNumber?: string;
         type: string;
     }>;
     note?: string;

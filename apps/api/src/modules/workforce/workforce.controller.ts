@@ -17,7 +17,7 @@ export class WorkforceController {
     @Post('shifts') createShift(@Req() req: StaffRequest, @Body() body: StaffShiftPayload) { return this.service.createShift(req.workforce, body); }
     @Post('shifts/:id/cancel') cancelShift(@Req() req: StaffRequest, @Param('id', ParseIntPipe) id: number) { return this.service.cancelShift(req.workforce, id); }
     @Get('schedules') schedules(@Req() req: StaffRequest, @Query('region') region?: string) { return this.service.schedules(req.workforce, region); }
-    @Patch('schedules/:id/region') region(@Req() req: StaffRequest, @Param('id', ParseIntPipe) id: number, @Body('region_code') region: unknown) { return this.service.setRegion(req.workforce, id, region); }
+    @Patch('schedules/:id/region') region(@Req() req: StaffRequest, @Param('id', ParseIntPipe) id: number, @Body('region_code') region: unknown, @Body('override_reason') reason: unknown) { return this.service.setRegion(req.workforce, id, region, reason); }
     @Put('schedules/:id/crew') crew(@Req() req: StaffRequest, @Param('id', ParseIntPipe) id: number, @Body() body: CrewPayload) { return this.service.assignCrew(req.workforce, id, body); }
     @Post('assignments/:id/respond') respond(@Req() req: StaffRequest, @Param('id', ParseIntPipe) id: number, @Body() body: { action: string; note?: string }) { return this.service.respond(req.workforce, id, body?.action, body?.note); }
     @Get('events') events(@Req() req: StaffRequest, @Query('schedule_id') schedule?: string) {

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { formatVND } from "@/lib/utils/currency";
 import type { VoucherForm } from "shared";
+import { VOUCHER_CUSTOMER_TYPES } from "shared";
 
 export function VoucherPreview({ form }: { form: VoucherForm }) {
   const active = form.status === 1;
@@ -95,6 +96,7 @@ export function VoucherPreview({ form }: { form: VoucherForm }) {
           />
         </dl>
       </div>
+      <p className="mt-3 text-[11px] leading-5 text-[#7183a3]">Đối tượng: {form.customer_types.includes("all") ? "Tất cả khách hàng" : VOUCHER_CUSTOMER_TYPES.filter(item => form.customer_types.includes(item.value)).map(item => item.label).join(", ") || "Chưa chọn"}</p>
     </section>
   );
 }

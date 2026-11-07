@@ -14,7 +14,7 @@ export const workforceApi = {
   createShift: (body: StaffShiftPayload) => request('/shifts', 'POST', body),
   cancelShift: (id: number) => request(`/shifts/${id}/cancel`, 'POST'),
   schedules: (region = '') => request<WorkforceSchedule[]>(`/schedules${query(region)}`),
-  setRegion: (id: number, region_code: string) => request(`/schedules/${id}/region`, 'PATCH', { region_code }),
+  setRegion: (id: number, region_code: string, override_reason?: string) => request(`/schedules/${id}/region`, 'PATCH', { region_code, override_reason }),
   crew: (id: number, body: CrewPayload) => request(`/schedules/${id}/crew`, 'PUT', body),
   respond: (id: number, action: string, note?: string) => request(`/assignments/${id}/respond`, 'POST', { action, note }),
   events: (id?: number) => request<Array<{ event_id: number; action: string; actor_user_id: number; created_at: string; details: unknown }>>(`/events${id ? `?schedule_id=${id}` : ''}`),

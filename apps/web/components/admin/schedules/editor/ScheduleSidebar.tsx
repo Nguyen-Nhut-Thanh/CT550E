@@ -1,5 +1,7 @@
 "use client";
 
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { ImageUpload } from "@/components/common/forms/ImageUpload";
 import { Image, Info, Layers3, Loader2, NotebookText, Save } from "lucide-react";
@@ -8,6 +10,7 @@ import { useEffect, useRef } from "react";
 import { TourEditorCard as ScheduleEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 
 export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUploadingChange, onFormChange }: ScheduleSidebarProps) {
+  const readOnly = useAdminContentReadOnly();
   const controlsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const controls = controlsRef.current;
@@ -27,7 +30,7 @@ export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUpl
     <div ref={controlsRef} className="flex shrink-0 flex-col gap-[22px] lg:sticky lg:top-[min(16px,calc(100dvh_-_var(--schedule-controls-height,500px)_-_16px))] lg:z-[5]">
     <ScheduleEditorCard title="Quản lý trạng thái" description="Thiết lập trạng thái hoạt động của đợt tour." icon={Layers3}>
       <div className="space-y-5">
-        <fieldset disabled={isPast} className="space-y-2">
+        <fieldset disabled={readOnly || isPast} className="space-y-2">
           <legend className="mb-2 text-[13px] font-semibold text-[#26324e]">Trạng thái đợt tour</legend>
           <div className="relative">
             <span aria-hidden="true" className={`pointer-events-none absolute top-1/2 left-3.5 z-[1] size-2 -translate-y-1/2 rounded-full ${form.status === 1 ? "bg-emerald-500" : "bg-slate-400"}`} />
@@ -36,11 +39,11 @@ export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUpl
         </fieldset>
         <div className="space-y-2">
           <label htmlFor="schedule-internal-note" className="flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"><NotebookText size={18} className="text-[#0868f9]" />Ghi chú nội bộ</label>
-          <textarea id="schedule-internal-note" disabled={isPast} rows={4} placeholder="Nhập ghi chú nội bộ để quản lý (chỉ hiển thị cho nhân viên)..." value={form.note || ""} onChange={event => onFormChange(previous => ({ ...previous, note: event.target.value }))} className="min-h-[112px] w-full resize-y rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-3 text-[13px] leading-[1.7] text-[#26324e] outline-none placeholder:text-[#92a0b5] focus:border-[#79a8f5] disabled:cursor-not-allowed disabled:text-slate-400" />
+          <textarea id="schedule-internal-note" disabled={readOnly || isPast} rows={4} placeholder="Nhập ghi chú nội bộ để quản lý (chỉ hiển thị cho nhân viên)..." value={form.note || ""} onChange={event => onFormChange(previous => ({ ...previous, note: event.target.value }))} className="min-h-[112px] w-full resize-y rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-3 text-[13px] leading-[1.7] text-[#26324e] outline-none placeholder:text-[#92a0b5] focus:border-[#79a8f5] disabled:cursor-not-allowed disabled:text-slate-400" />
         </div>
       </div>
     </ScheduleEditorCard>
-    {!isPast ? <button type="button" onClick={onSave} disabled={saving || uploading} className="relative mt-[2px] flex min-h-[54px] w-full items-center justify-center gap-[11px] rounded-[15px] border border-[#1c69f2] bg-[linear-gradient(135deg,#4c92ff,#1258ef_65%,#0646db)] px-5 py-[14px] text-[14px] font-bold text-white shadow-[0_6px_14px_#1a6af328,inset_0_1px_0_#ffffff50] transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-[0_9px_18px_#1a6af33a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500 disabled:cursor-wait disabled:opacity-60">{saving || uploading ? <Loader2 size={21} className="animate-spin" /> : <Save size={21} />}{saving ? "Đang lưu..." : uploading ? "Đang tải ảnh..." : "Lưu lịch trình ngay"}</button> : <p className="flex items-start gap-2 rounded-2xl bg-white/80 p-4 text-[12px] leading-[1.7] text-[#8493ab]"><Info size={18} className="mt-0.5 shrink-0" />Lịch khởi hành này đã diễn ra. Bạn chỉ có thể xem lại dữ liệu.</p>}
+    {!isPast ? <button type="button" onClick={onSave} disabled={readOnly || saving || uploading} className="relative mt-[2px] flex min-h-[54px] w-full items-center justify-center gap-[11px] rounded-[15px] border border-[#1c69f2] bg-[linear-gradient(135deg,#4c92ff,#1258ef_65%,#0646db)] px-5 py-[14px] text-[14px] font-bold text-white shadow-[0_6px_14px_#1a6af328,inset_0_1px_0_#ffffff50] transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-[0_9px_18px_#1a6af33a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500 disabled:cursor-wait disabled:opacity-60">{saving || uploading ? <Loader2 size={21} className="animate-spin" /> : <Save size={21} />}{saving ? "Đang lưu..." : uploading ? "Đang tải ảnh..." : "Lưu lịch trình ngay"}</button> : <p className="flex items-start gap-2 rounded-2xl bg-white/80 p-4 text-[12px] leading-[1.7] text-[#8493ab]"><Info size={18} className="mt-0.5 shrink-0" />Lịch khởi hành này đã diễn ra. Bạn chỉ có thể xem lại dữ liệu.</p>}
     </div>
   </aside>;
 }

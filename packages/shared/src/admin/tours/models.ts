@@ -1,4 +1,8 @@
 export type LocationOption = {
+    note?: string | null;
+    featured_image?: string | null;
+    location_images?: Array<{ image_url?: string | null }> | null;
+    locations?: { name?: string | null } | null;
     level_id?: number;
     parent_id?: number | null;
     location_id: number;

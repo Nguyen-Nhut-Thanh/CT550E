@@ -3,11 +3,13 @@ import type { PublicTourCard, PublicTourDetail, TourItinerary, TourSchedule, Vid
 export type TourBookingCardProps = {
     tour: PublicTourDetail;
     selectedSchedule?: TourSchedule | null;
+    selectedPickupPointId?: number | null;
 };
 export type TourDepartureCalendarProps = {
     schedules: TourSchedule[];
     selectedScheduleId: number | null;
-    onSelect: (scheduleId: number) => void;
+    selectedPickupPointId?: number | null;
+    onSelect: (scheduleId: number, pickupPointId?: number | null) => void;
     onReset: () => void;
 };
 export type TourDetailHeroProps = {

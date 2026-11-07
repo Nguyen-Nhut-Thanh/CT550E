@@ -1,4 +1,12 @@
 import { requestAdminJson } from "@/lib/http/requestAdminJson";
+import type { TourScheduleTemplate, TourScheduleTemplateResponse } from 'shared';
+
+export function getTourScheduleTemplate(tourId: number | string) {
+  return requestAdminJson<TourScheduleTemplateResponse>(`/admin/tours/${tourId}/schedule-template`, { method: 'GET' }, 'Không thể tải mẫu lịch trình.');
+}
+export function saveTourScheduleTemplate(tourId: number | string, template: TourScheduleTemplate, allowIncomplete = false) {
+  return requestAdminJson<TourScheduleTemplateResponse>(`/admin/tours/${tourId}/schedule-template`, { method: 'PATCH', body: JSON.stringify({ ...template, allow_incomplete_itinerary: allowIncomplete }) }, 'Không thể lưu mẫu lịch trình.');
+}
 
 export function getTourSchedules<T>(tourId: number) {
   return requestAdminJson<T[]>(

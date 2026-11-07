@@ -1,5 +1,8 @@
 "use client";
 
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+
+
 import { AdminPagination } from "@/components/admin/common/AdminPagination";
 import { BadgeCheck, Loader2, Lock, Mail, Phone, ShieldAlert, ShieldCheck, Unlock, Users, } from "lucide-react";
 import type { UsersTableProps as Props } from 'shared';
@@ -14,6 +17,7 @@ export function UsersTable({
   onToggleStatus,
   onPageChange,
 }: Props) {
+  const readOnly = useAdminContentReadOnly();
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
       <div className="overflow-x-auto">
@@ -121,13 +125,14 @@ export function UsersTable({
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                       <button
+                        disabled={readOnly}
                         onClick={() => onToggleStatus(user)}
                         title={
                           user.accounts?.status === 1
                             ? "Khóa tài khoản"
                             : "Mở khóa tài khoản"
                         }
-                        className={`rounded-lg p-2 transition-colors ${
+                        className={`rounded-lg p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                           user.accounts?.status === 1
                             ? "bg-rose-50 text-rose-600 hover:bg-rose-100"
                             : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"

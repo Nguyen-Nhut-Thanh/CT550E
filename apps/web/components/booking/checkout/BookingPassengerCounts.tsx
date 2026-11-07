@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from 'react';
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
@@ -15,6 +18,7 @@ export function BookingPassengerCounts({
   infantUnitPrice,
   onCountChange,
 }: BookingPassengerCountsProps) {
+  const [editingSchedule, setEditingSchedule] = useState(false);
   const getTravelerLabel = (type: TravelerType) => {
     if (type === "adult") return "Người lớn";
     if (type === "child") return "Trẻ em";
@@ -60,8 +64,9 @@ export function BookingPassengerCounts({
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">Ngày khởi hành
-          <CustomDropdown
+        <div className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">
+          <div className="flex items-center justify-between gap-2"><span>Chuyến đã chọn</span>{schedules.length > 1 && <button type="button" onClick={() => setEditingSchedule(value => !value)} className="font-semibold text-blue-600">{editingSchedule ? 'Đóng' : 'Thay đổi'}</button>}</div>
+          {editingSchedule ? <CustomDropdown
             variant="compact"
             matchTriggerWidth
             className="mt-2"
@@ -72,9 +77,9 @@ export function BookingPassengerCounts({
             }))}
             onSelect={(value) => {
               const schedule = schedules.find(item => item.tour_schedule_id === Number(value));
-              if (schedule) onScheduleChange(schedule);
+              if (schedule) { onScheduleChange(schedule); setEditingSchedule(false); }
             }}
-          />
+          /> : <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{formatDate(selectedSchedule.start_date)} · {new Date(selectedSchedule.start_date).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' })}<span className="block text-xs font-normal text-slate-500">{selectedSchedule.departure_location?.name || 'Chưa cập nhật nơi xuất phát'} · Còn {Math.max(selectedSchedule.quota - selectedSchedule.booked_count, 0)} chỗ</span></p>}
         </div>
         <div className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">Số lượng khách<div className="mt-2 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-900"><Users className="h-4 w-4 text-blue-700" />{totalGuests} người</div></div>
       </div>

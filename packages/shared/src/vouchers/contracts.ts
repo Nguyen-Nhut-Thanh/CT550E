@@ -1,4 +1,5 @@
 export type VoucherPayload = {
+    eligible_tiers?: import("../membership/models").MembershipTierId[];
     code?: string;
     discount_type?: string;
     discount_value?: number | string;

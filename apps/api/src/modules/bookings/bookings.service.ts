@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { BookingPayload } from "shared";
-import { BOOKING_EXTRAS, membershipDiscount } from "shared";
+import { BOOKING_EXTRAS, isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipDiscount, membershipPrice, voucherAudienceAllows, voucherAudienceLabel } from "shared";
+import { customerCrewBooking } from './customer-crew';
+import { MembershipService } from "../membership/membership.service";
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
@@ -26,7 +28,117 @@ export class BookingsService {
     async statsForAccount(accountId: number) { return this.getBookingStats(await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.")); }
     async detailForAccount(id: number, accountId: number) { return this.getBookingDetail(id, await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.")); }
     async cancelForAccount(id: number, accountId: number, reason?: string) { return this.requestCancel(id, await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng."), reason); }
-    constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) { }
+    constructor(private readonly prisma: PrismaService, private readonly mailService: MailService, private readonly membership: MembershipService) { }
+
+    async checkScheduleConflicts(tourScheduleId: number, travelers: Array<{ fullName: string; idNumber?: string }>) {
+        if (!tourScheduleId || !Array.isArray(travelers) || travelers.length === 0) {
+            return { hasConflict: false, conflicts: [] };
+        }
+        const currentSchedule = await this.prisma.tour_schedules.findUnique({
+            where: { tour_schedule_id: tourScheduleId },
+            include: { tours: { select: { name: true, duration_days: true } } },
+        });
+        if (!currentSchedule || !currentSchedule.start_date) {
+            return { hasConflict: false, conflicts: [] };
+        }
+
+        const currentStart = new Date(currentSchedule.start_date);
+        const durationDays = currentSchedule.tours?.duration_days || 1;
+        const currentEnd = currentSchedule.end_date
+            ? new Date(currentSchedule.end_date)
+            : new Date(currentStart.getTime() + Math.max(durationDays - 1, 0) * 86400000);
+
+        const idMap = new Map<string, string>();
+        for (const t of travelers) {
+            if (t?.idNumber && typeof t.idNumber === 'string') {
+                const clean = t.idNumber.trim();
+                if (clean) idMap.set(clean, t.fullName?.trim() || 'Hành khách');
+            }
+        }
+        const idNumbers = Array.from(idMap.keys());
+        if (idNumbers.length === 0) {
+            return { hasConflict: false, conflicts: [] };
+        }
+
+        const existingRecords = await this.prisma.booking_travelers.findMany({
+            where: {
+                id_number: { in: idNumbers },
+                bookings: {
+                    status: { notIn: ['cancelled', 'rejected'] },
+                    tour_schedule_id: { not: tourScheduleId },
+                },
+            },
+            include: {
+                bookings: {
+                    include: {
+                        tour_schedules: {
+                            include: {
+                                tours: {
+                                    select: { name: true, duration_days: true },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        const conflicts: Array<{
+            travelerName: string;
+            idNumber: string;
+            tourName: string;
+            startDate: string;
+            endDate: string;
+            bookingId: number;
+        }> = [];
+        const seen = new Set<string>();
+
+        const toVnDateStr = (date: Date) => {
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        };
+
+        const curS = currentStart.toISOString().slice(0, 10);
+        const curE = currentEnd.toISOString().slice(0, 10);
+
+        for (const record of existingRecords) {
+            const schedule = record.bookings?.tour_schedules;
+            if (!schedule || !schedule.start_date) continue;
+
+            const oldStart = new Date(schedule.start_date);
+            const oldDays = schedule.tours?.duration_days || 1;
+            const oldEnd = schedule.end_date
+                ? new Date(schedule.end_date)
+                : new Date(oldStart.getTime() + Math.max(oldDays - 1, 0) * 86400000);
+
+            const oldS = oldStart.toISOString().slice(0, 10);
+            const oldE = oldEnd.toISOString().slice(0, 10);
+
+            if (curS <= oldE && oldS <= curE) {
+                const key = `${record.id_number}_${record.booking_id}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    conflicts.push({
+                        travelerName: record.full_name || idMap.get(record.id_number!) || 'Hành khách',
+                        idNumber: record.id_number!,
+                        tourName: schedule.tours?.name || 'Tour đã đặt',
+                        startDate: toVnDateStr(oldStart),
+                        endDate: toVnDateStr(oldEnd),
+                        bookingId: record.booking_id,
+                    });
+                }
+            }
+        }
+
+        return {
+            hasConflict: conflicts.length > 0,
+            conflicts,
+        };
+    }
+
     async createBooking(dto: any) {
         if (!Number.isInteger(dto.tour_schedule_id) || dto.tour_schedule_id < 1 ||
             !Number.isInteger(dto.adult_count) || dto.adult_count < 1 ||
@@ -36,6 +148,15 @@ export class BookingsService {
         }
         if ([dto.contact_name, dto.contact_phone, dto.contact_email].some(value => typeof value !== "string" || !value.trim())) {
             throw new BadRequestException("Vui lòng điền đầy đủ thông tin liên hệ.");
+        }
+        if (!isValidVietnamesePhone(dto.contact_phone)) {
+            throw new BadRequestException("Số điện thoại không đúng định dạng (VD: 0912345678).");
+        }
+        if (!isValidEmail(dto.contact_email)) {
+            throw new BadRequestException("Email không đúng định dạng (VD: example@domain.com).");
+        }
+        if (dto.contact_id_card && !isValidCitizenId(dto.contact_id_card)) {
+            throw new BadRequestException("Số căn cước công dân người liên hệ phải gồm 9 hoặc 12 chữ số.");
         }
         if (dto.payment_method !== "vnpay")
             throw new BadRequestException("Phương thức thanh toán chưa được hỗ trợ.");
@@ -49,7 +170,28 @@ export class BookingsService {
                 Number.isNaN(Date.parse(traveler.birthday)) || new Date(traveler.birthday).toISOString().slice(0, 10) !== traveler.birthday || new Date(traveler.birthday) > new Date())) {
                 throw new BadRequestException("Ngày sinh không hợp lệ.");
             }
+            if (traveler.idNumber && !isValidCitizenId(traveler.idNumber)) {
+                throw new BadRequestException(`Số căn cước công dân của "${traveler.fullName || 'hành khách'}" phải gồm 9 hoặc 12 chữ số.`);
+            }
         }
+
+        // Kiểm tra xung đột lịch trình nếu chưa được xác nhận bởi người dùng
+        const conflictCheck = await this.checkScheduleConflicts(
+            dto.tour_schedule_id,
+            dto.travelers.map((t: any, idx: number) => ({
+                fullName: t.fullName,
+                idNumber: t.idNumber || (idx === 0 ? dto.contact_id_card : undefined),
+            })),
+        );
+        if (conflictCheck.hasConflict && !dto.confirmed_schedule_conflict) {
+            const first = conflictCheck.conflicts[0];
+            throw new BadRequestException({
+                message: `Hành khách ${first.travelerName} (CCCD: ${first.idNumber}) hiện đang có tour "${first.tourName}" đi từ ${first.startDate} đến ${first.endDate}. Vui lòng xác nhận trước khi tiếp tục đặt tour.`,
+                hasConflict: true,
+                conflicts: conflictCheck.conflicts,
+            });
+        }
+        const member = await this.membership.syncUser(dto.user_id);
         const booking = await this.prisma.$transaction(async (tx: any) => {
             await tx.$queryRaw`SELECT tour_schedule_id FROM tour_schedules WHERE tour_schedule_id = ${dto.tour_schedule_id} FOR UPDATE`;
             const schedule = await tx.tour_schedules.findUnique({
@@ -111,6 +253,9 @@ export class BookingsService {
                         expiry_date: { gte: new Date() },
                     },
                 });
+                if (voucher && !voucherAudienceAllows(voucher.eligible_tiers, member.tier.id)) {
+                    throw new BadRequestException(`Voucher chỉ áp dụng cho: ${voucherAudienceLabel(voucher.eligible_tiers)}.`);
+                }
                 if (voucher && voucher.used_count < voucher.usage_limit && subtotal >= Number(voucher.min_order_value)) {
                     discountAmount = membershipDiscount({ discount_type: voucher.discount_type, discount_value: Number(voucher.discount_value), min_order_value: Number(voucher.min_order_value), max_discount_amount: voucher.max_discount_amount === null ? null : Number(voucher.max_discount_amount) }, subtotal);
                     voucherId = voucher.voucher_id;
@@ -121,13 +266,19 @@ export class BookingsService {
                 }
             }
             discountAmount = Math.min(Math.max(discountAmount, 0), subtotal);
+            const voucherDiscount = discountAmount;
+            const { tourDiscount, serviceDiscount } = membershipPrice(member.tier, subtotal, extras.total, voucherDiscount);
+            discountAmount += tourDiscount + serviceDiscount;
             const totalAmount = Math.max(subtotal + singleRoomSurcharge + extras.total - discountAmount, 0);
             const roomNote = dto.room_type === 'single'
                 ? `[ROOM_SELECTION]\nLoại phòng: PHÒNG ĐƠN\nPhụ thu phòng đơn: ${formatCurrency(singleRoomSurcharge)}đ`
                 : `[ROOM_SELECTION]\nLoại phòng: GHÉP PHÒNG\nPhụ thu phòng đơn: 0đ`;
+            const contactIdCardNote = dto.contact_id_card?.trim()
+                ? `\n[CCCD_LIEN_HE]: ${dto.contact_id_card.trim()}`
+                : '';
             const mergedNote = dto.note?.trim()
-                ? `${dto.note.trim()}\n\n${roomNote}`
-                : roomNote;
+                ? `${dto.note.trim()}\n\n${roomNote}${contactIdCardNote}`
+                : `${roomNote}${contactIdCardNote}`;
             const createdBooking = await tx.bookings.create({
                 data: {
                     user_id: dto.user_id,
@@ -150,16 +301,25 @@ export class BookingsService {
                     note: mergedNote,
                     voucher_id: voucherId,
                     additional_services: extras.items,
+                    membership_snapshot: {
+                        tier: member.tier.id, name: member.tier.name,
+                        pointMultiplier: member.tier.pointMultiplier,
+                        priorityReservation: member.tier.priorityReservation,
+                        tourDiscountPercent: member.tier.tourDiscountPercent,
+                        serviceDiscountPercent: member.tier.serviceDiscountPercent,
+                        tourDiscount, serviceDiscount, voucherDiscount,
+                    },
                     services_total: extras.total,
                 },
             });
             if (dto.travelers?.length) {
                 await tx.booking_travelers.createMany({
-                    data: dto.travelers.map((t: any) => ({
+                    data: dto.travelers.map((t: any, idx: number) => ({
                         booking_id: createdBooking.booking_id,
                         full_name: t.fullName,
                         gender: t.gender,
                         dob: t.birthday ? new Date(t.birthday) : null,
+                        id_number: t.idNumber ? String(t.idNumber).trim() : (idx === 0 && dto.contact_id_card ? String(dto.contact_id_card).trim() : null),
                         traveler_type: t.type.toUpperCase(),
                     })),
                 });
@@ -171,7 +331,7 @@ export class BookingsService {
             if (reserved.count !== 1)
                 throw new BadRequestException("Không đủ chỗ trống cho số lượng khách yêu cầu.");
             if (voucherId) {
-                const consumed = await tx.vouchers.updateMany({ where: { voucher_id: voucherId, used_count: { lt: voucherUsageLimit }, status: 1, start_date: { lte: new Date() }, expiry_date: { gt: new Date() }, OR: [{ owner_user_id: null }, { owner_user_id: dto.user_id }] }, data: { used_count: { increment: 1 } } });
+                const consumed = await tx.vouchers.updateMany({ where: { voucher_id: voucherId, used_count: { lt: voucherUsageLimit }, status: 1, start_date: { lte: new Date() }, expiry_date: { gt: new Date() }, AND: [{ OR: [{ owner_user_id: null }, { owner_user_id: dto.user_id }] }, { OR: [{ eligible_tiers: { isEmpty: true } }, { eligible_tiers: { has: member.tier.id } }] }] }, data: { used_count: { increment: 1 } } });
                 if (consumed.count !== 1)
                     throw new BadRequestException("Mã giảm giá đã hết lượt sử dụng.");
             }
@@ -192,7 +352,7 @@ export class BookingsService {
         return booking;
     }
     async getMyBookings(userId: any) {
-        return this.prisma.bookings.findMany({
+        const bookings = await this.prisma.bookings.findMany({
             where: { user_id: userId },
             include: {
                 tour_schedules: {
@@ -210,6 +370,7 @@ export class BookingsService {
             },
             orderBy: { created_at: 'desc' },
         });
+        return bookings.map(customerCrewBooking);
     }
     async getBookingStats(userId: any) {
         const [total, pending, upcoming] = await Promise.all([
@@ -238,7 +399,7 @@ export class BookingsService {
         };
     }
     async getBookingDetail(bookingId: any, userId: any) {
-        return this.prisma.bookings.findFirst({
+        const booking = await this.prisma.bookings.findFirst({
             where: { booking_id: bookingId, user_id: userId },
             include: {
                 tour_schedules: {
@@ -260,6 +421,7 @@ export class BookingsService {
                 vouchers: true,
             },
         });
+        return booking ? customerCrewBooking(booking) : null;
     }
     async requestCancel(bookingId: any, userId: any, reason: any) {
         const booking = await this.prisma.bookings.findFirst({

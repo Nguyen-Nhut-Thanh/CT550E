@@ -38,30 +38,32 @@ export default function TourRecommendedList() {
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-            <Compass className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Tour phù hợp với bạn</h3>
-            <p className="text-xs text-slate-500">Gợi ý dựa trên sở thích chuyến đi của bạn</p>
+    <div className="w-full border-y border-slate-200 bg-white py-6">
+      <div className="mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+              <Compass className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Tour phù hợp với bạn</h3>
+              <p className="text-xs text-slate-500">Gợi ý dựa trên sở thích chuyến đi của bạn</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="flex min-h-[160px] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-          {tours.map((tour) => (
-            <FeaturedTourCard key={tour.tour_id} item={tour} />
-          ))}
-        </div>
-      )}
+        {loading ? (
+          <div className="flex min-h-[160px] items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+            {tours.map((tour) => (
+              <FeaturedTourCard key={tour.tour_id} item={tour} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

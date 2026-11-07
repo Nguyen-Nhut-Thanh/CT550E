@@ -1,5 +1,8 @@
 "use client";
 
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+
+
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 
 import { useCallback, useEffect, useState } from "react";
@@ -21,6 +24,7 @@ const label = (index: number) =>
       : "Có thể bạn sẽ thích";
 
 export default function BlogLayoutAdminPage() {
+  const readOnly = useAdminContentReadOnly();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [slots, setSlots] = useState<(number | null)[]>(Array(9).fill(null));
   const [active, setActive] = useState(0);
@@ -192,7 +196,7 @@ export default function BlogLayoutAdminPage() {
           <div className="flex gap-2">
             <button
               onClick={save}
-              disabled={saving || !dirty}
+              disabled={readOnly || saving || !dirty}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
               {saving ? (
@@ -301,7 +305,7 @@ export default function BlogLayoutAdminPage() {
               return (
                 <button
                   key={post.post_id}
-                  disabled={saving || (usedAt !== -1 && usedAt !== active)}
+                  disabled={readOnly || saving || (usedAt !== -1 && usedAt !== active)}
                   onClick={() => assign(post.post_id)}
                   className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left disabled:opacity-40 ${slots[active] === post.post_id ? "border-blue-400 bg-blue-50" : "border-slate-100 hover:bg-slate-50"}`}
                 >

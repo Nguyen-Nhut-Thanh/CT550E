@@ -88,7 +88,7 @@ export const AdminSidebar = ({
   const pathname = usePathname();
   const router = useRouter();
   const identity = useWorkforceIdentity();
-  const visibleMenu = menuItems.map(group => ({ ...group, items: group.items.filter(item => identity?.isAdmin || item.href === '/admin/workforce' || (identity?.canChat && item.href === '/admin/chats')) })).filter(group => group.items.length);
+  const visibleMenu = menuItems.map(group => ({ ...group, items: group.items.filter(item => identity?.isManager || item.href === '/admin/workforce' || (identity?.canChat && item.href === '/admin/chats')) })).filter(group => group.items.length);
 
   const handleLogout = () => {
     removeToken();
@@ -112,7 +112,7 @@ export const AdminSidebar = ({
             <div className="flex items-center gap-3">
               JourniTrip{" "}
               <span className="rounded-full bg-blue-500/25 px-2 py-0.5 text-[9px] tracking-normal text-blue-100">
-                {identity?.isAdmin ? 'ADMIN' : 'NHÂN VIÊN'}
+                {identity?.isAdmin ? 'ADMIN' : identity?.isManager ? 'QUẢN LÝ MIỀN' : 'NHÂN VIÊN'}
               </span>
             </div>
             <p className="mt-0.5 text-[10px] font-normal tracking-normal text-blue-300/70">

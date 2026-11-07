@@ -1,8 +1,10 @@
 "use client";
 
 import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
-import { CalendarDays, Clock } from "lucide-react";
+import { TimeInput } from "@/components/common/date-time/TimeInput";
+import { CalendarDays } from "lucide-react";
 import type { VoucherModalProps } from "shared";
+import { VoucherAudienceSelect } from "./VoucherAudienceSelect";
 
 export function VoucherTiming({
   form,
@@ -26,12 +28,15 @@ export function VoucherTiming({
   | "onStartDateChange"
   | "onStartTimeChange"
 > & { disabled: boolean; idPrefix: string }) {
+  const timeError = !disabled && startDateValue === minDate && startTimeValue && startTimeValue < minTime
+    ? "Giờ bắt đầu phải từ thời điểm hiện tại trở đi."
+    : undefined;
   return (
     <section
-      className="ui-voucher-modal-panel min-w-0 p-[18px] [border:1px_solid_#e8effa] rounded-[17px] [background:linear-gradient(135deg,_#fff,_#fcfdff)] admin-short-tablet:p-[14px_16px] admin-max-479:p-[14px] ui-voucher-modal-timing [&&]:[background:linear-gradient(135deg,_#f7fbff,_#f0f7ff)]"
+      className="ui-voucher-modal-panel grid w-full min-w-0 max-w-full grid-cols-1 content-start gap-y-[18px] min-[800px]:row-span-4 min-[800px]:grid-rows-subgrid p-[18px] [border:1px_solid_#e8effa] rounded-[17px] [background:linear-gradient(135deg,_#fff,_#fcfdff)] admin-short-tablet:p-[14px_16px] admin-max-479:p-[14px] ui-voucher-modal-timing [&&]:[background:linear-gradient(135deg,_#f7fbff,_#f0f7ff)]"
       aria-labelledby={`${idPrefix}-timing`}
     >
-      <div className="ui-voucher-modal-sectionHeading flex items-center gap-[11px] mb-[22px] [&>span]:grid [&>span]:shrink-0 [&>span]:w-[38px] [&>span]:h-[38px] [&>span]:place-items-center [&>span]:rounded-[12px] [&>span]:[background:#eaf3ff] [&>span]:text-[#1465ff] [&_h3]:text-[16px] [&_h3]:font-[750] [&_h3]:tracking-[-.025em]! [&_h3]:leading-[1.4] [&_p]:mt-[2px] [&_p]:text-[#7a8aaa] [&_p]:text-[11px] [&_p]:leading-[1.5] admin-short-tablet:mb-[14px] admin-max-479:mb-[17px] admin-max-479:[&_h3]:text-[15px] admin-max-479:[&_p]:text-[10px]">
+      <div className="ui-voucher-modal-sectionHeading flex items-start gap-[11px] [&>span]:grid [&>span]:shrink-0 [&>span]:w-[38px] [&>span]:h-[38px] [&>span]:place-items-center [&>span]:rounded-[12px] [&>span]:[background:#eaf3ff] [&>span]:text-[#1465ff] [&_h3]:text-[16px] [&_h3]:font-[750] [&_h3]:tracking-[-.025em]! [&_h3]:leading-[1.4] [&_p]:mt-[2px] [&_p]:text-[#7a8aaa] [&_p]:text-[11px] [&_p]:leading-[1.5]  admin-max-479:[&_h3]:text-[15px] admin-max-479:[&_p]:text-[10px]">
         <span>
           <CalendarDays size={21} />
         </span>
@@ -40,7 +45,7 @@ export function VoucherTiming({
           <p>Thiết lập thời gian hiệu lực và số lượng voucher</p>
         </div>
       </div>
-      <div className="ui-voucher-modal-fieldGrid grid grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px]">
+      <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px]">
         <div className="ui-voucher-modal-date [&_label]:block [&_label]:m-[0_0_7px] [&_label]:text-[#697e9f] [&_label]:text-[10px] [&_label]:font-[750] [&_label]:tracking-[.065em]! [&_label]:leading-[16px] [&_label]:uppercase [&_label_svg]:hidden [&_button[aria-expanded]]:min-h-[44px] [&_button[aria-expanded]]:h-[44px] [&_button[aria-expanded]]:[border:1px_solid_#dce5f3] [&_button[aria-expanded]]:rounded-[10px] [&_button[aria-expanded]]:p-[6px_9px] [&_button[aria-expanded]]:[box-shadow:none] [&_button[aria-expanded]>span]:gap-[7px] [&_button[aria-expanded]_span]:text-[11px] admin-short-tablet:[&_label]:mb-[5px] admin-short-tablet:[&_button[aria-expanded]]:min-h-[40px] admin-short-tablet:[&_button[aria-expanded]]:h-[40px] admin-max-479:[&_button[aria-expanded]]:px-[6px]">
           <AdminDatePicker
             label="Ngày bắt đầu"
@@ -57,26 +62,18 @@ export function VoucherTiming({
           >
             Giờ bắt đầu
           </label>
-          <div className="relative">
-            <Clock
-              size={16}
-              className="ui-voucher-modal-inputIcon absolute left-[11px] top-[14px] text-[#3c7cff] pointer-events-none admin-short-tablet:top-[12px]"
-            />
-            <input
-              id={`${idPrefix}-time`}
-              type="time"
-              required
-              step={60}
-              min={startDateValue === minDate ? minTime : undefined}
-              value={startTimeValue}
-              disabled={disabled}
-              onChange={(event) => onStartTimeChange(event.target.value)}
-              className="ui-voucher-modal-input block w-full min-w-0 h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px] ui-voucher-modal-timeInput [&&]:pl-[34px] [&&]:pr-[7px] [&&]:text-[12px] admin-max-479:[&&]:pl-[31px]"
-            />
-          </div>
+          <TimeInput
+            id={`${idPrefix}-time`}
+            ariaLabel="Giờ bắt đầu voucher"
+            value={startTimeValue}
+            disabled={disabled}
+            onChange={onStartTimeChange}
+            error={timeError}
+            className="w-full max-w-full [&>button]:h-[44px] [&>button]:min-h-[44px] [&>button]:min-w-0 [&>button]:max-w-full [&>button]:overflow-hidden [&>button]:rounded-[10px] [&>button]:bg-white [&>button]:px-3 [&>button]:py-2 [&>button]:text-[12px] [&>button]:font-semibold [&>button]:shadow-none [&>button>span]:text-[#172340] [&>button>svg]:text-[#3c7cff] admin-short-tablet:[&>button]:h-[40px] admin-short-tablet:[&>button]:min-h-[40px]"
+          />
         </div>
       </div>
-      <div className="ui-voucher-modal-fieldGrid grid grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px] ui-voucher-modal-quantityFields mt-[29px] admin-short-tablet:mt-[24px] admin-max-799:mt-[20px]">
+      <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px] ui-voucher-modal-quantityFields">
         <div>
           <label
             htmlFor={`${idPrefix}-duration`}
@@ -98,7 +95,7 @@ export function VoucherTiming({
                 duration_hours: Number(event.target.value),
               }))
             }
-            className="ui-voucher-modal-input block w-full min-w-0 h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px]"
+            className="ui-voucher-modal-input block w-full min-w-0 text-ellipsis h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px]"
           />
           <p className="ui-voucher-modal-hint mt-[7px] text-[#8191ae] text-[10px] leading-[1.6] admin-short-tablet:mt-[4px] admin-short-tablet:leading-[1.4]">
             Thời gian hiệu lực tính từ ngày bắt đầu
@@ -125,13 +122,14 @@ export function VoucherTiming({
                 usage_limit: Number(event.target.value),
               }))
             }
-            className="ui-voucher-modal-input block w-full min-w-0 h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px]"
+            className="ui-voucher-modal-input block w-full min-w-0 text-ellipsis h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px]"
           />
           <p className="ui-voucher-modal-hint mt-[7px] text-[#8191ae] text-[10px] leading-[1.6] admin-short-tablet:mt-[4px] admin-short-tablet:leading-[1.4]">
             Tổng số voucher phát hành
           </p>
         </div>
       </div>
+      <VoucherAudienceSelect form={form} onChange={onChange} disabled={disabled} idPrefix={idPrefix} />
     </section>
   );
 }

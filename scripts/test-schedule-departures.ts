@@ -53,8 +53,8 @@ async function main() {
       const firstId = first.tour_schedule_id;
       check((await schedules.findOneSchedule(firstId)).departure_location_id === locations[0].location_id);
       const points = [
-        { name: 'Bến xe', address: 'Địa chỉ đón số 1', pickup_at: start.toISOString(), note: 'Có mặt trước 15 phút' },
-        { name: 'Văn phòng', address: 'Địa chỉ đón số 2', pickup_at: new Date(start.getTime() + 3600000).toISOString() },
+        { name: 'Bến xe', address: 'Địa chỉ đón số 1', pickup_at: new Date(start.getTime() - 3600000).toISOString(), note: 'Có mặt trước 15 phút' },
+        { name: 'Văn phòng', address: 'Địa chỉ đón số 2', pickup_at: new Date(start.getTime() - 1800000).toISOString() },
       ];
       const second = await schedules.createSchedule(tour.tour_id, { ...payload, price: 2000000,
         departure_location_id: locations[1].location_id, pickup_points: points });

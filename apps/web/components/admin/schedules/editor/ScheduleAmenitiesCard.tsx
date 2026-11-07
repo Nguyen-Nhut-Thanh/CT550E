@@ -1,6 +1,6 @@
 "use client";
 
-import { Bus, Check, ChevronDown, Copy, Droplet, Hotel, LockKeyhole, ShieldCheck, Sparkles, UserRoundCheck, Utensils } from "lucide-react";
+import { Bus, Check, ChevronDown, Droplet, Hotel, LockKeyhole, ShieldCheck, Sparkles, UserRoundCheck, Utensils } from "lucide-react";
 import { copyTourAmenities, type ScheduleFormState, type TourAmenity } from "shared";
 import { TourEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 import { TourAmenitiesEditor } from "@/components/admin/tours/editor/TourAmenitiesEditor";
@@ -12,15 +12,13 @@ export function ScheduleAmenitiesCard({ form, template, disabled, onChange }: {
   onChange: (updater: (previous: ScheduleFormState) => ScheduleFormState) => void;
 }) {
   const copyTemplate = () => onChange(previous => ({ ...previous, use_tour_amenities: true, copy_tour_amenities: true, tour_schedule_amenities: copyTourAmenities(template) }));
-  return <TourEditorCard id="schedule-amenities" title="Tiện ích của lịch khởi hành" description="Sử dụng mẫu tour hoặc điều chỉnh bản tiện ích riêng cho chuyến này." icon={Sparkles}>
+  return <TourEditorCard id="schedule-amenities" title="Tiện ích của lịch khởi hành" icon={Sparkles} headerAction={
+    <label className={`inline-flex min-h-10 items-center gap-2.5 text-[12px] leading-5 font-medium text-[#263b5c] sm:text-[13px] ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+      <input type="checkbox" checked={form.use_tour_amenities} disabled={disabled} onChange={event => event.target.checked ? copyTemplate() : onChange(previous => ({ ...previous, use_tour_amenities: false, copy_tour_amenities: false }))} className="size-4 shrink-0 rounded accent-blue-600" />
+      <span>Sử dụng tiện ích gốc từ tour</span>
+    </label>
+  }>
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[#dbe8ff] bg-[#f2f7ff] p-4">
-        <label className={`flex items-start gap-3 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
-          <input type="checkbox" checked={form.use_tour_amenities} disabled={disabled} onChange={event => event.target.checked ? copyTemplate() : onChange(previous => ({ ...previous, use_tour_amenities: false, copy_tour_amenities: false }))} className="mt-0.5 size-4 shrink-0 accent-blue-600" />
-          <span><span className="block text-[13px] font-semibold text-[#263b5c]">Sử dụng tiện ích gốc từ tour</span><span className="mt-1 block text-[12px] leading-5 text-[#7b8ba5]">Bỏ chọn để sửa nội dung đã sao chép. Mỗi chuyến giữ bản riêng khi mẫu tour thay đổi.</span></span>
-        </label>
-        {form.use_tour_amenities && !disabled && <button type="button" onClick={copyTemplate} className="mt-3 inline-flex items-center gap-2 rounded-[10px] border border-blue-200 bg-white px-3 py-2 text-[12px] font-semibold text-blue-600 transition-colors hover:bg-blue-50"><Copy size={14} />Sao chép lại mẫu tour hiện tại</button>}
-      </div>
       {disabled && <p className="flex items-start gap-2 text-[12px] leading-5 text-[#8490a5]"><LockKeyhole size={14} className="mt-0.5 shrink-0" />Tiện ích đã khóa vì chuyến đã khởi hành hoặc có đơn đặt.</p>}
       <div className="flex items-center justify-between gap-3 text-[12px]"><span className="font-semibold text-[#52627e]">{form.use_tour_amenities ? "Bản sao tiện ích của tour" : "Chỉnh sửa tiện ích cho chuyến"}</span><span className="rounded-full bg-blue-50 px-2.5 py-1 font-semibold text-blue-600">{form.tour_schedule_amenities.length} tiện ích</span></div>
       {form.use_tour_amenities || disabled ? <div className="grid items-start gap-3 sm:grid-cols-2">

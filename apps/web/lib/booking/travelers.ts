@@ -6,6 +6,7 @@ export function createEmptyTraveler(type: TravelerType): TravelerForm {
     gender: "male",
     type,
     birthday: "",
+    idNumber: "",
   };
 }
 

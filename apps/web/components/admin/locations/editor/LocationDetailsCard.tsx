@@ -1,229 +1,60 @@
 "use client";
 
-import { CheckCircle2, Edit3, Globe, Lock, Star } from "lucide-react";
-import type { LocationDetailsCardProps as Props } from 'shared';
+import { Globe2, Lock, Star } from "lucide-react";
+import type { LocationDetailsCardProps } from "shared";
 
-export function LocationDetailsCard({
-  form,
-  isNew,
-  level3Id,
-  level3List,
-  onFormChange,
-}: Props) {
+const inputClass = "w-full rounded-[8px] border border-[#dce5f3] bg-white px-3 py-2 text-[13px] leading-5 text-[#263b5c] outline-none placeholder:text-[#9aa8be] focus:border-blue-400 focus:ring-2 focus:ring-blue-50";
+
+export function LocationDetailsCard({ form, isNew, level3Id, level3List, onFormChange }: LocationDetailsCardProps) {
+  const country = level3List.find(item => String(item.location_id) === level3Id)?.name;
   return (
-    <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-sm">
-      <div className="flex items-center gap-3 border-b border-slate-50 bg-slate-50/30 p-6">
-        <div className="rounded-xl bg-amber-100 p-2 text-amber-600">
-          <Edit3 size={18} />
-        </div>
-        <h3 className="text-sm font-bold text-slate-900">Chi tiết địa điểm</h3>
+    <section className="rounded-[14px] border border-[#e0ebf9] bg-white/95 p-4 shadow-[0_3px_14px_#3869a705] sm:p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#eaf3ff] text-[14px] font-bold text-[#0766ff]">02</span>
+        <div><h2 className="text-[16px] font-bold text-[#102044]">Thông tin địa điểm</h2><p className="mt-0.5 text-[12px] leading-5 text-[#7d8eac]">Cung cấp thông tin chi tiết về địa điểm.</p></div>
       </div>
-      <div className="space-y-8 p-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Tên địa điểm chính thức
-            </label>
-            <input
-              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm font-bold shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-500 focus:bg-white"
-              value={form.name}
-              onChange={(event) =>
-                onFormChange((prev) => ({ ...prev, name: event.target.value }))
-              }
-              placeholder="VD: Vịnh Hạ Long, Paris, Tokyo..."
-              required
-            />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <label htmlFor="location-name" className="text-[12px] font-semibold text-[#102044]">Tên địa điểm <span className="text-rose-500">*</span></label>
+            <input id="location-name" className={inputClass} value={form.name} onChange={event => onFormChange(prev => ({ ...prev, name: event.target.value }))} placeholder="Ví dụ: Núi Cấm, Vịnh Hạ Long..." required />
+            <p className="text-[11px] leading-4 text-[#8191ad]">Tên hiển thị của địa điểm trên hệ thống.</p>
           </div>
-
-          <div className="space-y-2">
-            <label className="ml-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Slug (URL) <Lock size={10} className="text-slate-400" />
-            </label>
-            <div className="relative">
-              <input
-                readOnly
-                className="w-full cursor-not-allowed rounded-2xl border border-slate-100 bg-slate-100 px-5 py-4 text-sm font-medium text-slate-500 shadow-inner outline-none"
-                value={form.slug}
-                placeholder="tu-dong-theo-ten"
-              />
-              <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                <Lock size={14} className="text-slate-300" />
-              </div>
-            </div>
+          <div className="space-y-1.5">
+            <label htmlFor="location-slug" className="flex items-center gap-1.5 text-[12px] font-semibold text-[#102044]">Đường dẫn (slug)<Lock size={11} className="text-[#93a3bf]" /></label>
+            <input id="location-slug" readOnly className={`${inputClass} cursor-default bg-[#f4f7fc] text-[#7484a0]`} value={form.slug} placeholder="tu-dong-theo-ten" />
+            <p className="text-[11px] leading-4 text-[#8191ad]">{isNew ? "Đường dẫn thân thiện được tự động tạo từ tên địa điểm." : "Đường dẫn hiện tại của địa điểm."}</p>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {form.level_id === 3 ? (
-            <div className="animate-in fade-in space-y-2 duration-300">
-              <label className="ml-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Mã quốc gia (ISO){" "}
-                {!isNew && <Lock size={10} className="text-slate-400" />}
-              </label>
-              <div className="relative">
-                <input
-                  readOnly={!isNew}
-                  className={`w-full rounded-2xl border border-slate-100 px-5 py-4 text-sm font-bold shadow-sm outline-none transition-all ${
-                    !isNew
-                      ? "cursor-not-allowed bg-slate-100 text-slate-500"
-                      : "bg-slate-50 focus:border-blue-500 focus:bg-white"
-                  }`}
-                  value={form.country_code}
-                  onChange={(event) =>
-                    onFormChange((prev) => ({
-                      ...prev,
-                      country_code: event.target.value.toUpperCase(),
-                    }))
-                  }
-                  maxLength={10}
-                  placeholder="VD: VN, JP, US..."
-                />
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  {!isNew ? (
-                    <Lock size={14} className="text-slate-300" />
-                  ) : (
-                    <Globe size={16} className="text-slate-300" />
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="animate-in fade-in space-y-2 duration-300">
-              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Ghi chú / Mô tả ngắn
-              </label>
-              <input
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm font-medium shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-500 focus:bg-white"
-                value={form.note}
-                onChange={(event) =>
-                  onFormChange((prev) => ({
-                    ...prev,
-                    note: event.target.value,
-                  }))
-                }
-                placeholder="Thông tin thêm về địa điểm này..."
-              />
-            </div>
-          )}
-
-          {form.level_id === 3 ? (
-            <div className="animate-in fade-in space-y-2 duration-300">
-              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Ghi chú / Mô tả ngắn
-              </label>
-              <input
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm font-medium shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-500 focus:bg-white"
-                value={form.note}
-                onChange={(event) =>
-                  onFormChange((prev) => ({
-                    ...prev,
-                    note: event.target.value,
-                  }))
-                }
-                placeholder="Thông tin thêm về địa điểm này..."
-              />
-            </div>
-          ) : (
-            <div className="animate-in fade-in flex items-center justify-between rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 duration-300">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white p-2 text-blue-500 shadow-sm">
-                  <Globe size={16} />
-                </div>
-                <div>
-                  <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Thuộc quốc gia
-                  </span>
-                  <span className="text-xs font-bold text-slate-700">
-                    {level3List.find(
-                      (country) => String(country.location_id) === level3Id,
-                    )?.name || "Chưa xác định"}{" "}
-                    <span className="ml-1 text-blue-500">
-                      ({form.country_code})
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <Lock size={14} className="text-slate-300" />
-            </div>
-          )}
+        {form.level_id === 3 && <div className="max-w-sm space-y-1.5">
+          <label htmlFor="location-country-code" className="text-[12px] font-semibold text-[#102044]">Mã quốc gia (ISO)</label>
+          <input id="location-country-code" readOnly={!isNew} className={`${inputClass} read-only:bg-[#f4f7fc] read-only:text-[#7484a0]`} value={form.country_code} onChange={event => onFormChange(prev => ({ ...prev, country_code: event.target.value.toUpperCase() }))} maxLength={10} placeholder="Ví dụ: VN, JP, US..." />
+        </div>}
+        <div className="space-y-1.5">
+          <label htmlFor="location-note" className="text-[12px] font-semibold text-[#102044]">Mô tả ngắn</label>
+          <textarea id="location-note" rows={3} className={`${inputClass} block min-h-20 resize-y`} value={form.note} onChange={event => onFormChange(prev => ({ ...prev, note: event.target.value }))} placeholder="Giới thiệu ngắn gọn về cảnh quan, đặc trưng của địa điểm..." />
+          <p className="text-[11px] leading-4 text-[#8191ad]">Thông tin giới thiệu ngắn về địa điểm.</p>
         </div>
-
-        <div className="border-t border-slate-50 pt-8">
-          <div className="flex flex-wrap gap-4">
-            <div
-              className={`flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-3xl border-2 p-6 transition-all ${
-                form.is_featured
-                  ? "border-blue-200 bg-blue-50"
-                  : "border-slate-50 bg-slate-50 hover:border-slate-100"
-              }`}
-              onClick={() =>
-                onFormChange((prev) => ({
-                  ...prev,
-                  is_featured: !prev.is_featured,
-                }))
-              }
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`rounded-2xl p-3 ${
-                    form.is_featured
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                      : "border border-slate-100 bg-white text-slate-400"
-                  }`}
-                >
-                  <Star
-                    size={20}
-                    fill={form.is_featured ? "currentColor" : "none"}
-                  />
-                </div>
-                <div>
-                  <span
-                    className={`block text-sm font-black ${form.is_featured ? "text-blue-900" : "text-slate-900"}`}
-                  >
-                    Địa điểm nổi bật
-                  </span>
-                  <p
-                    className={`text-[10px] font-bold ${form.is_featured ? "text-blue-600" : "text-slate-400"}`}
-                  >
-                    Sẽ hiển thị ưu tiên tại trang chủ
-                  </p>
-                </div>
-              </div>
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all ${
-                  form.is_featured
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
-                {form.is_featured && <CheckCircle2 size={12} />}
-              </div>
-            </div>
-
-            {form.is_featured && (
-              <div className="animate-in zoom-in-95 w-full rounded-3xl border border-blue-100 bg-blue-50 p-6 md:w-48">
-                <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-blue-400">
-                  Thứ tự hiển thị
-                </label>
-                <input
-                  type="number"
-                  className="w-full rounded-xl border border-blue-100 bg-white px-4 py-2 text-center font-black text-blue-900 outline-none"
-                  value={form.featured_order || ""}
-                  onChange={(event) =>
-                    onFormChange((prev) => ({
-                      ...prev,
-                      featured_order: event.target.value
-                        ? Number(event.target.value)
-                        : null,
-                    }))
-                  }
-                  placeholder="0"
-                />
-              </div>
-            )}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex items-center gap-3 rounded-[9px] bg-[#f0f7ff] p-3">
+            <Globe2 size={24} className="shrink-0 text-[#0766ff]" aria-hidden="true" />
+            <div className="min-w-0 text-[12px] leading-5"><p className="text-[#536583]">Thuộc quốc gia <span className="font-semibold text-[#0766ff]">{form.level_id === 3 ? form.name || "Chưa nhập tên" : country || "Chưa chọn quốc gia"}</span></p><p className="text-[11px] text-[#8191ad]">Mã quốc gia: {form.country_code || "—"}</p></div>
           </div>
+          <label className="flex cursor-pointer items-start gap-3 rounded-[9px] bg-[#f0f7ff] p-3">
+            <span className="relative mt-0.5 inline-flex shrink-0">
+              <input type="checkbox" checked={form.is_featured} onChange={event => onFormChange(prev => ({ ...prev, is_featured: event.target.checked }))} className="peer sr-only" />
+              <span className="h-5 w-9 rounded-full bg-[#cdd9ea] transition-colors peer-checked:bg-[#0766ff] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500" />
+              <span className="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
+            </span>
+            <Star size={16} fill="currentColor" className="mt-0.5 shrink-0 text-amber-400" aria-hidden="true" />
+            <span><span className="block text-[12px] font-semibold leading-5 text-[#102044]">Địa điểm nổi bật</span><span className="block text-[11px] leading-4 text-[#8191ad]">Ưu tiên hiển thị trên trang chủ.</span></span>
+          </label>
         </div>
+        {form.is_featured && <div className="max-w-[180px] space-y-1.5">
+          <label htmlFor="location-featured-order" className="text-[12px] font-semibold text-[#102044]">Thứ tự hiển thị</label>
+          <input id="location-featured-order" type="number" className={inputClass} value={form.featured_order ?? ""} onChange={event => onFormChange(prev => ({ ...prev, featured_order: event.target.value ? Number(event.target.value) : null }))} placeholder="Chưa thiết lập" />
+        </div>}
       </div>
-    </div>
+    </section>
   );
 }

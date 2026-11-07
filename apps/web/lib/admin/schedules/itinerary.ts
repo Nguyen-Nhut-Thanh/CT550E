@@ -1,4 +1,16 @@
-import type { ItineraryActivity, LocationOption, TourInfo } from "shared";
+import type { ItineraryActivity, ItineraryFormItem, LocationOption, TourInfo } from "shared";
+
+export function getIncompleteItineraryDays(itinerary: ItineraryFormItem[], durationDays: number) {
+  const days = Math.max(1, durationDays || 0, ...itinerary.map(day => day.day_number));
+  return Array.from({ length: days }, (_, index) => index + 1).filter(number => {
+    const day = itinerary.find(item => item.day_number === number);
+    if (!day || !day.title.trim() || !day.meals.trim()) return true;
+    if (Boolean(day.hotel_id) !== Boolean(day.room_type_id)) return true;
+    return day.activities?.length
+      ? day.activities.some(activity => !/^([01]\d|2[0-3]):[0-5]\d$/.test(activity.time) || !activity.title.trim())
+      : !day.content.trim();
+  });
+}
 
 export function getItineraryProvinces(locations: LocationOption[], destinations: NonNullable<TourInfo["tour_destinations"]>) {
   const seen = new Set<number>();

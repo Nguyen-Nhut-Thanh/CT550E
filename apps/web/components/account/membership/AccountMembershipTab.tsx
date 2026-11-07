@@ -1,4 +1,5 @@
 "use client";
+import { MembershipBenefitsTable } from "@/components/common/membership/MembershipBenefitsTable";
 
 import {
   Award,
@@ -108,7 +109,7 @@ export function AccountMembershipTab() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-white/75">Điểm xét hạng</p>
+            <p className="text-xs text-white/75">Điểm thưởng kỳ này</p>
             <p className="mt-1 text-2xl font-extrabold">
               {data.points.toLocaleString("vi-VN")}{" "}
               <span className="text-sm font-medium text-white/75">điểm</span>
@@ -203,6 +204,7 @@ export function AccountMembershipTab() {
           ))}
         </div>
       </section>
+      <MembershipBenefitsTable tiers={data.tiers} />
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <h2 className="flex items-center gap-2 border-b border-slate-100 p-5 font-bold text-slate-900">
           <History size={18} />
@@ -227,7 +229,7 @@ export function AccountMembershipTab() {
                   </p>
                 </div>
                 <p className="text-sm font-bold text-emerald-700">
-                  +{formatVND(item.amount)}
+                  +{formatVND(item.amount)}<span className="mt-1 block text-right text-xs font-medium text-slate-500">+{item.points.toLocaleString("vi-VN")} điểm</span>
                 </p>
               </li>
             ))}
@@ -265,8 +267,7 @@ export function AccountMembershipTab() {
         </h2>
         <p>
           Mỗi 100.000đ thực trả từ tour đã kết thúc và thanh toán thành công
-          tương ứng 1 điểm xét hạng. Tour hủy và tiền hoàn không được tính. Dùng
-          voucher không làm mất điểm đã tích lũy.
+          tương ứng 1 điểm cơ bản, nhân với hệ số hạng lúc đặt tour. Điểm được làm tròn xuống cho từng đơn. Tour hủy và tiền hoàn không được tính. Hạng thành viên được xét theo chi tiêu thực trả, độc lập với điểm thưởng.
         </p>
         <p>
           Hạng được nâng ngay khi đủ chi tiêu. Sau mỗi 12 tháng, hệ thống xét
@@ -275,10 +276,7 @@ export function AccountMembershipTab() {
           hoặc hoàn tiền sẽ điều chỉnh lại chi tiêu và hạng tương ứng.
         </p>
         <p>
-          Mỗi hạng nhận tối đa một voucher trong một chu kỳ khi đạt hoặc được
-          giữ hạng. Voucher có hạn 90 ngày từ ngày cấp, dùng một lần và không
-          cộng dồn với voucher khác. Khi hạ hạng, voucher đã cấp vẫn giữ nguyên
-          điều kiện và hạn dùng.
+          Voucher sinh nhật được cấp một lần mỗi năm theo hạng tại thời điểm cấp, dùng một lần trong tháng sinh nhật khi hồ sơ có ngày sinh. Mỗi đơn dùng một voucher: trừ voucher trước, sau đó giảm theo hạng trên tiền tour còn lại. Dịch vụ đi kèm giảm riêng, phụ thu phòng đơn giữ nguyên. Voucher đã cấp trước đây giữ nguyên điều kiện và hạn dùng.
         </p>
       </section>
     </div>

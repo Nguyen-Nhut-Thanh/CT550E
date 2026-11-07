@@ -22,6 +22,7 @@ export function BookingRowActions({
   const actions: AdminRowAction[] = [
     {
       label: "Xem chi tiết booking",
+      access: 'view',
       icon: <Eye size={16} />,
       onClick: () => onAction(booking, "detail"),
     },

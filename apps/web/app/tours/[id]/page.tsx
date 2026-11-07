@@ -6,11 +6,13 @@ import TourDepartureCalendar from "@/components/tours/booking/TourDepartureCalen
 import TourDetailHero from "@/components/tours/detail/TourDetailHero";
 import TourHighlightsList from "@/components/tours/detail/TourHighlightsList";
 import TourItineraryTimeline from "@/components/tours/detail/TourItineraryTimeline";
+import { TourPoliciesSection } from "@/components/tours/detail/TourPoliciesSection";
 import TourSmartMap from "@/components/tours/detail/TourSmartMap";
 import TourRecommendedList from "@/components/tours/recommendations/TourRecommendedList";
 import TourReviewsSection from "@/components/tours/reviews/TourReviewsSection";
 import TourVideoHighlights from "@/components/tours/detail/TourVideoHighlights";
 import { getPublicTourDetail } from "@/lib/tours/api";
+import { resolvePickupPoint } from '@/lib/booking/departure';
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
@@ -28,6 +30,7 @@ export default function TourDetailPage({
   const [tour, setTour] = useState<PublicTourDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
+  const [selectedPickupPointId, setSelectedPickupPointId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -38,8 +41,11 @@ export default function TourDetailPage({
         const data = await getPublicTourDetail(tourId);
         if (!active) return;
         setTour(data);
-        const requestedSchedule = Number(new URLSearchParams(window.location.search).get("scheduleId"));
-        setSelectedScheduleId(data.tour_schedules?.some(item => item.tour_schedule_id === requestedSchedule) ? requestedSchedule : null);
+        const query = new URLSearchParams(window.location.search);
+        const requestedSchedule = Number(query.get("scheduleId"));
+        const schedule = data.tour_schedules?.find(item => item.tour_schedule_id === requestedSchedule);
+        setSelectedScheduleId(schedule?.tour_schedule_id ?? null);
+        setSelectedPickupPointId(resolvePickupPoint(schedule, query.get('pickupPointId'))?.pickup_point_id ?? null);
       } catch {
         if (!active) return;
         setTour(null);
@@ -85,7 +91,7 @@ export default function TourDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20 pt-6">
+    <div className="min-h-screen bg-[#f8fafc] pb-4 pt-6">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Main 2-Column Grid Section */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
@@ -101,8 +107,13 @@ export default function TourDetailPage({
             <TourDepartureCalendar
               schedules={tour.tour_schedules || []}
               selectedScheduleId={selectedScheduleId}
-              onSelect={(schedId) => setSelectedScheduleId(schedId)}
-              onReset={() => setSelectedScheduleId(null)}
+              selectedPickupPointId={selectedPickupPointId}
+              onSelect={(schedId, pickupId) => {
+                const schedule = tour.tour_schedules?.find(item => item.tour_schedule_id === schedId);
+                setSelectedScheduleId(schedId);
+                setSelectedPickupPointId(resolvePickupPoint(schedule, pickupId)?.pickup_point_id ?? null);
+              }}
+              onReset={() => { setSelectedScheduleId(null); setSelectedPickupPointId(null); }}
             />
 
             {/* 4. Tiện ích nổi bật (Amenities) */}
@@ -114,6 +125,7 @@ export default function TourDetailPage({
 
             {/* 6. Lịch trình chi tiết (Itinerary Timeline) */}
             <TourItineraryTimeline key={`itinerary-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} itineraries={displaySchedule?.tour_itineraries} />
+            <TourPoliciesSection policies={tour.tour_policies} />
 
             {/* 7. Đánh giá của khách hàng (Reviews Widget) */}
             <TourReviewsSection
@@ -135,14 +147,16 @@ export default function TourDetailPage({
             <TourBookingCard
               tour={tour}
               selectedSchedule={selectedSchedule}
+              selectedPickupPointId={selectedPickupPointId}
             />
           </div>
         </div>
 
-        {/* Bottom Full-Width Section: Tour phù hợp với bạn */}
-        <div className="pt-2">
-          <TourRecommendedList />
-        </div>
+      </div>
+
+      {/* Closing section spans the viewport outside the main content container. */}
+      <div className="mt-10 w-full">
+        <TourRecommendedList />
       </div>
     </div>
   );

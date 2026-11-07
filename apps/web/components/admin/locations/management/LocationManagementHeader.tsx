@@ -1,7 +1,12 @@
+"use client";
+
+import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { ADMIN_CONTENT_DENIED } from 'shared';
 import Link from "next/link";
 import { MapPin, Plus, Settings2 } from "lucide-react";
 
 export function LocationManagementHeader() {
+  const readOnly = useAdminContentReadOnly();
   return (
     <header className="ui-location-management-header flex items-center justify-between gap-[16px] p-[2px_0] admin-max-750:items-start admin-max-750:flex-col admin-max-750:gap-[12px]">
       <div className="ui-location-management-heading flex items-center gap-[12px] [&_h1]:text-[24px] [&_h1]:font-extrabold [&_h1]:leading-[1.25] [&_h1]:tracking-[-.6px]! [&_h1]:text-[#0c1e43] [&_h1]:m-[0_0_3px] [&_p]:text-[#7a8eae] [&_p]:text-[12px] admin-max-750:[&_h1]:text-[22px] admin-max-750:[&_p]:text-[11px]">
@@ -22,7 +27,7 @@ export function LocationManagementHeader() {
           Thiết lập grid
         </Link>
         <Link
-          href="/admin/locations/new"
+          href="/admin/locations/new" aria-disabled={readOnly} title={readOnly ? ADMIN_CONTENT_DENIED : undefined} style={readOnly ? { opacity: .4, cursor: 'not-allowed' } : undefined} onClick={event => { if (readOnly) event.preventDefault(); }}
           className="ui-location-management-primary inline-flex items-center justify-center gap-[8px] rounded-[9px] p-[10px_14px] text-[12px] font-[650] whitespace-nowrap [background:#075bff] text-[white] [box-shadow:0_3px_8px_#075bff20] [&:hover]:[background:#0646ce] admin-max-750:text-[11px] admin-max-750:p-[9px_12px]"
         >
           <Plus size={18} />

@@ -5,6 +5,8 @@ import { MoreVertical } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useDismiss } from "@/lib/ui/useDismiss";
 import { Popover } from "@/components/common/overlays/Popover";
+import { useAdminContentReadOnly } from './AdminContentPermission';
+import { ADMIN_CONTENT_DENIED } from 'shared';
 
 export type AdminRowAction = {
   label: string;
@@ -12,6 +14,9 @@ export type AdminRowAction = {
   href?: string;
   onClick?: () => void;
   danger?: boolean;
+  disabled?: boolean;
+  title?: string;
+  access?: 'view' | 'manage';
 };
 
 /** Hiển thị nút ba chấm để mở các lựa chọn thao tác trên một dòng dữ liệu quản trị. */
@@ -25,13 +30,14 @@ export function AdminRowActions({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const readOnly = useAdminContentReadOnly();
   const id = useId();
   const anchor = useRef<HTMLButtonElement>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   useDismiss(wrapper, open, () => setOpen(false));
   const focus = (index: number) => {
-    const items = panel.current?.querySelectorAll<HTMLElement>("a,button");
+    const items = panel.current?.querySelectorAll<HTMLElement>("a,button:not(:disabled)");
     if (items?.length) items[(index + items.length) % items.length].focus();
   };
   return (
@@ -50,7 +56,7 @@ export function AdminRowActions({
             event.preventDefault();
             setOpen(true);
             requestAnimationFrame(() =>
-              focus(event.key === "ArrowUp" ? actions.length - 1 : 0),
+              focus(event.key === "ArrowUp" ? -1 : 0),
             );
           }
         }}
@@ -70,7 +76,7 @@ export function AdminRowActions({
             aria-label={label}
             onKeyDown={(event) => {
               const items = Array.from(
-                panel.current?.querySelectorAll("a,button") ?? [],
+                panel.current?.querySelectorAll("a,button:not(:disabled)") ?? [],
               );
               const index = items.indexOf(document.activeElement as Element);
               const target =
@@ -81,7 +87,7 @@ export function AdminRowActions({
                     : event.key === "Home"
                       ? 0
                       : event.key === "End"
-                        ? actions.length - 1
+                        ? -1
                         : null;
               if (target !== null) {
                 event.preventDefault();
@@ -90,8 +96,10 @@ export function AdminRowActions({
               if (event.key === "Tab") setOpen(false);
             }}
           >
-            {actions.map((action) =>
-              action.href ? (
+            {actions.map((action) => {
+              const forbidden = readOnly && !action.href && action.access !== 'view';
+              const blocked = action.disabled || forbidden;
+              return action.href && !blocked ? (
                 <Link
                   key={action.label}
                   href={action.href}
@@ -107,9 +115,9 @@ export function AdminRowActions({
                 <button
                   type="button"
                   key={action.label}
-                  className={
-                    action.danger ? "ui-admin-row-actions-danger" : undefined
-                  }
+                  disabled={blocked}
+                  title={forbidden ? ADMIN_CONTENT_DENIED : action.title}
+                  className={`${action.danger ? "ui-admin-row-actions-danger" : ""} disabled:cursor-not-allowed disabled:opacity-40`}
                   onClick={() => {
                     setOpen(false);
                     anchor.current?.focus();
@@ -119,8 +127,9 @@ export function AdminRowActions({
                   {action.icon}
                   {action.label}
                 </button>
-              ),
-            )}
+              );
+            })}
+            {readOnly && actions.some(action => !action.href && action.access !== 'view') && <p role="note" className="px-2 py-2 text-[11px] leading-5 text-amber-700">{ADMIN_CONTENT_DENIED}</p>}
           </div>
         </Popover>
       )}

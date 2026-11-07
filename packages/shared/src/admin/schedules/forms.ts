@@ -20,7 +20,7 @@ export type ScheduleFormState = {
     copy_tour_amenities: boolean;
     tour_schedule_amenities: import('../../tours/amenities').ScheduleAmenity[];
     departure_location_id: number | "";
-    pickup_points: Array<{ name: string; address: string; pickup_at: string; note: string }>;
+    pickup_points: Array<{ name: string; address: string; pickup_at: string; note: string; day_offset?: number; pickup_time?: string }>;
     start_date: string;
     start_time: string;
     end_date: string;

@@ -1,18 +1,26 @@
 "use client";
 
-import { createEmptyPickupPoint, pickupDateToInput, pickupInputToDate } from "@/lib/admin/schedules/forms";
+import { createEmptyPickupPoint, pickupDateToInput, pickupInputToDate, updateScheduleStart } from "@/lib/admin/schedules/forms";
+import { setTemplatePickupDate } from "@/lib/admin/schedules/template";
 import { DateTimeInput } from "@/components/common/date-time/DateTimeInput";
+import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
+import { parseCalendarDate } from "@/lib/utils/calendar";
 import { ArrowDown, ArrowUp, CalendarDays, Flag, Info, MapPin, NotebookText, Plus, Trash2 } from "lucide-react";
 import { useId, type Dispatch, type SetStateAction } from "react";
 import type { ScheduleFormState } from "shared";
 import { TourEditorCard as ScheduleEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 
-export function ScheduleDepartureCard({ form, disabled, onChange }: {
-  form: ScheduleFormState; disabled: boolean; onChange: Dispatch<SetStateAction<ScheduleFormState>>;
+export function ScheduleDepartureCard({ form, disabled, onChange, templateMode = false, durationDays = 1 }: {
+  form: ScheduleFormState; disabled: boolean; onChange: Dispatch<SetStateAction<ScheduleFormState>>; templateMode?: boolean; durationDays?: number;
 }) {
   const id = useId();
-  function update(index: number, field: keyof ScheduleFormState["pickup_points"][number], value: string) {
-    onChange(previous => ({ ...previous, pickup_points: previous.pickup_points.map((point, i) => i === index ? { ...point, [field]: value } : point) }));
+  const minPickup = templateMode ? parseCalendarDate(form.start_date) : null;
+  const maxPickup = templateMode ? parseCalendarDate(form.start_date) : null;
+  if (minPickup) minPickup.setDate(minPickup.getDate() - 1);
+  if (maxPickup) { maxPickup.setDate(maxPickup.getDate() + durationDays - 1); maxPickup.setHours(23, 59, 0, 0); }
+  function update(index: number, field: 'name' | 'address' | 'pickup_at' | 'note', value: string) {
+    if (templateMode && field === 'pickup_at') { onChange(previous => setTemplatePickupDate(previous, index, value)); return; }
+    onChange(previous => ({ ...previous, pickup_points: previous.pickup_points.map((point, i) => i === index ? { ...point, [field]: value, ...(field === 'pickup_at' ? { day_offset: undefined, pickup_time: undefined } : {}) } : point) }));
   }
   function move(index: number, offset: number) {
     onChange(previous => {
@@ -22,8 +30,9 @@ export function ScheduleDepartureCard({ form, disabled, onChange }: {
       return { ...previous, pickup_points: points };
     });
   }
-  return <ScheduleEditorCard id="schedule-pickups" title="Địa điểm đón khách" description="Thiết lập thông tin và thời gian đón khách cho chuyến đi." icon={MapPin}>
-    {disabled && <p className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[12px] leading-[1.7] text-amber-800"><Info size={16} className="mt-0.5 shrink-0" />Điểm đón đã được khóa vì chuyến đã khởi hành hoặc có đơn đặt.</p>}
+  return <ScheduleEditorCard id="schedule-pickups" title={templateMode ? "Điểm đón mẫu" : "Địa điểm đón khách"} description={templateMode ? "Thiết lập ngày đón theo hành trình và giờ đón dùng cho các chuyến mới." : "Thiết lập thông tin và thời gian đón khách cho chuyến đi."} icon={MapPin}>
+    {templateMode && <div className="mb-5 space-y-2 rounded-xl border border-blue-100 bg-blue-50/60 p-3.5"><p className="text-[13px] font-semibold text-[#26324e]">Ngày khởi hành tham chiếu</p><fieldset disabled={disabled}><AdminDatePicker value={form.start_date} onChange={date => onChange(previous => updateScheduleStart(previous, date, previous.start_time, durationDays))} disabled={disabled} placeholder="Chọn ngày khởi hành của mẫu" /></fieldset><p className="text-[12px] leading-6 text-[#7b879d]">Dùng ngày này để chọn ngày và giờ đón bên dưới. Khi tạo chuyến mới, hệ thống tự dịch ngày đón theo ngày khởi hành thực tế và giữ nguyên giờ đón.</p></div>}
+    {disabled && !templateMode && <p className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[12px] leading-[1.7] text-amber-800"><Info size={16} className="mt-0.5 shrink-0" />Điểm đón đã được khóa vì chuyến đã khởi hành hoặc có đơn đặt.</p>}
     <div className="space-y-4">
       {form.pickup_points.map((point, index) => <fieldset key={index} disabled={disabled} className="overflow-hidden rounded-[16px] border border-[#cfe1f8] bg-[linear-gradient(145deg,#fff,#f5f9ff)]">
         <legend className="sr-only">Điểm đón {index + 1}</legend>
@@ -45,7 +54,8 @@ export function ScheduleDepartureCard({ form, disabled, onChange }: {
             <Icon size={19} className="mt-0.5 shrink-0 text-[#0868f9]" />
             <div className="min-w-0 flex-1">
               <label htmlFor={`${id}-${index}-${field}`} className="mb-1.5 block text-[13px] font-semibold text-[#26324e]">{label}{field !== "note" && <span className="ml-1 text-rose-500">*</span>}</label>
-              {field === "pickup_at" ? <DateTimeInput id={`${id}-${index}-${field}`} ariaLabel={`${label} - Điểm đón ${index + 1}`} value={pickupInputToDate(point.pickup_at)} onChange={value => update(index, field, pickupDateToInput(value))} disabled={disabled} placeholder="Chọn ngày và giờ đón" className="[&>button]:min-h-10 [&>button]:rounded-[11px] [&>button]:border-[#dfe6f1] [&>button]:bg-[#f8faff] [&>button]:py-2" /> : <input id={`${id}-${index}-${field}`} type="text" maxLength={max} value={point[field]} onChange={event => update(index, field, event.target.value)} placeholder={placeholder} className="min-h-10 w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-2 text-[14px] text-[#233455] outline-none placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:ring-2 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500" />}
+              {field === "pickup_at" ? <DateTimeInput id={`${id}-${index}-${field}`} ariaLabel={`${label} - Điểm đón ${index + 1}`} value={pickupInputToDate(point.pickup_at)} onChange={value => update(index, field, pickupDateToInput(value))} minDate={minPickup ?? undefined} maxDate={maxPickup ?? undefined} disabled={disabled} placeholder="Chọn ngày và giờ đón" className="[&>button]:min-h-10 [&>button]:rounded-[11px] [&>button]:border-[#dfe6f1] [&>button]:bg-[#f8faff] [&>button]:py-2" /> : <input id={`${id}-${index}-${field}`} type="text" maxLength={max} value={point[field]} onChange={event => update(index, field, event.target.value)} placeholder={placeholder} className="min-h-10 w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-2 text-[14px] text-[#233455] outline-none placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:ring-2 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500" />}
+              {field === "pickup_at" && !templateMode && <p className="mt-1.5 text-xs leading-5 text-slate-500">Thời gian đón khách phải sớm hơn thời gian khởi hành của đợt.</p>}
             </div>
           </div>)}
         </div>

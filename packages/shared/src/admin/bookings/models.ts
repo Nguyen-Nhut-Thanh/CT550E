@@ -16,6 +16,7 @@ export type AdminBooking = {
     child_unit_price?: number | string;
     infant_unit_price?: number | string;
     discount_amount?: number | string;
+    membership_snapshot?: import("../../membership/models").MembershipBookingSnapshot | null;
     tour_schedules?: {
         departure_location?: { name: string } | null;
         tour_schedule_id?: number;

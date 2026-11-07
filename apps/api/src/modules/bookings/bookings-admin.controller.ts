@@ -10,7 +10,7 @@ import type { BookingPayload, AdminBookingFilters } from "shared";
 export class BookingsAdminController {
     constructor(private readonly service: BookingsAdminService, private readonly bookings: BookingsService, private readonly access: WorkforceAccessService) { }
     @Get("admin/customer/:id")
-    async customer(@Param("id", ParseIntPipe) id: number, @Req() req: any) { await this.access.customer(req.workforce, id); return this.bookings.customerForStaff(id); }
+    async customer(@Param("id", ParseIntPipe) id: number, @Req() req: any) { if (!req.workforce.isManager) await this.access.customer(req.workforce, id); return this.bookings.customerForStaff(id); }
     @Post("admin/customer/:id")
     async createForCustomer(@Param("id", ParseIntPipe) id: number, @Body() body: BookingPayload, @Req() req: any) {
         await this.access.customer(req.workforce, id);
@@ -26,7 +26,7 @@ export class BookingsAdminController {
     @Query("limit")
     limit?: string,
     @Query() filters?: AdminBookingFilters) {
-        return this.service.listAdminBookings(Boolean(req.user.isStaff), Number(page || 1), Number(limit || 10), filters);
+        return this.service.listAdminBookings(Boolean(req.workforce.isManager), Number(page || 1), Number(limit || 10), filters);
     }
     @Get("admin/:id")
     @UseGuards(AdminAuthGuard)
@@ -35,7 +35,7 @@ export class BookingsAdminController {
     id: number,
     @Req()
     req: any) {
-        return this.service.getAdminBookingDetail(id, Boolean(req.user.isStaff));
+        return this.service.getAdminBookingDetail(id, Boolean(req.workforce.isManager));
     }
     @Post("admin/:id/approve-cancel")
     @UseGuards(AdminAuthGuard)
@@ -49,7 +49,7 @@ export class BookingsAdminController {
     },
     @Req()
     req: any) {
-        return this.service.approveCancel(id, Boolean(req.user.isStaff), dto.note, dto.refundAmount);
+        return this.service.approveCancel(id, Boolean(req.workforce.isAdmin), dto.note, dto.refundAmount);
     }
     @Post("admin/:id/reject-cancel")
     @UseGuards(AdminAuthGuard)
@@ -62,6 +62,6 @@ export class BookingsAdminController {
     },
     @Req()
     req: any) {
-        return this.service.rejectCancel(id, Boolean(req.user.isStaff), dto.note);
+        return this.service.rejectCancel(id, Boolean(req.workforce.isAdmin), dto.note);
     }
 }
