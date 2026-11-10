@@ -36,6 +36,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
   const tour = b.tour_schedules?.tours;
   const name = tour?.name || `Đơn đặt tour #${b.booking_id}`;
+  const tourSummary = tour?.summary?.trim() || (tour?.description ? tour.description.replace(/<[^>]*>/g, '').trim() : "");
   const rows = [
     { label: "Người lớn", quantity: b.adult_count, price: Number(b.adult_unit_price) || 0 },
     { label: "Trẻ em", quantity: b.child_count, price: Number(b.child_unit_price) || 0 },
@@ -51,29 +52,56 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
   const paymentStatus = payment ? ({ success: "Đã thanh toán", paid: "Đã thanh toán", completed: "Đã thanh toán", pending: "Chờ thanh toán", failed: "Thất bại", refunded: "Đã hoàn tiền", review: "Cần đối soát" }[payment.status.toLowerCase()] || payment.status) : "Chưa có giao dịch";
   const method = payment ? ({ vnpay: "VNPay", momo: "MoMo", bank: "Chuyển khoản", bank_transfer: "Chuyển khoản" }[payment.method.toLowerCase()] || payment.method) : "Chưa cập nhật";
   return <div className="text-[#092448] [background:radial-gradient(ellipse_at_25%_40%,_#f6fdff,_transparent_65%),_#eefaff] min-h-[80vh] pb-9 text-[13px] [&_a:focus-visible]:[outline:3px_solid_#24aaff] [&_a:focus-visible]:[outline-offset:4px] [&_a:focus-visible]:rounded-[7px]">
-    <header className="relative isolate min-h-62.5 pt-7 pb-[43px] overflow-hidden px-0 after:content-[''] after:absolute after:-bottom-5 after:-left-[2%] after:h-9.5 after:w-[104%] after:bg-[#eefaff] after:rounded-[50%_45%_0_0] after:[transform:rotate(-1deg)] min-[1450px]:min-h-[245px] max-[800px]:pt-5 max-[800px]:pb-10 max-[480px]:pt-4.5">
+    <header className="relative isolate pt-5 pb-8 overflow-hidden px-0 after:content-[''] after:absolute after:-bottom-5 after:-left-[2%] after:h-9.5 after:w-[104%] after:bg-[#eefaff] after:rounded-[50%_45%_0_0] after:[transform:rotate(-1deg)] max-[800px]:pt-4 max-[800px]:pb-6 max-[480px]:pt-3.5 max-[480px]:pb-5">
       <div className="absolute top-0 right-0 bottom-0 left-0 z-[-2] [background:url('/images/about/travel-dreams-banner.png')_center_53%/cover]" aria-hidden="true" /><div className="absolute top-0 right-0 bottom-0 left-0 z-[-1] [background:linear-gradient(90deg,_#e5f4fff7_0%,_#e4f4fff0_35%,_#e1f3ff99_61%,_#e8f9ff12_100%)] max-[800px]:[background:linear-gradient(90deg,_#e5f4fff5,_#e4f4ffd9_65%,_#e1f3ff90)]" />
       <div className="w-[min(1430px,_93%)] mx-auto max-[800px]:w-[92%]">
-        <nav aria-label="Đường dẫn" className="flex items-center text-[#466286] text-[13px] mb-[35px] flex-wrap gap-[13px] [&_a:hover]:text-[#0064ff] max-[800px]:text-[11px] max-[800px]:mb-[25px] max-[800px]:gap-2 max-[480px]:text-[10px] max-[480px]:gap-1.5"><Link href="/" aria-label="Trang chủ"><Home size={18} /></Link><ChevronRight size={15} /><Link href="/account/bookings">Lịch sử đặt tour</Link><ChevronRight size={15} /><span>Chi tiết booking</span></nav>
-        <div className="flex items-start relative gap-11.5 max-[1150px]:gap-5.5 max-[800px]:gap-[15px] max-[480px]:gap-2.5"><Link href="/account/bookings" className="bg-[#ffffffeb] text-[#0064ff] grid place-items-center w-12 h-12 shrink-0 rounded-full [transition:background_.2s] border border-[white] border-solid hover:bg-[#d9efff] max-[800px]:w-[39px] max-[800px]:h-[39px] max-[480px]:w-[33px] max-[480px]:h-[33px] max-[480px]:[&_svg]:w-[19px]" aria-label="Quay lại lịch sử đặt tour"><ArrowLeft size={23} /></Link><div className="[&>p]:uppercase [&>p]:text-[12px] [&>p]:tracking-[.02em]! [&>p]:text-[#4e709b] [&>p]:mt-[3px] [&>p]:mb-2.5 [&>p]:mx-0 [&>span]:text-[13px] [&>span_strong]:font-semibold max-[800px]:[&>span]:text-[12px] max-[480px]:[&>p]:text-[10px]"><p>Chi tiết booking</p><div className="flex items-start mb-2 gap-[23px] [&_h1]:text-[clamp(23px,_2.15vw,_31px)] [&_h1]:leading-[1.3] [&_h1]:tracking-[-.025em]! [&_h1]:font-extrabold [&_h1]:max-w-170 max-[1150px]:[&_h1]:max-w-140 max-[1150px]:gap-3.5 max-[800px]:flex-wrap max-[800px]:gap-[11px] max-[800px]:[&_h1]:text-[25px] max-[480px]:[&_h1]:text-[21px] max-[480px]:[&_h1]:leading-[1.4]"><h1>{name}</h1><Status value={b.status} /></div><span>Mã booking: <strong>#BK{String(b.booking_id).padStart(6, "0")}</strong></span></div></div>
-        <Plane aria-hidden="true" className="absolute right-[10%] top-[55px] text-[white] [transform:rotate(-13deg)] max-[1150px]:hidden" size={45} strokeWidth={1.4} />
+        <nav aria-label="Đường dẫn" className="flex items-center text-[#466286] text-[13px] mb-3 flex-wrap gap-2 [&_a:hover]:text-[#0064ff] max-[800px]:text-[11px] max-[800px]:mb-2 max-[480px]:text-[10px] max-[480px]:gap-1.5"><Link href="/" aria-label="Trang chủ"><Home size={17} /></Link><ChevronRight size={14} /><Link href="/account/bookings">Lịch sử đặt tour</Link><ChevronRight size={14} /><span>Chi tiết booking</span></nav>
+        <div className="flex items-start relative gap-5 max-[800px]:gap-3 max-[480px]:gap-2.5">
+          <Link href="/account/bookings" className="bg-[#ffffffeb] text-[#0064ff] grid place-items-center w-10.5 h-10.5 shrink-0 rounded-full [transition:background_.2s] border border-[white] border-solid hover:bg-[#d9efff] max-[800px]:w-9 max-[800px]:h-9 max-[480px]:w-8 max-[480px]:h-8 max-[480px]:[&_svg]:w-4" aria-label="Quay lại lịch sử đặt tour"><ArrowLeft size={20} /></Link>
+          <div className="min-w-0 flex-1">
+            <p className="uppercase text-[11px] tracking-wider text-[#4e709b] font-bold mb-1 max-[480px]:text-[10px]">Chi tiết booking</p>
+            <div className="flex items-center mb-1 gap-3.5 flex-wrap [&_h1]:text-[clamp(21px,_2vw,_28px)] [&_h1]:leading-[1.25] [&_h1]:tracking-[-.025em]! [&_h1]:font-extrabold max-[800px]:gap-2 max-[480px]:[&_h1]:text-[19px]">
+              <h1>{name}</h1>
+              <Status value={b.status} />
+            </div>
+            {tourSummary && (
+              <p className="text-[12.5px] leading-relaxed text-[#4e709b] max-w-2xl line-clamp-2 mb-1.5 font-normal">
+                {tourSummary}
+              </p>
+            )}
+            <div className="text-[12px] text-[#5c7da6]">
+              Mã booking: <strong className="font-bold text-[#092448]">#BK{String(b.booking_id).padStart(6, "0")}</strong>
+            </div>
+          </div>
+        </div>
+        <Plane aria-hidden="true" className="absolute right-[10%] top-[45px] text-[white] [transform:rotate(-13deg)] max-[1150px]:hidden" size={40} strokeWidth={1.4} />
       </div>
     </header>
-    <div className="w-[min(1430px,_93%)] grid grid-cols-[minmax(0,_1.42fr)_minmax(0,_1fr)] relative z-[2] -mt-2 mx-auto gap-[21px] max-[1150px]:grid-cols-[minmax(0,_1.2fr)_minmax(0,_1fr)] max-[1150px]:gap-[15px] max-[800px]:w-[92%] max-[800px]:grid-cols-[1fr] max-[800px]:-mt-[5px]">
-      <div className="flex flex-col min-w-0 gap-5 max-[480px]:gap-[15px]">
-        <section className="bg-[#ffffffed] rounded-[19px] shadow-[0_3px_18px_#c9e9fa08] min-w-0 border border-[#dcecff] border-solid p-5 min-[1450px]:p-[21px] max-[1150px]:p-4 max-[800px]:p-4.5 max-[480px]:rounded-[17px] max-[480px]:p-[15px]" aria-label="Thông tin tour">
-          <div className="flex mb-5 gap-[25px] min-[1450px]:gap-[25px] max-[1150px]:gap-4 max-[800px]:gap-[17px] max-[480px]:gap-3"><ImageWithFallback src={tour?.tour_images?.[0]?.image_url || ""} alt={name} className="w-39 h-[157px] object-cover rounded-[12px] shrink-0 max-[1150px]:w-[115px] max-[1150px]:h-[145px] max-[800px]:w-[135px] max-[800px]:h-[145px] max-[480px]:w-22.5 max-[480px]:h-35.5" /><div className="flex-1 min-w-0 [&_dl]:m-0" data-booking-tour-copy=""><SectionTitle icon={<Ticket size={24} />} title="Thông tin tour" description="Các thông tin cơ bản của tour bạn đã đặt." /><dl><Field label="Tên tour">{tour ? <Link href={`/tours/${tour.tour_id}`}>{name}</Link> : name}</Field></dl></div></div>
-          <dl className="grid grid-cols-4 gap-[13px] max-[1150px]:grid-cols-[1fr_1fr] max-[1150px]:gap-2.5 max-[800px]:grid-cols-4 max-[480px]:grid-cols-[1fr_1fr]">{[
+    <div className="w-[min(1430px,_93%)] grid grid-cols-[minmax(0,_1.42fr)_minmax(0,_1fr)] relative z-[2] -mt-2 mx-auto gap-4 max-[1150px]:grid-cols-[minmax(0,_1.2fr)_minmax(0,_1fr)] max-[1150px]:gap-3.5 max-[800px]:w-[92%] max-[800px]:grid-cols-[1fr]">
+      <div className="flex flex-col min-w-0 gap-4 max-[480px]:gap-3">
+        <section className="bg-[#ffffffed] rounded-[19px] shadow-[0_3px_18px_#c9e9fa08] min-w-0 border border-[#dcecff] border-solid p-4.5 max-[1150px]:p-4 max-[480px]:rounded-[17px] max-[480px]:p-3.5" aria-label="Thông tin tour">
+          <div className="flex mb-3.5 gap-4 max-[800px]:gap-3 max-[480px]:gap-2.5">
+            <ImageWithFallback src={tour?.tour_images?.[0]?.image_url || ""} alt={name} className="w-36 h-[140px] object-cover rounded-[12px] shrink-0 max-[1150px]:w-[110px] max-[1150px]:h-[130px] max-[800px]:w-[120px] max-[800px]:h-[130px] max-[480px]:w-20 max-[480px]:h-28" />
+            <div className="flex-1 min-w-0 [&_dl]:m-0" data-booking-tour-copy="">
+              <SectionTitle icon={<Ticket size={22} />} title="Thông tin tour" description="Các thông tin cơ bản của tour bạn đã đặt." />
+              <dl><Field label="Tên tour">{tour ? <Link href={`/tours/${tour.tour_id}`}>{name}</Link> : name}</Field></dl>
+            </div>
+          </div>
+          {/* Hàng trên: 4 cột thông tin tour */}
+          <dl className="grid grid-cols-4 gap-2.5 max-[1150px]:grid-cols-[1fr_1fr] max-[800px]:grid-cols-4 max-[480px]:grid-cols-[1fr_1fr]">{[
             { icon: Plane, label: "Mã tour", value: tour?.code || "Chưa cập nhật" },
             { icon: CalendarDays, label: "Ngày khởi hành", value: date(b.tour_schedules?.start_date) },
             { icon: Clock3, label: "Thời gian", value: tour ? `${tour.duration_days} ngày ${tour.duration_nights} đêm` : "Chưa cập nhật" },
             { icon: MapPin, label: "Điểm khởi hành", value: b.departure_name || b.tour_schedules?.departure_location?.name || "Chưa cập nhật" },
-            ...(b.pickup_snapshot ? [
-              { icon: MapPin, label: "Điểm đón đã chọn", value: `${b.pickup_snapshot.name} — ${b.pickup_snapshot.address}` },
+          ].map(({ icon: Icon, label, value }) => <div key={label} className="[&_dt]:text-[9px] [&_dt]:uppercase [&_dt]:tracking-[.06em]! [&_dt]:text-[#6283af] [&_dt]:mb-0.5 flex items-center min-w-0 rounded-[12px] [background:linear-gradient(125deg,_#f3f8fd,_#f6faff)] px-2.5 py-2.5 gap-2 [&_dd]:text-[12px] [&_dd]:font-[750] [&_dd]:leading-[1.5] [&_dd]:wrap-anywhere min-[1450px]:[&_dd]:text-[12.5px] max-[1150px]:p-2.5 max-[800px]:flex-col max-[800px]:items-start max-[800px]:p-2.5 max-[800px]:gap-1.5 max-[480px]:flex-row max-[480px]:items-center max-[480px]:p-2 max-[480px]:gap-2 max-[480px]:[&_dd]:text-[11px] max-[480px]:[&_dt]:text-[8px]"><span className="grid place-items-center [background:linear-gradient(135deg,_#eaf5ff,_#e2f0ff)] text-[#0064ff] rounded-full w-10 h-10 shrink-0 max-[480px]:w-8 max-[480px]:h-8 max-[480px]:[&_svg]:w-[18px]"><Icon size={21} /></span><div><dt>{label}</dt><dd>{value}</dd></div></div>)}</dl>
+
+          {/* Hàng dưới: 2 cột (Địa điểm đón + Thời gian đón) */}
+          {b.pickup_snapshot && (
+            <dl className="grid grid-cols-2 gap-2.5 mt-2.5 max-[480px]:grid-cols-1">{[
+              { icon: MapPin, label: "Địa điểm đón", value: b.pickup_snapshot.address ? `${b.pickup_snapshot.name} — ${b.pickup_snapshot.address}` : b.pickup_snapshot.name },
               { icon: Clock3, label: "Thời gian đón", value: date(b.pickup_snapshot.pickup_at, true) },
-              ...(b.pickup_snapshot.note ? [{ icon: MapPin, label: "Hướng dẫn đón", value: b.pickup_snapshot.note }] : []),
-            ] : []),
-          ].map(({ icon: Icon, label, value }) => <div key={label} className="[&_dt]:text-[9px] [&_dt]:uppercase [&_dt]:tracking-[.06em]! [&_dt]:text-[#6283af] [&_dt]:mb-1 flex items-center min-w-0 rounded-[13px] [background:linear-gradient(125deg,_#f3f8fd,_#f6faff)] px-2.5 py-[13px] gap-2.5 [&_dd]:text-[12px] [&_dd]:font-[750] [&_dd]:leading-[1.6] [&_dd]:wrap-anywhere min-[1450px]:[&_dd]:text-[13px] max-[1150px]:p-3 max-[800px]:flex-col max-[800px]:items-start max-[800px]:p-3 max-[800px]:gap-2 max-[480px]:flex-row max-[480px]:items-center max-[480px]:p-[11px] max-[480px]:gap-[9px] max-[480px]:[&_dd]:text-[11px] max-[480px]:[&_dt]:text-[8px]"><span className="grid place-items-center [background:linear-gradient(135deg,_#eaf5ff,_#e2f0ff)] text-[#0064ff] rounded-full w-[43px] h-[43px] shrink-0 max-[480px]:w-[35px] max-[480px]:h-[35px] max-[480px]:[&_svg]:w-[21px]"><Icon size={24} /></span><div><dt>{label}</dt><dd>{value}</dd></div></div>)}</dl>
+            ].map(({ icon: Icon, label, value }) => <div key={label} className="[&_dt]:text-[9px] [&_dt]:uppercase [&_dt]:tracking-[.06em]! [&_dt]:text-[#6283af] [&_dt]:mb-0.5 flex items-center min-w-0 rounded-[12px] [background:linear-gradient(125deg,_#f3f8fd,_#f6faff)] px-3 py-2.5 gap-2.5 [&_dd]:text-[12px] [&_dd]:font-[750] [&_dd]:leading-[1.5] [&_dd]:wrap-anywhere min-[1450px]:[&_dd]:text-[12.5px] max-[1150px]:p-2.5 max-[480px]:p-2 max-[480px]:gap-2 max-[480px]:[&_dd]:text-[11px] max-[480px]:[&_dt]:text-[8px]"><span className="grid place-items-center [background:linear-gradient(135deg,_#eaf5ff,_#e2f0ff)] text-[#0064ff] rounded-full w-10 h-10 shrink-0 max-[480px]:w-8 max-[480px]:h-8 max-[480px]:[&_svg]:w-[18px]"><Icon size={21} /></span><div><dt>{label}</dt><dd>{value}</dd></div></div>)}</dl>
+          )}
         </section>
         <BookingCrewCard booking={b} />
         {b.status === 'pending' && b.tour_schedules?.start_date && new Date(b.tour_schedules.start_date).getTime() > Date.now() && <section aria-label="Thanh toán đơn đặt tour" className="space-y-3 rounded-2xl border border-blue-100 bg-white p-5">{payments.some(item => item.status === 'review') ? <div><h2 className="text-base font-bold text-slate-900">Giao dịch đang được đối soát</h2><p className="mt-1 text-sm leading-6 text-slate-500">Vui lòng liên hệ hỗ trợ để kiểm tra giao dịch trước khi thanh toán thêm.</p></div> : <><div><h2 className="text-base font-bold text-slate-900">Đơn đang chờ thanh toán</h2><p className="mt-1 text-sm leading-6 text-slate-500">Thanh toán {money(b.total_amount)} qua VNPay để hoàn tất đơn đặt tour.</p></div><BookingPaymentButton bookingId={b.booking_id} /></>}</section>}

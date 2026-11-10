@@ -1,10 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Param, ParseIntPipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import type { CreateReplyPayload, CreateReviewPayload } from "shared";
+import { CloudinaryService } from "../../infrastructure/storage/cloudinary.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { ReviewsService } from "./reviews.service";
 @Controller()
 export class ReviewsController {
-    constructor(private readonly reviewsService: ReviewsService) { }
+    constructor(
+        private readonly reviewsService: ReviewsService,
+        private readonly cloudinaryService: CloudinaryService,
+    ) { }
     @UseGuards(JwtAuthGuard)
     @Get("account/reviews")
     getMyReviews(
@@ -25,6 +30,23 @@ export class ReviewsController {
         comment: string;
     }) {
         return this.reviewsService.updateMyReview(req.user.accountId, reviewId, dto);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Post("reviews/upload-image")
+    @UseInterceptors(FileInterceptor("file"))
+    async uploadReviewImage(@UploadedFile() file: Express.Multer.File) {
+        if (!file) {
+            throw new BadRequestException("Không tìm thấy file để upload");
+        }
+        try {
+            const result = await this.cloudinaryService.uploadBuffer(file.buffer, {
+                folder: "JourniTrip/reviews",
+                resource_type: "image",
+            });
+            return { url: result.secure_url };
+        } catch (error: any) {
+            throw new InternalServerErrorException(`Lỗi upload ảnh đánh giá: ${error?.message || "Lỗi không xác định"}`);
+        }
     }
     // 1. Lấy danh sách đánh giá công khai (Đã duyệt) của 1 Tour
     @Get("tours/:tourId/reviews")

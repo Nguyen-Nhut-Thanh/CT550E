@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import { isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipPrice, type MembershipTier, type ScheduleConflict } from "shared";
 import type { PaymentMethod, TravelerForm, TravelerType, UserProfileLite, VoucherValidationResult, } from "shared";
 
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { BookingContactForm } from "@/components/booking/checkout/BookingContactForm";
 import { BookingExtraServices } from "@/components/booking/checkout/BookingExtraServices";
 import { BookingOrderSummary } from "@/components/booking/checkout/BookingOrderSummary";
@@ -21,6 +22,7 @@ import { BookingVoucherAndPayment } from "@/components/booking/vouchers/BookingV
 import InlineNotice from "@/components/common/feedback/InlineNotice";
 
 import { fetchMe, getToken } from "@/lib/auth/session";
+import { useToast } from "@/lib/notifications/useToast";
 import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher, checkBookingConflicts } from "@/lib/booking/api";
 import { parseBirthday } from "@/lib/booking/birthday";
 import { getSingleRoomSurchargeTotal, getUnitPrice } from "@/lib/booking/pricing";
@@ -86,6 +88,10 @@ function BookingContent() {
     useState<VoucherValidationResult | null>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("vnpay");
+  const toast = useToast();
+  const [travelerErrors, setTravelerErrors] = useState<
+    Record<number, { fullName?: string; idNumber?: string; birthday?: string }>
+  >({});
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitTone, setSubmitTone] = useState<"error" | "success">("success");
   const [submitting, setSubmitting] = useState(false);
@@ -237,6 +243,7 @@ function BookingContent() {
         selectedCode.trim(),
         pricing.subtotal,
         customerId,
+        tour?.tour_id,
       );
       if (requestId !== voucherRequest.current) return false;
       setVoucherResult({
@@ -269,6 +276,23 @@ function BookingContent() {
         travelerIndex === index ? { ...traveler, [field]: value } : traveler,
       ),
     );
+    if (travelerErrors[index]?.[field as "fullName" | "idNumber" | "birthday"]) {
+      setTravelerErrors((prev) => {
+        if (!prev[index]) return prev;
+        const copy = { ...prev };
+        const tCopy = { ...copy[index] };
+        delete tCopy[field as "fullName" | "idNumber" | "birthday"];
+        if (Object.keys(tCopy).length === 0) {
+          delete copy[index];
+        } else {
+          copy[index] = tCopy;
+        }
+        return copy;
+      });
+    }
+    if (submitTone === "error") {
+      setSubmitMessage(null);
+    }
   };
 
   const updateSingleRoomSelection = (adultIndex: number, checked: boolean) => {
@@ -280,7 +304,9 @@ function BookingContent() {
   const handleCountChange = (type: TravelerType, delta: number) => {
     if (delta > 0 && totalGuests >= seatsLeft) {
       setSubmitTone("error");
-      setSubmitMessage(`Tour hiện tại chỉ còn ${seatsLeft} chỗ trống.`);
+      const msg = `Tour hiện tại chỉ còn ${seatsLeft} chỗ trống.`;
+      setSubmitMessage(msg);
+      toast.warning(msg);
       return;
     }
 
@@ -383,12 +409,38 @@ function BookingContent() {
         return;
       }
       setSubmitTone("error");
-      setSubmitMessage(
-        error instanceof Error ? error.message : "Không thể đặt tour. Vui lòng thử lại.",
-      );
+      const errorMsg =
+        error instanceof Error ? error.message : "Không thể đặt tour. Vui lòng thử lại.";
+      setSubmitMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       submitInFlight.current = false;
       setSubmitting(false);
+    }
+  };
+
+  const showErrorAndScroll = (message: string, targetId?: string) => {
+    setSubmitTone("error");
+    setSubmitMessage(message);
+    toast.error(message);
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (
+            el instanceof HTMLInputElement ||
+            el instanceof HTMLTextAreaElement ||
+            el instanceof HTMLSelectElement ||
+            el instanceof HTMLButtonElement
+          ) {
+            el.focus();
+          } else {
+            const input = el.querySelector<HTMLElement>("input, select, textarea, button");
+            if (input) input.focus();
+          }
+        }
+      }, 70);
     }
   };
 
@@ -397,14 +449,16 @@ function BookingContent() {
     if (submitInFlight.current) return;
     if (membershipLoading || membershipError || voucherLoading) return;
     if (!selectedSchedule || !tour) return;
+
     if (selectedSchedule.pickup_points?.length && !pickupPointId) {
-      setSubmitTone("error"); setSubmitMessage("Vui lòng chọn điểm đón trước khi đặt tour."); return;
+      showErrorAndScroll("Vui lòng chọn điểm đón trước khi đặt tour.", "booking-pickup");
+      return;
     }
 
     if (seatsLeft < totalGuests) {
-      setSubmitTone("error");
-      setSubmitMessage(
+      showErrorAndScroll(
         "Số khách đang vượt quá chỗ trống của lịch khởi hành này.",
+        "booking-passengers",
       );
       return;
     }
@@ -419,43 +473,77 @@ function BookingContent() {
 
     setContactErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitTone("error");
-      setSubmitMessage("Vui lòng kiểm tra và điền chính xác thông tin liên hệ.");
+      const firstKey = Object.keys(nextErrors)[0];
+      const targetId = firstKey === "name" ? "contact-name" : firstKey === "phone" ? "contact-phone" : "contact-email";
+      const msg = nextErrors[firstKey as keyof typeof nextErrors] || "Vui lòng kiểm tra và điền chính xác thông tin liên hệ.";
+      showErrorAndScroll(msg, targetId);
       return;
     }
 
-    // 2. Kiểm tra ngày sinh và CCCD của từng hành khách
-    const invalidBirthday = travelers.findIndex(traveler => parseBirthday(traveler.birthday) === null);
-    if (invalidBirthday !== -1) {
-      setSubmitTone("error");
-      setSubmitMessage(`Ngày sinh hành khách ${invalidBirthday + 1} không hợp lệ. Vui lòng nhập dd/mm/yyyy.`);
-      return;
-    }
+    // 2. Kiểm tra thông tin từng hành khách (Họ tên, Ngày sinh, CCCD)
+    const newTravelerErrors: Record<number, { fullName?: string; idNumber?: string; birthday?: string }> = {};
+    let firstTravelerError: { message: string; targetId: string } | null = null;
 
     for (let index = 0; index < travelers.length; index += 1) {
       const traveler = travelers[index];
+      const tErrors: { fullName?: string; idNumber?: string; birthday?: string } = {};
+
       if (!traveler.fullName.trim()) {
-        setSubmitTone("error");
-        setSubmitMessage(`Vui lòng nhập họ và tên cho hành khách ${index + 1}.`);
-        return;
+        tErrors.fullName = `Vui lòng nhập họ và tên cho hành khách ${index + 1}.`;
+        if (!firstTravelerError) {
+          firstTravelerError = {
+            message: `Vui lòng nhập họ và tên cho hành khách ${index + 1}.`,
+            targetId: `traveler-${index}-name`,
+          };
+        }
       }
+
+      if (parseBirthday(traveler.birthday) === null) {
+        tErrors.birthday = "Ngày sinh không hợp lệ (dd/mm/yyyy).";
+        if (!firstTravelerError) {
+          firstTravelerError = {
+            message: `Ngày sinh hành khách ${index + 1} không hợp lệ. Vui lòng nhập dd/mm/yyyy.`,
+            targetId: `traveler-${index}-birthday`,
+          };
+        }
+      }
+
       if (traveler.type === "adult") {
         const travelerId = traveler.idNumber?.trim() || "";
         if (!travelerId) {
-          setSubmitTone("error");
-          setSubmitMessage(`Hành khách ${index + 1} (${traveler.fullName || 'người lớn'}) cần có số CCCD.`);
-          return;
-        }
-        if (!isValidCitizenId(travelerId)) {
-          setSubmitTone("error");
-          setSubmitMessage(`Số CCCD của hành khách ${index + 1} (${traveler.fullName}) phải gồm 9 hoặc 12 chữ số.`);
-          return;
+          tErrors.idNumber = "Cần có số CCCD.";
+          if (!firstTravelerError) {
+            firstTravelerError = {
+              message: `Hành khách ${index + 1} (${traveler.fullName || "người lớn"}) cần có số CCCD.`,
+              targetId: `traveler-${index}-id`,
+            };
+          }
+        } else if (!isValidCitizenId(travelerId)) {
+          tErrors.idNumber = "Số CCCD phải gồm 9 hoặc 12 chữ số.";
+          if (!firstTravelerError) {
+            firstTravelerError = {
+              message: `Số CCCD của hành khách ${index + 1} (${traveler.fullName}) phải gồm 9 hoặc 12 chữ số.`,
+              targetId: `traveler-${index}-id`,
+            };
+          }
         }
       }
+
+      if (Object.keys(tErrors).length > 0) {
+        newTravelerErrors[index] = tErrors;
+      }
+    }
+
+    setTravelerErrors(newTravelerErrors);
+
+    if (firstTravelerError) {
+      showErrorAndScroll(firstTravelerError.message, firstTravelerError.targetId);
+      return;
     }
 
     const token = getToken();
     if (!token) {
+      toast.info("Vui lòng đăng nhập để tiếp tục đặt tour.");
       router.push(
         `/login?callbackUrl=${encodeURIComponent(
           `/booking?tourId=${tour.tour_id}&scheduleId=${selectedSchedule.tour_schedule_id}`,
@@ -558,27 +646,29 @@ function BookingContent() {
               <InlineNotice tone={submitTone}>{submitMessage}</InlineNotice>
             )}
 
-            <BookingPassengerCounts
-              schedules={tour.tour_schedules || []}
-              selectedSchedule={selectedSchedule}
-              onScheduleChange={(schedule) => {
-                if (schedule.tour_schedule_id === selectedSchedule.tour_schedule_id) return;
-                setSelectedSchedule(schedule);
-                setPickupPointId(resolvePickupPoint(schedule)?.pickup_point_id ?? '');
-                setEditingPickup(false);
-                setVoucherResult(null);
-                setVoucherError(null);
-                setSubmitMessage(null);
-              }}
-              adultCount={adultCount}
-              childCount={childCount}
-              infantCount={infantCount}
-              totalGuests={totalGuests}
-              adultUnitPrice={pricing.adultUnitPrice}
-              childUnitPrice={pricing.childUnitPrice}
-              infantUnitPrice={pricing.infantUnitPrice}
-              onCountChange={handleCountChange}
-            />
+            <div id="booking-passengers">
+              <BookingPassengerCounts
+                schedules={tour.tour_schedules || []}
+                selectedSchedule={selectedSchedule}
+                onScheduleChange={(schedule) => {
+                  if (schedule.tour_schedule_id === selectedSchedule.tour_schedule_id) return;
+                  setSelectedSchedule(schedule);
+                  setPickupPointId(resolvePickupPoint(schedule)?.pickup_point_id ?? '');
+                  setEditingPickup(false);
+                  setVoucherResult(null);
+                  setVoucherError(null);
+                  setSubmitMessage(null);
+                }}
+                adultCount={adultCount}
+                childCount={childCount}
+                infantCount={infantCount}
+                totalGuests={totalGuests}
+                adultUnitPrice={pricing.adultUnitPrice}
+                childUnitPrice={pricing.childUnitPrice}
+                infantUnitPrice={pricing.infantUnitPrice}
+                onCountChange={handleCountChange}
+              />
+            </div>
 
             <BookingContactForm
               contactName={contactName}
@@ -610,13 +700,27 @@ function BookingContent() {
                 {!!pickupPointId && selectedSchedule.pickup_points.length > 1 && <button type="button" onClick={() => setEditingPickup(value => !value)} className="text-sm font-semibold text-blue-600">{editingPickup ? 'Đóng' : 'Thay đổi'}</button>}
               </div>
               <p className="text-sm text-slate-500">Áp dụng cho tất cả hành khách trong đơn đặt này.</p>
-              {(!pickupPointId || editingPickup) && <select id="booking-pickup" aria-label="Điểm đón của bạn" required value={pickupPointId} onChange={e => { setPickupPointId(e.target.value ? Number(e.target.value) : ''); setEditingPickup(false); }}
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm">
-                <option value="">Chọn điểm đón của bạn</option>
-                {selectedSchedule.pickup_points.map(point => <option key={point.pickup_point_id} value={point.pickup_point_id}>
-                  {point.name} — {new Date(point.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
-                </option>)}
-              </select>}
+              {(!pickupPointId || editingPickup) && (
+                <div id="booking-pickup" className="w-full">
+                  <CustomDropdown
+                    ariaLabel="Điểm đón của bạn"
+                    variant="compact"
+                    matchTriggerWidth
+                    icon={MapPin}
+                    placeholder="Chọn điểm đón của bạn"
+                    selectedValue={pickupPointId ? String(pickupPointId) : ""}
+                    options={selectedSchedule.pickup_points.map((point) => ({
+                      value: String(point.pickup_point_id),
+                      label: `${point.name} — ${new Date(point.pickup_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`,
+                    }))}
+                    onSelect={(val) => {
+                      setPickupPointId(val ? Number(val) : "");
+                      setEditingPickup(false);
+                    }}
+                    className="w-full [&_button]:min-w-0 [&_button]:py-3"
+                  />
+                </div>
+              )}
               {selectedSchedule.pickup_points.filter(point => point.pickup_point_id === pickupPointId).map(point => <div key={point.pickup_point_id} className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">
                 <p className="font-semibold">{point.name}</p>
                 <p>{point.address}</p>
@@ -633,6 +737,7 @@ function BookingContent() {
               getUnitPrice={getUnitPrice}
               onUpdateTraveler={updateTraveler}
               onUpdateSingleRoomSelection={updateSingleRoomSelection}
+              travelerErrors={travelerErrors}
             />
 
             <BookingExtraServices services={extraServices} selectedIds={selectedExtraIds} onChange={setSelectedExtraIds}

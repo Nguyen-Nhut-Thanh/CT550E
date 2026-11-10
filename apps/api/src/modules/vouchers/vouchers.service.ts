@@ -8,11 +8,11 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 export class VouchersService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async validateForAccount(accountId: number, code: string, rawAmount: string) {
-        return this.validatePublicVoucher(code, rawAmount, await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.'));
+    async validateForAccount(accountId: number, code: string, rawAmount: string, tourId?: number) {
+        return this.validatePublicVoucher(code, rawAmount, await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.'), tourId);
     }
 
-    async validatePublicVoucher(code: string, rawAmount: string, userId?: number) {
+    async validatePublicVoucher(code: string, rawAmount: string, userId?: number, tourId?: number) {
         const amount = Number(rawAmount);
         if (!code?.trim() || !rawAmount?.trim() || !Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Mã giảm giá hoặc giá trị đơn không hợp lệ.');
         const voucher = await this.prisma.vouchers.findFirst({
@@ -23,6 +23,47 @@ export class VouchersService {
             },
         });
         if (!voucher || voucher.used_count >= voucher.usage_limit || amount < Number(voucher.min_order_value)) throw new BadRequestException('Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng.');
+
+        // Kiểm tra giới hạn số lần sử dụng trên mỗi khách hàng
+        if (userId) {
+            const userUsedCount = await this.prisma.bookings.count({
+                where: {
+                    user_id: userId,
+                    voucher_id: voucher.voucher_id,
+                    status: { notIn: ['cancelled', 'rejected'] },
+                },
+            });
+            const maxPerUser = voucher.usage_limit_per_user ?? 1;
+            if (userUsedCount >= maxPerUser) {
+                throw new BadRequestException(`Bạn đã sử dụng hết lượt cho mã giảm giá này (tối đa ${maxPerUser} lần/tài khoản).`);
+            }
+        }
+
+        // Kiểm tra phạm vi tour áp dụng (loại tour hoặc tour cụ thể)
+        if (tourId && voucher.applicable_scope && voucher.applicable_scope !== 'all') {
+            const tour = await this.prisma.tours.findUnique({
+                where: { tour_id: tourId },
+                select: { tour_id: true, tour_type: true, name: true },
+            });
+            if (tour) {
+                if (voucher.applicable_scope === 'tour_type' && voucher.applicable_tour_types.length > 0) {
+                    if (!voucher.applicable_tour_types.includes(tour.tour_type)) {
+                        const typeLabels: Record<string, string> = {
+                            domestic: 'Tour trong nước',
+                            outbound: 'Tour nước ngoài',
+                            international: 'Tour quốc tế',
+                        };
+                        const allowed = voucher.applicable_tour_types.map((t: string) => typeLabels[t] || t).join(', ');
+                        throw new BadRequestException(`Mã giảm giá này chỉ áp dụng cho: ${allowed}.`);
+                    }
+                } else if (voucher.applicable_scope === 'specific_tours' && voucher.applicable_tour_ids.length > 0) {
+                    if (!voucher.applicable_tour_ids.includes(tour.tour_id)) {
+                        throw new BadRequestException('Mã giảm giá này chỉ áp dụng cho một số tour nhất định.');
+                    }
+                }
+            }
+        }
+
         const membership = userId ? await this.prisma.memberships.findUnique({ where: { user_id: userId }, select: { tier: true } }) : null;
         if (!voucherAudienceAllows(voucher.eligible_tiers, userId ? membership?.tier ?? 'bronze' : null)) {
             throw new BadRequestException(userId ? `Voucher chỉ áp dụng cho: ${voucherAudienceLabel(voucher.eligible_tiers)}.` : 'Vui lòng đăng nhập để kiểm tra hạng thành viên được dùng voucher này.');
@@ -37,11 +78,18 @@ export class VouchersService {
         }
         const payload = {
             code: data.code !== undefined ? String(data.code).trim().toUpperCase() : undefined,
+            name: data.name !== undefined ? (data.name ? String(data.name).trim() : null) : undefined,
+            short_description: data.short_description !== undefined ? (data.short_description ? String(data.short_description).trim() : null) : undefined,
+            image_url: data.image_url !== undefined ? (data.image_url ? String(data.image_url).trim() : null) : undefined,
             discount_type: data.discount_type,
             discount_value: data.discount_value !== undefined ? Number(data.discount_value) : undefined,
             min_order_value: data.min_order_value != null ? Number(data.min_order_value) : undefined,
             max_discount_amount: data.max_discount_amount === null ? null : data.max_discount_amount !== undefined ? Number(data.max_discount_amount) : undefined,
             usage_limit: data.usage_limit !== undefined ? Number(data.usage_limit) : undefined,
+            usage_limit_per_user: data.usage_limit_per_user !== undefined ? Number(data.usage_limit_per_user) : undefined,
+            applicable_scope: data.applicable_scope !== undefined ? data.applicable_scope : undefined,
+            applicable_tour_types: data.applicable_tour_types !== undefined ? (Array.isArray(data.applicable_tour_types) ? data.applicable_tour_types : []) : undefined,
+            applicable_tour_ids: data.applicable_tour_ids !== undefined ? (Array.isArray(data.applicable_tour_ids) ? data.applicable_tour_ids.map(Number).filter(Number.isInteger) : []) : undefined,
             start_date: data.start_date ? new Date(data.start_date) : undefined,
             expiry_date: data.expiry_date ? new Date(data.expiry_date) : undefined,
             status: data.status !== undefined ? Number(data.status) : undefined,
@@ -51,6 +99,8 @@ export class VouchersService {
         if (payload.discount_type !== undefined && !['percentage', 'fixed', 'fixed_amount'].includes(payload.discount_type)) throw new BadRequestException('Loại giảm giá không hợp lệ.');
         for (const value of [payload.discount_value, payload.min_order_value, payload.max_discount_amount]) if (value != null && (!Number.isFinite(value) || value < 0 || value > 9_999_999_999)) throw new BadRequestException('Giá trị tiền không hợp lệ.');
         if (payload.usage_limit !== undefined && (!Number.isSafeInteger(payload.usage_limit) || payload.usage_limit < 1 || payload.usage_limit > 2147483647)) throw new BadRequestException('Số lượng voucher không hợp lệ.');
+        if (payload.usage_limit_per_user !== undefined && (!Number.isSafeInteger(payload.usage_limit_per_user) || payload.usage_limit_per_user < 1 || payload.usage_limit_per_user > 2147483647)) throw new BadRequestException('Giới hạn lượt dùng trên mỗi khách không hợp lệ.');
+        if (payload.applicable_scope !== undefined && !['all', 'tour_type', 'specific_tours'].includes(payload.applicable_scope)) throw new BadRequestException('Phạm vi áp dụng tour không hợp lệ.');
         if (payload.status !== undefined && ![0, 1].includes(payload.status)) throw new BadRequestException('Trạng thái voucher không hợp lệ.');
         if ([payload.start_date, payload.expiry_date].some(date => date && Number.isNaN(date.getTime()))) throw new BadRequestException('Thời gian voucher không hợp lệ.');
         return payload;
@@ -99,7 +149,25 @@ export class VouchersService {
         const payload = this.normalizePayload(data);
         if (!payload.code || !payload.discount_type || payload.discount_value === undefined || !payload.start_date || !payload.expiry_date) throw new BadRequestException('Vui lòng nhập đầy đủ thông tin voucher.');
         this.validateDiscount(payload.discount_type, payload.discount_value, payload.start_date, payload.expiry_date);
-        const record = { code: payload.code, discount_type: payload.discount_type, discount_value: payload.discount_value, min_order_value: payload.min_order_value ?? 0, max_discount_amount: payload.max_discount_amount, usage_limit: payload.usage_limit ?? 100, start_date: payload.start_date, expiry_date: payload.expiry_date, status: payload.status ?? 1, eligible_tiers: payload.eligible_tiers ?? [] };
+        const record = {
+            code: payload.code,
+            name: payload.name ?? null,
+            short_description: payload.short_description ?? null,
+            image_url: payload.image_url ?? null,
+            discount_type: payload.discount_type,
+            discount_value: payload.discount_value,
+            min_order_value: payload.min_order_value ?? 0,
+            max_discount_amount: payload.max_discount_amount,
+            usage_limit: payload.usage_limit ?? 100,
+            usage_limit_per_user: payload.usage_limit_per_user ?? 1,
+            applicable_scope: payload.applicable_scope ?? 'all',
+            applicable_tour_types: payload.applicable_tour_types ?? [],
+            applicable_tour_ids: payload.applicable_tour_ids ?? [],
+            start_date: payload.start_date,
+            expiry_date: payload.expiry_date,
+            status: payload.status ?? 1,
+            eligible_tiers: payload.eligible_tiers ?? [],
+        };
         try {
             return await this.prisma.$transaction(async tx => {
                 const voucher = await tx.vouchers.create({ data: record });

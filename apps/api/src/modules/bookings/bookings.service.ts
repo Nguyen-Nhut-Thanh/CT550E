@@ -203,6 +203,8 @@ export class BookingsService {
                     tour_schedule_hotels: { include: { hotel_room_types: true } },
                     tours: {
                         select: {
+                            tour_id: true,
+                            tour_type: true,
                             name: true,
                             status: true,
                         },
@@ -255,6 +257,35 @@ export class BookingsService {
                 });
                 if (voucher && !voucherAudienceAllows(voucher.eligible_tiers, member.tier.id)) {
                     throw new BadRequestException(`Voucher chỉ áp dụng cho: ${voucherAudienceLabel(voucher.eligible_tiers)}.`);
+                }
+                if (voucher) {
+                    const userUsedCount = await tx.bookings.count({
+                        where: {
+                            user_id: dto.user_id,
+                            voucher_id: voucher.voucher_id,
+                            status: { notIn: ['cancelled', 'rejected'] },
+                        },
+                    });
+                    const maxPerUser = voucher.usage_limit_per_user ?? 1;
+                    if (userUsedCount >= maxPerUser) {
+                        throw new BadRequestException(`Bạn đã sử dụng hết lượt cho mã giảm giá này (tối đa ${maxPerUser} lần/tài khoản).`);
+                    }
+
+                    if (voucher.applicable_scope === 'tour_type' && voucher.applicable_tour_types.length > 0) {
+                        if (!voucher.applicable_tour_types.includes(schedule.tours.tour_type)) {
+                            const typeLabels: Record<string, string> = {
+                                domestic: 'Tour trong nước',
+                                outbound: 'Tour nước ngoài',
+                                international: 'Tour quốc tế',
+                            };
+                            const allowed = voucher.applicable_tour_types.map((t: string) => typeLabels[t] || t).join(', ');
+                            throw new BadRequestException(`Mã giảm giá này chỉ áp dụng cho: ${allowed}.`);
+                        }
+                    } else if (voucher.applicable_scope === 'specific_tours' && voucher.applicable_tour_ids.length > 0) {
+                        if (!voucher.applicable_tour_ids.includes(schedule.tours.tour_id)) {
+                            throw new BadRequestException('Mã giảm giá này chỉ áp dụng cho một số tour nhất định.');
+                        }
+                    }
                 }
                 if (voucher && voucher.used_count < voucher.usage_limit && subtotal >= Number(voucher.min_order_value)) {
                     discountAmount = membershipDiscount({ discount_type: voucher.discount_type, discount_value: Number(voucher.discount_value), min_order_value: Number(voucher.min_order_value), max_discount_amount: voucher.max_discount_amount === null ? null : Number(voucher.max_discount_amount) }, subtotal);
@@ -365,6 +396,19 @@ export class BookingsService {
                                 },
                             },
                         },
+                    },
+                },
+                reviews: {
+                    select: {
+                        review_id: true,
+                        tour_id: true,
+                        booking_id: true,
+                        rating: true,
+                        title: true,
+                        comment: true,
+                        images: true,
+                        status: true,
+                        created_at: true,
                     },
                 },
             },

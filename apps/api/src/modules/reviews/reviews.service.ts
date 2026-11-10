@@ -191,6 +191,14 @@ export class ReviewsService {
         if (dto.rating < 1 || dto.rating > 5) {
             throw new BadRequestException("Số sao đánh giá phải từ 1 đến 5.");
         }
+        if (dto.booking_id) {
+            const existingReview = await this.prisma.reviews.findFirst({
+                where: { user_id: userId, booking_id: dto.booking_id },
+            });
+            if (existingReview) {
+                throw new BadRequestException("Đơn đặt tour này đã được bạn đánh giá trước đó.");
+            }
+        }
         const review = await this.prisma.reviews.create({
             data: {
                 user_id: userId,

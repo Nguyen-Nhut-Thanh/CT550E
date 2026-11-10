@@ -54,6 +54,7 @@ export interface BookingTravelersListProps {
     getUnitPrice: (schedule: TourSchedule | null, type: TravelerType) => number;
     onUpdateTraveler: (index: number, field: keyof TravelerForm, value: string) => void;
     onUpdateSingleRoomSelection: (adultIndex: number, checked: boolean) => void;
+    travelerErrors?: Record<number, { fullName?: string; idNumber?: string; birthday?: string }>;
 }
 export interface BookingVoucherAndPaymentProps {
     voucherCode: string;

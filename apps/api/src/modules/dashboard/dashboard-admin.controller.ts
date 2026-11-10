@@ -26,4 +26,42 @@ export class DashboardAdminController {
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         return res.send(csvData);
     }
+
+    @Get('analytics')
+    async getComprehensiveAnalytics(
+        @Query('range') range?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+    ) {
+        return this.dashboardService.getComprehensiveAnalytics(range, from, to);
+    }
+
+    @Get('export-excel')
+    async exportExcel(
+        @Query('range') range: string | undefined,
+        @Query('from') from: string | undefined,
+        @Query('to') to: string | undefined,
+        @Res() res: Response,
+    ) {
+        const xmlData = await this.dashboardService.getComprehensiveExcel(range, from, to);
+        const filename = `bao-cao-thong-ke-toan-dien-${new Date().toISOString().split('T')[0]}.xls`;
+        res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(xmlData);
+    }
+
+    @Get('export-section-csv')
+    @Header('Content-Type', 'text/csv; charset=utf-8')
+    async exportSectionCsv(
+        @Query('section') section: string,
+        @Query('range') range: string | undefined,
+        @Query('from') from: string | undefined,
+        @Query('to') to: string | undefined,
+        @Res() res: Response,
+    ) {
+        const csvData = await this.dashboardService.getSectionCsv(section, range, from, to);
+        const filename = `bao-cao-${section || 'du-lieu'}-${new Date().toISOString().split('T')[0]}.csv`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(csvData);
+    }
 }

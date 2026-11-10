@@ -1,11 +1,18 @@
 export type VoucherForm = {
     customer_types: Array<"all" | import("../../membership/models").MembershipTierId>;
     code: string;
+    name: string;
+    short_description: string;
+    image_url: string;
     discount_type: string;
     discount_value: number;
     min_order_value: number;
     max_discount_amount: number | null;
     usage_limit: number;
+    usage_limit_per_user: number;
+    applicable_scope: 'all' | 'tour_type' | 'specific_tours';
+    applicable_tour_types: string[];
+    applicable_tour_ids: number[];
     start_date: string;
     duration_hours: number;
     status: number;

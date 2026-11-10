@@ -31,6 +31,7 @@ export class MembershipController {
     @Req() req: any,
     @Query("code") code: string,
     @Query("amount") rawAmount: string,
+    @Query("tour_id") tourId?: string,
   ) {
     const amount = Number(rawAmount);
     if (
@@ -45,6 +46,7 @@ export class MembershipController {
       req.user.accountId,
       code,
       rawAmount,
+      tourId ? Number(tourId) : undefined,
     );
   }
 }

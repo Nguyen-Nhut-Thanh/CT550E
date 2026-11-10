@@ -132,6 +132,16 @@ export default function AdminVouchersPage() {
       return;
     }
 
+    if (form.applicable_scope === "tour_type" && !form.applicable_tour_types.length) {
+      showError("Vui lòng chọn ít nhất một loại tour áp dụng");
+      return;
+    }
+
+    if (form.applicable_scope === "specific_tours" && !form.applicable_tour_ids.length) {
+      showError("Vui lòng chọn ít nhất một tour cụ thể áp dụng");
+      return;
+    }
+
     const startDate = new Date(form.start_date);
     if (Number.isNaN(startDate.getTime()) || startDate.getTime() < Date.now()) {
       showError("Ngày bắt đầu phải từ thời điểm hiện tại trở đi");

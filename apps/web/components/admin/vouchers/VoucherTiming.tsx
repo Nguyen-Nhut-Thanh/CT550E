@@ -1,6 +1,7 @@
 "use client";
 
 import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
+import { ImageUpload } from "@/components/common/forms/ImageUpload";
 import { TimeInput } from "@/components/common/date-time/TimeInput";
 import { CalendarDays } from "lucide-react";
 import type { VoucherModalProps } from "shared";
@@ -33,7 +34,7 @@ export function VoucherTiming({
     : undefined;
   return (
     <section
-      className="ui-voucher-modal-panel grid w-full min-w-0 max-w-full grid-cols-1 content-start gap-y-[18px] min-[800px]:row-span-4 min-[800px]:grid-rows-subgrid p-[18px] [border:1px_solid_#e8effa] rounded-[17px] [background:linear-gradient(135deg,_#fff,_#fcfdff)] admin-short-tablet:p-[14px_16px] admin-max-479:p-[14px] ui-voucher-modal-timing [&&]:[background:linear-gradient(135deg,_#f7fbff,_#f0f7ff)]"
+      className="ui-voucher-modal-panel flex flex-col gap-y-[18px] w-full min-w-0 max-w-full p-[18px] [border:1px_solid_#e8effa] rounded-[17px] [background:linear-gradient(135deg,_#f7fbff,_#f0f7ff)] admin-short-tablet:p-[14px_16px] admin-max-479:p-[14px]"
       aria-labelledby={`${idPrefix}-timing`}
     >
       <div className="ui-voucher-modal-sectionHeading flex items-start gap-[11px] [&>span]:grid [&>span]:shrink-0 [&>span]:w-[38px] [&>span]:h-[38px] [&>span]:place-items-center [&>span]:rounded-[12px] [&>span]:[background:#eaf3ff] [&>span]:text-[#1465ff] [&_h3]:text-[16px] [&_h3]:font-[750] [&_h3]:tracking-[-.025em]! [&_h3]:leading-[1.4] [&_p]:mt-[2px] [&_p]:text-[#7a8aaa] [&_p]:text-[11px] [&_p]:leading-[1.5]  admin-max-479:[&_h3]:text-[15px] admin-max-479:[&_p]:text-[10px]">
@@ -41,19 +42,27 @@ export function VoucherTiming({
           <CalendarDays size={21} />
         </span>
         <div>
-          <h3 id={`${idPrefix}-timing`}>Thời gian &amp; số lượng</h3>
-          <p>Thiết lập thời gian hiệu lực và số lượng voucher</p>
+          <h3 id={`${idPrefix}-timing`}>Thời gian, đối tượng &amp; hình ảnh</h3>
+          <p>Thiết lập thời hạn, số lượng, đối tượng và ảnh voucher</p>
         </div>
       </div>
       <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px]">
-        <div className="ui-voucher-modal-date [&_label]:block [&_label]:m-[0_0_7px] [&_label]:text-[#697e9f] [&_label]:text-[10px] [&_label]:font-[750] [&_label]:tracking-[.065em]! [&_label]:leading-[16px] [&_label]:uppercase [&_label_svg]:hidden [&_button[aria-expanded]]:min-h-[44px] [&_button[aria-expanded]]:h-[44px] [&_button[aria-expanded]]:[border:1px_solid_#dce5f3] [&_button[aria-expanded]]:rounded-[10px] [&_button[aria-expanded]]:p-[6px_9px] [&_button[aria-expanded]]:[box-shadow:none] [&_button[aria-expanded]>span]:gap-[7px] [&_button[aria-expanded]_span]:text-[11px] admin-short-tablet:[&_label]:mb-[5px] admin-short-tablet:[&_button[aria-expanded]]:min-h-[40px] admin-short-tablet:[&_button[aria-expanded]]:h-[40px] admin-max-479:[&_button[aria-expanded]]:px-[6px]">
-          <AdminDatePicker
-            label="Ngày bắt đầu"
-            value={startDateValue}
-            minDate={minDate}
-            disabled={disabled}
-            onChange={onStartDateChange}
-          />
+        <div>
+          <label
+            htmlFor={`${idPrefix}-start-date`}
+            className="ui-voucher-modal-label block m-[0_0_7px] text-[#697e9f] text-[10px] font-[750] tracking-[.065em]! leading-[16px] uppercase admin-short-tablet:mb-[5px]"
+          >
+            Ngày bắt đầu
+          </label>
+          <div className="[&_button]:!h-[44px] [&_button]:!min-h-[44px] [&_button]:[border:1px_solid_#dce5f3] [&_button]:rounded-[10px] [&_button]:px-3 [&_button]:py-2 [&_button]:bg-white [&_button]:text-[12px] [&_button]:font-semibold [&_button]:shadow-none [&_button]:min-w-0 [&_button]:w-full admin-short-tablet:[&_button]:!h-[40px] admin-short-tablet:[&_button]:!min-h-[40px]">
+            <AdminDatePicker
+              variant="compact"
+              value={startDateValue}
+              minDate={minDate}
+              disabled={disabled}
+              onChange={onStartDateChange}
+            />
+          </div>
         </div>
         <div>
           <label
@@ -69,11 +78,12 @@ export function VoucherTiming({
             disabled={disabled}
             onChange={onStartTimeChange}
             error={timeError}
-            className="w-full max-w-full [&>button]:h-[44px] [&>button]:min-h-[44px] [&>button]:min-w-0 [&>button]:max-w-full [&>button]:overflow-hidden [&>button]:rounded-[10px] [&>button]:bg-white [&>button]:px-3 [&>button]:py-2 [&>button]:text-[12px] [&>button]:font-semibold [&>button]:shadow-none [&>button>span]:text-[#172340] [&>button>svg]:text-[#3c7cff] admin-short-tablet:[&>button]:h-[40px] admin-short-tablet:[&>button]:min-h-[40px]"
+            className="w-full max-w-full [&>button]:!h-[44px] [&>button]:!min-h-[44px] [&>button]:min-w-0 [&>button]:max-w-full [&>button]:overflow-hidden [&>button]:rounded-[10px] [&>button]:bg-white [&>button]:px-3 [&>button]:py-2 [&>button]:text-[12px] [&>button]:font-semibold [&>button]:shadow-none [&>button>span]:text-[#172340] [&>button>svg]:text-[#3c7cff] admin-short-tablet:[&>button]:!h-[40px] admin-short-tablet:[&>button]:!min-h-[40px]"
           />
         </div>
       </div>
-      <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px] ui-voucher-modal-quantityFields">
+      {/* Hết hạn (giờ) và Đối tượng áp dụng nằm chung hàng */}
+      <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px]">
         <div>
           <label
             htmlFor={`${idPrefix}-duration`}
@@ -101,12 +111,19 @@ export function VoucherTiming({
             Thời gian hiệu lực tính từ ngày bắt đầu
           </p>
         </div>
+        <div className="min-w-0">
+          <VoucherAudienceSelect form={form} onChange={onChange} disabled={disabled} idPrefix={idPrefix} />
+        </div>
+      </div>
+
+      {/* Số lượng phát hành & Giới hạn lượt dùng / khách */}
+      <div className="ui-voucher-modal-fieldGrid grid min-w-0 [&>div]:min-w-0 grid-cols-[repeat(2,_minmax(0,_1fr))] [align-items:start] gap-[14px] admin-max-479:gap-[10px] ui-voucher-modal-quantityFields">
         <div>
           <label
             htmlFor={`${idPrefix}-quantity`}
             className="ui-voucher-modal-label block m-[0_0_7px] text-[#697e9f] text-[10px] font-[750] tracking-[.065em]! leading-[16px] uppercase admin-short-tablet:mb-[5px]"
           >
-            Số lượng
+            Số lượng phát hành
           </label>
           <input
             id={`${idPrefix}-quantity`}
@@ -128,8 +145,58 @@ export function VoucherTiming({
             Tổng số voucher phát hành
           </p>
         </div>
+        <div>
+          <label
+            htmlFor={`${idPrefix}-usage-per-user`}
+            className="ui-voucher-modal-label block m-[0_0_7px] text-[#697e9f] text-[10px] font-[750] tracking-[.065em]! leading-[16px] uppercase admin-short-tablet:mb-[5px]"
+          >
+            Giới hạn / khách
+          </label>
+          <input
+            id={`${idPrefix}-usage-per-user`}
+            type="number"
+            min={1}
+            step={1}
+            required
+            placeholder="1"
+            value={form.usage_limit_per_user ? String(form.usage_limit_per_user) : "1"}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                usage_limit_per_user: Math.max(1, Number(event.target.value) || 1),
+              }))
+            }
+            className="ui-voucher-modal-input block w-full min-w-0 text-ellipsis h-[44px] [border:1px_solid_#dce5f3] rounded-[10px] [background:#fff] p-[10px_36px_10px_13px] text-[#172340] text-[13px] font-semibold [outline:none] [transition:border-color_.15s,_box-shadow_.15s] [&:focus]:[border-color:#6c9eff] [&:focus]:[box-shadow:0_0_0_3px_#edf4ff] [&::placeholder]:text-[#a0adc3] [&::placeholder]:font-medium [&:disabled]:cursor-not-allowed [&:disabled]:text-[#667795] [&:disabled]:[background:#f7f9fc] [&[aria-invalid=true]]:[border-color:#f58ca0] admin-short-tablet:min-h-[40px] admin-short-tablet:h-[40px] admin-max-479:pl-[10px]"
+          />
+          <p className="ui-voucher-modal-hint mt-[7px] text-[#8191ae] text-[10px] leading-[1.6] admin-short-tablet:mt-[4px] admin-short-tablet:leading-[1.4]">
+            Lượt dùng tối đa / 1 khách (mặc định: 1)
+          </p>
+        </div>
       </div>
-      <VoucherAudienceSelect form={form} onChange={onChange} disabled={disabled} idPrefix={idPrefix} />
+
+      {/* Hình ảnh voucher: Sử dụng ImageUpload như phần tour */}
+      <div className="pt-2 border-t border-[#edf1f8]">
+        <label className="ui-voucher-modal-label block m-[0_0_7px] text-[#697e9f] text-[10px] font-[750] tracking-[.065em]! leading-[16px] uppercase">
+          Hình ảnh voucher
+        </label>
+        <div className="[&>div>div:first-child]:rounded-[15px] [&>div>div:first-child]:border [&>div>div:first-child]:border-[#9ec4ff] [&>div>div:first-child]:bg-[linear-gradient(145deg,#f3f8ff,#fff)] [&>div>div:first-child]:px-3 [&>div>div:first-child]:py-[16px] [&>div>div:first-child_p:first-of-type]:text-[14px] [&>div>div:first-child_p:first-of-type]:text-[#354966] [&>div>div:first-child_p:last-of-type]:text-[12px] [&>div>div:first-child_p:last-of-type]:leading-[1.7]">
+          <ImageUpload
+            multiple={false}
+            maxFiles={1}
+            label="Kéo thả ảnh vào đây hoặc nhấn để chọn"
+            value={form.image_url ? [form.image_url] : []}
+            onChange={(urls) => {
+              const url = Array.isArray(urls) ? (urls[0] || "") : (urls || "");
+              onChange((current) => ({
+                ...current,
+                image_url: url,
+              }));
+            }}
+            disabled={disabled}
+          />
+        </div>
+        <p className="mt-1.5 text-[10px] text-[#8191ae]">Ảnh đại diện hiển thị cho chương trình ưu đãi.</p>
+      </div>
     </section>
   );
 }

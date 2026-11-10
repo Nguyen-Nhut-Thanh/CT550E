@@ -6,7 +6,7 @@ export type { MembershipBookingSnapshot } from "./membership/models";
 export type { MembershipTierId, MembershipTier, MembershipSummary, MembershipVoucher, MembershipNotification, MembershipAdminList } from "./membership/models";
 import "./common/browser";
 export type { AccountResourceCache, AccountResourceEntry } from "./account/cache";
-export type { AccountBooking, AccountReviewItem, AccountStats, BookingItemUI, BookingStatusFilter, UserProfile, UserProfileLite } from "./account/models";
+export type { AccountBooking, AccountReviewItem, AccountStats, BookingItemUI, BookingReviewInfo, BookingStatusFilter, UserProfile, UserProfileLite } from "./account/models";
 export type { AccountBookingsTabProps, AccountFavoritesTabProps, AccountOverviewProps, AccountOverviewTabProps, AccountRightSidebarProps, AccountSidebarProps, AccountUserProps } from "./account/props";
 export type { GuardCache, GuardStatus } from "./admin/auth/models";
 export type { AdminBannerPayload, BannerPayload } from "./admin/banners/contracts";
@@ -14,7 +14,22 @@ export type { AdminBooking, AdminBookingFilters, AdminBookingStats, AdminBooking
 export type { ActionModalState } from "./admin/bookings/props";
 export type { ChatWorkspaceProps, ConversationSidebarProps } from "./admin/chat/props";
 export type { AdminBackPageHeaderProps, AdminDatePickerProps, AdminFormCardProps, AdminIconActionButtonProps, AdminIconActionTone, AdminModalShellProps, AdminPageHeaderProps, AdminPaginationProps, AdminSearchInputProps, AdminStatusBadgeProps, AdminStatusBadgeTone, AdminTableAction, AdminTableColumn, AdminTableProps, ImageUploadProps, PriceInputProps } from "./admin/common/props";
-export type { DashboardBookingItem, DashboardChartPoint, DashboardKpi, DashboardReportRow, DashboardStats, DashboardStatusBreakdown, DashboardTimeRange, DashboardTopTour } from "./admin/dashboard/models";
+export type {
+    ComprehensiveAnalytics,
+    CustomerVipItem,
+    DashboardBookingItem,
+    DashboardChartPoint,
+    DashboardKpi,
+    DashboardReportRow,
+    DashboardStats,
+    DashboardStatusBreakdown,
+    DashboardTimeRange,
+    DashboardTopTour,
+    ReviewAnalytics,
+    StaffPerformanceItem,
+    TourTypeStat,
+    VoucherAnalytics,
+} from "./admin/dashboard/models";
 export type { DashboardAnalyticsChartProps, DashboardHeaderProps, DashboardKpiCardsProps, DashboardRecentBookingsProps, DashboardStatusBreakdownProps, DashboardTopToursProps } from "./admin/dashboard/props";
 export type { FlashDealPayload } from "./admin/flash-deals/contracts";
 export type { FlashDealForm } from "./admin/flash-deals/forms";

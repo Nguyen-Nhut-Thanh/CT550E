@@ -61,7 +61,7 @@ export function VoucherModal(props: VoucherModalProps) {
         <div className="ui-voucher-modal-body min-h-0 min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-[0_24px_20px] [scrollbar-width:thin] [scrollbar-color:#d5dfee_transparent] admin-short-tablet:pb-[14px] admin-max-479:p-[0_12px_14px]">
           <fieldset
             disabled={readonly || saving}
-            className="ui-voucher-modal-columns grid grid-cols-[minmax(0,_calc((100%_-_14px)_*_1.35_/_2.35_-_50px))_minmax(0,_1fr)] gap-x-[14px] gap-y-[18px] min-[800px]:grid-rows-[repeat(4,_auto)] min-w-0 [border:0] p-[0] admin-max-799:grid-cols-[minmax(0,_1fr)]"
+            className="ui-voucher-modal-columns grid grid-cols-1 items-start gap-[18px] min-[800px]:grid-cols-2 min-w-0 border-0 p-0"
           >
             <legend className="sr-only">Thiết lập voucher</legend>
             <VoucherInformation

@@ -4,7 +4,7 @@ import { getSingleRoomSurchargeTotal } from "@/lib/booking/pricing";
 import { resolvePickupPoint } from '@/lib/booking/departure';
 import { formatVND } from "@/lib/utils/currency";
 import { Dialog } from '@/components/common/overlays/Dialog';
-import { ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { ArrowLeft, Bus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import type { TourDepartureCalendarProps as Props, TourSchedule } from 'shared';
 
@@ -319,34 +319,79 @@ export default function TourDepartureCalendar({
           </div>
         </div>
       </div>
-      {selectedDay !== null && <Dialog onClose={() => setSelectedDay(null)} labelledBy={choiceTitleId} describedBy={choiceDescriptionId}>
-        <div className="my-auto flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 p-5">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-600"><CalendarIcon size={20} /></span>
+      {selectedDay !== null && <Dialog onClose={() => setSelectedDay(null)} labelledBy={choiceTitleId} describedBy={choiceDescriptionId} overlayClassName="bg-slate-950/45">
+        <div className="my-auto flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_24px_80px_#0f172a40]">
+          <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600 sm:size-12"><CalendarIcon size={23} strokeWidth={1.8} /></span>
               <div className="min-w-0">
-                <h3 id={choiceTitleId} className="font-bold text-slate-900 sm:text-lg">Chọn chuyến ngày {new Date(currentMonth.getFullYear(), currentMonth.getMonth(), selectedDay).toLocaleDateString('vi-VN')}</h3>
-                <p id={choiceDescriptionId} className="mt-1 text-xs leading-5 text-slate-500">Chọn chuyến phù hợp với nơi xuất phát, giờ đi và điểm đón của bạn.</p>
+                <h3 id={choiceTitleId} className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">Chọn chuyến khởi hành</h3>
+                <p id={choiceDescriptionId} className="mt-0.5 text-sm text-slate-500">{new Date(currentMonth.getFullYear(), currentMonth.getMonth(), selectedDay).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
               </div>
             </div>
-            <button type="button" onClick={() => setSelectedDay(null)} aria-label="Đóng chọn chuyến" className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-sky-500"><X size={20} /></button>
+            <button type="button" onClick={() => setSelectedDay(null)} aria-label="Đóng chọn chuyến" className="shrink-0 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-blue-500"><X size={26} strokeWidth={1.5} /></button>
           </header>
-          <div className="min-h-0 space-y-3 overflow-y-auto p-5">
-            {(scheduleMap.get(selectedDay) || []).map(schedule => <article key={schedule.tour_schedule_id} className="rounded-xl border border-sky-200 bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900">{schedule.departure_location?.name || 'Chưa cập nhật'} <span className="font-medium text-slate-500">· {new Date(schedule.start_date).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' })}</span></p>
-                  <p className="mt-1 text-xs text-slate-500">Chuyến #{schedule.tour_schedule_id} · Còn {Math.max(schedule.quota - schedule.booked_count, 0)} chỗ</p>
+          <div className="min-h-0 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6">
+            <div className="sm:overflow-x-auto">
+              <div className="sm:min-w-[640px]">
+                <div className="hidden grid-cols-[150px_minmax(0,1fr)_100px_130px] items-center gap-4 rounded-lg bg-slate-100 px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600 sm:grid">
+                  <span>Chuyến / xuất phát</span>
+                  <span>Điểm đón</span>
+                  <span className="text-center">Chỗ trống</span>
+                  <span className="text-right">Giá tour</span>
                 </div>
-                <p className="text-sm font-bold text-rose-600 sm:text-base">{formatVND(schedule.price)}</p>
+                <div className="divide-y divide-slate-200 border-y border-slate-200">
+                  {(scheduleMap.get(selectedDay) || []).map(schedule => {
+                    const points = schedule.pickup_points?.length ? schedule.pickup_points : [null];
+                    return points.map((point) => (
+                      <button
+                        key={`${schedule.tour_schedule_id}-${point?.pickup_point_id ?? 'none'}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDay(null);
+                          onSelect(schedule.tour_schedule_id, point?.pickup_point_id ?? null);
+                        }}
+                        className="group grid w-full cursor-pointer gap-2.5 px-4 py-4 text-left transition-colors hover:bg-blue-50/70 focus-visible:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:grid-cols-[150px_minmax(0,1fr)_100px_130px] sm:items-center sm:gap-4"
+                      >
+                        <span className="block min-w-0">
+                          <span className="block text-xl font-extrabold leading-tight text-slate-900 transition-colors group-hover:text-blue-600">
+                            {new Date(schedule.start_date).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className="mt-0.5 block text-sm font-bold text-slate-800">
+                            {schedule.departure_location?.name || 'Chưa cập nhật'}
+                          </span>
+                          <span className="block text-xs text-slate-500">Mã chuyến #{schedule.tour_schedule_id}</span>
+                        </span>
+
+                        <span className="flex min-w-0 items-start gap-2 text-slate-700">
+                          <MapPin size={20} className="mt-0.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-600" />
+                          {point ? (
+                            <span className="min-w-0">
+                              <strong className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600">{point.name}</strong>
+                              <span className="mt-0.5 block text-sm text-slate-500 leading-relaxed">
+                                {new Date(point.pickup_at).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' })}
+                                {point.address ? ` · ${point.address}` : ''}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-sm italic text-slate-500">Chưa cập nhật điểm đón</span>
+                          )}
+                        </span>
+
+                        <span className="flex items-center gap-2 text-sm text-slate-700 sm:justify-center">
+                          <Bus size={19} className="shrink-0 text-slate-500" />
+                          <span>{Math.max(schedule.quota - schedule.booked_count, 0)} chỗ</span>
+                        </span>
+
+                        <span className="block text-lg font-extrabold text-slate-900 transition-colors group-hover:text-blue-600 sm:text-right">
+                          {formatVND(schedule.price)}
+                        </span>
+                      </button>
+                    ));
+                  })}
+                </div>
               </div>
-              {schedule.pickup_points?.length ? <div className="mt-3 space-y-2 border-t border-sky-100 pt-3">
-                {schedule.pickup_points.map(point => <button key={point.pickup_point_id} type="button" onClick={() => { setSelectedDay(null); onSelect(schedule.tour_schedule_id, point.pickup_point_id); }} className="flex w-full items-center justify-between gap-3 rounded-lg border border-sky-100 bg-sky-50/50 p-3 text-left text-xs leading-5 transition hover:border-sky-400 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-500">
-                  <span className="flex min-w-0 items-start gap-2"><MapPin size={14} className="mt-0.5 shrink-0 text-sky-600" /><span><strong className="font-semibold text-slate-700">{point.name}</strong> · {new Date(point.pickup_at).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' })}<span className="block text-slate-500">{point.address}</span></span></span>
-                  <span className="shrink-0 font-semibold text-sky-700">Chọn →</span>
-                </button>)}
-              </div> : <button type="button" onClick={() => { setSelectedDay(null); onSelect(schedule.tour_schedule_id, null); }} className="mt-3 w-full rounded-lg border border-sky-100 bg-sky-50/50 px-3 py-2 text-right text-xs font-semibold text-sky-700 hover:border-sky-400 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-sky-500">Chọn chuyến này →</button>}
-            </article>)}
+            </div>
           </div>
         </div>
       </Dialog>}

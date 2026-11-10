@@ -12,6 +12,7 @@ export function BookingTravelersList({
   getUnitPrice,
   onUpdateTraveler,
   onUpdateSingleRoomSelection,
+  travelerErrors = {},
 }: BookingTravelersListProps) {
   const getTravelerLabel = (type: TravelerType) => {
     if (type === "adult") return "Người lớn";
@@ -20,7 +21,7 @@ export function BookingTravelersList({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div id="section-booking-travelers" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5">
         <h2 className="text-xl font-bold text-slate-900">
           Danh sách hành khách
@@ -41,14 +42,26 @@ export function BookingTravelersList({
                   .filter((item) => item.type === "adult").length - 1
               : -1;
 
+          const err = travelerErrors[index] || {};
+          const hasError = Object.keys(err).length > 0;
+
           return (
             <div
               key={`${traveler.type}-${index}`}
-              className="rounded-xl border border-slate-200 p-4"
+              id={`traveler-row-${index}`}
+              className={`rounded-xl border p-4 transition-colors ${
+                hasError
+                  ? "border-rose-300 bg-rose-50/20"
+                  : "border-slate-200"
+              }`}
             >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                      hasError ? "bg-rose-100 text-rose-700" : "bg-blue-50 text-blue-700"
+                    }`}
+                  >
                     <UserRound className="h-5 w-5" />
                   </div>
                   <div>
@@ -104,30 +117,60 @@ export function BookingTravelersList({
                     : "md:grid-cols-3"
                 }`}
               >
-                <input
-                  value={traveler.fullName}
-                  onChange={(event) =>
-                    onUpdateTraveler(index, "fullName", event.target.value)
-                  }
-                  placeholder="Họ và tên"
-                  className="min-h-[46px] min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
-                />
+                <div className="min-w-0">
+                  <input
+                    id={`traveler-${index}-name`}
+                    value={traveler.fullName}
+                    onChange={(event) =>
+                      onUpdateTraveler(index, "fullName", event.target.value)
+                    }
+                    placeholder="Họ và tên *"
+                    className={`min-h-[46px] w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
+                      err.fullName
+                        ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-100"
+                        : "border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+                    }`}
+                  />
+                  {err.fullName && (
+                    <p className="mt-1 text-xs font-medium text-rose-500">{err.fullName}</p>
+                  )}
+                </div>
                 <BookingGenderSelect
                   value={traveler.gender}
                   label={`Giới tính hành khách ${index + 1}`}
                   onChange={(gender) => onUpdateTraveler(index, "gender", gender)}
                 />
-                <BirthdayInput value={traveler.birthday} label={`Ngày sinh hành khách ${index + 1}`} onChange={(value) => onUpdateTraveler(index, "birthday", value)} />
-                {traveler.type === "adult" && (
-                  <input
-                    value={traveler.idNumber || ""}
-                    maxLength={12}
-                    onChange={(event) =>
-                      onUpdateTraveler(index, "idNumber", event.target.value.replace(/\D/g, ""))
-                    }
-                    placeholder="Số CCCD (12 số) *"
-                    className="min-h-[46px] min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-400 focus:bg-white"
+                <div className="min-w-0">
+                  <BirthdayInput
+                    id={`traveler-${index}-birthday`}
+                    value={traveler.birthday}
+                    label={`Ngày sinh hành khách ${index + 1}`}
+                    onChange={(value) => onUpdateTraveler(index, "birthday", value)}
                   />
+                  {err.birthday && (
+                    <p className="mt-1 text-xs font-medium text-rose-500">{err.birthday}</p>
+                  )}
+                </div>
+                {traveler.type === "adult" && (
+                  <div className="min-w-0">
+                    <input
+                      id={`traveler-${index}-id`}
+                      value={traveler.idNumber || ""}
+                      maxLength={12}
+                      onChange={(event) =>
+                        onUpdateTraveler(index, "idNumber", event.target.value.replace(/\D/g, ""))
+                      }
+                      placeholder="Số CCCD (12 số) *"
+                      className={`min-h-[46px] w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
+                        err.idNumber
+                          ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-100"
+                          : "border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+                      }`}
+                    />
+                    {err.idNumber && (
+                      <p className="mt-1 text-xs font-medium text-rose-500">{err.idNumber}</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

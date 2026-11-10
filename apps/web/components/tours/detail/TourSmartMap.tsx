@@ -1,20 +1,57 @@
 "use client";
 
 import { MapPin, Route } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { TourSmartMapProps } from 'shared';
 import { ImageWithFallback } from '@/components/common/media/ImageWithFallback';
 import { TourProvinceNavigation } from './TourProvinceNavigation';
 
 export default function TourSmartMap({ tour, attractions: scheduleAttractions = [] }: TourSmartMapProps) {
   const [activeProvince, setActiveProvince] = useState<number | null>(null);
+  const [orderedAttractions, setOrderedAttractions] = useState<Record<number, number[]>>({});
+
   const provinces = [...(tour?.tour_destinations || [])].sort((a, b) => a.visit_order - b.visit_order).map(item => ({
     id: item.location_id ?? item.locations?.location_id,
     name: item.name || item.locations?.name || 'Điểm đến',
   })).filter((item, index, items) => item.id != null && items.findIndex(other => other.id === item.id) === index)
     .map(item => ({ id: item.id!, name: item.name, count: scheduleAttractions.filter(visit => visit.location?.parent_id === item.id).length }));
   const selected = provinces.find(item => item.id === activeProvince) || provinces[0];
-  const attractions = [...scheduleAttractions].sort((a, b) => a.sort_order - b.sort_order).filter(item => item.location && item.location.parent_id === selected?.id);
+
+  const defaultAttractions = useMemo(() => {
+    return [...scheduleAttractions]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .filter((item) => item.location && item.location.parent_id === selected?.id);
+  }, [scheduleAttractions, selected?.id]);
+
+  const attractions = useMemo(() => {
+    if (!selected?.id) return defaultAttractions;
+    const order = orderedAttractions[selected.id];
+    if (!order || order.length !== defaultAttractions.length) return defaultAttractions;
+
+    const itemMap = new Map(defaultAttractions.map((item) => [item.location_id, item]));
+    const reordered = order.map((id) => itemMap.get(id)).filter(Boolean) as typeof defaultAttractions;
+    if (reordered.length === defaultAttractions.length) {
+      return reordered;
+    }
+    return defaultAttractions;
+  }, [defaultAttractions, orderedAttractions, selected?.id]);
+
+  const handleSelectAttraction = (targetLocationId: number) => {
+    if (!selected?.id || attractions.length < 2) return;
+    const targetIndex = attractions.findIndex((item) => item.location_id === targetLocationId);
+    if (targetIndex <= 0) return;
+
+    const currentFeatured = attractions[0];
+    const targetItem = attractions[targetIndex];
+    const others = attractions.slice(1).filter((item) => item.location_id !== targetLocationId);
+
+    const nextList = [targetItem, ...others, currentFeatured];
+    setOrderedAttractions((prev) => ({
+      ...prev,
+      [selected.id]: nextList.map((item) => item.location_id),
+    }));
+  };
+
   const [featured, ...otherAttractions] = attractions;
   const featuredLocation = featured?.location;
 
@@ -36,10 +73,33 @@ export default function TourSmartMap({ tour, attractions: scheduleAttractions = 
           {otherAttractions.length > 0 && <div role="region" aria-label={`Các điểm tham quan khác tại ${selected.name}`} tabIndex={0} className="no-scrollbar min-w-0 space-y-3 overflow-y-auto overscroll-y-contain rounded-xl focus-visible:outline-2 focus-visible:outline-sky-600 @[640px]/destinations:max-h-[26rem]">
             {otherAttractions.map(visit => {
               const location = visit.location!;
-              return <article key={visit.location_id} className="grid min-h-32 grid-cols-[0.9fr_1.1fr] gap-2.5">
-                <div className="relative min-h-32 overflow-hidden rounded-xl bg-slate-100"><ImageWithFallback src={location.location_images?.[0]?.image_url} alt={location.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" /></div>
-                <div className="min-w-0 py-1"><h4 className="flex items-start gap-1.5 text-sm font-bold text-slate-950"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><span className="min-w-0 break-words">{location.name}</span></h4><p className="mt-2 whitespace-pre-line break-words text-xs leading-5 text-slate-500">{location.note || 'Thông tin giới thiệu địa điểm đang được cập nhật.'}</p></div>
-              </article>;
+              return (
+                <button
+                  key={visit.location_id}
+                  type="button"
+                  onClick={() => handleSelectAttraction(visit.location_id)}
+                  title={`Xem điểm tham quan ${location.name}`}
+                  className="group grid w-full min-h-32 grid-cols-[0.9fr_1.1fr] gap-2.5 rounded-2xl p-1.5 text-left cursor-pointer transition-all hover:bg-sky-50/70 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                >
+                  <span className="relative min-h-32 overflow-hidden rounded-xl bg-slate-100">
+                    <ImageWithFallback
+                      src={location.location_images?.[0]?.image_url}
+                      alt={location.name}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </span>
+                  <span className="min-w-0 py-1">
+                    <span className="flex items-start gap-1.5 text-sm font-bold text-slate-950 transition-colors group-hover:text-sky-600">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+                      <span className="min-w-0 break-words">{location.name}</span>
+                    </span>
+                    <span className="mt-2 block whitespace-pre-line break-words text-xs leading-5 text-slate-500">
+                      {location.note || 'Thông tin giới thiệu địa điểm đang được cập nhật.'}
+                    </span>
+                  </span>
+                </button>
+              );
             })}
           </div>}
         </div> : <div className="rounded-xl border border-dashed border-sky-200 bg-sky-50/40 px-5 py-10 text-center text-sm leading-6 text-slate-500">Chưa có điểm tham quan được chọn tại {selected.name} trong lịch trình này.</div>}

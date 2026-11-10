@@ -8,7 +8,9 @@ export class VouchersPublicController {
     @Query('code')
     code: string,
     @Query('amount')
-    rawAmount: string) {
-        return this.vouchersService.validatePublicVoucher(code, rawAmount);
+    rawAmount: string,
+    @Query('tour_id')
+    tourId?: string) {
+        return this.vouchersService.validatePublicVoucher(code, rawAmount, undefined, tourId ? Number(tourId) : undefined);
     }
 }

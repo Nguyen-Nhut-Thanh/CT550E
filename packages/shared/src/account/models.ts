@@ -32,6 +32,7 @@ export type AccountBooking = {
         start_date: string;
         end_date?: string;
         tours: {
+            tour_id?: number;
             name: string;
             tour_images?: {
                 image_url?: string | null;
@@ -40,9 +41,30 @@ export type AccountBooking = {
     };
     rating?: number;
     review_count?: number;
+    reviews?: {
+        review_id: number;
+        tour_id: number;
+        booking_id?: number | null;
+        rating: number;
+        title?: string | null;
+        comment?: string | null;
+        images?: unknown;
+        status: number;
+        created_at: Date | string;
+    }[];
+};
+export type BookingReviewInfo = {
+    review_id: number;
+    rating: number;
+    title?: string | null;
+    comment?: string | null;
+    images?: string[] | null;
+    status: number;
+    created_at?: string;
 };
 export type BookingItemUI = {
     id: number;
+    tourId: number;
     name: string;
     startDate: string;
     endDate: string;
@@ -51,6 +73,7 @@ export type BookingItemUI = {
     statusText: string;
     price: number;
     image: string;
+    review?: BookingReviewInfo | null;
 };
 export type BookingStatusFilter = "all" | BookingItemUI["status"];
 export type UserProfileLite = {

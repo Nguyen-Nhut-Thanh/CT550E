@@ -70,6 +70,6 @@ export interface BookingDetail {
     departure_location?: { name: string } | null;
     start_date: string;
     end_date?: string | null;
-    tours?: { tour_id: number; code: string; name: string; duration_days: number; duration_nights: number; departure_locations?: { name: string } | null; tour_images?: { image_url?: string | null }[] } | null;
+    tours?: { tour_id: number; code: string; name: string; summary?: string | null; description?: string | null; duration_days: number; duration_nights: number; departure_locations?: { name: string } | null; tour_images?: { image_url?: string | null }[] } | null;
   } | null;
 }

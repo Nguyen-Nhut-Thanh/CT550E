@@ -49,10 +49,11 @@ export class MembershipAdminController {
     @Param("id", ParseIntPipe) id: number,
     @Query("code") code: string,
     @Query("amount") amount: string,
+    @Query("tour_id") tourId: string | undefined,
     @Req() req: any,
   ) {
     if (!req.workforce.isManager) await this.access.customer(req.workforce, id);
     await this.service.syncUser(id);
-    return this.vouchers.validatePublicVoucher(code, amount, id);
+    return this.vouchers.validatePublicVoucher(code, amount, id, tourId ? Number(tourId) : undefined);
   }
 }

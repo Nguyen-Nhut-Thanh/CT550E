@@ -72,7 +72,7 @@ export function VoucherPreview({ form }: { form: VoucherForm }) {
             size={60}
           />
           <strong title={form.code}>{form.code.trim() || "MÃ VOUCHER"}</strong>
-          <span>VOUCHER ƯU ĐÃI</span>
+          <span>{form.name.trim() || "VOUCHER ƯU ĐÃI"}</span>
         </div>
         <dl className="ui-voucher-modal-metrics relative grid grid-cols-[repeat(4,_minmax(0,_1fr))] items-center p-[14px_0] admin-short-tablet:py-[10px] admin-max-799:grid-cols-[repeat(2,_minmax(0,_1fr))] admin-max-799:gap-[15px_0]">
           {details.map(({ label, value, icon: Icon, tone }) => (
@@ -96,7 +96,23 @@ export function VoucherPreview({ form }: { form: VoucherForm }) {
           />
         </dl>
       </div>
-      <p className="mt-3 text-[11px] leading-5 text-[#7183a3]">Đối tượng: {form.customer_types.includes("all") ? "Tất cả khách hàng" : VOUCHER_CUSTOMER_TYPES.filter(item => form.customer_types.includes(item.value)).map(item => item.label).join(", ") || "Chưa chọn"}</p>
+      {form.short_description.trim() && <p className="mt-3 text-xs leading-5 text-slate-600">{form.short_description}</p>}
+      {form.image_url.trim() && <img src={form.image_url} alt={form.name || "Hình ảnh voucher"} className="mt-3 max-h-36 w-full rounded-xl border border-blue-100 object-cover" />}
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[#7183a3]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+          👤 {form.usage_limit_per_user ? `${form.usage_limit_per_user} lần/khách` : "1 lần/khách"}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
+          🎯 {form.applicable_scope === "tour_type"
+            ? `Loại tour: ${form.applicable_tour_types.length ? form.applicable_tour_types.join(", ") : "Chưa chọn"}`
+            : form.applicable_scope === "specific_tours"
+            ? `${form.applicable_tour_ids.length} tour chỉ định`
+            : "Tất cả các tour"}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          Đối tượng: {form.customer_types.includes("all") ? "Tất cả khách hàng" : VOUCHER_CUSTOMER_TYPES.filter(item => form.customer_types.includes(item.value)).map(item => item.label).join(", ") || "Chưa chọn"}
+        </span>
+      </div>
     </section>
   );
 }

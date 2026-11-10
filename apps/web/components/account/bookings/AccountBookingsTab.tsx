@@ -3,14 +3,18 @@
 import { getBookingTripStatus } from "@/lib/account/booking-status";
 import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
-import { CalendarDays, MessageCircle, User } from "lucide-react";
+import { CalendarDays, Eye, MessageCircle, Star, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { AccountBookingsTabProps, BookingItemUI, BookingStatusFilter, } from "shared";
+import type { AccountBookingsTabProps, BookingItemUI, BookingStatusFilter } from "shared";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
+import { TourReviewModal } from "./TourReviewModal";
 
 export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
   const [activeFilter, setActiveFilter] = useState<BookingStatusFilter>("all");
+  const [localReviews, setLocalReviews] = useState<Record<number, any>>({});
+  const [reviewModalBooking, setReviewModalBooking] = useState<BookingItemUI | null>(null);
 
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -22,6 +26,7 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
     if (bookings && bookings.length > 0) {
       return bookings.map((b) => {
         const id = b.booking_id;
+        const tourId = (b.tour_schedules?.tours as any)?.tour_id || 0;
         const name = b.tour_schedules?.tours?.name || `Đơn đặt tour #${b.booking_id}`;
         const startDate = b.tour_schedules?.start_date
           ? new Date(b.tour_schedules.start_date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
@@ -43,8 +48,11 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
           b.tour_schedules?.tours?.tour_images?.[0]?.image_url ||
           "/images/shared/travel-cover.png";
 
+        const review = localReviews[id] || (b.reviews?.[0] ? (b.reviews[0] as any) : null);
+
         return {
           id,
+          tourId,
           name,
           startDate,
           endDate,
@@ -53,12 +61,13 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
           statusText,
           price,
           image,
+          review,
         };
       });
     }
 
     return [];
-  }, [bookings, now]);
+  }, [bookings, now, localReviews]);
 
   const upcomingCount = useMemo(
     () => formattedBookings.filter((b) => b.status === "upcoming").length,
@@ -120,19 +129,28 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
             >
               {/* Left Side: Thumbnail & Infos */}
               <div className="flex items-center gap-4 min-w-0">
-                <div className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                <Link
+                  href={`/booking/${item.id}`}
+                  className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-slate-100 block group"
+                >
                   <Image
                     src={item.image}
                     alt={item.name}
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                     sizes="160px"
                   />
-                </div>
+                </Link>
 
                 <div className="space-y-1.5 min-w-0">
                   <h3 className="text-base font-extrabold text-slate-900 truncate">
-                    {item.name}
+                    <Link
+                      href={`/booking/${item.id}`}
+                      className="hover:text-[#095fff] transition-colors"
+                      title={item.name}
+                    >
+                      {item.name}
+                    </Link>
                   </h3>
 
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -158,9 +176,21 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                       </span>
                     )}
                     {item.status === "completed" && (
-                      <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                        {item.statusText}
-                      </span>
+                      <div className="flex items-center gap-1.5 justify-start sm:justify-end">
+                        <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                          {item.statusText}
+                        </span>
+                        {item.review && (
+                          <span
+                            onClick={() => setReviewModalBooking(item)}
+                            title="Bấm để xem lại bài đánh giá"
+                            className="inline-flex items-center gap-1 cursor-pointer rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition shadow-2xs"
+                          >
+                            <Star size={11} className="fill-amber-400 text-amber-500" />
+                            <span>{item.review.rating}★</span>
+                          </span>
+                        )}
+                      </div>
                     )}
                     {item.status === "upcoming" && (
                       <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-700">
@@ -179,30 +209,52 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                   </div>
                 </div>
 
-                {/* Buttons */}
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/booking/${item.id}`}
-                    className="rounded-xl bg-[#eef6ff] px-4 py-2.5 text-xs font-bold text-[#1766c2] transition hover:bg-blue-100"
-                  >
-                    Xem chi tiết
-                  </Link>
-
-                  <button
-                    type="button"
-                    aria-label="Liên hệ nhân viên về đơn đặt tour"
-                    title="Liên hệ nhân viên"
-                    onClick={() => openSupportChat({ booking_id: item.id })}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </button>
+                {/* Component Thao tác chuẩn như bên Quản lý tour */}
+                <div className="flex items-center">
+                  <AdminRowActions
+                    label={`Thao tác với đơn đặt tour #${item.id}`}
+                    actions={[
+                      {
+                        label: "Xem chi tiết",
+                        icon: <Eye size={16} />,
+                        href: `/booking/${item.id}`,
+                        access: "view",
+                      },
+                      {
+                        label: "Liên hệ nhân viên",
+                        icon: <MessageCircle size={16} />,
+                        onClick: () => openSupportChat({ booking_id: item.id }),
+                        access: "view",
+                      },
+                      {
+                        label: item.review ? `Xem đánh giá (${item.review.rating}★)` : "Đánh giá",
+                        icon: <Star size={16} />,
+                        disabled: item.status !== "completed",
+                        title:
+                          item.status !== "completed"
+                            ? "Chỉ có thể đánh giá sau khi hoàn thành chuyến đi"
+                            : undefined,
+                        onClick: () => setReviewModalBooking(item),
+                        access: "view",
+                      },
+                    ]}
+                  />
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Popup Modal Đánh Giá Tour */}
+      <TourReviewModal
+        open={Boolean(reviewModalBooking)}
+        booking={reviewModalBooking}
+        onClose={() => setReviewModalBooking(null)}
+        onSuccess={(bookingId, newReview) => {
+          setLocalReviews((prev) => ({ ...prev, [bookingId]: newReview }));
+        }}
+      />
     </div>
   );
 }

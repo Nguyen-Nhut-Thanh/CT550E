@@ -22,7 +22,7 @@ export function BookingContactForm({
     }`;
 
   return (
-    <section className="rounded-2xl border border-blue-100/60 bg-white p-5 shadow-[0_4px_24px_rgba(37,99,235,0.04)] sm:p-6">
+    <section id="section-booking-contact" className="rounded-2xl border border-blue-100/60 bg-white p-5 shadow-[0_4px_24px_rgba(37,99,235,0.04)] sm:p-6">
       <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
         <UserRound className="h-5 w-5 text-blue-700" />
         2. Thông tin liên hệ
@@ -34,6 +34,7 @@ export function BookingContactForm({
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">
           Họ và tên <span className="text-rose-500">*</span>
           <input
+            id="contact-name"
             autoComplete="name"
             value={contactName}
             onChange={(event) => onContactNameChange(event.target.value)}
@@ -49,6 +50,7 @@ export function BookingContactForm({
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600">
           Số điện thoại <span className="text-rose-500">*</span>
           <input
+            id="contact-phone"
             type="tel"
             autoComplete="tel"
             value={contactPhone}
@@ -65,6 +67,7 @@ export function BookingContactForm({
         <label className="rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-600 sm:col-span-2">
           Email <span className="text-rose-500">*</span>
           <input
+            id="contact-email"
             type="email"
             autoComplete="email"
             value={contactEmail}

@@ -5,6 +5,7 @@ import { NavigationPending } from "@/components/common/navigation/NavigationPend
 import { useWorkforceIdentity } from './AdminGuard';
 import {
   ArrowLeft,
+  BarChart3,
   Briefcase,
   CalendarDays,
   Compass,
@@ -29,6 +30,7 @@ const menuItems = [
     group: "Tổng quan",
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { name: "Báo cáo & Thống kê", href: "/admin/analytics", icon: BarChart3 },
     ],
   },
   {
