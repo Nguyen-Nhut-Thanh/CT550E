@@ -217,7 +217,7 @@ export function AccountWalletTab() {
                 </div>
 
                 {/* Right Stub Section */}
-                <div className="flex w-[130px] sm:w-[150px] shrink-0 flex-col justify-center p-4 sm:p-5 pl-4 sm:pl-5">
+                <div className="flex w-[145px] sm:w-[180px] shrink-0 flex-col justify-center p-4 sm:p-5 pl-4 sm:pl-5">
                   <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-slate-500 uppercase">
                     Mã ưu đãi
                   </p>

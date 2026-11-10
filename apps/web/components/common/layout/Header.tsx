@@ -41,7 +41,7 @@ export default function Header() {
   return (
     <>
       {/* Desktop Header Overlay */}
-      <header className={`${isHome ? "absolute left-0 top-0" : "sticky top-0 border-b border-gray-100 bg-white"} z-[100] flex w-full items-center justify-between px-[42px] py-[26px] max-[991px]:px-6 max-[991px]:py-[26px]`}>
+      <header className={`${isHome ? "absolute left-0 top-0" : "sticky top-0 border-b border-gray-100 bg-white"} z-[100] flex w-full items-center justify-between px-[42px] py-5 max-[991px]:px-6 max-[991px]:py-5`}>
         <Link
           href="/"
           className={`text-[24px] font-black italic tracking-[-0.5px] no-underline ${isHome ? "text-white" : "text-blue-600"}`}

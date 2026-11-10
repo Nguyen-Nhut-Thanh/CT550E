@@ -1,9 +1,9 @@
 "use client";
 
-import { getBookingTripStatus } from "@/lib/account/booking-status";
+import { getBookingPaymentStatus, getBookingTripStatus } from "@/lib/account/booking-status";
 import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
-import { CalendarDays, Eye, MessageCircle, Star, User } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, CreditCard, Eye, MessageCircle, Star, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -41,7 +41,12 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         if (b.infant_count) passParts.push(`${b.infant_count} em bé`);
         const passengers = passParts.join(", ") || "1 người lớn";
 
+        const tour = b.tour_schedules?.tours as any;
+        const rawSummary = tour?.summary || tour?.description || "";
+        const summary = rawSummary ? rawSummary.replace(/<[^>]*>/g, "").trim() : "";
+
         const { status, statusText } = getBookingTripStatus(b, now);
+        const { paymentStatus, paymentStatusText } = getBookingPaymentStatus(b);
 
         const price = b.total_amount ? Number(b.total_amount) : 2890000;
         const image =
@@ -54,11 +59,14 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
           id,
           tourId,
           name,
+          summary,
           startDate,
           endDate,
           passengers,
           status,
           statusText,
+          paymentStatus,
+          paymentStatusText,
           price,
           image,
           review,
@@ -128,22 +136,23 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
               className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md"
             >
               {/* Left Side: Thumbnail & Infos */}
-              <div className="flex items-center gap-4 min-w-0">
+              <div className="flex items-start sm:items-stretch gap-4 min-w-0 flex-1">
                 <Link
                   href={`/booking/${item.id}`}
-                  className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-slate-100 block group"
+                  className="relative aspect-[16/10] w-36 sm:w-40 shrink-0 overflow-hidden rounded-xl bg-slate-100 block group self-start sm:self-auto"
                 >
                   <Image
                     src={item.image}
                     alt={item.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="160px"
+                    sizes="(max-width: 640px) 144px, 160px"
                   />
                 </Link>
 
-                <div className="space-y-1.5 min-w-0">
-                  <h3 className="text-base font-extrabold text-slate-900 truncate">
+                <div className="flex flex-col justify-between min-w-0 flex-1 py-0.5 space-y-1 sm:space-y-0">
+                  {/* Hàng 1: Tên tour */}
+                  <h3 className="text-base font-extrabold text-slate-900 truncate leading-snug">
                     <Link
                       href={`/booking/${item.id}`}
                       className="hover:text-[#095fff] transition-colors"
@@ -153,11 +162,18 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                     </Link>
                   </h3>
 
+                  {/* Hàng 2: Mô tả ngắn của tour */}
+                  <p className="text-xs text-slate-500 truncate" title={item.summary}>
+                    {item.summary || "Khám phá lịch trình du lịch hấp dẫn và trải nghiệm tuyệt vời."}
+                  </p>
+
+                  {/* Hàng 3: Lịch khởi hành */}
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <CalendarDays className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <span>{item.startDate} - {item.endDate}</span>
                   </div>
 
+                  {/* Hàng 4: Số lượng khách */}
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <span>{item.passengers}</span>
@@ -168,15 +184,34 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
               {/* Right Side: Status, Price & Action Buttons */}
               <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                 {/* Status & Price */}
-                <div className="text-left sm:text-right space-y-1">
-                  <div>
+                <div className="text-left sm:text-right space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
+                    {/* Tag trạng thái thanh toán */}
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        item.paymentStatus === "paid"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : item.paymentStatus === "refunded"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {item.paymentStatus === "paid" ? (
+                        <CheckCircle2 size={12} className="shrink-0" />
+                      ) : (
+                        <Clock size={12} className="shrink-0" />
+                      )}
+                      <span>{item.paymentStatusText}</span>
+                    </span>
+
+                    {/* Tag trạng thái chuyến đi */}
                     {(item.status === "ongoing" || item.status === "unknown") && (
                       <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${item.status === "ongoing" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
                         {item.statusText}
                       </span>
                     )}
                     {item.status === "completed" && (
-                      <div className="flex items-center gap-1.5 justify-start sm:justify-end">
+                      <div className="flex items-center gap-1.5">
                         <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
                           {item.statusText}
                         </span>
@@ -214,6 +249,16 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
                   <AdminRowActions
                     label={`Thao tác với đơn đặt tour #${item.id}`}
                     actions={[
+                      ...(item.paymentStatus === "unpaid" && item.status !== "cancelled"
+                        ? [
+                            {
+                              label: "Thanh toán ngay",
+                              icon: <CreditCard size={16} className="text-emerald-600" />,
+                              href: `/booking/${item.id}`,
+                              access: "view" as const,
+                            },
+                          ]
+                        : []),
                       {
                         label: "Xem chi tiết",
                         icon: <Eye size={16} />,

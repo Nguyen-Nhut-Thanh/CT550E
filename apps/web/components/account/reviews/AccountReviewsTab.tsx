@@ -5,10 +5,11 @@ import { StarRating } from "@/components/common/tours/StarRating";
 import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
 import { getMyReviews, updateMyReview } from "@/lib/account/reviewsApi";
 import { useAccountResource } from "@/lib/account/useAccountResource";
-import { Loader2, MoreHorizontal, Pencil, Star, X } from "lucide-react";
+import { Eye, Loader2, Pencil, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AccountReviewItem } from "shared";
+import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
 
 export function AccountReviewsTab() {
   const {
@@ -29,13 +30,11 @@ export function AccountReviewsTab() {
     images: string[];
     index: number;
   } | null>(null);
-  const [menu, setMenu] = useState<number | null>(null);
   function edit(review: AccountReviewItem) {
     setEditing(review);
     setRating(review.rating);
     setComment(review.comment ?? "");
     setEditError("");
-    setMenu(null);
   }
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -140,14 +139,17 @@ export function AccountReviewsTab() {
           {visible.map((review) => (
             <article
               key={review.review_id}
-              className="flex flex-col gap-4 py-5 sm:flex-row"
+              className="flex flex-col gap-4 py-3 sm:flex-row"
             >
-              <Link href={`/tours/${review.tour_id}`} className="shrink-0">
+              <Link
+                href={`/tours/${review.tour_id}`}
+                className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:aspect-[4/3] sm:w-[200px] sm:self-start"
+              >
                 <ImageWithFallback
                   src={review.tour_image || "/images/shared/travel-cover.png"}
                   fallback="/images/shared/travel-cover.png"
                   alt={review.tour_name}
-                  className="h-40 w-full rounded-lg object-cover sm:h-[112px] sm:w-[170px]"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </Link>
               <div className="min-w-0 flex-1">
@@ -208,40 +210,24 @@ export function AccountReviewsTab() {
                   ))}
                 </div>
               </div>
-              <div className="relative flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-start">
-                <button
-                  aria-label={`Tùy chọn đánh giá ${review.tour_name}`}
-                  aria-expanded={menu === review.review_id}
-                  onClick={() =>
-                    setMenu(menu === review.review_id ? null : review.review_id)
-                  }
-                  className="rounded p-1 text-slate-500 hover:bg-slate-100"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </button>
-                {menu === review.review_id && (
-                  <div className="absolute right-0 top-8 z-10 rounded-lg border bg-white p-2 shadow-lg">
-                    <Link
-                      href={`/tours/${review.tour_id}`}
-                      className="block whitespace-nowrap px-3 py-2 text-sm text-slate-600"
-                    >
-                      Xem chi tiết tour
-                    </Link>
-                    <button
-                      onClick={() => edit(review)}
-                      className="px-3 py-2 text-sm text-blue-600"
-                    >
-                      Chỉnh sửa đánh giá
-                    </button>
-                  </div>
-                )}
-                <button
-                  onClick={() => edit(review)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#eef8ff] px-3 py-2 text-xs font-semibold text-[#2586bd] hover:bg-blue-100 sm:mt-3"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Chỉnh sửa
-                </button>
+              <div className="flex shrink-0 items-center sm:items-start">
+                <AdminRowActions
+                  label={`Thao tác với bài đánh giá tour ${review.tour_name}`}
+                  actions={[
+                    {
+                      label: "Xem chi tiết tour",
+                      icon: <Eye size={16} />,
+                      href: `/tours/${review.tour_id}`,
+                      access: "view",
+                    },
+                    {
+                      label: "Chỉnh sửa đánh giá",
+                      icon: <Pencil size={16} />,
+                      onClick: () => edit(review),
+                      access: "view",
+                    },
+                  ]}
+                />
               </div>
             </article>
           ))}

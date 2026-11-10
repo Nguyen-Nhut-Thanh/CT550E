@@ -31,3 +31,27 @@ export function getBookingTripStatus(
   if (end || today === start) return { status: "ongoing", statusText: "Đang diễn ra" };
   return { status: "unknown", statusText: "Chưa xác định ngày kết thúc" };
 }
+
+export function getBookingPaymentStatus(booking: {
+  status?: string | null;
+  payments?: { status?: string | null }[] | null;
+}): Pick<BookingItemUI, "paymentStatus" | "paymentStatusText"> {
+  const status = booking.status?.trim().toLowerCase() || "";
+  const payments = booking.payments || [];
+  const hasSuccessfulPayment = payments.some((p) =>
+    ["success", "paid", "completed"].includes(p.status?.toLowerCase() || "")
+  );
+  const isRefunded = payments.some((p) =>
+    ["refunded", "đã hoàn tiền"].includes(p.status?.toLowerCase() || "")
+  );
+
+  if (isRefunded) {
+    return { paymentStatus: "refunded", paymentStatusText: "Đã hoàn tiền" };
+  }
+
+  if (hasSuccessfulPayment || ["paid", "confirmed", "completed"].includes(status)) {
+    return { paymentStatus: "paid", paymentStatusText: "Đã thanh toán" };
+  }
+
+  return { paymentStatus: "unpaid", paymentStatusText: "Chưa thanh toán" };
+}

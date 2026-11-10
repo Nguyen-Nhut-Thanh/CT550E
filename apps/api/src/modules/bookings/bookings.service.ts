@@ -398,6 +398,16 @@ export class BookingsService {
                         },
                     },
                 },
+                payments: {
+                    select: {
+                        payment_id: true,
+                        status: true,
+                        amount: true,
+                        method: true,
+                        created_at: true,
+                    },
+                    orderBy: { created_at: 'desc' },
+                },
                 reviews: {
                     select: {
                         review_id: true,

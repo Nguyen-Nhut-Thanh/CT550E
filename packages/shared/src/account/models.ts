@@ -34,11 +34,20 @@ export type AccountBooking = {
         tours: {
             tour_id?: number;
             name: string;
+            summary?: string | null;
+            description?: string | null;
             tour_images?: {
                 image_url?: string | null;
             }[];
         };
     };
+    payments?: {
+        payment_id?: number;
+        status: string;
+        amount?: number | string;
+        method?: string;
+        created_at?: string | Date;
+    }[];
     rating?: number;
     review_count?: number;
     reviews?: {
@@ -66,11 +75,14 @@ export type BookingItemUI = {
     id: number;
     tourId: number;
     name: string;
+    summary?: string;
     startDate: string;
     endDate: string;
     passengers: string;
     status: "completed" | "upcoming" | "ongoing" | "cancelled" | "unknown";
     statusText: string;
+    paymentStatus: "paid" | "unpaid" | "refunded";
+    paymentStatusText: string;
     price: number;
     image: string;
     review?: BookingReviewInfo | null;
