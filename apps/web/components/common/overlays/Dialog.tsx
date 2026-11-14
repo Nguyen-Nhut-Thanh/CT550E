@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 let openDialogs = 0;
 let previousOverflow = "";
@@ -19,11 +20,17 @@ export function Dialog({
   describedBy?: string;
   overlayClassName?: string;
 }) {
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const dialog = ref.current;
     if (!dialog) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -79,9 +86,11 @@ export function Dialog({
       if (openDialogs === 0) document.body.style.overflow = previousOverflow;
       if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, []);
+  }, [mounted]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       ref={ref}
       role="dialog"
@@ -93,9 +102,10 @@ export function Dialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className={`fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 backdrop-blur-sm ${overlayClassName}`}
+      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-3 sm:p-4 backdrop-blur-sm ${overlayClassName}`}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 }

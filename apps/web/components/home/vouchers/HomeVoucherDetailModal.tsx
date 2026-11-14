@@ -88,18 +88,18 @@ export function HomeVoucherDetailModal({
 
   return (
     <Dialog labelledBy={headingId} onClose={onClose}>
-      <section className="flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <section className="my-auto flex max-h-[min(88vh,660px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-2xl">
         {/* Modal Header */}
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4 sm:py-5">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-xs">
-              <Ticket className="h-6 w-6" />
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3 sm:px-6 sm:py-3.5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-xs">
+              <Ticket className="h-5 w-5" />
             </div>
             <div>
-              <h2 id={headingId} className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h2 id={headingId} className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                 Chi tiết Mã Ưu Đãi
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500">
                 Xem đầy đủ điều kiện và phạm vi áp dụng của voucher.
               </p>
             </div>
@@ -116,12 +116,12 @@ export function HomeVoucherDetailModal({
         </header>
 
         {/* Modal Body */}
-        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-5 sm:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
             {/* LEFT COLUMN: Poster Card + How To Use */}
-            <div className="md:col-span-5 flex flex-col gap-4">
+            <div className="md:col-span-5 flex flex-col gap-3">
               {/* Poster Card */}
-              <div className="relative min-h-[350px] sm:min-h-[380px] overflow-hidden rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-md">
+              <div className="relative min-h-[220px] sm:min-h-[240px] overflow-hidden rounded-2xl p-4 flex flex-col justify-between shadow-md">
                 {/* Background image & gradient overlay */}
                 <ImageWithFallback
                   src={bgImage}
@@ -131,36 +131,36 @@ export function HomeVoucherDetailModal({
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-blue-900/40" />
 
                 {/* Top Info */}
-                <div className="relative z-10 space-y-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm backdrop-blur-xs">
-                    <Sparkles size={12} className="text-amber-300" />
+                <div className="relative z-10 space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600/90 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-white shadow-sm backdrop-blur-xs">
+                    <Sparkles size={11} className="text-amber-300" />
                     Ưu đãi du lịch
                   </span>
 
                   {/* Tên voucher hiển thị nổi bật */}
-                  <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow-md line-clamp-2 pt-1 leading-snug">
+                  <h3 className="text-base sm:text-lg font-bold text-white drop-shadow-md line-clamp-2 pt-0.5 leading-snug">
                     {voucher.name || "Voucher Tour Du Lịch"}
                   </h3>
 
                   {/* Mức giảm to rõ */}
-                  <div className="text-3xl sm:text-4xl font-black tracking-tight text-white drop-shadow-lg pt-1">
+                  <div className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-lg pt-0.5">
                     {discountText}
                   </div>
 
                   {/* Pill điều kiện tối thiểu */}
-                  <div className="inline-block rounded-full bg-white/95 px-3.5 py-1 text-xs font-bold text-slate-800 shadow-sm backdrop-blur-xs mt-2">
+                  <div className="inline-block rounded-full bg-white/95 px-3 py-0.5 text-[11px] font-bold text-slate-800 shadow-sm backdrop-blur-xs mt-1">
                     Đơn tối thiểu từ {cleanVND(voucher.min_order_value)}
                   </div>
                 </div>
 
                 {/* Bottom Code Box */}
-                <div className="relative z-10 rounded-2xl border border-white/80 bg-white/95 p-3.5 px-4 shadow-xl backdrop-blur-md">
+                <div className="relative z-10 rounded-xl sm:rounded-2xl border border-white/80 bg-white/95 p-2.5 px-3.5 shadow-xl backdrop-blur-md mt-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">
                         Mã voucher
                       </span>
-                      <code className="text-base sm:text-lg font-black font-mono tracking-wide text-blue-700">
+                      <code className="text-sm sm:text-base font-black font-mono tracking-wide text-blue-700">
                         {voucher.code}
                       </code>
                     </div>
@@ -168,13 +168,13 @@ export function HomeVoucherDetailModal({
                     <button
                       type="button"
                       onClick={handleCopy}
-                      className="flex items-center gap-1 rounded-xl p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
+                      className="flex items-center gap-1 rounded-lg p-1.5 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
                       title="Sao chép mã"
                     >
                       {copied ? (
-                        <Check size={18} className="text-emerald-600" />
+                        <Check size={16} className="text-emerald-600" />
                       ) : (
-                        <Copy size={18} />
+                        <Copy size={16} />
                       )}
                     </button>
                   </div>
@@ -182,22 +182,22 @@ export function HomeVoucherDetailModal({
               </div>
 
               {/* How to use Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-[#f4f9fd] p-4 flex flex-col justify-between">
+              <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-[#f4f9fd] p-3.5 sm:p-4 flex flex-col justify-between">
                 <div>
-                  <h4 className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-900 mb-3">
+                  <h4 className="flex items-center gap-2 text-xs sm:text-[13px] font-bold text-slate-900 mb-2 sm:mb-2.5">
                     <span className="text-blue-500">💡</span> Cách sử dụng mã giảm giá:
                   </h4>
-                  <ol className="space-y-2.5 text-xs text-slate-700 leading-relaxed font-medium">
-                    <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                  <ol className="space-y-2 text-xs text-slate-700 leading-relaxed font-medium">
+                    <li className="flex items-start gap-2">
+                      <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">
                         1
                       </span>
                       <span>
                         Nhấn <strong>Sao chép mã</strong> ở trên.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                    <li className="flex items-start gap-2">
+                      <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">
                         2
                       </span>
                       <span>
@@ -209,64 +209,64 @@ export function HomeVoucherDetailModal({
 
                 {/* Landmark watermark */}
                 <div className="pointer-events-none absolute -bottom-2 -right-2 opacity-15">
-                  <Compass size={70} className="text-blue-600" />
+                  <Compass size={55} className="text-blue-600" />
                 </div>
               </div>
             </div>
 
             {/* RIGHT COLUMN: Grid Cards */}
-            <div className="md:col-span-7 flex flex-col gap-3 sm:gap-3.5 justify-between">
+            <div className="md:col-span-7 flex flex-col gap-2.5 sm:gap-3 justify-between">
               {/* Row 1: Giá trị giảm & Đơn hàng tối thiểu */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Tag size={15} className="text-blue-600" />
+                    <Tag size={14} className="text-blue-600" />
                     <span>Giá trị giảm</span>
                   </div>
-                  <p className="mt-2 text-lg sm:text-xl font-black text-slate-900">
+                  <p className="mt-1.5 text-base sm:text-lg font-black text-slate-900">
                     {discountText}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <ShoppingCart size={15} className="text-blue-600" />
+                    <ShoppingCart size={14} className="text-blue-600" />
                     <span>Đơn hàng tối thiểu</span>
                   </div>
-                  <p className="mt-2 text-lg sm:text-xl font-black text-slate-900">
+                  <p className="mt-1.5 text-base sm:text-lg font-black text-slate-900">
                     {cleanVND(voucher.min_order_value)}
                   </p>
                 </div>
               </div>
 
               {/* Row 2: Hiệu lực từ & Hạn sử dụng đến */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Calendar size={15} className="text-blue-600" />
+                    <Calendar size={14} className="text-blue-600" />
                     <span>Hiệu lực từ</span>
                   </div>
-                  <p className="mt-2 text-xs sm:text-sm font-bold text-slate-800">
+                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-slate-800">
                     {formatDateTime(voucher.start_date)}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Clock size={15} className="text-blue-600" />
+                    <Clock size={14} className="text-blue-600" />
                     <span>Hạn sử dụng đến</span>
                   </div>
-                  <p className="mt-2 text-xs sm:text-sm font-bold text-rose-600">
+                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-rose-600">
                     {formatDateTime(voucher.expiry_date)}
                   </p>
                 </div>
               </div>
 
               {/* Row 3: Số lượt còn lại with Circular Progress Ring */}
-              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 px-5 flex items-center gap-5 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 px-4 flex items-center gap-4 shadow-2xs">
                 {/* SVG Donut Ring */}
-                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
-                  <svg className="h-16 w-16 -rotate-90 transform" viewBox="0 0 36 36">
+                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 36 36">
                     <path
                       className="text-slate-100"
                       strokeWidth="3.5"
@@ -285,10 +285,10 @@ export function HomeVoucherDetailModal({
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-sm font-black text-slate-900 leading-tight">
+                    <span className="text-xs font-black text-slate-900 leading-tight">
                       {remainingPercent}%
                     </span>
-                    <span className="text-[9px] font-semibold text-slate-500 leading-tight">
+                    <span className="text-[8.5px] font-semibold text-slate-500 leading-tight">
                       Còn lại
                     </span>
                   </div>
@@ -298,56 +298,56 @@ export function HomeVoucherDetailModal({
                   <span className="text-xs font-semibold text-slate-500">
                     Số lượt còn lại
                   </span>
-                  <p className="text-lg font-black text-slate-900 mt-0.5">
+                  <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
                     {remainingCount} / {voucher.usage_limit} lượt
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     (Đã dùng {usagePercent}%)
                   </p>
                 </div>
               </div>
 
               {/* Row 4: Giới hạn mỗi khách hàng & Đối tượng áp dụng */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Users size={15} className="text-blue-600" />
+                    <Users size={14} className="text-blue-600" />
                     <span>Giới hạn mỗi khách hàng</span>
                   </div>
-                  <p className="mt-2 text-xs sm:text-sm font-bold text-slate-900">
+                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-slate-900">
                     {voucher.usage_limit_per_user || 1} lần / tài khoản
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Globe size={15} className="text-blue-600" />
+                    <Globe size={14} className="text-blue-600" />
                     <span>Đối tượng áp dụng</span>
                   </div>
-                  <p className="mt-2 text-xs sm:text-sm font-bold text-blue-700">
+                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-blue-700">
                     {audienceText}
                   </p>
                 </div>
               </div>
 
               {/* Row 5: Phạm vi tour */}
-              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-4 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                  <Plane size={15} className="text-blue-600" />
+                  <Plane size={14} className="text-blue-600" />
                   <span>Phạm vi tour</span>
                 </div>
-                <p className="mt-1 text-xs sm:text-sm font-bold text-slate-800">
+                <p className="mt-1 text-xs sm:text-[13px] font-bold text-slate-800">
                   {scopeLabel}
                 </p>
               </div>
 
               {/* Row 6: Lưu ý quan trọng */}
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3 sm:p-3.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                  <Info size={15} className="text-blue-600" />
+                  <Info size={14} className="text-blue-600" />
                   <span>Lưu ý quan trọng</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                <p className="mt-1 text-[11.5px] text-slate-600 leading-relaxed">
                   Voucher chỉ áp dụng cho các tour thuộc phạm vi và điều kiện nêu trên.
                   {voucher.discount_type === "percentage" && voucher.max_discount_amount !== null && (
                     <> Mức giảm tối đa là {cleanVND(voucher.max_discount_amount)} cho mỗi đơn hàng.</>
@@ -359,11 +359,11 @@ export function HomeVoucherDetailModal({
         </div>
 
         {/* Modal Footer Actions */}
-        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/40">
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50/40">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-300 bg-white px-7 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            className="rounded-xl border border-slate-300 bg-white px-6 py-2 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50"
           >
             Đóng
           </button>
@@ -372,16 +372,16 @@ export function HomeVoucherDetailModal({
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
             >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? <Check size={15} /> : <Copy size={15} />}
               <span>{copied ? "Đã sao chép mã" : "Sao chép mã"}</span>
             </button>
 
             <Link
               href={tourTargetLink}
               onClick={onClose}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
             >
               <Plane size={15} />
               <span>Xem tour &amp; Dùng ngay</span>

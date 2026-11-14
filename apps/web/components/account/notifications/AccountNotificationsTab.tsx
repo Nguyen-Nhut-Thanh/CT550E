@@ -14,6 +14,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import { AccountPageBanner } from "@/components/account/layout/AccountPageBanner";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAccountResource } from "@/lib/account/useAccountResource";
@@ -174,72 +175,44 @@ export function AccountNotificationsTab() {
   }
 
   return (
-    <div className="space-y-6 pt-2">
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              Thông báo
-            </h1>
-            {unreadCount > 0 && (
-              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-rose-600 px-2 text-xs font-black text-white shadow-xs">
-                {unreadCount}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Cập nhật trạng thái đặt tour, hạn thanh toán 15 phút, yêu cầu hủy và ưu đãi mới
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={loading}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-2xs cursor-pointer"
-          >
-            Làm mới
-          </button>
-          {unreadCount > 0 && (
+    <div className="w-full min-w-0 space-y-6">
+      <AccountPageBanner
+        title={unreadCount > 0 ? `Thông báo (${unreadCount} chưa đọc)` : "Thông báo"}
+        description="Cập nhật trạng thái đặt tour, hạn thanh toán, yêu cầu hủy và ưu đãi mới."
+        icon={Bell}
+        filterAriaLabel="Lọc thông báo"
+        activeFilter={filter}
+        onFilterChange={(value) => setFilter(value as typeof filter)}
+        filters={[
+          { value: "all", label: `Tất cả (${notifications.length})` },
+          { value: "trips", label: `Chuyến đi & Đặt tour (${tripsCount})` },
+          { value: "vouchers", label: `Ưu đãi & Voucher (${vouchersCount})` },
+          { value: "unread", label: `Chưa đọc (${unreadCount})` },
+        ]}
+        controls={
+          <>
             <button
               type="button"
-              disabled={saving}
-              onClick={() => void readAll()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white transition disabled:opacity-50 shadow-xs cursor-pointer"
+              onClick={refresh}
+              disabled={loading}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-50"
             >
-              <CheckCheck size={15} />
-              <span>Đánh dấu tất cả đã đọc</span>
+              Làm mới
             </button>
-          )}
-        </div>
-      </header>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
-        {(
-          [
-            { id: "all", label: "Tất cả", count: notifications.length },
-            { id: "trips", label: "Chuyến đi & Đặt tour", count: tripsCount },
-            { id: "vouchers", label: "Ưu đãi & Voucher", count: vouchersCount },
-            { id: "unread", label: "Chưa đọc", count: unreadCount },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setFilter(tab.id)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-              filter === tab.id
-                ? "bg-[#1766c2] text-white shadow-xs"
-                : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
-      </div>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void readAll()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50"
+              >
+                <CheckCheck size={15} />
+                <span>Đánh dấu tất cả đã đọc</span>
+              </button>
+            )}
+          </>
+        }
+      />
 
       {(error || actionError) && (
         <div

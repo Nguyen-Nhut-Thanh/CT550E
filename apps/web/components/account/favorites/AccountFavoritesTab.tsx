@@ -3,11 +3,11 @@
 import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
 import { useToast } from "@/lib/notifications/useToast";
 import { formatDate } from "@/lib/utils/dateTime";
-import { Compass, Globe, Heart, Search, X } from "lucide-react";
-import Image from "next/image";
+import { Heart, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { AccountFavoritesTabProps, FavFilterType, FavItem } from "shared";
+import { AccountPageBanner } from "@/components/account/layout/AccountPageBanner";
 import { FavoriteTourCard } from "./FavoriteTourCard";
 
 export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps) {
@@ -25,28 +25,37 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
         const tourId = fav.tour_id || t?.tour_id;
         const name = t?.name || "Tour du lịch";
         const location = t?.departure_locations?.name || "Việt Nam";
-        const rating = t?.rating_avg ? Number(t.rating_avg) : 4.8;
-        const reviewsCount = t?.rating_count ? Number(t.rating_count) : 0;
-        const price = t?.base_price ? Number(t.base_price) : 2990000;
+        const schedule = t?.tour_schedules?.[0];
+        const rating = t?.rating_avg != null ? Number(t.rating_avg) : 0;
+        const reviewsCount = Number(t?.rating_count ?? 0);
+        const basePrice = Number(t?.base_price ?? 0);
+        const price = Number(schedule?.price ?? basePrice);
+        const scheduleOriginalPrice = Number(schedule?.original_price ?? 0);
+        const originalPrice = scheduleOriginalPrice > price
+          ? scheduleOriginalPrice
+          : basePrice > price ? basePrice : undefined;
         const duration = t?.duration_days
           ? `${t.duration_days} ngày ${t.duration_nights || t.duration_days - 1} đêm`
-          : "3 ngày 2 đêm";
+          : "Đang cập nhật";
         const type: "domestic" | "international" =
-          t?.tour_type === "international" ? "international" : "domestic";
+          t?.tour_type === "outbound" || t?.tour_type === "international" ? "international" : "domestic";
         const image =
+          schedule?.cover_image_url ||
           t?.tour_images?.[0]?.image_url ||
           "/images/shared/travel-cover.png";
-        const startDate = t?.tour_schedules?.[0]?.start_date;
+        const startDate = schedule?.start_date;
         const savedDate = fav.created_at
           ? formatDate(fav.created_at)
           : formatDate(new Date());
-        const quota = t?.tour_schedules?.[0]?.quota;
-        const guestCount = quota ? `2 – ${quota} khách` : "2 – 30 khách";
+        const seatsLeft = schedule?.quota != null
+          ? Math.max(0, Number(schedule.quota) - Number(schedule.booked_count ?? 0))
+          : undefined;
 
         return {
           tour_id: tourId,
           name,
           location,
+          summary: t?.summary,
           rating,
           reviewsCount,
           price,
@@ -55,7 +64,9 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
           image,
           startDate,
           savedDate,
-          guestCount,
+          airline: t?.transports?.name,
+          seatsLeft,
+          originalPrice,
         };
       });
     }
@@ -117,148 +128,44 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
   };
 
   return (
-    <div className="space-y-6">
-      {/* FULL SCENIC HERO BANNER (Tràn viền, không đóng khung, hiển thị hình phong cảnh trọn vẹn) */}
-      <div className="relative -mx-4 -mt-4 overflow-hidden sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
-        {/* Full Landscape Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/about/travel-dreams-banner.png"
-            alt="Scenic background"
-            fill
-            priority
-            className="object-cover object-[center_28%]"
-          />
-          {/* Subtle bottom fade - toned down to keep the full landscape and water crystal clear */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent 85% to-[#f6f8fb]/40" />
-        </div>
-
-        {/* Content Container (Aligned with main content width, reduced height for compact elegance) */}
-        <div className="relative z-10 mx-auto max-w-[1240px] px-4 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 lg:px-8 flex flex-col justify-between min-h-[165px] sm:min-h-[185px]">
-          {/* Top Row: Title & Subtitle + Airplane + Handwritten Script Quote */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 sm:gap-3.5">
-              {/* Rounded Heart Icon Badge */}
-              <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dbeafe]/90 text-[#1766c2] shadow-xs backdrop-blur-xs">
-                <Heart className="h-6 w-6 text-[#1766c2] stroke-[2.3]" />
-              </div>
-              <div>
-                <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-                  Tour yêu thích
-                </h1>
-                <p className="mt-0.5 text-xs font-medium text-slate-700 sm:text-sm">
-                  Lưu lại những hành trình bạn yêu thích để dễ dàng xem lại và đặt tour trong tương lai!
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Airplane & Script Quote */}
-            <div className="hidden shrink-0 items-center gap-4 md:flex lg:gap-6">
-              <svg
-                className="h-8 w-8 -rotate-12 text-slate-600/80 transition-transform duration-300 hover:translate-x-1 hover:-translate-y-1"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
+    <div className="w-full min-w-0 space-y-6">
+      <AccountPageBanner
+        title="Tour yêu thích"
+        description="Lưu lại những hành trình bạn yêu thích để dễ dàng xem lại và đặt tour trong tương lai!"
+        icon={Heart}
+        filterAriaLabel="Lọc tour yêu thích"
+        activeFilter={filterType}
+        onFilterChange={(value) => setFilterType(value as FavFilterType)}
+        filters={[
+          { value: "all", label: `Tất cả (${activeList.length})` },
+          { value: "domestic", label: `Trong nước (${domesticCount})` },
+          { value: "international", label: `Nước ngoài (${internationalCount})` },
+        ]}
+        search={
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Tìm tour yêu thích..."
+              className="w-full rounded-full border border-slate-200/90 bg-white/95 py-2 pl-9 pr-8 text-xs font-medium text-slate-800 placeholder-slate-400 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Xóa tìm kiếm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-              </svg>
-
-              <div className="text-right -rotate-2">
-                <p className="font-serif text-xs font-bold italic leading-tight text-sky-900 sm:text-sm">
-                  Khám phá thêm
-                </p>
-                <p className="font-serif text-xs font-bold italic leading-tight text-sky-900 sm:text-sm">
-                  những chuyến đi tuyệt vời!
-                </p>
-              </div>
-            </div>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
           </div>
+        }
+      />
 
-          {/* Bottom Controls Row: Filter Tabs & Search Bar */}
-          <div className="mt-5 sm:mt-6 lg:mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Tất cả */}
-              <button
-                type="button"
-                onClick={() => setFilterType("all")}
-                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
-                  filterType === "all"
-                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
-                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
-                }`}
-              >
-                <Heart
-                  className={`h-3.5 w-3.5 ${
-                    filterType === "all" ? "fill-white text-white" : "text-slate-500"
-                  }`}
-                />
-                <span>Tất cả ({activeList.length})</span>
-              </button>
-
-              {/* Trong nước */}
-              <button
-                type="button"
-                onClick={() => setFilterType("domestic")}
-                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
-                  filterType === "domestic"
-                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
-                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
-                }`}
-              >
-                <Compass
-                  className={`h-3.5 w-3.5 ${
-                    filterType === "domestic" ? "text-white" : "text-slate-500"
-                  }`}
-                />
-                <span>Trong nước ({domesticCount})</span>
-              </button>
-
-              {/* Nước ngoài */}
-              <button
-                type="button"
-                onClick={() => setFilterType("international")}
-                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
-                  filterType === "international"
-                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
-                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
-                }`}
-              >
-                <Globe
-                  className={`h-3.5 w-3.5 ${
-                    filterType === "international" ? "text-white" : "text-slate-500"
-                  }`}
-                />
-                <span>Nước ngoài ({internationalCount})</span>
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm tour yêu thích..."
-                className="w-full rounded-full border border-white/80 bg-white/95 py-2.5 pl-9 pr-8 text-xs font-medium text-slate-800 placeholder-slate-400 shadow-xs backdrop-blur-md transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1766c2]"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Xóa tìm kiếm"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid of Cards (2 columns on tablet/desktop, matching the design sample) */}
+      {/* Thẻ tour ngang theo mẫu tham khảo */}
       {filteredList.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/80 px-6 py-16 text-center shadow-xs">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-500 shadow-xs">
@@ -286,7 +193,7 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3.5 sm:gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {filteredList.map((item) => (
             <FavoriteTourCard
               key={item.tour_id}

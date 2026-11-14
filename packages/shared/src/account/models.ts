@@ -33,6 +33,7 @@ export type AccountBooking = {
     tour_schedules: {
         start_date: string;
         end_date?: string;
+        cover_image_url?: string | null;
         departure_location?: {
             name?: string | null;
         } | null;
@@ -81,6 +82,7 @@ export type BookingItemUI = {
     tourId: number;
     name: string;
     summary?: string;
+    tourType?: string;
     startDate: string;
     endDate: string;
     passengers: string;

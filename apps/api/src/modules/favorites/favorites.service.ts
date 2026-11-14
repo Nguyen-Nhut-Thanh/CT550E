@@ -16,9 +16,15 @@ export class FavoritesService {
         return this.prisma.favorites.findMany({
             where: { user_id }, orderBy: { created_at: "desc" },
             include: { tours: { include: {
+                        transports: { select: { name: true, transport_type: true } },
                         departure_locations: { select: { name: true } },
                         tour_images: { orderBy: [{ is_cover: "desc" }, { sort_order: "asc" }], take: 1 },
-                        tour_schedules: { orderBy: { start_date: "asc" }, take: 1, select: { start_date: true, quota: true } },
+                        tour_schedules: {
+                            where: { status: 1, start_date: { gte: new Date() } },
+                            orderBy: { start_date: "asc" },
+                            take: 1,
+                            select: { start_date: true, quota: true, booked_count: true, price: true, cover_image_url: true },
+                        },
                     } } },
         });
     }

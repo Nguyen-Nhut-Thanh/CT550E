@@ -4,185 +4,147 @@ import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
 import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
-import {
-  Calendar,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  Eye,
-  MapPin,
-  MessageCircle,
-  RotateCcw,
-  Star,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, CreditCard, Eye, Globe2, MapPin, MessageCircle, Plane, RotateCcw, Star, Users, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useId } from "react";
 import type { BookingItemUI } from "shared";
 
 interface BookingHistoryCardProps {
   item: BookingItemUI;
-  striped?: boolean;
-  grouped?: boolean;
   rawBooking?: any;
   onReview?: (item: BookingItemUI) => void;
   onCancelRequest?: (rawBooking: any) => void;
 }
 
-export function BookingHistoryCard({
-  item,
-  striped = false,
-  grouped = false,
-  rawBooking,
-  onReview,
-  onCancelRequest,
-}: BookingHistoryCardProps) {
+export function BookingHistoryCard({ item, rawBooking, onReview, onCancelRequest }: BookingHistoryCardProps) {
   const imageSrc = normalizeImageSrc(item.image) || PLACEHOLDER_IMAGE;
-
-  const isCancelRequested =
-    rawBooking?.status === "cancel_requested" ||
-    (item.status === "unknown" && item.statusText === "Đang yêu cầu hủy");
-  const isCancellable =
-    item.status !== "cancelled" && item.status !== "completed";
+  const waveId = `booking-history-wave-${useId().replace(/:/g, "")}`;
+  const isCancelRequested = rawBooking?.status === "cancel_requested" || (item.status === "unknown" && item.statusText === "Đang yêu cầu hủy");
+  const isCancellable = item.status !== "cancelled" && item.status !== "completed";
   const bookingDate = item.createdAt
     ? new Date(item.createdAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
     : null;
+  const isInternational = item.tourType === "outbound" || item.tourType === "international";
+  const statusLabel = item.paymentStatus === "unpaid" && item.status === "upcoming" ? "Chờ thanh toán" : item.statusText;
+  const statusClass = item.status === "cancelled"
+    ? "border-rose-200 bg-rose-50 text-rose-700"
+    : item.status === "completed"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : item.status === "ongoing"
+        ? "border-blue-200 bg-blue-50 text-blue-700"
+        : item.paymentStatus === "unpaid"
+          ? "border-amber-200 bg-amber-50 text-amber-800"
+          : "border-sky-200 bg-sky-50 text-sky-700";
+  const StatusIcon = item.status === "cancelled" ? XCircle : item.status === "completed" ? CheckCircle2 : Clock;
 
   return (
-    <article className={`group relative flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${grouped ? "rounded-none border-0 border-b border-slate-200 last:border-b-0 shadow-none hover:shadow-none" : "rounded-xl border border-slate-100/90 shadow-[0_1px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.05)]"} ${striped ? "bg-[#f7faff]" : "bg-white"} p-1 sm:p-1.5 transition-all duration-300 hover:border-slate-200/80`}>
-      {/* Left Column: Image Thumbnail */}
-      <Link
-        href={`/booking/${item.id}`}
-        className="relative aspect-[16/10] w-full md:w-[260px] lg:w-[280px] shrink-0 overflow-hidden rounded-xl bg-slate-100 block group/thumb"
-      >
-        <Image
-          src={imageSrc}
-          alt={item.name}
-          fill
-          className="object-cover transition-transform duration-500 group-hover/thumb:scale-105"
-          sizes="(max-width: 768px) 100vw, 280px"
+    <article className="group relative flex w-full min-w-0 flex-col gap-3 overflow-visible rounded-[24px] border border-blue-100/80 bg-white p-3 shadow-[0_12px_32px_rgba(30,64,175,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(30,64,175,0.12)] sm:p-3.5 md:flex-row md:gap-3.5">
+      <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
+        <defs>
+          <clipPath id={`${waveId}-main`} clipPathUnits="objectBoundingBox">
+            <path d="M .065 0 L .90 0 Q .97 0 .98 .07 C 1 .32 .99 .72 .95 .89 C .93 .96 .82 .98 .65 .97 C .42 .95 .20 .98 .065 .99 Q 0 .99 0 .92 L 0 .07 Q 0 0 .065 0 Z" />
+          </clipPath>
+          <clipPath id={`${waveId}-back`} clipPathUnits="objectBoundingBox">
+            <path d="M .065 0 L .91 0 Q .98 0 .99 .07 C 1.01 .36 1 .76 .96 .94 C .94 .99 .84 1 .64 .99 L .065 1 Q 0 1 0 .93 L 0 .07 Q 0 0 .065 0 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      <div className="relative h-[190px] w-full shrink-0 sm:h-[210px] md:h-[230px] md:w-[36%]">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-100/85 to-sky-200/75"
+          style={{ clipPath: `url(#${waveId}-back)`, WebkitClipPath: `url(#${waveId}-back)` }}
         />
-
-      </Link>
-
-      {/* Middle Column: Tour Information */}
-      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
-        {/* Title */}
-        <h3 className="text-base sm:text-[17px] font-bold text-slate-900 leading-snug line-clamp-1">
-          <Link
-            href={`/booking/${item.id}`}
-            className="hover:text-[#1766c2] transition-colors"
-            title={item.name}
-          >
-            {item.name}
-          </Link>
-        </h3>
-
-        {/* Location */}
-        <div className="flex items-center gap-1 text-xs font-medium text-slate-700">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-          <span className="truncate">{item.location || "Chưa cập nhật điểm khởi hành"}</span>
-        </div>
-
-        {/* Departure dates & Duration */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-700">
-          <div className="flex items-center gap-1.5 whitespace-nowrap">
-            <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-            <span className="text-blue-700">Khởi hành: {item.startDate} – {item.endDate}</span>
-          </div>
-          {item.duration && (
-            <>
-              <span className="text-slate-300">•</span>
-              <span className="whitespace-nowrap font-semibold text-slate-800">
-                {item.duration}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Guests / Passengers */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-700">
-          <Users className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-          <span>{item.passengers}</span>
-          {bookingDate && <><span className="mx-0.5 text-slate-400">•</span><span className="text-blue-700">Ngày đặt {bookingDate}</span></>}
-        </div>
-
-        {/* Price display */}
-        <div className="pt-1">
-          <span className="text-[11px] text-slate-600 font-medium block">
-            Tổng tiền thanh toán
-          </span>
-          <span className="text-base sm:text-lg font-black text-red-600 tracking-tight">
-            {formatVND(item.price)}
-          </span>
-        </div>
+        <Link
+          href={`/booking/${item.id}`}
+          className="absolute inset-0 block overflow-hidden bg-sky-100"
+          style={{ clipPath: `url(#${waveId}-main)`, WebkitClipPath: `url(#${waveId}-main)` }}
+        >
+          <Image
+            src={imageSrc}
+            alt={item.name}
+            fill
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 325px"
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
+        </Link>
+        <span className="absolute left-3.5 top-3.5 inline-flex items-center gap-1 rounded-full border border-white/15 bg-slate-900/45 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm backdrop-blur-md">
+          {isInternational ? <Globe2 className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
+          {isInternational ? "Nước ngoài" : "Trong nước"}
+        </span>
       </div>
 
-      {/* Right Column: Status Badge & Action Buttons */}
-      <div className="flex flex-col md:items-end justify-between self-stretch gap-2 shrink-0 pt-3 md:pt-0 md:pr-1.5 border-t md:border-t-0 border-slate-100">
-        <div className="flex justify-end md:mr-2 md:mt-2">
-          <AdminRowActions
-            label={`Thao tác với đơn đặt tour #${item.id}`}
-            buttonText="Thao tác"
-            actions={[
-              { label: "Xem chi tiết", icon: <Eye size={16} />, href: `/booking/${item.id}`, access: "view" },
-              ...(item.status === "completed" || item.status === "cancelled" ? [{ label: "Đặt lại tour", icon: <RotateCcw size={16} />, href: `/tours/${item.tourId}`, access: "view" as const }] : []),
-              { label: "Liên hệ hỗ trợ", icon: <MessageCircle size={16} />, onClick: () => openSupportChat({ booking_id: item.id }), access: "view" },
-              ...(item.paymentStatus === "unpaid" && item.status !== "cancelled" ? [{ label: "Thanh toán ngay", icon: <CreditCard size={16} />, href: `/booking/${item.id}`, access: "view" as const }] : []),
-              ...(item.status === "completed" && onReview ? [{ label: item.review ? `Xem đánh giá (${item.review.rating}★)` : "Đánh giá", icon: <Star size={16} />, onClick: () => onReview(item), access: "view" as const }] : []),
-              ...(isCancellable && onCancelRequest ? [isCancelRequested
-                ? { label: "Đang chờ duyệt hủy", icon: <Clock size={16} />, disabled: true, title: "Yêu cầu hủy của bạn đang được ban quản lý xem xét", access: "view" as const }
-                : { label: "Yêu cầu hủy tour", icon: <XCircle size={16} />, onClick: () => onCancelRequest(rawBooking || item), danger: true, access: "view" as const }] : []),
-            ]}
-          />
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-between py-1 md:py-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-base font-extrabold leading-snug tracking-tight text-slate-900 transition-colors group-hover:text-[#1266f1] md:text-lg">
+              <Link href={`/booking/${item.id}`} title={item.name}>{item.name}</Link>
+            </h3>
+            <div className="mt-1.5 flex flex-col gap-2 text-xs font-medium text-slate-500">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0 text-slate-900" />
+                <span className="truncate">{item.location || "Chưa cập nhật điểm khởi hành"}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-500">
+                <CalendarDays className="h-4 w-4 shrink-0 text-slate-900" />
+                <span>Đặt ngày:</span>
+                <span className="text-blue-700">{bookingDate || "Chưa cập nhật"}</span>
+              </span>
+            </div>
+          </div>
+          <div className="relative z-20 shrink-0">
+            <AdminRowActions
+              label={`Thao tác với đơn đặt tour #${item.id}`}
+              buttonText="Thao tác"
+              actions={[
+                { label: "Xem chi tiết", icon: <Eye size={16} />, href: `/booking/${item.id}`, access: "view" },
+                ...(item.status === "completed" || item.status === "cancelled" ? [{ label: "Đặt lại tour", icon: <RotateCcw size={16} />, href: `/tours/${item.tourId}`, access: "view" as const }] : []),
+                { label: "Liên hệ hỗ trợ", icon: <MessageCircle size={16} />, onClick: () => openSupportChat({ booking_id: item.id }), access: "view" },
+                ...(item.paymentStatus === "unpaid" && item.status !== "cancelled" ? [{ label: "Thanh toán ngay", icon: <CreditCard size={16} />, href: `/booking/${item.id}`, access: "view" as const }] : []),
+                ...(item.status === "completed" && onReview ? [{ label: item.review ? `Xem đánh giá (${item.review.rating}★)` : "Đánh giá", icon: <Star size={16} />, onClick: () => onReview(item), access: "view" as const }] : []),
+                ...(isCancellable && onCancelRequest ? [isCancelRequested
+                  ? { label: "Đang chờ duyệt hủy", icon: <Clock size={16} />, disabled: true, title: "Yêu cầu hủy của bạn đang được ban quản lý xem xét", access: "view" as const }
+                  : { label: "Yêu cầu hủy tour", icon: <XCircle size={16} />, onClick: () => onCancelRequest(rawBooking || item), danger: true, access: "view" as const }] : []),
+              ]}
+            />
+          </div>
         </div>
 
-        {/* Status Badge */}
-        <div className="flex flex-wrap items-center justify-end gap-2 md:mr-2 md:mb-2">
-          {item.status === "completed" && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-3.5 py-1 text-xs font-bold shadow-2xs">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Đã hoàn thành</span>
-            </span>
-          )}
+        <div className="mb-2 mt-2 flex flex-col gap-2 text-slate-700">
+          <div className="flex min-w-0 items-center gap-2">
+            <CalendarDays className="h-4 w-4 shrink-0 text-slate-900" />
+            <span className="shrink-0 text-[11px] font-medium text-slate-500">Khởi hành:</span>
+            <span className="truncate text-xs font-bold text-blue-700">{item.startDate} – {item.endDate}</span>
+          </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0 text-slate-900" />
+            <span className="shrink-0 text-[11px] font-medium text-slate-500">Thời gian:</span>
+            <span className="truncate text-xs font-bold text-slate-800">{item.duration || "Đang cập nhật"}</span>
+          </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <Users className="h-4 w-4 shrink-0 text-slate-900" />
+            <span className="shrink-0 text-[11px] font-medium text-slate-500">Hành khách:</span>
+            <span className="truncate text-xs font-bold text-slate-800">{item.passengers}</span>
+          </div>
+        </div>
 
-          {item.status === "ongoing" && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-3.5 py-1 text-xs font-bold shadow-2xs">
-              <Clock className="h-3.5 w-3.5 text-blue-600" />
-              <span>Đang diễn ra</span>
+        <div className="flex flex-col justify-between gap-3 pt-1 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-blue-100/70 bg-[#f3f7fd] px-3.5 py-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm"><CreditCard className="h-4 w-4" /></span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-medium leading-tight text-slate-500">Tổng tiền thanh toán</span>
+              <span className="block truncate text-base font-extrabold leading-tight tracking-tight text-[#1266f1]">{formatVND(item.price)}</span>
             </span>
-          )}
-
-          {item.status === "cancelled" && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200/60 px-3.5 py-1 text-xs font-bold shadow-2xs">
-              <XCircle className="h-3.5 w-3.5 text-rose-500" />
-              <span>Đã hủy</span>
-            </span>
-          )}
-
-          {item.status === "upcoming" && (
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold shadow-2xs ${
-                item.paymentStatus === "unpaid"
-                  ? "bg-amber-50 text-amber-800 border border-amber-200/60"
-                  : "bg-sky-50 text-sky-700 border border-sky-200/60"
-              }`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>{item.statusText}</span>
-            </span>
-          )}
-
-          {item.status === "unknown" && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 px-3.5 py-1 text-xs font-bold shadow-2xs">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{item.statusText}</span>
-            </span>
-          )}
+          </div>
+          <div className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-bold sm:self-auto ${statusClass}`}>
+            <StatusIcon className="h-3 w-3" />
+            <span>{statusLabel}</span>
+            {item.status === "ongoing" && <Plane className="h-3 w-3 -rotate-12" />}
+          </div>
         </div>
       </div>
     </article>
   );
 }
-

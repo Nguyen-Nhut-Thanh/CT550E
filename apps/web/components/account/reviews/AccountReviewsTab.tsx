@@ -67,22 +67,19 @@ export function AccountReviewsTab() {
   const approved = reviews.filter((review) => review.status === 1);
   const visible = approvedOnly ? approved : reviews;
   return (
-    <div className="w-full space-y-5 pt-1">
-      <AccountPageBanner title="Bài đánh giá" description="Những đánh giá bạn đã viết về các tour" icon={Star}>
-      <div className="flex flex-wrap gap-2" aria-label="Lọc bài đánh giá">
-        {[false, true].map((value) => (
-          <button
-            key={String(value)}
-            aria-pressed={approvedOnly === value}
-            onClick={() => setApprovedOnly(value)}
-            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${approvedOnly === value ? "bg-[#2094d3] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
-          >
-            {value ? "Đã đánh giá" : "Tất cả"}{" "}
-            {!loading && `(${value ? approved.length : reviews.length})`}
-          </button>
-        ))}
-      </div>
-      </AccountPageBanner>
+    <div className="w-full min-w-0 space-y-6">
+      <AccountPageBanner
+        title="Bài đánh giá"
+        description="Những đánh giá bạn đã viết về các tour"
+        icon={Star}
+        filterAriaLabel="Lọc bài đánh giá"
+        activeFilter={approvedOnly ? "approved" : "all"}
+        onFilterChange={(value) => setApprovedOnly(value === "approved")}
+        filters={[
+          { value: "all", label: `Tất cả${!loading ? ` (${reviews.length})` : ""}` },
+          { value: "approved", label: `Đã đánh giá${!loading ? ` (${approved.length})` : ""}` },
+        ]}
+      />
       {notice && (
         <p
           role="status"

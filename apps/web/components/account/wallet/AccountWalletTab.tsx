@@ -58,59 +58,42 @@ export function AccountWalletTab() {
   );
 
   return (
-    <div className="w-full">
-      <AccountPageBanner title="Ví voucher & ưu đãi" description="Lưu giữ ưu đãi cho những chuyến đi sắp tới." icon={Ticket}>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/account/membership"
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:border-slate-300"
-          >
-            Hạng thành viên
-          </Link>
-          <span aria-hidden="true" className="h-4 w-px bg-slate-200" />
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-blue-600 transition hover:text-blue-700 disabled:opacity-50"
-          >
-            <RotateCw size={15} className={loading ? "animate-spin" : ""} />
-            <span>Làm mới</span>
-          </button>
-        </div>
-      </AccountPageBanner>
-
-      {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Trạng thái voucher"
-        className="mt-6 mb-7 flex gap-7 overflow-x-auto border-b border-slate-200/80"
-      >
-        {tabs.map(({ value, label }) => {
-          const count =
-            value === "available"
-              ? vouchers.filter((voucher) => voucher.state === "available" || voucher.state === "upcoming").length
-              : vouchers.filter((voucher) => voucher.state === value).length;
-          const selected = filter === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setFilter(value)}
-              className={`relative pb-3 text-sm font-semibold transition shrink-0 ${
-                selected ? "text-blue-600 font-bold" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {label} ({count})
-              {selected && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-blue-600" />
-              )}
-            </button>
-          );
+    <div className="w-full min-w-0 space-y-6">
+      <AccountPageBanner
+        title="Ví voucher & ưu đãi"
+        description="Lưu giữ ưu đãi cho những chuyến đi sắp tới."
+        icon={Ticket}
+        filterAriaLabel="Trạng thái voucher"
+        activeFilter={filter}
+        onFilterChange={(value) => setFilter(value as WalletFilter)}
+        filters={tabs.map(({ value, label }) => {
+              const count =
+                value === "available"
+                  ? vouchers.filter((voucher) => voucher.state === "available" || voucher.state === "upcoming").length
+                  : vouchers.filter((voucher) => voucher.state === value).length;
+              return { value, label: `${label} (${count})` };
         })}
-      </div>
+        controls={
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/account/membership"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-50 sm:text-sm"
+            >
+              Hạng thành viên
+            </Link>
+            <span aria-hidden="true" className="h-4 w-px bg-slate-200" />
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 disabled:opacity-50 sm:text-sm"
+            >
+              <RotateCw size={15} className={loading ? "animate-spin" : ""} />
+              <span>Làm mới</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* Content */}
       {loading ? (
