@@ -38,6 +38,7 @@ export type FlashDealItem = {
     tour_id: number;
     code: string;
     name: string;
+    summary?: string | null;
     slug: string;
     image_url: string | null;
     departure_name: string;
@@ -54,6 +55,8 @@ export type FlashDealItem = {
     transport_type?: string | null;
     promotion_info: string | null;
     cover_image_url: string | null;
+    rating_avg?: number | null;
+    rating_count?: number;
     deal_id?: number;
     discount_value?: number;
     discount_type?: string;

@@ -5,6 +5,7 @@ import { useAdminAccess } from "@/lib/account/useAdminAccess";
 import { NavigationPending } from "@/components/common/navigation/NavigationPending";
 import {
   Bell,
+  Crown,
   Gem,
   CalendarDays,
   Heart,
@@ -18,6 +19,9 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { AccountSidebarProps } from "shared";
+import { AccountAvatar } from "@/components/account/avatar/AccountAvatar";
+import { useAccountResource } from "@/lib/account/useAccountResource";
+import { getMembership } from "@/lib/membership/api";
 
 const menuItems = [
   { id: "overview", label: "Trang cá nhân", icon: User, href: "/account" },
@@ -69,6 +73,8 @@ export function AccountSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const canAccessAdmin = useAdminAccess(user);
+  const { data: membership } = useAccountResource("membership", getMembership);
+  const displayName = user?.full_name?.trim() || "Người dùng";
 
   const handleLogout = () => {
     removeToken();
@@ -79,23 +85,25 @@ export function AccountSidebar({
   };
 
   return (
-    <aside className="flex w-full flex-col border-r border-slate-200/80 bg-white lg:sticky lg:top-0 lg:h-screen lg:min-h-screen">
-      <div className="hidden px-7 pt-7 pb-5 lg:block">
-        <Link href="/" className="block">
-          <div className="text-[28px] font-black tracking-[-0.04em] text-[#1766c2] leading-none">
-            <span className="relative inline-block pr-1">
-              JourniTrip
-              <span className="absolute -right-1 bottom-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
-            </span>
-          </div>
-          <p className="mt-2 text-[11px] font-medium text-slate-400">
-            Khám phá thế giới cùng bạn
-          </p>
-        </Link>
-      </div>
+    <aside className="no-scrollbar flex w-full flex-col border-r border-slate-200/80 bg-white lg:sticky lg:top-[66px] lg:h-[calc(100vh-66px)] lg:self-start lg:overflow-y-auto">
+      <Link
+        href="/account"
+        className="mx-3 mb-2 mt-4 hidden flex-col items-center rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50 px-3 py-3 text-center transition hover:border-blue-100 hover:bg-blue-50/40 lg:flex"
+      >
+        <div className="relative h-[52px] w-[52px] overflow-hidden rounded-full bg-slate-100 ring-2 ring-white shadow-sm">
+          <AccountAvatar source={user?.avatar_url} name={displayName} sizes="52px" />
+        </div>
+        <span className="mt-2 inline-flex max-w-full items-center gap-1 truncate text-xs font-bold text-slate-900">
+          <span className="truncate">{displayName}</span>
+          <Crown className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-500" />
+        </span>
+        <span className="mt-0.5 text-[11px] font-medium text-slate-500">
+          {membership?.tier?.name ? `Thành viên ${membership.tier.name}` : "Thành viên"}
+        </span>
+      </Link>
 
       <nav className="px-3 py-3 lg:px-4 lg:pb-0">
-        <div className="flex gap-2 overflow-x-auto pb-2 lg:block lg:space-y-1.5 lg:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-2 lg:block lg:space-y-1.5 lg:overflow-visible lg:pb-0">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -153,20 +161,20 @@ export function AccountSidebar({
         </button>
       </nav>
 
-      <div className="mt-auto hidden overflow-hidden pt-10 lg:block">
-        <div className="relative h-[265px] bg-gradient-to-b from-white via-[#edf8ff] to-[#c9ebff]">
-          <div className="absolute left-7 top-2 -rotate-6 select-none text-[32px] font-semibold italic leading-[1.05] text-[#0f4d88] [font-family:cursive]">
+      <div className="mt-auto hidden overflow-hidden pt-4 lg:block">
+        <div className="relative h-[180px] bg-gradient-to-b from-white via-[#edf8ff] to-[#c9ebff]">
+          <div className="absolute left-6 top-2 -rotate-6 select-none text-[26px] font-semibold italic leading-[1.05] text-[#0f4d88] [font-family:cursive]">
             Good
             <br />
             Vibes
             <br />
             Only
           </div>
-          <div className="absolute left-[120px] top-[65px] text-3xl text-[#1766c2]">
+          <div className="absolute left-[110px] top-[48px] text-2xl text-[#1766c2]">
             ⌁✈
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(160deg,transparent_0_32%,#8dc7ed_33%_52%,#65acd8_53%_70%,#3b90c7_71%_100%)] opacity-90" />
-          <div className="absolute inset-x-0 bottom-0 h-[72px] bg-gradient-to-b from-[#5fc3ea]/20 to-[#4aa8d3]/80" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(160deg,transparent_0_32%,#8dc7ed_33%_52%,#65acd8_53%_70%,#3b90c7_71%_100%)] opacity-90" />
+          <div className="absolute inset-x-0 bottom-0 h-[50px] bg-gradient-to-b from-[#5fc3ea]/20 to-[#4aa8d3]/80" />
         </div>
       </div>
     </aside>

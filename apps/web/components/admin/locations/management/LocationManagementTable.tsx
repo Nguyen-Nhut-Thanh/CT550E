@@ -165,7 +165,7 @@ export function LocationManagementTable({
                             {
                               label: "Thiết lập grid nổi bật",
                               icon: <Star size={16} />,
-                              href: "/admin/locations/featured",
+                              href: "/admin/banners?tab=featured",
                             },
                             {
                               label: "Xóa địa điểm",

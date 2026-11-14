@@ -1,6 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma, vouchers } from '@prisma/client';
-import { MEMBERSHIP_TIERS, membershipDiscount, voucherAudienceAllows, voucherAudienceLabel, type VoucherPayload } from 'shared';
+import * as fs from 'fs';
+import * as path from 'path';
+import { MEMBERSHIP_TIERS, membershipDiscount, voucherAudienceAllows, voucherAudienceLabel, type HomeVoucherCampaignConfig, type PublicHomeVouchersData, type VoucherPayload } from 'shared';
+
+const DEFAULT_HOME_VOUCHER_CONFIG: HomeVoucherCampaignConfig = {
+    enabled: true,
+    title: 'SĂN VOUCHER ƯU ĐÃI',
+    subtitle: 'Nhận ngay các mã giảm giá hấp dẫn dành riêng cho chuyến du lịch của bạn!',
+    badge: 'ƯU ĐÃI ĐẶC BIỆT',
+    voucher_ids: [],
+};
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
@@ -204,5 +214,102 @@ export class VouchersService {
         const voucher = await this.ensureExists(id);
         if (voucher.used_count) throw new BadRequestException('Không thể xóa voucher đã được sử dụng.');
         return this.prisma.vouchers.delete({ where: { voucher_id: id } });
+    }
+
+    private getHomeConfigFilePath(): string {
+        const cwd = process.cwd();
+        const baseDir = cwd.endsWith(path.join('apps', 'api')) || cwd.endsWith('apps/api')
+            ? path.join(cwd, 'data')
+            : path.join(cwd, 'apps', 'api', 'data');
+        if (!fs.existsSync(baseDir)) {
+            try { fs.mkdirSync(baseDir, { recursive: true }); } catch { /* ignore */ }
+        }
+        return path.join(baseDir, 'home-vouchers.json');
+    }
+
+    async getHomeVoucherConfig(): Promise<HomeVoucherCampaignConfig> {
+        try {
+            const filePath = this.getHomeConfigFilePath();
+            if (fs.existsSync(filePath)) {
+                const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                return {
+                    enabled: parsed.enabled !== undefined ? Boolean(parsed.enabled) : true,
+                    title: parsed.title || DEFAULT_HOME_VOUCHER_CONFIG.title,
+                    subtitle: parsed.subtitle || DEFAULT_HOME_VOUCHER_CONFIG.subtitle,
+                    badge: parsed.badge || DEFAULT_HOME_VOUCHER_CONFIG.badge,
+                    voucher_ids: Array.isArray(parsed.voucher_ids) ? parsed.voucher_ids.map(Number) : [],
+                };
+            }
+        } catch {
+            // fallback
+        }
+        return { ...DEFAULT_HOME_VOUCHER_CONFIG };
+    }
+
+    async updateHomeVoucherConfig(payload: Partial<HomeVoucherCampaignConfig>): Promise<HomeVoucherCampaignConfig> {
+        const current = await this.getHomeVoucherConfig();
+        const updated: HomeVoucherCampaignConfig = {
+            enabled: payload.enabled !== undefined ? Boolean(payload.enabled) : current.enabled,
+            title: payload.title?.trim() || current.title,
+            subtitle: payload.subtitle?.trim() || current.subtitle,
+            badge: payload.badge?.trim() || current.badge,
+            voucher_ids: Array.isArray(payload.voucher_ids) ? payload.voucher_ids.map(Number) : current.voucher_ids,
+        };
+        try {
+            const filePath = this.getHomeConfigFilePath();
+            fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8');
+        } catch {
+            throw new BadRequestException('Không thể ghi file cấu hình voucher trang chủ.');
+        }
+        return updated;
+    }
+
+    async getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
+        const config = await this.getHomeVoucherConfig();
+        if (!config.enabled) {
+            return { config, vouchers: [] };
+        }
+
+        const now = new Date();
+        const baseWhere = {
+            owner_user_id: null,
+            status: 1,
+            start_date: { lte: now },
+            expiry_date: { gt: now },
+        };
+
+        let voucherList: any[] = [];
+        if (config.voucher_ids && config.voucher_ids.length > 0) {
+            const found = await this.prisma.vouchers.findMany({
+                where: {
+                    ...baseWhere,
+                    voucher_id: { in: config.voucher_ids },
+                },
+            });
+            voucherList = config.voucher_ids
+                .map(id => found.find(v => v.voucher_id === id))
+                .filter(Boolean);
+        }
+
+        if (!voucherList.length) {
+            voucherList = await this.prisma.vouchers.findMany({
+                where: baseWhere,
+                orderBy: [
+                    { discount_value: 'desc' },
+                    { created_at: 'desc' },
+                ],
+                take: 6,
+            });
+        }
+
+        return {
+            config,
+            vouchers: voucherList.map(v => ({
+                ...v,
+                discount_value: Number(v.discount_value),
+                min_order_value: Number(v.min_order_value),
+                max_discount_amount: v.max_discount_amount !== null ? Number(v.max_discount_amount) : null,
+            })),
+        };
     }
 }

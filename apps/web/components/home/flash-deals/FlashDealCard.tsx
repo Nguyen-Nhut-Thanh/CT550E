@@ -9,14 +9,11 @@ import { getTransportLabel } from "@/lib/tours/display";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { normalizeImageSrc } from "@/lib/utils/images";
-import { Calendar, Clock, Hash, MapPin, Users, } from "lucide-react";
+import { Calendar, Clock, Hash, MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import type { FlashDealItem } from "shared";
-
-const brandRed = "text-red-600";
-const brandRedBorder = "border-red-600";
 
 export default function FlashDealCard({ item }: { item: FlashDealItem }) {
   const router = useRouter();
@@ -45,6 +42,9 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
   const displayPrice = item.sale_price || item.original_price || 0;
   const hasDiscount =
     !!item.original_price && item.original_price > (item.sale_price || 0);
+  const accentText = "text-red-600";
+  const accentBorder = "border-red-600";
+  const accentHover = "hover:bg-red-600 hover:shadow-red-100";
 
   const handleFavoriteClick = async (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -113,12 +113,8 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
             <Clock className="h-3 w-3" />
             <span>Giờ chót</span>
           </div>
-
           <div className="w-9 shrink-0" />
-
-          <div
-            className={`flex-1 rounded-lg bg-white/80 py-1.5 text-center text-sm font-black ${brandRed} shadow-sm backdrop-blur-sm`}
-          >
+          <div className={`flex-1 rounded-lg bg-white/80 py-1.5 text-center text-sm font-black ${accentText} shadow-sm backdrop-blur-sm`}>
             {countdownLabel}
           </div>
         </div>
@@ -189,16 +185,16 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
               <span className="text-[10px] font-bold text-slate-500">
                 Giá từ:
               </span>
-              <span
-                className={`text-[12px] font-bold italic text-slate-400 ${hasDiscount ? "line-through" : ""}`}
-              >
-                {formatVND(item.original_price || 0)}
-              </span>
+              {hasDiscount && (
+                <span className="text-[12px] font-bold italic text-slate-400 line-through">
+                  {formatVND(item.original_price || 0)}
+                </span>
+              )}
             </div>
 
             <div className="flex items-baseline gap-1">
               <p
-                className={`text-[19px] font-black leading-none ${brandRed} tracking-tighter`}
+                className={`text-[19px] font-black leading-none ${accentText} tracking-tighter`}
               >
                 {formatVND(displayPrice)}
               </p>
@@ -208,7 +204,7 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
           <div className="flex flex-shrink-0 items-center pl-2">
             <Link
               href={item.link || `/tours/${item.tour_id}`}
-              className={`flex h-[40px] items-center justify-center rounded-xl border-2 ${brandRedBorder} ${brandRed} bg-transparent px-4 text-center text-[12px] font-bold transition-all hover:bg-red-600 hover:text-white hover:shadow-lg hover:shadow-red-100 active:scale-95`}
+              className={`flex h-[40px] items-center justify-center rounded-xl border-2 ${accentBorder} ${accentText} bg-transparent px-4 text-center text-[12px] font-bold transition-all ${accentHover} hover:text-white hover:shadow-lg active:scale-95`}
             >
               Đặt ngay
             </Link>

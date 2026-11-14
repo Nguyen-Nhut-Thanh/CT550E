@@ -9,6 +9,7 @@ export type ItineraryFormItem = {
     day_number: number;
     title: string;
     content: string;
+    image_url?: string;
     meals: string;
     transport_id: string | number;
     hotel_id: string | number;

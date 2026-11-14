@@ -37,12 +37,21 @@ export class SchedulesAdminService {
             include: {
                 departure_location: true,
                 pickup_points: { orderBy: { sort_order: 'asc' } },
+                schedule_promotions: true,
                 _count: { select: { bookings: true } },
             },
         });
         return items.map((item) => ({
             ...item,
             price: Number(item.price),
+            schedule_promotions: item.schedule_promotions
+                ? {
+                    ...item.schedule_promotions,
+                    discount_value: Number(item.schedule_promotions.discount_value),
+                    start_date: item.schedule_promotions.start_date.toISOString(),
+                    end_date: item.schedule_promotions.end_date.toISOString(),
+                }
+                : null,
         }));
     }
     async findOneSchedule(scheduleId: number) {
@@ -61,6 +70,7 @@ export class SchedulesAdminService {
                     include: { hotels: true, hotel_room_types: true },
                 },
                 tour_itineraries: { orderBy: { day_number: 'asc' }, include: { activities: { orderBy: { sort_order: 'asc' } } } },
+                schedule_promotions: true,
             },
         });
         if (!schedule) {
@@ -71,6 +81,14 @@ export class SchedulesAdminService {
             duration_days: schedule.tours.duration_days,
             hasBookings: schedule._count.bookings > 0,
             price: Number(schedule.price),
+            schedule_promotions: schedule.schedule_promotions
+                ? {
+                    ...schedule.schedule_promotions,
+                    discount_value: Number(schedule.schedule_promotions.discount_value),
+                    start_date: schedule.schedule_promotions.start_date.toISOString(),
+                    end_date: schedule.schedule_promotions.end_date.toISOString(),
+                }
+                : null,
             tour_schedule_prices: schedule.tour_schedule_prices.map((price) => ({
                 ...price,
                 price: Number(price.price),
@@ -90,6 +108,92 @@ export class SchedulesAdminService {
                     : null,
             })),
         };
+    }
+    async getSchedulePromotion(scheduleId: number) {
+        const promo = await this.prisma.schedule_promotions.findUnique({
+            where: { tour_schedule_id: scheduleId },
+        });
+        if (!promo) return null;
+        return {
+            ...promo,
+            discount_value: Number(promo.discount_value),
+            start_date: promo.start_date.toISOString(),
+            end_date: promo.end_date.toISOString(),
+            created_at: promo.created_at.toISOString(),
+            updated_at: promo.updated_at.toISOString(),
+        };
+    }
+    async saveSchedulePromotion(scheduleId: number, body: any) {
+        const schedule = await this.prisma.tour_schedules.findUnique({
+            where: { tour_schedule_id: scheduleId },
+            select: { tour_schedule_id: true, price: true, start_date: true },
+        });
+        if (!schedule) throw new NotFoundException('Không tìm thấy lịch khởi hành.');
+
+        if (!body.title?.trim()) throw new BadRequestException('Vui lòng nhập tên chương trình ưu đãi.');
+        if (!body.discount_type || !['percentage', 'fixed_amount'].includes(body.discount_type)) {
+            throw new BadRequestException('Loại ưu đãi không hợp lệ.');
+        }
+        const discountValue = Number(body.discount_value);
+        if (Number.isNaN(discountValue) || discountValue <= 0) {
+            throw new BadRequestException('Giá trị giảm giá phải lớn hơn 0.');
+        }
+        if (body.discount_type === 'percentage' && discountValue > 100) {
+            throw new BadRequestException('Giảm theo phần trăm không được vượt quá 100%.');
+        }
+        if (body.discount_type === 'fixed_amount' && discountValue >= Number(schedule.price)) {
+            throw new BadRequestException('Số tiền giảm không được vượt quá giá gốc của tour.');
+        }
+
+        const startDate = body.start_date ? new Date(body.start_date) : new Date();
+        const endDate = body.end_date ? new Date(body.end_date) : new Date(schedule.start_date);
+        if (endDate <= startDate) {
+            throw new BadRequestException('Thời gian kết thúc ưu đãi phải sau thời gian bắt đầu.');
+        }
+
+        const maxSlots = body.max_slots !== null && body.max_slots !== undefined && Number(body.max_slots) > 0
+            ? Math.floor(Number(body.max_slots))
+            : null;
+
+        const promo = await this.prisma.schedule_promotions.upsert({
+            where: { tour_schedule_id: scheduleId },
+            create: {
+                tour_schedule_id: scheduleId,
+                title: body.title.trim(),
+                discount_type: body.discount_type,
+                discount_value: discountValue,
+                max_slots: maxSlots,
+                start_date: startDate,
+                end_date: endDate,
+                gift_description: body.gift_description?.trim() || null,
+                is_active: body.is_active ?? true,
+            },
+            update: {
+                title: body.title.trim(),
+                discount_type: body.discount_type,
+                discount_value: discountValue,
+                max_slots: maxSlots,
+                start_date: startDate,
+                end_date: endDate,
+                gift_description: body.gift_description?.trim() || null,
+                is_active: body.is_active ?? true,
+            },
+        });
+
+        return {
+            ...promo,
+            discount_value: Number(promo.discount_value),
+            start_date: promo.start_date.toISOString(),
+            end_date: promo.end_date.toISOString(),
+            created_at: promo.created_at.toISOString(),
+            updated_at: promo.updated_at.toISOString(),
+        };
+    }
+    async deleteSchedulePromotion(scheduleId: number) {
+        await this.prisma.schedule_promotions.deleteMany({
+            where: { tour_schedule_id: scheduleId },
+        });
+        return { success: true };
     }
     async createSchedule(tourId: number, body: ScheduleAdminPayload) {
         requireFields(body as Record<string, unknown>, [
@@ -371,5 +475,148 @@ export class SchedulesAdminService {
                 where: { tour_schedule_id: scheduleId },
             });
         });
+    }
+
+    async getScheduleManifest(scheduleId: number) {
+        const schedule = await this.prisma.tour_schedules.findUnique({
+            where: { tour_schedule_id: scheduleId },
+            include: {
+                tours: {
+                    select: {
+                        tour_id: true,
+                        name: true,
+                        code: true,
+                        duration_days: true,
+                        duration_nights: true,
+                    },
+                },
+                departure_location: {
+                    select: {
+                        location_id: true,
+                        name: true,
+                    },
+                },
+                bookings: {
+                    where: {
+                        status: { notIn: ['cancelled', 'canceled'] },
+                    },
+                    orderBy: { created_at: 'desc' },
+                    include: {
+                        booking_travelers: {
+                            orderBy: { traveler_id: 'asc' },
+                        },
+                        payments: {
+                            orderBy: { created_at: 'desc' },
+                            take: 1,
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!schedule) {
+            throw new NotFoundException('Không tìm thấy lịch khởi hành.');
+        }
+
+        const HOLDING_HOURS = 12; // 12 tiếng giữ chỗ cho đơn chưa thanh toán
+        let totalTravelers = 0;
+        let adultCount = 0;
+        let childCount = 0;
+        let infantCount = 0;
+        let paidCount = 0;
+        let pendingCount = 0;
+
+        const bookings = schedule.bookings.map((b) => {
+            const adults = b.adult_count || 0;
+            const children = b.child_count || 0;
+            const infants = b.infant_count || 0;
+            const guests = b.booking_travelers?.length || (adults + children + infants);
+
+            totalTravelers += guests;
+            adultCount += adults;
+            childCount += children;
+            infantCount += infants;
+
+            const isPaid = ['paid', 'completed', 'confirmed'].includes(b.status.toLowerCase());
+            if (isPaid) {
+                paidCount += guests;
+            } else {
+                pendingCount += guests;
+            }
+
+            const createdAtTime = new Date(b.created_at).getTime();
+            const expiresTime = createdAtTime + HOLDING_HOURS * 3600 * 1000;
+            const isHoldingExpired = b.status === 'pending' && Date.now() > expiresTime;
+
+            // Map travelers kèm gán số điện thoại cho người lớn
+            const travelers = (b.booking_travelers || []).map((t, idx) => {
+                const normType = (t.traveler_type || 'adult').toLowerCase();
+                let phone: string | null = null;
+                if (normType === 'adult') {
+                    if (t.full_name?.trim().toLowerCase() === b.contact_name?.trim().toLowerCase() || idx === 0) {
+                        phone = b.contact_phone || null;
+                    }
+                }
+                return {
+                    traveler_id: t.traveler_id,
+                    full_name: t.full_name,
+                    gender: t.gender,
+                    dob: t.dob ? t.dob.toISOString().split('T')[0] : null,
+                    id_number: t.id_number,
+                    traveler_type: normType,
+                    phone,
+                };
+            });
+
+            return {
+                booking_id: b.booking_id,
+                status: b.status,
+                total_amount: Number(b.total_amount) || 0,
+                created_at: b.created_at.toISOString(),
+                contact_name: b.contact_name,
+                contact_phone: b.contact_phone,
+                contact_email: b.contact_email,
+                note: b.note,
+                pickup_snapshot: b.pickup_snapshot as any,
+                departure_name: b.departure_name,
+                adult_count: adults,
+                child_count: children,
+                infant_count: infants,
+                holding_expires_at: new Date(expiresTime).toISOString(),
+                is_holding_expired: isHoldingExpired,
+                travelers,
+                payment: b.payments?.[0]
+                    ? {
+                          status: b.payments[0].status,
+                          method: b.payments[0].method,
+                          amount: Number(b.payments[0].amount) || 0,
+                          transaction_code: b.payments[0].transaction_code,
+                      }
+                    : null,
+            };
+        });
+
+        return {
+            schedule: {
+                tour_schedule_id: schedule.tour_schedule_id,
+                code: schedule.code,
+                start_date: schedule.start_date.toISOString(),
+                end_date: schedule.end_date.toISOString(),
+                quota: schedule.quota,
+                booked_count: schedule.booked_count,
+                departure_location: schedule.departure_location,
+                tour: schedule.tours,
+            },
+            summary: {
+                total_bookings: bookings.length,
+                total_travelers: totalTravelers,
+                adult_count: adultCount,
+                child_count: childCount,
+                infant_count: infantCount,
+                paid_count: paidCount,
+                pending_count: pendingCount,
+            },
+            bookings,
+        };
     }
 }

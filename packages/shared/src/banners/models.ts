@@ -9,3 +9,14 @@ export type Banner = {
     created_at: string;
     updated_at: string;
 };
+
+export type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter';
+export type SeasonMode = SeasonType | 'auto' | 'disabled';
+
+export interface SeasonalThemeConfig {
+    mode: SeasonMode;
+    activeSeason: SeasonType;
+    enableParticles: boolean;
+    enableColors: boolean;
+    particleDensity: 'light' | 'normal' | 'dense';
+}

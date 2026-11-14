@@ -135,6 +135,7 @@ export default function CustomDropdown({
             <div className="custom-scrollbar max-h-[300px] overflow-y-auto p-0.5">
               {options.map((option) => {
                 const isSelected = option.value === selectedValue;
+                const isDisabled = Boolean(option.disabled);
 
                 return (
                   <button
@@ -142,13 +143,18 @@ export default function CustomDropdown({
                     type="button"
                     role="option"
                     aria-selected={isSelected}
+                    aria-disabled={isDisabled}
+                    disabled={isDisabled}
                     onClick={() => {
+                      if (isDisabled) return;
                       onSelect(option.value);
                       setIsOpen(false);
                       triggerRef.current?.focus();
                     }}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] transition-all duration-200 ${
-                      isSelected
+                      isDisabled
+                        ? "cursor-not-allowed opacity-40 text-slate-400 bg-slate-50"
+                        : isSelected
                         ? "bg-sky-100/60 font-bold text-sky-800"
                         : "text-slate-600 hover:bg-sky-50 hover:pl-5 hover:text-sky-700"
                     }`}

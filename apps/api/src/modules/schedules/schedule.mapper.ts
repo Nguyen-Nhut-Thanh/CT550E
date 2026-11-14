@@ -16,6 +16,7 @@ export function mapScheduleItinerary(
     day_number: itinerary.day_number || index + 1,
     title: itinerary.title || `Ngày ${index + 1}`,
     content: itinerary.content || itinerary.description || "",
+    image_url: itinerary.image_url || null,
     meals: itinerary.meals || null,
   };
 }

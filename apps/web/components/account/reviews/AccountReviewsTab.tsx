@@ -5,11 +5,12 @@ import { StarRating } from "@/components/common/tours/StarRating";
 import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
 import { getMyReviews, updateMyReview } from "@/lib/account/reviewsApi";
 import { useAccountResource } from "@/lib/account/useAccountResource";
-import { Eye, Loader2, Pencil, Star, X } from "lucide-react";
+import { AlertTriangle, Eye, Loader2, MessageSquare, Pencil, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AccountReviewItem } from "shared";
 import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
+import { AccountPageBanner } from "@/components/account/layout/AccountPageBanner";
 
 export function AccountReviewsTab() {
   const {
@@ -67,15 +68,8 @@ export function AccountReviewsTab() {
   const visible = approvedOnly ? approved : reviews;
   return (
     <div className="w-full space-y-5 pt-1">
-      <header>
-        <h1 className="text-[26px] font-extrabold tracking-tight text-slate-900">
-          Bài đánh giá
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Những đánh giá bạn đã viết về các tour
-        </p>
-      </header>
-      <div className="flex gap-2" aria-label="Lọc bài đánh giá">
+      <AccountPageBanner title="Bài đánh giá" description="Những đánh giá bạn đã viết về các tour" icon={Star}>
+      <div className="flex flex-wrap gap-2" aria-label="Lọc bài đánh giá">
         {[false, true].map((value) => (
           <button
             key={String(value)}
@@ -88,6 +82,7 @@ export function AccountReviewsTab() {
           </button>
         ))}
       </div>
+      </AccountPageBanner>
       {notice && (
         <p
           role="status"
@@ -209,6 +204,71 @@ export function AccountReviewsTab() {
                     </button>
                   ))}
                 </div>
+
+                {/* Hộp thông báo khi bị từ chối / chưa được duyệt */}
+                {review.status === 2 && (
+                  <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50/70 p-3 text-xs text-rose-900">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-700">
+                      <AlertTriangle size={14} className="shrink-0" />
+                      <span>Đánh giá chưa được phê duyệt</span>
+                    </div>
+                    <p className="mt-1 text-slate-700">
+                      <strong className="text-slate-900">Lý do từ Ban quản trị:</strong>{" "}
+                      {review.admin_note || "Nội dung chưa phù hợp với tiêu chuẩn cộng đồng hoặc thông tin chưa chính xác."}
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => edit(review)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-rose-700"
+                      >
+                        <Pencil size={12} />
+                        Chỉnh sửa và gửi lại
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Đang chờ duyệt */}
+                {review.status === 0 && (
+                  <div className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-800">
+                    <span className="font-semibold">Đang chờ duyệt:</span> Đánh giá của bạn đang được Ban quản trị kiểm duyệt trước khi hiển thị công khai.
+                  </div>
+                )}
+
+                {/* Phản hồi từ JourniTrip */}
+                {review.replies && review.replies.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {review.replies.map((reply) => (
+                      <div
+                        key={reply.reply_id}
+                        className="relative rounded-xl border border-blue-100 bg-[#f4f9ff] p-3 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                              ✓
+                            </span>
+                            <span>{reply.user?.full_name || "Phản hồi từ JourniTrip"}</span>
+                            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                              CSKH
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(reply.created_at).toLocaleDateString("vi-VN", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap pl-6">
+                          {reply.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 items-center sm:items-start">
                 <AdminRowActions

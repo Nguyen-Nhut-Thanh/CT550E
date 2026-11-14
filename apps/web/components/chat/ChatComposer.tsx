@@ -10,11 +10,16 @@ const emojis = ["😊", "❤️", "👍", "👋", "✨", "🎉", "🙏", "✈️
 export function ChatComposer({
   disabled,
   placeholder = "Nhắn tin…",
+  initialText = "",
   onSend,
   onTyping,
   onShareTour,
-}: ChatComposerProps) {
-  const [input, setInput] = useState("");
+}: ChatComposerProps & { initialText?: string }) {
+  const [input, setInput] = useState(initialText || "");
+
+  useEffect(() => {
+    setInput(initialText || "");
+  }, [initialText]);
   const [image, setImage] = useState<PendingImage | null>(null);
   const [uploaded, setUploaded] = useState("");
   const [busy, setBusy] = useState(false);

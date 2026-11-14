@@ -10,13 +10,14 @@ import { TourPoliciesSection } from "@/components/tours/detail/TourPoliciesSecti
 import TourSmartMap from "@/components/tours/detail/TourSmartMap";
 import TourRecommendedList from "@/components/tours/recommendations/TourRecommendedList";
 import TourReviewsSection from "@/components/tours/reviews/TourReviewsSection";
+import { TourReviewsModal } from "@/components/tours/reviews/TourReviewsModal";
 import TourVideoHighlights from "@/components/tours/detail/TourVideoHighlights";
 import { getPublicTourDetail } from "@/lib/tours/api";
 import { resolvePickupPoint } from '@/lib/booking/departure';
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
-import type { PublicTourDetail } from "shared";
+import { use, useEffect, useMemo, useState } from "react";
+import type { PublicTourDetail, ReviewItem } from "shared";
 
 export default function TourDetailPage({
   params,
@@ -31,6 +32,7 @@ export default function TourDetailPage({
   const [loading, setLoading] = useState(true);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
   const [selectedPickupPointId, setSelectedPickupPointId] = useState<number | null>(null);
+  const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +70,64 @@ export default function TourDetailPage({
       ? tour.tour_schedules.find((s) => s.tour_schedule_id === selectedScheduleId) ?? null
       : null;
   const displaySchedule = selectedSchedule || tour?.tour_schedules?.[0];
+
+  const formattedReviews: ReviewItem[] = useMemo(() => {
+    return (tour?.reviews || []).map((r: any) => ({
+      id: r.review_id || r.id || Math.random(),
+      name:
+        r.users?.full_name ||
+        r.user?.full_name ||
+        r.user_name ||
+        r.name ||
+        "Khách hàng",
+      rating: Number(r.rating) || 5,
+      title: r.title || undefined,
+      content: r.comment || r.content || "",
+      timeAgo: r.created_at
+        ? new Date(r.created_at).toLocaleDateString("vi-VN")
+        : undefined,
+      avatarUrl:
+        r.users?.avatar_url ||
+        r.user?.avatar_url ||
+        r.avatar_url ||
+        undefined,
+      images: Array.isArray(r.images)
+        ? r.images
+        : r.images
+          ? [String(r.images)]
+          : [],
+      likesCount: r.likes_count || 0,
+      replies: (r.review_replies || r.replies || []).map((reply: any) => ({
+        id: reply.reply_id || reply.id,
+        content: reply.content,
+        userName:
+          reply.users?.full_name ||
+          reply.user?.full_name ||
+          "JourniTrip CSKH",
+        userAvatar: reply.users?.avatar_url || reply.user?.avatar_url,
+        createdAt: reply.created_at,
+      })),
+    }));
+  }, [tour?.reviews]);
+
+  const ratingBreakdown = useMemo(() => {
+    if (tour?.rating_breakdown && tour.rating_breakdown.length > 0) {
+      return tour.rating_breakdown;
+    }
+    const list = formattedReviews;
+    if (!list.length) return [];
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of list) {
+      const s = Math.min(5, Math.max(1, Math.round(r.rating)));
+      counts[s] = (counts[s] || 0) + 1;
+    }
+    const total = list.length;
+    return ([5, 4, 3, 2, 1] as const).map((stars) => ({
+      stars,
+      count: counts[stars] || 0,
+      percent: Math.round(((counts[stars] || 0) / total) * 100),
+    }));
+  }, [tour?.rating_breakdown, formattedReviews]);
 
   if (loading) {
     return (
@@ -130,15 +190,10 @@ export default function TourDetailPage({
             {/* 7. Đánh giá của khách hàng (Reviews Widget) */}
             <TourReviewsSection
               averageRating={Number(tour.rating_avg) || 5}
-              totalReviews={tour.rating_count ?? (tour.reviews ? tour.reviews.length : 0)}
-              reviews={(tour.reviews || []).map((r: any) => ({
-                id: r.review_id || r.id || Math.random(),
-                name: r.users?.full_name || r.user_name || r.name || "Khách hàng",
-                rating: Number(r.rating) || 5,
-                content: r.comment || r.content || "",
-                timeAgo: r.created_at ? new Date(r.created_at).toLocaleDateString("vi-VN") : undefined,
-                avatarUrl: r.users?.avatar_url || r.avatar_url || undefined,
-              }))}
+              totalReviews={tour.rating_count ?? formattedReviews.length}
+              breakdown={ratingBreakdown}
+              reviews={formattedReviews}
+              onViewAll={() => setIsReviewsModalOpen(true)}
             />
           </div>
 
@@ -153,6 +208,17 @@ export default function TourDetailPage({
         </div>
 
       </div>
+
+      {/* Modal xem tất cả đánh giá */}
+      <TourReviewsModal
+        isOpen={isReviewsModalOpen}
+        onClose={() => setIsReviewsModalOpen(false)}
+        tourName={tour.name}
+        averageRating={Number(tour.rating_avg) || 5}
+        totalReviews={tour.rating_count ?? formattedReviews.length}
+        breakdown={ratingBreakdown}
+        reviews={formattedReviews}
+      />
 
       {/* Closing section spans the viewport outside the main content container. */}
       <div className="mt-10 w-full">

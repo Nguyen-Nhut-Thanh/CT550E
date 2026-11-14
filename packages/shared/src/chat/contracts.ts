@@ -23,6 +23,7 @@ export type ChatManageInput = {
 export type ChatContextInput = {
     tour_id?: number;
     booking_id?: number;
+    review_id?: number;
 };
 export type ChatMessagePage = {
     items: RealtimeMessage[];

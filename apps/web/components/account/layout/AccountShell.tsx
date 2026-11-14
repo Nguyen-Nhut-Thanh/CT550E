@@ -68,40 +68,40 @@ export function AccountShell({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#f6f8fb] lg:grid lg:grid-cols-[268px_minmax(0,1fr)]">
-      <AccountSidebar activeTab="" user={user} />
-      <div className="min-w-0">
-        {error ? (
-          <div
-            role="alert"
-            className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-sm text-slate-600"
-          >
-            <AlertCircle className="text-rose-500" />
-            <p>Không thể tải thông tin tài khoản.</p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="rounded-xl bg-blue-600 px-5 py-2 text-white"
+    <AccountResourceProvider key={user?.user_id ?? "account-resources"}>
+      <div className="min-h-[calc(100vh-66px)] bg-[#f6f8fb] lg:grid lg:grid-cols-[268px_minmax(0,1fr)]">
+        <AccountSidebar activeTab="" user={user} />
+        <div className="min-w-0 flex-1">
+          {error ? (
+            <div
+              role="alert"
+              className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-sm text-slate-600"
             >
-              Thử lại
-            </button>
-          </div>
-        ) : user ? (
-          <AccountContext.Provider value={{ user, updateUser }}>
-            <AccountResourceProvider key={user.user_id}>
+              <AlertCircle className="text-rose-500" />
+              <p>Không thể tải thông tin tài khoản.</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-xl bg-blue-600 px-5 py-2 text-white"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : user ? (
+            <AccountContext.Provider value={{ user, updateUser }}>
               {children}
-            </AccountResourceProvider>
-          </AccountContext.Provider>
-        ) : (
-          <div
-            role="status"
-            className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-slate-500"
-          >
-            <Loader2 size={22} className="animate-spin text-blue-600" />
-            Đang tải thông tin tài khoản...
-          </div>
-        )}
+            </AccountContext.Provider>
+          ) : (
+            <div
+              role="status"
+              className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-slate-500"
+            >
+              <Loader2 size={22} className="animate-spin text-blue-600" />
+              Đang tải thông tin tài khoản...
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </AccountResourceProvider>
   );
 }

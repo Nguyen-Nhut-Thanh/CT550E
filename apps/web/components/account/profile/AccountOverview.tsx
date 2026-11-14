@@ -108,6 +108,16 @@ export function AccountOverview({ stats, bookings = [], favorites = [], loading,
               const tourName = booking.tour_schedules?.tours?.name || `Đơn hàng #${booking.booking_id}`;
               const imageUrl = booking.tour_schedules?.tours?.tour_images?.[0]?.image_url;
               const startDate = booking.tour_schedules?.start_date;
+              const statusLabels: Record<string, string> = {
+                paid: "Đã thanh toán",
+                confirmed: "Đã xác nhận",
+                completed: "Đã hoàn thành",
+                cancelled: "Đã hủy",
+                cancel_requested: "Chờ duyệt hủy",
+                pending: "Chờ thanh toán",
+                refunded: "Đã hoàn tiền",
+              };
+              const statusLabel = statusLabels[booking.status?.toLowerCase()] || "Đang xử lý";
 
               return (
                 <article key={booking.booking_id} className="overflow-hidden rounded-[12px] border border-slate-100 bg-white">
@@ -122,7 +132,7 @@ export function AccountOverview({ stats, bookings = [], favorites = [], loading,
                       />
                     ) : null}
                     <span className="absolute left-3 top-3 rounded-full bg-emerald-50/95 px-2.5 py-1 text-[10px] font-semibold text-emerald-600">
-                      {booking.status || "Thành công"}
+                      {statusLabel}
                     </span>
                   </div>
 

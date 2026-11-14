@@ -81,6 +81,62 @@ export class LocationsAdminService {
     private createSlug(name?: string) {
         return (name || '').trim().toLowerCase().replace(/\s+/g, '-');
     }
+    private async validateUniqueName(
+        db: Prisma.TransactionClient | PrismaService,
+        name: string,
+        levelId: number,
+        parentId: number | null,
+        excludeId?: number,
+    ) {
+        const duplicate = await db.locations.findFirst({
+            where: {
+                name: { equals: name, mode: 'insensitive' },
+                level_id: levelId,
+                parent_id: parentId,
+                location_id: excludeId ? { not: excludeId } : undefined,
+            },
+            select: { location_id: true, name: true },
+        });
+        if (!duplicate) return;
+
+        throw new BadRequestException(`Đã có địa điểm tên "${duplicate.name}" cùng cấp dưới địa điểm cha này.`);
+    }
+
+    private async makeUniqueSlug(
+        db: Prisma.TransactionClient | PrismaService,
+        slug: string,
+        levelId: number,
+        excludeId?: number,
+    ) {
+        const baseSlug = slug.trim() || `location-${levelId}`;
+        let candidate = baseSlug;
+        let suffix = 1;
+        while (await db.locations.findFirst({
+            where: {
+                slug: candidate,
+                location_id: excludeId ? { not: excludeId } : undefined,
+            },
+            select: { location_id: true },
+        })) {
+            candidate = `${baseSlug}-${levelId}${suffix > 1 ? `-${suffix}` : ''}`;
+            suffix += 1;
+        }
+        return candidate;
+    }
+
+    private throwLocationUniqueConstraintMessage(error: unknown, name: string): never {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            const target = error.meta?.target;
+            const targetText = Array.isArray(target) ? target.join(',') : String(target || '');
+            if (targetText.toLowerCase().includes('name')) {
+                throw new BadRequestException(`Đã có địa điểm tên "${name}" cùng cấp dưới địa điểm cha này.`);
+            }
+            if (targetText.toLowerCase().includes('slug')) {
+                throw new BadRequestException('Đường dẫn của địa điểm đã được sử dụng. Vui lòng đổi tên địa điểm.');
+            }
+        }
+        throw error;
+    }
     async findAll(params: LocationListParams) {
         const where: Record<string, unknown> = {};
         if (params.search) {
@@ -188,31 +244,36 @@ export class LocationsAdminService {
         const levelId = Number(body.level_id);
         const parentId = body.parent_id ? Number(body.parent_id) : null;
         await this.validateHierarchy(levelId, parentId);
-        return this.prisma.$transaction(async (tx) => {
-            const name = String(body.name || '').trim();
-            const location = await tx.locations.create({
-                data: {
-                    name,
-                    slug: body.slug || this.createSlug(name),
-                    location_type: body.location_type || LOCATION_TYPE_BY_LEVEL[levelId],
-                    level_id: levelId,
-                    parent_id: parentId,
-                    country_code: body.country_code || null,
-                    note: body.note || null,
-                },
-            });
-            if (body.image_url) {
-                await tx.location_images.create({
+        const name = String(body.name || '').trim();
+        try {
+            return await this.prisma.$transaction(async (tx) => {
+                await this.validateUniqueName(tx, name, levelId, parentId);
+                const location = await tx.locations.create({
                     data: {
-                        location_id: location.location_id,
-                        image_url: body.image_url,
-                        is_cover: 1,
-                        sort_order: 1,
+                        name,
+                        slug: await this.makeUniqueSlug(tx, body.slug || this.createSlug(name), levelId),
+                        location_type: body.location_type || LOCATION_TYPE_BY_LEVEL[levelId],
+                        level_id: levelId,
+                        parent_id: parentId,
+                        country_code: body.country_code || null,
+                        note: body.note || null,
                     },
                 });
-            }
-            return location;
-        });
+                if (body.image_url) {
+                    await tx.location_images.create({
+                        data: {
+                            location_id: location.location_id,
+                            image_url: body.image_url,
+                            is_cover: 1,
+                            sort_order: 1,
+                        },
+                    });
+                }
+                return location;
+            });
+        } catch (error) {
+            this.throwLocationUniqueConstraintMessage(error, name);
+        }
     }
     async update(id: number, body: LocationAdminPayload) {
         const current = await this.prisma.locations.findUnique({
@@ -248,47 +309,58 @@ export class LocationsAdminService {
         if (body.level_id || body.parent_id !== undefined) {
             await this.validateHierarchy(nextLevelId, nextParentId);
         }
-        return this.prisma.$transaction(async (tx) => {
-            const updatedLocation = await tx.locations.update({
-                where: { location_id: id },
-                data: {
-                    name: body.name ?? undefined,
-                    slug: body.slug ?? undefined,
-                    location_type: body.location_type ?? undefined,
-                    level_id: body.level_id ? Number(body.level_id) : undefined,
-                    parent_id: body.parent_id !== undefined
-                        ? body.parent_id
-                            ? Number(body.parent_id)
-                            : null
-                        : undefined,
-                    country_code: body.country_code !== undefined ? body.country_code : undefined,
-                    note: body.note ?? undefined,
-                    is_featured: body.is_featured ?? undefined,
-                    featured_order: body.featured_order !== undefined
-                        ? body.featured_order
-                            ? Number(body.featured_order)
-                            : null
-                        : undefined,
-                    featured_image: body.featured_image ?? undefined,
-                },
-            });
-            if (body.image_url !== undefined) {
-                await tx.location_images.deleteMany({
-                    where: { location_id: id, is_cover: 1 },
-                });
-                if (body.image_url) {
-                    await tx.location_images.create({
-                        data: {
-                            location_id: id,
-                            image_url: body.image_url,
-                            is_cover: 1,
-                            sort_order: 1,
-                        },
-                    });
+        const nextName = body.name !== undefined ? String(body.name).trim() : current.name;
+        try {
+            return await this.prisma.$transaction(async (tx) => {
+                if (body.name !== undefined || body.parent_id !== undefined) {
+                    await this.validateUniqueName(tx, nextName, nextLevelId, nextParentId, id);
                 }
-            }
-            return updatedLocation;
-        });
+                const nextSlug = body.slug !== undefined
+                    ? await this.makeUniqueSlug(tx, body.slug, nextLevelId, id)
+                    : undefined;
+                const updatedLocation = await tx.locations.update({
+                    where: { location_id: id },
+                    data: {
+                        name: body.name !== undefined ? nextName : undefined,
+                        slug: nextSlug,
+                        location_type: body.location_type ?? undefined,
+                        level_id: body.level_id ? Number(body.level_id) : undefined,
+                        parent_id: body.parent_id !== undefined
+                            ? body.parent_id
+                                ? Number(body.parent_id)
+                                : null
+                            : undefined,
+                        country_code: body.country_code !== undefined ? body.country_code : undefined,
+                        note: body.note ?? undefined,
+                        is_featured: body.is_featured ?? undefined,
+                        featured_order: body.featured_order !== undefined
+                            ? body.featured_order
+                                ? Number(body.featured_order)
+                                : null
+                            : undefined,
+                        featured_image: body.featured_image ?? undefined,
+                    },
+                });
+                if (body.image_url !== undefined) {
+                    await tx.location_images.deleteMany({
+                        where: { location_id: id, is_cover: 1 },
+                    });
+                    if (body.image_url) {
+                        await tx.location_images.create({
+                            data: {
+                                location_id: id,
+                                image_url: body.image_url,
+                                is_cover: 1,
+                                sort_order: 1,
+                            },
+                        });
+                    }
+                }
+                return updatedLocation;
+            });
+        } catch (error) {
+            this.throwLocationUniqueConstraintMessage(error, nextName);
+        }
     }
     async remove(id: number) {
         const location = await this.prisma.locations.findUnique({

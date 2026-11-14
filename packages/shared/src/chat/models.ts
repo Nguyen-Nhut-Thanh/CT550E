@@ -38,7 +38,7 @@ export type ChatStaff = {
     full_name: string;
 };
 export type ChatContextCard = {
-    kind: 'tour' | 'booking';
+    kind: 'tour' | 'booking' | 'review';
     image_url?: string;
     price?: number;
     duration?: string;

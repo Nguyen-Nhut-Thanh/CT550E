@@ -49,7 +49,7 @@ export class BookingsAdminController {
     },
     @Req()
     req: any) {
-        return this.service.approveCancel(id, Boolean(req.workforce.isAdmin), dto.note, dto.refundAmount);
+        return this.service.approveCancel(id, Boolean(req.workforce.isManager || req.workforce.isAdmin), dto.note, dto.refundAmount);
     }
     @Post("admin/:id/reject-cancel")
     @UseGuards(AdminAuthGuard)
@@ -62,6 +62,47 @@ export class BookingsAdminController {
     },
     @Req()
     req: any) {
-        return this.service.rejectCancel(id, Boolean(req.workforce.isAdmin), dto.note);
+        return this.service.rejectCancel(id, Boolean(req.workforce.isManager || req.workforce.isAdmin), dto.note);
+    }
+    @Post("admin/:id/cancel-pending")
+    @UseGuards(AdminAuthGuard)
+    cancelPending(
+    @Param("id", ParseIntPipe)
+    id: number,
+    @Body()
+    dto: {
+        reason?: string;
+    },
+    @Req()
+    req: any) {
+        return this.service.cancelPendingBooking(id, Boolean(req.workforce.isManager || req.workforce.isAdmin || req.workforce.isStaff), dto.reason);
+    }
+    @Post("admin/:id/cancel-booking")
+    @UseGuards(AdminAuthGuard)
+    cancelBooking(
+        @Param("id", ParseIntPipe)
+        id: number,
+        @Body()
+        dto: {
+            reason?: string;
+            refundAmount?: number;
+            note?: string;
+            cancelType?: 'operator_fault' | 'customer_request';
+            resolutionOption?: 'full_refund' | 'reschedule';
+            newScheduleId?: number;
+        },
+        @Req()
+        req: any,
+    ) {
+        return this.service.adminCancelBooking(
+            id,
+            Boolean(req.workforce.isManager || req.workforce.isAdmin),
+            dto.reason,
+            dto.refundAmount,
+            dto.note,
+            dto.cancelType,
+            dto.resolutionOption,
+            dto.newScheduleId,
+        );
     }
 }

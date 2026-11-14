@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, MapPin, Utensils } from 'lucide-react';
+import { CalendarDays, ImageIcon, Utensils } from 'lucide-react';
 import { useId, useState } from 'react';
 import type { ItineraryActivity, TourItineraryTimelineProps } from 'shared';
 import { ImageWithFallback } from '@/components/common/media/ImageWithFallback';
@@ -14,18 +14,28 @@ export default function TourItineraryTimeline({ itineraries = [] }: TourItinerar
   const events: ItineraryActivity[] = currentDay?.activities?.length
     ? [...currentDay.activities].sort((a, b) => a.time.localeCompare(b.time))
     : currentDay ? [{ time: '', title: currentDay.title, description: currentDay.content }] : [];
-  const initialEvent = Math.max(0, events.findIndex(event => event.location?.location_images?.length));
-  const selectedIndex = activeEvent != null && events[activeEvent] ? activeEvent : initialEvent;
+
+  const selectedIndex = activeEvent != null && events[activeEvent] ? activeEvent : 0;
   const selected = events[selectedIndex];
-  const photo = selected?.location?.location_images?.[0]?.image_url;
+
+  // Ưu tiên ảnh minh họa của ngày (currentDay.image_url), fallback ảnh điểm tham quan nếu có
+  const photo =
+    currentDay?.image_url ||
+    selected?.location?.location_images?.[0]?.image_url ||
+    (selected?.location as { featured_image?: string | null } | undefined)?.featured_image ||
+    events.find((e) => e.location?.location_images?.[0]?.image_url)?.location?.location_images?.[0]?.image_url;
+
+  const displayTitle = currentDay?.title
+    ? `Ngày ${currentDay.day_number}: ${currentDay.title}`
+    : selected?.title || 'Hình ảnh lịch trình';
 
   return <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`} className="flex items-center gap-2 text-xl font-bold text-slate-900"><CalendarDays className="h-5 w-5 text-sky-600" />Lịch trình chi tiết</h2>
     {!currentDay ? <p className="py-4 text-sm text-slate-500">Lịch trình chi tiết đang được cập nhật cho tour này.</p> : <>
       <div role="tablist" aria-label="Ngày trong hành trình" className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain border-b border-slate-100 pb-1">
         {days.map((day, index) => {
-          const selected = day.day_number === currentDay.day_number;
-          return <button key={day.day_number} id={`${id}-day-${day.day_number}`} role="tab" aria-selected={selected} aria-controls={`${id}-panel`} tabIndex={selected ? 0 : -1} type="button"
+          const isSelected = day.day_number === currentDay.day_number;
+          return <button key={day.day_number} id={`${id}-day-${day.day_number}`} role="tab" aria-selected={isSelected} aria-controls={`${id}-panel`} tabIndex={isSelected ? 0 : -1} type="button"
             onClick={() => { setActiveDay(day.day_number); setActiveEvent(null); }}
             onKeyDown={event => {
               let next = index;
@@ -37,7 +47,7 @@ export default function TourItineraryTimeline({ itineraries = [] }: TourItinerar
               event.preventDefault(); setActiveDay(days[next].day_number); setActiveEvent(null);
               document.getElementById(`${id}-day-${days[next].day_number}`)?.focus();
             }}
-            className={`min-w-36 flex-1 shrink-0 rounded-t-xl border border-b-2 px-4 py-3 text-left transition-colors ${selected ? 'border-slate-200 border-b-sky-600 bg-sky-50/40 text-sky-700' : 'border-slate-100 border-b-transparent text-slate-700 hover:bg-slate-50'}`}>
+            className={`min-w-36 flex-1 shrink-0 rounded-t-xl border border-b-2 px-4 py-3 text-left transition-colors ${isSelected ? 'border-slate-200 border-b-sky-600 bg-sky-50/40 text-sky-700' : 'border-slate-100 border-b-transparent text-slate-700 hover:bg-slate-50'}`}>
             <span className="block text-sm font-bold">Ngày {day.day_number}</span>
             <span className="mt-1 block max-w-44 truncate text-xs text-slate-500" title={day.title}>{day.title}</span>
           </button>;
@@ -61,9 +71,18 @@ export default function TourItineraryTimeline({ itineraries = [] }: TourItinerar
           {currentDay.meals && <p className="mt-5 flex items-start gap-2 text-xs text-slate-500"><Utensils className="h-4 w-4 shrink-0 text-orange-500" />Bữa ăn: {currentDay.meals}</p>}
         </div>
         <figure className="relative overflow-hidden rounded-2xl bg-slate-100 md:sticky md:top-24">
-          {photo ? <ImageWithFallback src={photo} alt={selected.location?.name || selected.title} className="aspect-[4/3] w-full object-cover" />
-            : <div className="flex aspect-[4/3] flex-col items-center justify-center gap-3 px-6 text-center text-slate-400"><MapPin className="h-9 w-9" /><p className="text-sm">{selected?.location ? 'Ảnh địa điểm đang được cập nhật' : 'Chọn điểm tham quan để xem hình ảnh'}</p></div>}
-          <figcaption className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-lg bg-slate-900/75 px-2.5 py-1.5 text-xs font-semibold text-white"><MapPin className="h-3 w-3 shrink-0" />{selected?.location?.name || selected?.title}</figcaption>
+          {photo ? (
+            <ImageWithFallback src={photo} alt={displayTitle} className="aspect-[4/3] w-full object-cover" />
+          ) : (
+            <div className="flex aspect-[4/3] flex-col items-center justify-center gap-3 px-6 text-center text-slate-400">
+              <ImageIcon className="h-9 w-9 text-slate-300" />
+              <p className="text-sm">Ảnh lịch trình đang được cập nhật</p>
+            </div>
+          )}
+          <figcaption className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-lg bg-slate-900/75 px-2.5 py-1.5 text-xs font-semibold text-white">
+            <CalendarDays className="h-3 w-3 shrink-0" />
+            <span className="truncate">{displayTitle}</span>
+          </figcaption>
         </figure>
       </div>
     </>}

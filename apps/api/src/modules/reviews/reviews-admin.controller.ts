@@ -14,6 +14,13 @@ export class ReviewsAdminController {
     query: AdminReviewQuery) {
         return this.reviewsService.adminGetReviews(query);
     }
+    // 5.1 Admin lấy chi tiết 1 đánh giá
+    @Get("admin/reviews/:reviewId")
+    async adminGetReviewDetail(
+    @Param("reviewId", ParseIntPipe)
+    reviewId: number) {
+        return this.reviewsService.adminGetReviewDetail(reviewId);
+    }
     // 6. Admin phê duyệt hoặc từ chối đánh giá
     @Patch("admin/reviews/:reviewId/status")
     async adminUpdateReviewStatus(

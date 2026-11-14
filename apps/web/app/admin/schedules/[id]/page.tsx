@@ -33,7 +33,9 @@ import {
 import { getAdminTourDetail } from "@/lib/admin/tours/api";
 import { applyScheduleTemplate } from "@/lib/admin/schedules/template";
 import { useToast } from "@/lib/notifications/useToast";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Gift, Loader2, UsersRound } from "lucide-react";
+import { ScheduleManifestModal } from "@/components/admin/schedules/listing/ScheduleManifestModal";
+import { SchedulePromotionModal } from "@/components/admin/schedules/listing/SchedulePromotionModal";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -58,6 +60,8 @@ export default function AdminScheduleDetailPage() {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [incompleteDays, setIncompleteDays] = useState<number[] | null>(null);
+  const [manifestOpen, setManifestOpen] = useState(false);
+  const [promotionOpen, setPromotionOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [tourInfo, setTourInfo] = useState<TourInfo | null>(null);
@@ -293,8 +297,6 @@ export default function AdminScheduleDetailPage() {
           <ScheduleDepartureCard form={form} disabled={isPast || hasBookings} onChange={setForm} />
           <ScheduleAttractionsCard form={form} locations={locations} tourInfo={tourInfo} disabled={isPast} onChange={setForm} />
           <ScheduleAmenitiesCard form={form} template={tourInfo?.tour_amenities || []} disabled={isPast || hasBookings} onChange={setForm} />
-          {!isNew && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white p-5"><div><h2 className="font-bold text-slate-900">Nhân sự phụ trách chuyến</h2><p className="mt-1 text-xs text-slate-500">Chọn miền điều hành, hướng dẫn viên và trưởng đoàn trong phần điều hành.</p></div><Link href="/admin/workforce?tab=trips" className="rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700">Phân công nhân sự</Link></div>}
-
           <div id="schedule-itinerary" className="scroll-mt-5">
           <ScheduleItinerarySection
             locations={locations}
@@ -320,9 +322,51 @@ export default function AdminScheduleDetailPage() {
           onSave={() => void handleSave()}
           onUploadingChange={setUploading}
           onFormChange={setForm}
+          managementActions={!isNew ? (
+            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm divide-y divide-slate-100">
+              <button type="button" onClick={() => setManifestOpen(true)} className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition hover:bg-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600"><UsersRound size={17} /></span>
+                <span className="min-w-0 flex-1"><span className="block text-[13px] font-bold text-slate-800">Danh sách đoàn khách</span><span className="mt-0.5 block text-[11px] text-slate-500">{bookedCount} khách giữ chỗ</span></span>
+                <ChevronRight size={16} className="shrink-0 text-slate-400" />
+              </button>
+              <button type="button" onClick={() => setPromotionOpen(true)} className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition hover:bg-amber-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-600"><Gift size={17} /></span>
+                <span className="min-w-0 flex-1"><span className="block text-[13px] font-bold text-slate-800">Ưu đãi riêng</span><span className="mt-0.5 block text-[11px] text-slate-500">Thiết lập giảm giá, quà tặng</span></span>
+                <ChevronRight size={16} className="shrink-0 text-slate-400" />
+              </button>
+              <Link href={`/admin/trips?schedule=${id}`} className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition hover:bg-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600"><UsersRound size={17} /></span>
+                <span className="min-w-0 flex-1"><span className="block text-[13px] font-bold text-slate-800">Nhân sự phụ trách chuyến</span><span className="mt-0.5 block text-[11px] text-slate-500">Điều hành & phân công nhân sự</span></span>
+                <ChevronRight size={16} className="shrink-0 text-slate-400" />
+              </Link>
+            </div>
+          ) : null}
         />
       </div>
       <IncompleteItineraryDialog days={incompleteDays} destination="quản lý lịch khởi hành" onCancel={() => setIncompleteDays(null)} onConfirm={() => { setIncompleteDays(null); void handleSave(true); }} />
+      <ScheduleManifestModal
+        scheduleId={Number(id)}
+        open={manifestOpen}
+        onClose={() => setManifestOpen(false)}
+      />
+      <SchedulePromotionModal
+        schedule={
+          !isNew
+            ? ({
+                tour_schedule_id: Number(id),
+                price: form.prices.find((p) => p.passenger_type === "adult")?.price || 0,
+                start_date: buildScheduleDateTime(form.start_date, form.start_time),
+                end_date: buildScheduleDateTime(form.end_date, form.end_time),
+                quota: Number(form.quota) || 0,
+                status: 1,
+              } as any)
+            : null
+        }
+        tourName={tourInfo?.name || undefined}
+        open={promotionOpen}
+        onClose={() => setPromotionOpen(false)}
+        onSaved={() => success("Đã lưu thiết lập ưu đãi cho đợt khởi hành!")}
+      />
     </TourEditorShell>
   );
 }

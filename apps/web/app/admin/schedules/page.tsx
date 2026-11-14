@@ -4,6 +4,8 @@ import { ScheduleEmptyState } from "@/components/admin/schedules/listing/Schedul
 import { SchedulePageHeader } from "@/components/admin/schedules/listing/SchedulePageHeader";
 
 import { ScheduleTablePanel } from "@/components/admin/schedules/listing/ScheduleTablePanel";
+import { ScheduleManifestModal } from "@/components/admin/schedules/listing/ScheduleManifestModal";
+import { SchedulePromotionModal } from "@/components/admin/schedules/listing/SchedulePromotionModal";
 import { TourListPanel } from "@/components/admin/schedules/tour-picker/TourListPanel";
 import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
@@ -51,6 +53,8 @@ export default function AdminSchedulesPage() {
   const [pendingDeleteScheduleId, setPendingDeleteScheduleId] = useState<
     number | null
   >(null);
+  const [manifestScheduleId, setManifestScheduleId] = useState<number | null>(null);
+  const [promotionSchedule, setPromotionSchedule] = useState<Schedule | null>(null);
 
   const selectedTour = tours.find((tour) => tour.tour_id === selectedTourId);
 
@@ -294,11 +298,28 @@ export default function AdminSchedulesPage() {
               onDelete={setPendingDeleteScheduleId}
               onToggleStatus={handleToggleStatus}
               onPageChange={setSchedulePage}
+              onViewManifest={setManifestScheduleId}
+              onConfigurePromotion={setPromotionSchedule}
               pendingIds={pendingIds}
             />
           )}
         </div>
       </div>
+
+      <ScheduleManifestModal
+        scheduleId={manifestScheduleId}
+        open={manifestScheduleId !== null}
+        onClose={() => setManifestScheduleId(null)}
+        onUpdated={() => setScheduleRetry((c) => c + 1)}
+      />
+
+      <SchedulePromotionModal
+        schedule={promotionSchedule}
+        tourName={selectedTour?.name}
+        open={promotionSchedule !== null}
+        onClose={() => setPromotionSchedule(null)}
+        onSaved={() => setScheduleRetry((c) => c + 1)}
+      />
 
       <ConfirmDialog
         open={pendingDeleteScheduleId !== null}

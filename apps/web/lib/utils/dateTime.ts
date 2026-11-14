@@ -38,3 +38,28 @@ export function formatDate(value?: string | Date | null) {
     year: "numeric",
   }).format(date);
 }
+
+export function parseViDateTime(value?: string | null): Date | null {
+  if (!value || typeof value !== "string") return null;
+  const cleaned = value.trim();
+  if (!cleaned) return null;
+
+  // Hỗ trợ dạng: "03:35:47 14/11/2026", "14/11/2026, 03:35:47", "14/11/2026 03:35:47", "14/11/2026"
+  const dmyMatch = cleaned.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  const timeMatch = cleaned.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10) - 1;
+    const year = parseInt(dmyMatch[3], 10);
+    const hour = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+    const minute = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+    const second = timeMatch && timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+
+    const parsed = new Date(year, month, day, hour, minute, second);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  const fallback = new Date(cleaned);
+  return !Number.isNaN(fallback.getTime()) ? fallback : null;
+}

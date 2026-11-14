@@ -8,6 +8,7 @@ import { getMembership } from "@/lib/membership/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { formatVND } from "@/lib/utils/currency";
 import type { MembershipVoucher } from "shared";
+import { AccountPageBanner } from "@/components/account/layout/AccountPageBanner";
 
 type WalletFilter = "available" | "used" | "expired";
 const tabs: { value: WalletFilter; label: string }[] = [
@@ -58,26 +59,8 @@ export function AccountWalletTab() {
 
   return (
     <div className="w-full">
-      {/* Breadcrumb */}
-      <nav aria-label="Đường dẫn" className="mb-4 flex items-center text-xs sm:text-sm font-semibold">
-        <Link href="/account" className="text-slate-500 hover:text-blue-600 transition">
-          Tài khoản
-        </Link>
-        <span className="mx-2 text-slate-300">/</span>
-        <span className="text-blue-600">Ví ưu đãi</span>
-      </nav>
-
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            Ví voucher &amp; ưu đãi
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
-            Lưu giữ ưu đãi cho những chuyến đi sắp tới.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <AccountPageBanner title="Ví voucher & ưu đãi" description="Lưu giữ ưu đãi cho những chuyến đi sắp tới." icon={Ticket}>
+        <div className="flex items-center gap-2">
           <Link
             href="/account/membership"
             className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:border-slate-300"
@@ -95,7 +78,7 @@ export function AccountWalletTab() {
             <span>Làm mới</span>
           </button>
         </div>
-      </header>
+      </AccountPageBanner>
 
       {/* Tabs */}
       <div

@@ -47,6 +47,8 @@ export type ScheduleTablePanelProps = {
     onDelete: (scheduleId: number) => void;
     onToggleStatus: (scheduleId: number, currentStatus: number, bookedCount: number) => void;
     onPageChange: (page: number) => void;
+    onViewManifest?: (scheduleId: number) => void;
+    onConfigurePromotion?: (schedule: AdminSchedule) => void;
     pendingIds?: number[];
 };
 export type TourListPanelProps = {

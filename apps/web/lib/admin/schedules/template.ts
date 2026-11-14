@@ -14,7 +14,7 @@ export function applyScheduleTemplate(form: ScheduleFormState, template: TourSch
     attraction_ids: [...template.attraction_ids],
     pickup_points: template.pickup_points.map(point => ({ name: point.name, address: point.address, note: point.note, pickup_at: '', day_offset: point.day_offset, pickup_time: point.time })),
     itinerary: ensureItineraryDays(template.itinerary.map((day, index) => ({
-      day_number: day.day_number ?? index + 1, title: day.title || '', content: day.content || '', meals: day.meals || '',
+      day_number: day.day_number ?? index + 1, title: day.title || '', content: day.content || '', image_url: day.image_url || '', meals: day.meals || '',
       hotel_id: day.hotel_id || '', room_type_id: day.room_type_id || '', transport_id: day.transport_id || '',
       activities: (day.activities || []).map(item => ({ time: item.time, title: item.title, description: item.description, location_id: item.location_id ?? null })),
     })), durationDays),
@@ -34,7 +34,7 @@ export function buildScheduleTemplatePayload(form: ScheduleFormState): TourSched
       return { name: point.name, address: point.address, note: point.note, day_offset, time: time || point.pickup_time || '08:00' };
     }),
     itinerary: form.itinerary.map(day => ({
-      day_number: day.day_number, title: day.title, content: day.content, meals: day.meals,
+      day_number: day.day_number, title: day.title, content: day.content, image_url: day.image_url || null, meals: day.meals,
       hotel_id: day.hotel_id ? Number(day.hotel_id) : null, room_type_id: day.room_type_id ? Number(day.room_type_id) : null,
       transport_id: day.transport_id ? Number(day.transport_id) : null,
       activities: (day.activities || []).map(item => ({ time: item.time, title: item.title, description: item.description, location_id: item.location_id ?? null })),

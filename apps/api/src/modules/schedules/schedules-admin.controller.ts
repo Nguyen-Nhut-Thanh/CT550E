@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { ScheduleAdminPayload } from 'shared';
@@ -76,5 +76,26 @@ export class SchedulesAdminController {
     @Body()
     body: ScheduleAdminPayload) {
         return this.toursAdminService.createSchedule(Number(id), body);
+    }
+    @Get('admin/schedules/:scheduleId/manifest')
+    getScheduleManifest(
+    @Param('scheduleId')
+    scheduleId: string) {
+        return this.toursAdminService.getScheduleManifest(Number(scheduleId));
+    }
+    @Get('admin/schedules/:scheduleId/promotion')
+    getSchedulePromotion(@Param('scheduleId') scheduleId: string) {
+        return this.toursAdminService.getSchedulePromotion(Number(scheduleId));
+    }
+    @Put('admin/schedules/:scheduleId/promotion')
+    saveSchedulePromotion(
+        @Param('scheduleId') scheduleId: string,
+        @Body() body: any
+    ) {
+        return this.toursAdminService.saveSchedulePromotion(Number(scheduleId), body);
+    }
+    @Delete('admin/schedules/:scheduleId/promotion')
+    deleteSchedulePromotion(@Param('scheduleId') scheduleId: string) {
+        return this.toursAdminService.deleteSchedulePromotion(Number(scheduleId));
     }
 }

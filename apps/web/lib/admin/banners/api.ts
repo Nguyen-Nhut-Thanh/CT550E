@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/auth/session";
 import { adminFetch } from "@/lib/http/adminFetch";
 import { API_BASE } from "@/lib/http/config";
-import type { AdminBannerPayload, Banner } from 'shared';
+import type { AdminBannerPayload, Banner, SeasonalThemeConfig } from 'shared';
 
 async function parseJsonResponse<T>(response: Response) {
   return (await response.json()) as T;
@@ -76,4 +76,23 @@ export async function uploadAdminBannerImage(file: File) {
   }
 
   return parseJsonResponse<{ url: string }>(response);
+}
+
+export async function fetchAdminSeasonalTheme(): Promise<SeasonalThemeConfig> {
+  const response = await adminFetch("/banners/admin/seasonal-theme");
+  if (!response.ok) {
+    throw new Error("Không thể tải cấu hình hiệu ứng 4 mùa");
+  }
+  return parseJsonResponse<SeasonalThemeConfig>(response);
+}
+
+export async function saveAdminSeasonalTheme(payload: Partial<SeasonalThemeConfig>): Promise<SeasonalThemeConfig> {
+  const response = await adminFetch("/banners/admin/seasonal-theme", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Không thể lưu cấu hình hiệu ứng 4 mùa");
+  }
+  return parseJsonResponse<SeasonalThemeConfig>(response);
 }

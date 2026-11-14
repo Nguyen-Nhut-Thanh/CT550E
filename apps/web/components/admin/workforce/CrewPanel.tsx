@@ -7,6 +7,7 @@ import { filterWorkforceTrips, getWorkforceTripStatus, WORKFORCE_TRIP_STATUSES, 
 import { type CrewPayload, type Employee, type WorkforceActor, type WorkforceSchedule } from 'shared';
 import { CrewEditor } from './CrewEditor';
 import { CrewScheduleCard, requiresCrewOverride } from './CrewScheduleCard';
+import { ScheduleManifestModal } from '@/components/admin/schedules/listing/ScheduleManifestModal';
 
 export function CrewPanel({ actor, schedules, employees, busy, onRegion, onAssign, onRespond, onlyMine = false, initialStatusFilter = 'upcoming' }: {
   actor: WorkforceActor; schedules: WorkforceSchedule[]; employees: Employee[]; busy: boolean; onlyMine?: boolean;
@@ -23,6 +24,7 @@ export function CrewPanel({ actor, schedules, employees, busy, onRegion, onAssig
   const [reason, setReason] = useState('');
   const [history, setHistory] = useState<Awaited<ReturnType<typeof workforceApi.events>> | null>(null);
   const [historyError, setHistoryError] = useState('');
+  const [manifestScheduleId, setManifestScheduleId] = useState<number | null>(null);
   const now = Date.now();
   const pageSize = 10;
   const baseFilters = { search, missingCrew: missing, userId: onlyMine ? actor.userId : undefined };
@@ -50,12 +52,13 @@ export function CrewPanel({ actor, schedules, employees, busy, onRegion, onAssig
     <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white">
       <div className="divide-y divide-blue-300">
         {!rows.length && <div className="p-12 text-center text-sm text-slate-500">Không có chuyến phù hợp với bộ lọc hiện tại.</div>}
-    {visibleRows.map(schedule => <CrewScheduleCard key={schedule.tour_schedule_id} actor={actor} schedule={schedule} busy={busy} onlyMine={onlyMine} onEdit={() => setEditing(schedule)} onRegion={onRegion} onRespond={onRespond} onDecline={id => { setDeclining(id); setReason(''); }} onHistory={() => { setHistory([]); setHistoryError(''); void workforceApi.events(schedule.tour_schedule_id).then(setHistory).catch(error => setHistoryError(error.message)); }} />)}
+    {visibleRows.map(schedule => <CrewScheduleCard key={schedule.tour_schedule_id} actor={actor} schedule={schedule} busy={busy} onlyMine={onlyMine} onEdit={() => setEditing(schedule)} onRegion={onRegion} onRespond={onRespond} onDecline={id => { setDeclining(id); setReason(''); }} onHistory={() => { setHistory([]); setHistoryError(''); void workforceApi.events(schedule.tour_schedule_id).then(setHistory).catch(error => setHistoryError(error.message)); }} onManifest={id => setManifestScheduleId(id)} />)}
       </div>
       <div className="border-t border-blue-100"><AdminPagination variant="numbered" showSinglePage currentPage={currentPage} totalPages={totalPages} totalItems={rows.length} pageSize={pageSize} itemLabel="chuyến" onPageChange={nextPage => { setPage(nextPage); listRef.current?.scrollIntoView({ block: 'start' }); }} /></div>
     </div>
     {editing && <CrewEditor requireOverride={requiresCrewOverride(editing)} key={editing.tour_schedule_id} schedule={editing} employees={employees} busy={busy} onClose={() => setEditing(null)} onSave={async body => { if (await onAssign(editing.tour_schedule_id, body)) setEditing(null); }} />}
     {declining && <AdminModalShell title="Từ chối chuyến được giao" onClose={() => !busy && setDeclining(null)}><form className="space-y-4 p-6" onSubmit={e => { e.preventDefault(); void onRespond(declining, 'decline', reason).then(ok => { if (ok) setDeclining(null); }); }}><label className="block text-sm text-slate-600">Lý do<textarea required maxLength={1000} rows={3} className="mt-2 w-full rounded-xl border p-3" value={reason} onChange={e => setReason(e.target.value)} /></label><button disabled={busy} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-[650] text-white">Gửi phản hồi</button></form></AdminModalShell>}
     {history && <AdminModalShell title="Lịch sử điều hành chuyến" onClose={() => setHistory(null)}><div className="space-y-3 p-6">{historyError && <p role="alert" className="text-sm text-rose-600">{historyError}</p>}{!history.length && !historyError && <p className="text-sm text-slate-400">Chưa có thay đổi được ghi nhận.</p>}{history.map(event => <div key={event.event_id} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold">{{ crew_assigned: 'Cập nhật đội ngũ phụ trách', crew_confirmed: 'Nhân viên nhận chuyến', crew_declined: 'Nhân viên từ chối chuyến', crew_completed: 'Nhân viên hoàn thành chuyến', crew_finalized: 'Tự chốt / công bố nhân sự', crew_override: 'Admin sửa ngoại lệ phân công', schedule_region_updated: 'Chỉ định miền điều hành' }[event.action] || 'Cập nhật điều hành'}</p><p className="mt-1 text-xs text-slate-500">{event.actor_user_id === 0 ? 'Hệ thống' : employees.find(item => item.user_id === event.actor_user_id)?.full_name || 'Nhân viên phụ trách'} · {workforceDate(event.created_at)}</p>{event.details !== null && typeof event.details === 'object' && 'reason' in event.details && typeof event.details.reason === 'string' && event.details.reason && <p className="mt-2 text-xs leading-5 text-slate-600">Lý do: {event.details.reason}</p>}</div>)}</div></AdminModalShell>}
+    <ScheduleManifestModal scheduleId={manifestScheduleId} open={manifestScheduleId !== null} onClose={() => setManifestScheduleId(null)} />
   </div>;
 }

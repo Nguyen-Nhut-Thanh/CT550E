@@ -1,5 +1,5 @@
 import { requestAdminJson } from "@/lib/http/requestAdminJson";
-import type { TourScheduleTemplate, TourScheduleTemplateResponse } from 'shared';
+import type { SaveSchedulePromotionPayload, ScheduleManifestResponse, SchedulePromotion, TourScheduleTemplate, TourScheduleTemplateResponse } from 'shared';
 
 export function getTourScheduleTemplate(tourId: number | string) {
   return requestAdminJson<TourScheduleTemplateResponse>(`/admin/tours/${tourId}/schedule-template`, { method: 'GET' }, 'Không thể tải mẫu lịch trình.');
@@ -77,5 +77,40 @@ export function updateAdminScheduleStatus(scheduleId: number, status: number) {
       body: JSON.stringify({ status }),
     },
     "Không thể cập nhật trạng thái lịch khởi hành.",
+  );
+}
+
+export function getScheduleManifest(scheduleId: number) {
+  return requestAdminJson<ScheduleManifestResponse>(
+    `/admin/schedules/${scheduleId}/manifest`,
+    { method: "GET" },
+    "Không thể tải danh sách đoàn.",
+  );
+}
+
+export function getSchedulePromotion(scheduleId: number) {
+  return requestAdminJson<SchedulePromotion | null>(
+    `/admin/schedules/${scheduleId}/promotion`,
+    { method: "GET" },
+    "Không thể tải thông tin ưu đãi đợt khởi hành.",
+  );
+}
+
+export function saveSchedulePromotion(scheduleId: number, body: SaveSchedulePromotionPayload) {
+  return requestAdminJson<SchedulePromotion>(
+    `/admin/schedules/${scheduleId}/promotion`,
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    },
+    "Không thể lưu thông tin ưu đãi đợt khởi hành.",
+  );
+}
+
+export function deleteSchedulePromotion(scheduleId: number) {
+  return requestAdminJson<{ success: boolean }>(
+    `/admin/schedules/${scheduleId}/promotion`,
+    { method: "DELETE" },
+    "Không thể xóa ưu đãi đợt khởi hành.",
   );
 }

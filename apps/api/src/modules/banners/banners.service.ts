@@ -1,9 +1,79 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { BannerPayload } from 'shared';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { BannerPayload, SeasonalThemeConfig, SeasonMode, SeasonType } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class BannersService {
     constructor(private readonly prisma: PrismaService) { }
+    private resolveActiveSeason(mode: SeasonMode): SeasonType {
+        if (mode === 'spring' || mode === 'summer' || mode === 'autumn' || mode === 'winter') {
+            return mode;
+        }
+        const month = new Date().getMonth() + 1;
+        if (month >= 3 && month <= 5) return 'spring';
+        if (month >= 6 && month <= 8) return 'summer';
+        if (month >= 9 && month <= 11) return 'autumn';
+        return 'winter';
+    }
+
+    private getConfigFile(): string {
+        const cwd = process.cwd();
+        const baseDir = cwd.endsWith(path.join('apps', 'api')) || cwd.endsWith('apps/api')
+            ? path.join(cwd, 'data')
+            : path.join(cwd, 'apps', 'api', 'data');
+        if (!fs.existsSync(baseDir)) {
+            try { fs.mkdirSync(baseDir, { recursive: true }); } catch { /* ignore */ }
+        }
+        return path.join(baseDir, 'seasonal-theme.json');
+    }
+
+    async getSeasonalTheme(): Promise<SeasonalThemeConfig> {
+        let saved: Partial<SeasonalThemeConfig> = {};
+        try {
+            const filePath = this.getConfigFile();
+            if (fs.existsSync(filePath)) {
+                saved = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            }
+        } catch {
+            // fallback
+        }
+
+        const mode: SeasonMode = saved.mode || 'auto';
+        const activeSeason = this.resolveActiveSeason(mode);
+        const enableParticles = saved.enableParticles !== undefined ? Boolean(saved.enableParticles) : true;
+        const enableColors = saved.enableColors !== undefined ? Boolean(saved.enableColors) : true;
+        const particleDensity = saved.particleDensity || 'normal';
+
+        return {
+            mode,
+            activeSeason,
+            enableParticles: mode === 'disabled' ? false : enableParticles,
+            enableColors: mode === 'disabled' ? false : enableColors,
+            particleDensity,
+        };
+    }
+
+    async updateSeasonalTheme(payload: Partial<SeasonalThemeConfig>): Promise<SeasonalThemeConfig> {
+        const current = await this.getSeasonalTheme();
+        const mode = payload.mode !== undefined ? payload.mode : current.mode;
+        const updated: SeasonalThemeConfig = {
+            mode,
+            activeSeason: this.resolveActiveSeason(mode),
+            enableParticles: payload.enableParticles !== undefined ? Boolean(payload.enableParticles) : current.enableParticles,
+            enableColors: payload.enableColors !== undefined ? Boolean(payload.enableColors) : current.enableColors,
+            particleDensity: payload.particleDensity || current.particleDensity,
+        };
+
+        try {
+            const filePath = this.getConfigFile();
+            fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8');
+        } catch {
+            // fallback
+        }
+
+        return updated;
+    }
     private async ensureExists(id: number) {
         const banner = await this.prisma.banners.findUnique({
             where: { banner_id: id },

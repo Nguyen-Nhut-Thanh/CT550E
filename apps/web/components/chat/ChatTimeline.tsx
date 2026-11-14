@@ -1,11 +1,35 @@
 "use client";
 
-import { UserRound } from "lucide-react";
+import { Eye, Star, Ticket, UserRound } from "lucide-react";
 import { TourMessageCard } from "./TourMessageCard";
 import { formatMessageTime } from "@/lib/chat/format";
 import { DEFAULT_AVATAR, resolveAvatar } from "@/lib/account/avatar";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import type { ChatTimelineProps } from "shared";
+
+function renderMessageText(content: string, own: boolean, isStaff: boolean) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`font-semibold underline underline-offset-2 transition ${
+            own && isStaff ? "text-blue-100 hover:text-white" : "text-blue-600 hover:text-blue-800"
+          }`}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
 
 export function ChatTimeline({
   messages,
@@ -16,6 +40,8 @@ export function ChatTimeline({
   onLoadMore,
   onRetry,
   onVisible,
+  onViewBooking,
+  onViewReview,
 }: ChatTimelineProps) {
   const container = useRef<HTMLDivElement>(null);
   const nearBottom = useRef(true);
@@ -129,10 +155,64 @@ export function ChatTimeline({
                   <p className={`text-[10px] font-semibold uppercase opacity-70 ${message.context?.kind === "tour" ? "hidden" : ""}`}>
                     {message.context?.kind === "booking"
                       ? "Hỗ trợ đơn đặt tour"
-                      : "Tư vấn tour"}
+                      : message.context?.kind === "review"
+                        ? "Xử lý đánh giá tour"
+                        : "Tư vấn tour"}
                   </p>
-                  {message.context?.kind === "tour" ? <TourMessageCard context={message.context} /> : message.context &&
-                  !(isStaff && message.context.kind === "booking") ? (
+                  {message.context?.kind === "tour" ? (
+                    <TourMessageCard context={message.context} />
+                  ) : message.context?.kind === "booking" && isStaff ? (
+                    (() => {
+                      const bookingId = message.context?.id || Number(message.content.match(/#(\d+)/)?.[1]) || null;
+                      return (
+                        <div className="space-y-2 pt-0.5">
+                          <p className="font-semibold text-slate-900 leading-snug">{message.content}</p>
+                          {bookingId && (
+                            <button
+                              type="button"
+                              onClick={() => onViewBooking?.(bookingId)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-600 transition hover:bg-blue-100 hover:text-blue-700 active:scale-95 border border-blue-200/70 shadow-xs cursor-pointer"
+                            >
+                              <Eye size={13} />
+                              <span>Xem chi tiết đơn</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : message.context?.kind === "review" ? (
+                    (() => {
+                      const reviewId = message.context?.id || Number(message.content.match(/#(\d+)/)?.[1]) || null;
+                      return (
+                        <div className="space-y-2 pt-0.5">
+                          <div className="flex items-center gap-1.5 font-bold text-slate-900 leading-snug">
+                            <span>{message.content}</span>
+                            {message.context?.rating && (
+                              <span className="flex items-center gap-0.5 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-800">
+                                <Star size={11} className="fill-amber-400 text-amber-500" />
+                                {message.context.rating}★
+                              </span>
+                            )}
+                          </div>
+                          {message.context?.summary && (
+                            <p className="line-clamp-2 text-xs italic text-slate-600">
+                              "{message.context.summary}"
+                            </p>
+                          )}
+                          {reviewId && (
+                            <button
+                              type="button"
+                              onClick={() => onViewReview?.(reviewId)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-900 shadow-xs transition hover:bg-amber-100 active:scale-95 cursor-pointer"
+                            >
+                              <Star size={13} className="fill-amber-400 text-amber-600" />
+                              <span>{isStaff ? "Xem chi tiết đánh giá" : "Chỉnh sửa đánh giá"}</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : message.context ? (
                     <a
                       href={message.context.url}
                       className="font-semibold underline underline-offset-2"
@@ -145,7 +225,7 @@ export function ChatTimeline({
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                  {message.content}
+                  {renderMessageText(message.content, own, isStaff)}
                 </p>
               )}
             </div>

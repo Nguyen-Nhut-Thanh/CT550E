@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Compass, Eye, EyeOff, Gift, MoreHorizontal, Pencil, Trash2, UsersRound } from "lucide-react";
 import { Popover } from "@/components/common/overlays/Popover";
 import { useDismiss } from "@/lib/ui/useDismiss";
 import { getScheduleBookedCount } from "@/lib/admin/schedules/status";
@@ -15,9 +16,12 @@ export function ScheduleRowActions({
   onEdit,
   onDelete,
   onToggleStatus,
-}: Pick<ScheduleTablePanelProps, "onEdit" | "onDelete" | "onToggleStatus"> & {
+  onViewManifest,
+  onConfigurePromotion,
+}: Pick<ScheduleTablePanelProps, "onEdit" | "onDelete" | "onToggleStatus" | "onViewManifest"> & {
   schedule: AdminSchedule;
   busy: boolean;
+  onConfigurePromotion?: (schedule: AdminSchedule) => void;
 }) {
   const [open, setOpen] = useState(false);
   const readOnly = useAdminContentReadOnly();
@@ -45,6 +49,36 @@ export function ScheduleRowActions({
           className="ui-schedule-overview-menu p-[6px] [border:1px_solid_#e1eaf8] rounded-[12px] [background:white] [box-shadow:0_10px_32px_#263d6826] [&>div]:flex [&>div]:flex-col [&_button]:flex [&_button]:items-center [&_button]:gap-[9px] [&_button]:rounded-[7px] [&_button]:p-[10px] [&_button]:text-[12px] [&_button]:text-left [&_button]:text-[#4a648c] [&_button:hover]:[background:#edf5ff] [&_button:hover]:text-[#075bff] [&_.ui-schedule-overview-danger]:text-[#dc3653] [&_.ui-schedule-overview-danger:hover]:text-[#c72544] [&_.ui-schedule-overview-danger:hover]:[background:#fff0f3]"
         >
           <div aria-label="Thao tác lịch khởi hành">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onViewManifest?.(schedule.tour_schedule_id);
+              }}
+            >
+              <UsersRound size={16} className="text-blue-600" />
+              <span>Danh sách đoàn</span>
+            </button>
+            <Link
+              href={`/admin/trips?schedule=${schedule.tour_schedule_id}`}
+              className="flex items-center gap-[9px] rounded-[7px] p-[10px] text-[12px] text-left text-[#4a648c] hover:bg-[#edf5ff] hover:text-[#075bff]"
+              onClick={() => setOpen(false)}
+            >
+              <Compass size={16} className="text-blue-600" />
+              <span>Điều hành chuyến</span>
+            </Link>
+            <button
+              type="button"
+              disabled={readOnly}
+              title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
+              onClick={() => {
+                setOpen(false);
+                onConfigurePromotion?.(schedule);
+              }}
+            >
+              <Gift size={16} className="text-amber-500" />
+              <span>Ưu đãi đợt khởi hành</span>
+            </button>
             <button
               type="button"
               onClick={() => {

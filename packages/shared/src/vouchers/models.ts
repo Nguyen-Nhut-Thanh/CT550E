@@ -33,3 +33,17 @@ export type VoucherValidationResult = {
     discountAmount: number;
     finalAmount?: number;
 };
+
+export interface HomeVoucherCampaignConfig {
+    enabled: boolean;
+    title: string;
+    subtitle: string;
+    badge?: string;
+    voucher_ids: number[];
+}
+
+export interface PublicHomeVouchersData {
+    config: HomeVoucherCampaignConfig;
+    vouchers: Voucher[];
+}
+

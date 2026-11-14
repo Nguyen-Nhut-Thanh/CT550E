@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2, MapPin } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -11,11 +11,11 @@ import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import { isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipPrice, type MembershipTier, type ScheduleConflict } from "shared";
 import type { PaymentMethod, TravelerForm, TravelerType, UserProfileLite, VoucherValidationResult, } from "shared";
 
-import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { BookingContactForm } from "@/components/booking/checkout/BookingContactForm";
 import { BookingExtraServices } from "@/components/booking/checkout/BookingExtraServices";
 import { BookingOrderSummary } from "@/components/booking/checkout/BookingOrderSummary";
 import { BookingPassengerCounts } from "@/components/booking/checkout/BookingPassengerCounts";
+import { BookingPickupPointSection } from "@/components/booking/checkout/BookingPickupPointSection";
 import { BookingTourInfoCard } from "@/components/booking/checkout/BookingTourInfoCard";
 import { BookingTravelersList } from "@/components/booking/checkout/BookingTravelersList";
 import { BookingVoucherAndPayment } from "@/components/booking/vouchers/BookingVoucherAndPayment";
@@ -694,40 +694,16 @@ function BookingContent() {
               onNoteChange={setNote}
             />
 
-            {!!selectedSchedule.pickup_points?.length && <section className="space-y-3 rounded-2xl border border-blue-100 bg-white p-5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-slate-900">{pickupPointId ? 'Điểm đón đã chọn' : 'Chọn điểm đón'}</h2>
-                {!!pickupPointId && selectedSchedule.pickup_points.length > 1 && <button type="button" onClick={() => setEditingPickup(value => !value)} className="text-sm font-semibold text-blue-600">{editingPickup ? 'Đóng' : 'Thay đổi'}</button>}
-              </div>
-              <p className="text-sm text-slate-500">Áp dụng cho tất cả hành khách trong đơn đặt này.</p>
-              {(!pickupPointId || editingPickup) && (
-                <div id="booking-pickup" className="w-full">
-                  <CustomDropdown
-                    ariaLabel="Điểm đón của bạn"
-                    variant="compact"
-                    matchTriggerWidth
-                    icon={MapPin}
-                    placeholder="Chọn điểm đón của bạn"
-                    selectedValue={pickupPointId ? String(pickupPointId) : ""}
-                    options={selectedSchedule.pickup_points.map((point) => ({
-                      value: String(point.pickup_point_id),
-                      label: `${point.name} — ${new Date(point.pickup_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`,
-                    }))}
-                    onSelect={(val) => {
-                      setPickupPointId(val ? Number(val) : "");
-                      setEditingPickup(false);
-                    }}
-                    className="w-full [&_button]:min-w-0 [&_button]:py-3"
-                  />
-                </div>
-              )}
-              {selectedSchedule.pickup_points.filter(point => point.pickup_point_id === pickupPointId).map(point => <div key={point.pickup_point_id} className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">
-                <p className="font-semibold">{point.name}</p>
-                <p>{point.address}</p>
-                <p>Có mặt lúc {new Date(point.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
-                {point.note && <p className="mt-1">{point.note}</p>}
-              </div>)}
-            </section>}
+            <BookingPickupPointSection
+              selectedSchedule={selectedSchedule}
+              pickupPointId={pickupPointId}
+              editingPickup={editingPickup}
+              onToggleEditingPickup={() => setEditingPickup((v) => !v)}
+              onSelectPickupPoint={(pointId) => {
+                setPickupPointId(pointId);
+                setEditingPickup(false);
+              }}
+            />
 
             <BookingTravelersList
               travelers={travelers}

@@ -47,7 +47,10 @@ export default function FeaturedToursSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#dff0ff] px-4 py-14 sm:px-6 lg:px-10 xl:px-16">
+    <section
+      data-seasonal-featured="true"
+      className="relative overflow-hidden bg-[#dff0ff] px-4 py-14 sm:px-6 lg:px-10 xl:px-16 transition-colors duration-700"
+    >
       {/* Họa tiết trang trí SVG nét đứt ở góc dưới bên trái */}
       <div className="pointer-events-none absolute bottom-0 left-0 h-44 w-44 opacity-20">
         <svg viewBox="0 0 240 240" className="h-full w-full">

@@ -16,4 +16,6 @@ export type ChatTimelineProps = {
     onLoadMore: () => void;
     onRetry: (message: ChatDisplayMessage) => void;
     onVisible: (id: number) => void;
+    onViewBooking?: (bookingId: number) => void;
+    onViewReview?: (reviewId: number) => void;
 };

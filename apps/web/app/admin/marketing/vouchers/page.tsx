@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { VoucherModal } from "@/components/admin/vouchers/VoucherModal";
 import { VoucherStatusFilterTabs } from "@/components/admin/vouchers/VoucherStatusFilterTabs";
+import { HomeVoucherCampaignManager } from "@/components/admin/vouchers/HomeVoucherCampaignManager";
+import { VoucherManagementTable } from "@/components/admin/vouchers/VoucherManagementTable";
 import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
 import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
-import { AdminStatusBadge } from "@/components/admin/common/AdminStatusBadge";
-import { AdminTable } from "@/components/admin/common/AdminTable";
-import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
 import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
 import {
   createAdminVoucher,
@@ -22,60 +23,63 @@ import {
   getVoucherDateParts,
 } from "@/lib/admin/vouchers/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { formatVND } from "@/lib/utils/currency";
-import { getVoucherStatus } from "@/lib/vouchers/status";
-import { AlertTriangle, CheckCircle2, Clock, Eye, Lock, LockOpen, Tag, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Sparkles, Ticket } from "lucide-react";
 import type { Voucher, VoucherForm, VoucherStatusFilter } from "shared";
 
-const voucherDateFormatter = new Intl.DateTimeFormat("vi-VN", {
-  timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", year: "numeric",
-});
-const voucherTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
-  timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-});
-
-function VoucherDateCell({ value, label, muted = false }: { value: string; label: string; muted?: boolean }) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return <span className="text-slate-400">—</span>;
-  return <time dateTime={date.toISOString()} title={label} className={`block whitespace-nowrap text-xs tabular-nums ${muted ? "text-slate-400" : "font-medium text-slate-700"}`}>
-    <span className="sr-only">{label}: </span>
-    {voucherTimeFormatter.format(date)} <span aria-hidden="true">–</span> {voucherDateFormatter.format(date)}
-  </time>;
-}
-
-function VoucherStatusBadge({ voucher }: { voucher: Voucher }) {
-  const status = getVoucherStatus(voucher);
-  const badges = {
-    active: { label: "Hoạt động", tone: "success", icon: CheckCircle2 },
-    locked: { label: "Tạm khóa", tone: "muted", icon: Lock },
-    upcoming: { label: "Sắp có hiệu lực", tone: "muted", icon: Clock },
-    expired: { label: "Hết hạn", tone: "warning", icon: Clock },
-    exhausted: { label: "Hết lượt", tone: "warning", icon: AlertTriangle },
-  } as const;
-  const { label, tone, icon: Icon } = badges[status];
-  const color = status === "locked"
-    ? "[&&]:border-red-200 [&&]:bg-red-50 [&&]:text-red-600"
-    : status === "upcoming"
-      ? "[&&]:border-blue-200 [&&]:bg-blue-50 [&&]:text-blue-600"
-      : undefined;
-  return <AdminStatusBadge tone={tone} className={color} icon={<Icon size={12} />}>{label}</AdminStatusBadge>;
-}
+type VouchersTab = "list" | "campaign";
 
 export default function AdminVouchersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+          <div className="text-sm font-medium text-slate-500">Đang tải mã giảm giá…</div>
+        </div>
+      }
+    >
+      <AdminVouchersContent />
+    </Suspense>
+  );
+}
+
+function AdminVouchersContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const initialTab: VouchersTab = tabParam === "campaign" || tabParam === "home" ? "campaign" : "list";
+
+  const [activeTab, setActiveTab] = useState<VouchersTab>(initialTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [pendingIds, setPendingIds] = useState<number[]>([]);
   const busyIds = useRef(new Set<number>());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<VoucherStatusFilter>("all");
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
-  const [pendingDeleteVoucher, setPendingDeleteVoucher] =
-    useState<Voucher | null>(null);
+  const [pendingDeleteVoucher, setPendingDeleteVoucher] = useState<Voucher | null>(null);
   const [form, setForm] = useState<VoucherForm>(createDefaultVoucherForm);
   const { success, error: showError } = useToast();
+
+  useEffect(() => {
+    if (tabParam === "campaign" || tabParam === "home") {
+      setActiveTab("campaign");
+    } else {
+      setActiveTab("list");
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (nextTab: VouchersTab) => {
+    setActiveTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === "list") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextTab);
+    }
+    const qs = params.toString();
+    router.replace(`/admin/marketing/vouchers${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
   const isReadonlyVoucher = !!editingVoucher;
   const { minDate, minTime, startDateValue, startTimeValue } =
@@ -99,7 +103,7 @@ export default function AdminVouchersPage() {
 
   const filteredVouchers = useMemo(
     () => filterVouchers(vouchers, searchTerm, statusFilter),
-    [vouchers, searchTerm, statusFilter],
+    [vouchers, searchTerm, statusFilter]
   );
 
   const openVoucherModal = (voucher: Voucher | null = null) => {
@@ -116,229 +120,148 @@ export default function AdminVouchersPage() {
 
   const handleSaveVoucher = async () => {
     if (saving) return;
-    if (!form.customer_types.length) { showError("Vui lòng chọn ít nhất một đối tượng áp dụng"); return; }
+    if (!form.customer_types.length) {
+      showError("Vui lòng chọn ít nhất một đối tượng áp dụng");
+      return;
+    }
     if (editingVoucher) {
-      showError("Voucher đã tạo không thể chỉnh sửa, hãy tạo voucher mới");
-      return;
-    }
-
-    if (
-      !form.code ||
-      !form.discount_value ||
-      !form.duration_hours ||
-      !form.usage_limit
-    ) {
-      showError("Vui lòng nhập đầy đủ mã, mức giảm, thời hạn và số lượng");
-      return;
-    }
-
-    if (form.applicable_scope === "tour_type" && !form.applicable_tour_types.length) {
-      showError("Vui lòng chọn ít nhất một loại tour áp dụng");
-      return;
-    }
-
-    if (form.applicable_scope === "specific_tours" && !form.applicable_tour_ids.length) {
-      showError("Vui lòng chọn ít nhất một tour cụ thể áp dụng");
-      return;
-    }
-
-    const startDate = new Date(form.start_date);
-    if (Number.isNaN(startDate.getTime()) || startDate.getTime() < Date.now()) {
-      showError("Ngày bắt đầu phải từ thời điểm hiện tại trở đi");
+      closeModal();
       return;
     }
 
     setSaving(true);
-
     try {
-      const created = await createAdminVoucher(buildVoucherPayload(form));
-      success(form.status === 1 ? `Đã tạo voucher và gửi ${created.notification_count ?? 0} thông báo đến nhóm khách đã chọn` : "Đã tạo voucher tạm dừng, chưa gửi thông báo");
+      await createAdminVoucher(buildVoucherPayload(form));
+      success("Tạo voucher thành công");
       closeModal();
       void loadData();
-    } catch (cause) {
-      showError(cause instanceof Error ? cause.message : "Không thể tạo voucher");
+    } catch (error) {
+      showError(error instanceof Error ? error.message : "Lỗi khi lưu voucher");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteVoucher = async (voucher: Voucher) => {
+  const handleToggleVoucher = async (voucher: Voucher) => {
     if (busyIds.current.has(voucher.voucher_id)) return;
-    if (voucher.used_count > 0) {
-      showError("Voucher đã có lượt sử dụng, không thể xóa.");
-      setPendingDeleteVoucher(null);
-      return;
-    }
-
     busyIds.current.add(voucher.voucher_id);
-    setPendingIds(current => [...current, voucher.voucher_id]);
+
+    const nextStatus = voucher.status === 1 ? 0 : 1;
+    try {
+      await setAdminVoucherStatus(voucher.voucher_id, nextStatus);
+      success(nextStatus === 1 ? "Đã mở khóa voucher" : "Đã tạm khóa voucher");
+      void loadData();
+    } catch (error) {
+      showError(
+        error instanceof Error ? error.message : "Không thể thay đổi trạng thái voucher"
+      );
+    } finally {
+      busyIds.current.delete(voucher.voucher_id);
+    }
+  };
+
+  const handleDeleteVoucher = async (voucher: Voucher) => {
     try {
       await deleteAdminVoucher(voucher.voucher_id);
       success("Đã xóa voucher thành công");
-      setVouchers((current) =>
-        current.filter((item) => item.voucher_id !== voucher.voucher_id),
-      );
       setPendingDeleteVoucher(null);
-    } catch {
-      showError("Lỗi kết nối");
-    } finally {
-      busyIds.current.delete(voucher.voucher_id);
-      setPendingIds(current => current.filter(id => id !== voucher.voucher_id));
+      void loadData();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : "Không thể xóa voucher");
     }
   };
 
-  const handleToggleVoucher = async (voucher: Voucher) => {
-    if (busyIds.current.has(voucher.voucher_id)) return;
-    const status = voucher.status === 1 ? 0 : 1;
-    const currentStatus = getVoucherStatus(voucher);
-    if (status === 1 && (currentStatus === "expired" || currentStatus === "exhausted")) {
-      showError(currentStatus === "expired" ? "Voucher đã hết hạn, không thể mở lại." : "Voucher đã hết lượt, không thể mở lại.");
-      return;
-    }
-    busyIds.current.add(voucher.voucher_id);
-    setPendingIds(current => [...current, voucher.voucher_id]);
-    try {
-      const updated = await setAdminVoucherStatus(voucher.voucher_id, status);
-      setVouchers(current => current.map(item => item.voucher_id === voucher.voucher_id ? { ...item, ...updated, notification_count: (item.notification_count ?? 0) + (updated.notification_count ?? 0) } : item));
-      success(status === 0 ? "Đã khóa voucher. Các đơn mới không thể sử dụng mã này." : `Đã mở voucher${updated.notification_count ? ` và gửi ${updated.notification_count} thông báo` : ""}.`);
-    } catch (cause) {
-      showError(cause instanceof Error ? cause.message : "Không thể thay đổi trạng thái voucher.");
-    } finally {
-      busyIds.current.delete(voucher.voucher_id);
-      setPendingIds(current => current.filter(id => id !== voucher.voucher_id));
-    }
+  const handleStartDateChange = (date: string) => {
+    setForm((current) => {
+      const parts = getVoucherDateParts(current.start_date);
+      const nextTime = parts.startTimeValue || "00:00";
+      return {
+        ...current,
+        start_date: date ? `${date}T${nextTime}:00` : "",
+      };
+    });
   };
 
-  const handleStartDateChange = (datePart: string) => {
-    const timePart = startTimeValue || minTime;
-    setForm((current) => ({
-      ...current,
-      start_date: `${datePart}T${timePart}`,
-    }));
+  const handleStartTimeChange = (time: string) => {
+    setForm((current) => {
+      const parts = getVoucherDateParts(current.start_date);
+      const nextDate = parts.startDateValue || "";
+      return {
+        ...current,
+        start_date: nextDate ? `${nextDate}T${time}:00` : "",
+      };
+    });
   };
-
-  const handleStartTimeChange = (timePart: string) => {
-    const datePart = startDateValue || minDate;
-    setForm((current) => ({
-      ...current,
-      start_date: `${datePart}T${timePart}`,
-    }));
-  };
-
-  const columns = [
-    {
-      header: "Mã voucher",
-      render: (voucher: Voucher) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
-            <Tag size={18} />
-          </div>
-          <span className="font-bold uppercase tracking-wider text-slate-900">
-            {voucher.code}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: "Mức giảm",
-      render: (voucher: Voucher) => (
-        <span className="font-bold text-blue-600">
-          {voucher.discount_type === "percentage"
-            ? `-${voucher.discount_value}%`
-            : `-${formatVND(voucher.discount_value)}`}
-        </span>
-      ),
-    },
-    {
-      header: "Đơn tối thiểu",
-      render: (voucher: Voucher) => (
-        <span className="font-medium italic text-slate-600">
-          Từ {formatVND(voucher.min_order_value)}
-        </span>
-      ),
-    },
-    {
-      header: "Thời gian áp dụng",
-      className: "whitespace-nowrap",
-      render: (voucher: Voucher) => <div className="space-y-1.5">
-        <VoucherDateCell value={voucher.start_date} label="Bắt đầu" />
-        <VoucherDateCell value={voucher.expiry_date} label="Kết thúc" muted />
-      </div>,
-    },
-    {
-      header: "Đã dùng / GH",
-      align: "center" as const,
-      render: (voucher: Voucher) => (
-        <span className="font-bold text-slate-700">
-          {voucher.used_count} / {voucher.usage_limit}
-        </span>
-      ),
-    },
-    {
-      header: "Trạng thái",
-      align: "center" as const,
-      render: (voucher: Voucher) => <VoucherStatusBadge voucher={voucher} />,
-    },
-    {
-      header: "Thao tác",
-      align: "right" as const,
-      className: "w-[100px] whitespace-nowrap",
-      render: (voucher: Voucher) => <AdminRowActions
-        label={`Thao tác với voucher ${voucher.code}`}
-        disabled={loading || saving || pendingIds.includes(voucher.voucher_id)}
-        actions={[
-          { label: "Xem chi tiết", access: 'view', icon: <Eye size={16} />, onClick: () => openVoucherModal(voucher) },
-          {
-            label: voucher.status === 1 ? "Khóa voucher" : "Mở voucher",
-            icon: voucher.status === 1 ? <Lock size={16} /> : <LockOpen size={16} />,
-            disabled: voucher.status !== 1 && ["expired", "exhausted"].includes(getVoucherStatus(voucher)),
-            title: getVoucherStatus(voucher) === "expired" ? "Voucher đã hết hạn" : getVoucherStatus(voucher) === "exhausted" ? "Voucher đã hết lượt" : undefined,
-            onClick: () => void handleToggleVoucher(voucher),
-          },
-          {
-            label: "Xóa voucher",
-            icon: <Trash2 size={16} />,
-            danger: true,
-            disabled: voucher.used_count > 0,
-            title: voucher.used_count > 0 ? "Voucher đã có lượt sử dụng, không thể xóa" : undefined,
-            onClick: () => setPendingDeleteVoucher(voucher),
-          },
-        ]}
-      />,
-    },
-  ];
 
   return (
-    <div className="relative space-y-4">
+    <div className="relative space-y-5">
       <AdminPageHeader
-        title="Mã giảm giá (Vouchers)"
-        description="Quản lý các chương trình ưu đãi nhập mã khuyến mãi."
-        primaryAction={{
-          label: "Tạo mã mới",
-          onClick: () => openVoucherModal(),
-        }}
+        title="Mã giảm giá &amp; Ưu đãi"
+        description="Quản lý các chương trình ưu đãi mã khuyến mãi và chiến dịch voucher sự kiện trang chủ."
+        primaryAction={
+          activeTab === "list"
+            ? {
+                label: "Tạo mã mới",
+                onClick: () => openVoucherModal(),
+              }
+            : undefined
+        }
       />
 
-      <AdminSearchInput
-        value={searchTerm}
-        onChange={setSearchTerm}
-        placeholder="Tìm theo mã voucher..."
-      />
+      {/* Tab Navigation */}
+      <div className="flex border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => handleTabChange("list")}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === "list"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+          }`}
+        >
+          <Ticket size={16} />
+          Danh sách voucher ({vouchers.length})
+        </button>
 
-      <VoucherStatusFilterTabs
-        value={statusFilter}
-        onChange={setStatusFilter}
-      />
+        <button
+          type="button"
+          onClick={() => handleTabChange("campaign")}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === "campaign"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+          }`}
+        >
+          <Sparkles size={16} className="text-amber-500" />
+          Voucher hiển thị Trang chủ
+        </button>
+      </div>
 
-      <AdminTable
-        items={filteredVouchers}
-        columns={columns}
-        loading={loading}
-        rowKey={(voucher) => voucher.voucher_id}
-        pageSize={10}
-        itemLabel="voucher"
-        emptyMessage="Không tìm thấy voucher nào phù hợp"
-      />
+      {/* Tab Content */}
+      {activeTab === "list" && (
+        <div className="space-y-4">
+          <AdminSearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Tìm theo mã voucher..."
+          />
+
+          <VoucherStatusFilterTabs
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+
+          <VoucherManagementTable
+            vouchers={filteredVouchers}
+            loading={loading}
+            onView={(v) => openVoucherModal(v)}
+            onToggleStatus={(v) => void handleToggleVoucher(v)}
+            onDelete={(v) => setPendingDeleteVoucher(v)}
+          />
+        </div>
+      )}
+
+      {activeTab === "campaign" && <HomeVoucherCampaignManager />}
 
       <VoucherModal
         open={showModal}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatReviewEditModal } from "@/components/chat/ChatReviewEditModal";
 import { ChatTimeline } from "@/components/chat/ChatTimeline";
 import { CustomerTourPicker } from "@/components/chat/CustomerTourPicker";
 import { chatApi } from "@/lib/chat/api";
@@ -20,6 +21,7 @@ export function CustomerChat() {
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [showTourPicker, setShowTourPicker] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState<number | null>(null);
   const contextSending = useRef(false);
   const tokenRef = useRef(session.token);
   tokenRef.current = session.token;
@@ -236,6 +238,7 @@ export function CustomerChat() {
                 onLoadMore={() => void chat.loadMore()}
                 onRetry={chat.retry}
                 onVisible={chat.markRead}
+                onViewReview={setSelectedReviewId}
               />
               {(!chat.connected || chat.typing || conversation?.status === "CLOSED" || conversation?.status === "WAITING") && (
               <p className="bg-slate-50 px-4 py-1 text-[11px] text-slate-500">
@@ -258,6 +261,16 @@ export function CustomerChat() {
                 onShareTour={() => setShowTourPicker(true)}
               />
               {showTourPicker && <CustomerTourPicker disabled={!chat.connected || !id} onSend={chat.send} onClose={() => setShowTourPicker(false)} />}
+              {selectedReviewId && (
+                <ChatReviewEditModal
+                  reviewId={selectedReviewId}
+                  isOpen={Boolean(selectedReviewId)}
+                  onClose={() => setSelectedReviewId(null)}
+                  onSuccess={() => {
+                    void chat.send("Tôi vừa cập nhật lại bài đánh giá tour.", "TEXT");
+                  }}
+                />
+              )}
             </>
           )}
         </section>

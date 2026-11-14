@@ -8,4 +8,10 @@ export type ActionModalState = {
 } | {
     type: "detail";
     booking: AdminBooking;
+} | {
+    type: "cancel-pending";
+    booking: AdminBooking;
+} | {
+    type: "cancel-booking";
+    booking: AdminBooking;
 } | null;

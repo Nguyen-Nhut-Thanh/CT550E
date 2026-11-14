@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export function useCountdown(targetDate: string) {
+export function useCountdown(targetDate: string, enabled = true) {
   const calculate = () => {
     const now = Date.now();
     const target = new Date(targetDate).getTime();
@@ -20,12 +20,13 @@ export function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState(calculate);
 
   useEffect(() => {
+    if (!enabled) return;
     const timer = window.setInterval(() => {
       setTimeLeft(calculate());
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, enabled]);
 
   return timeLeft;
 }

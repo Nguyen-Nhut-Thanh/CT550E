@@ -13,27 +13,19 @@ export class ToursPublicService {
                 rating_count: number;
             }>();
         }
-        const rows = (await this.prisma.$queryRaw<{
-            tour_id: number;
-            rating_avg: number;
-            rating_count: number;
-        }[]> `
-      SELECT tour_id,
-             AVG(rating)::float AS rating_avg,
-             COUNT(*)::int AS rating_count
-      FROM reviews
-      WHERE status = 1
-        AND tour_id = ANY(${ids})
-      GROUP BY tour_id
-    `) as Array<{
-            tour_id: number;
-            rating_avg: number;
-            rating_count: number;
-        }>;
+        const rows = await this.prisma.reviews.groupBy({
+            by: ['tour_id'],
+            where: { tour_id: { in: ids }, status: 1 },
+            _avg: { rating: true },
+            _count: { rating: true },
+        });
         return new Map<number, {
             rating_avg: number;
             rating_count: number;
-        }>(rows.map((row) => [row.tour_id, row]));
+        }>(rows.map((row) => [row.tour_id, {
+            rating_avg: Number((row._avg.rating ?? 0).toFixed(1)),
+            rating_count: row._count.rating,
+        }]));
     }
     private async getBestSellerOrder(today: Date) {
         const activeSchedules = await this.prisma.tour_schedules.findMany({
@@ -131,6 +123,9 @@ export class ToursPublicService {
         const where: Prisma.toursWhereInput = {
             status: 1,
         };
+        if (params.tour_type === 'domestic' || params.tour_type === 'outbound' || params.tour_type === 'international') {
+            where.tour_type = params.tour_type;
+        }
         const search = params.search?.trim();
         if (search) {
             where.OR = [
@@ -230,7 +225,13 @@ export class ToursPublicService {
                     return 0;
                 });
             })()
-            : items;
+            : params.collection === 'nearest'
+                ? [...items].sort((left: any, right: any) => {
+                    const leftDate = left.next_schedule?.start_date ? new Date(left.next_schedule.start_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    const rightDate = right.next_schedule?.start_date ? new Date(right.next_schedule.start_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    return leftDate - rightDate;
+                })
+                : items;
         const paginatedItems = resolvedItems.slice(skip, skip + take);
         const ids = paginatedItems.map((item: any) => item.tour_id);
         const ratingMap = await this.getRatingsMap(ids);
@@ -239,8 +240,8 @@ export class ToursPublicService {
                 const rating = ratingMap.get(card.tour_id);
                 return {
                     ...card,
-                    rating_avg: rating?.rating_avg,
-                    rating_count: rating?.rating_count,
+                    rating_avg: rating?.rating_avg ?? card.rating_avg,
+                    rating_count: rating?.rating_count ?? card.rating_count,
                 };
             }),
             total: resolvedItems.length,
@@ -254,6 +255,7 @@ export class ToursPublicService {
                 min_price: params.min_price ?? '',
                 max_price: params.max_price ?? '',
                 collection: params.collection ?? '',
+                tour_type: params.tour_type ?? '',
             },
         };
     }
@@ -273,6 +275,8 @@ export class ToursPublicService {
                 duration_nights: true,
                 base_price: true,
                 tour_type: true,
+                rating_avg: true,
+                rating_count: true,
                 tour_amenities: { orderBy: { sort_order: 'asc' }, select: { amenity_id: true, kind: true, title: true, content: true, sort_order: true } },
                 cut_off_hours: true,
                 departure_locations: {
@@ -339,6 +343,7 @@ export class ToursPublicService {
                                 end_date: { gte: new Date() },
                             },
                         },
+                        schedule_promotions: true,
                         tour_schedule_attractions: {
                             orderBy: { sort_order: 'asc' },
                             select: {
@@ -355,13 +360,14 @@ export class ToursPublicService {
                                 day_number: true,
                                 title: true,
                                 content: true,
+                                image_url: true,
                                 meals: true,
                                 activities: {
                                     orderBy: { sort_order: 'asc' },
                                     select: {
                                         time: true, title: true, description: true, location_id: true,
                                         location: { select: {
-                                            location_id: true, parent_id: true, name: true, note: true,
+                                            location_id: true, parent_id: true, name: true, note: true, featured_image: true,
                                             location_images: { where: { status: 1 }, orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } },
                                         } },
                                     },
@@ -410,13 +416,36 @@ export class ToursPublicService {
                 reviews: {
                     where: { status: 1 },
                     orderBy: { created_at: 'desc' },
-                    take: 10,
+                    take: 20,
                     select: {
                         review_id: true,
                         rating: true,
+                        title: true,
                         comment: true,
+                        images: true,
+                        likes_count: true,
                         created_at: true,
                         user_id: true,
+                        users: {
+                            select: {
+                                user_id: true,
+                                full_name: true,
+                                avatar_url: true,
+                            },
+                        },
+                        review_replies: {
+                            where: { status: 1 },
+                            orderBy: { created_at: 'asc' },
+                            include: {
+                                users: {
+                                    select: {
+                                        user_id: true,
+                                        full_name: true,
+                                        avatar_url: true,
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
                 tour_policies: {
@@ -446,6 +475,7 @@ export class ToursPublicService {
             const originalPrice = Number(s.price || 0);
             let effectivePrice = originalPrice;
             const flashDeal = s.flash_deals;
+            let schedulePromotion = null;
             if (flashDeal) {
                 if (flashDeal.discount_type === 'percentage') {
                     effectivePrice =
@@ -454,12 +484,37 @@ export class ToursPublicService {
                 else {
                     effectivePrice = originalPrice - Number(flashDeal.discount_value);
                 }
+            } else if (s.schedule_promotions && s.schedule_promotions.is_active) {
+                const p = s.schedule_promotions;
+                const pStart = new Date(p.start_date);
+                const pEnd = new Date(p.end_date);
+                const hasSlot = p.max_slots === null || p.max_slots === undefined || p.used_slots < p.max_slots;
+                if (pStart <= now && pEnd >= now && hasSlot) {
+                    const discountVal = Number(p.discount_value);
+                    if (p.discount_type === 'percentage') {
+                        effectivePrice = Math.max(0, originalPrice * (1 - discountVal / 100));
+                    } else {
+                        effectivePrice = Math.max(0, originalPrice - discountVal);
+                    }
+                    schedulePromotion = {
+                        has_promotion: true,
+                        promotion_title: p.title,
+                        discount_type: p.discount_type,
+                        discount_value: discountVal,
+                        effective_price: Math.round(effectivePrice),
+                        original_price: originalPrice,
+                        is_active: p.is_active,
+                        gift_description: p.gift_description,
+                    };
+                }
             }
             return {
                 ...s,
                 original_price: originalPrice,
-                price: effectivePrice,
+                price: Math.round(effectivePrice),
                 flash_deal: flashDeal,
+                schedule_promotions: s.schedule_promotions || null,
+                schedule_promotion: schedulePromotion,
                 tour_itineraries: s.tour_itineraries?.map((item: PublicItineraryRecord) => ({
                     ...item,
                     title: fixMojibakeText(item.title),
@@ -481,8 +536,77 @@ export class ToursPublicService {
                 })),
             };
         });
+
+        const ratingGroups = await this.prisma.reviews.groupBy({
+            by: ['rating'],
+            where: { tour_id: tourId, status: 1 },
+            _count: { _all: true },
+        });
+        const starCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let reviewsCount = 0;
+        let ratingTotal = 0;
+        for (const group of ratingGroups) {
+            const stars = Math.min(5, Math.max(1, Math.round(Number(group.rating) || 5)));
+            const count = group._count._all;
+            starCounts[stars] += count;
+            reviewsCount += count;
+            ratingTotal += stars * count;
+        }
+        const rating_breakdown = ([5, 4, 3, 2, 1] as const).map((stars) => ({
+            stars,
+            count: starCounts[stars] || 0,
+            percent: reviewsCount > 0 ? Math.round(((starCounts[stars] || 0) / reviewsCount) * 100) : 0,
+        }));
+
+        const calculatedAvg = reviewsCount > 0
+            ? Number((ratingTotal / reviewsCount).toFixed(1))
+            : 5;
+
         return {
             ...tour,
+            rating_avg: calculatedAvg,
+            rating_count: reviewsCount,
+            rating_breakdown,
+            reviews: tour.reviews.map((r: any) => ({
+                review_id: r.review_id,
+                rating: r.rating,
+                title: r.title,
+                comment: r.comment,
+                images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
+                likes_count: r.likes_count,
+                created_at: r.created_at.toISOString(),
+                user_id: r.user_id,
+                user: {
+                    user_id: r.users?.user_id,
+                    full_name: r.users?.full_name || 'Khách hàng',
+                    avatar_url: r.users?.avatar_url || null,
+                },
+                users: {
+                    user_id: r.users?.user_id,
+                    full_name: r.users?.full_name || 'Khách hàng',
+                    avatar_url: r.users?.avatar_url || null,
+                },
+                replies: (r.review_replies || []).map((reply: any) => ({
+                    reply_id: reply.reply_id,
+                    content: reply.content,
+                    created_at: reply.created_at.toISOString(),
+                    user: {
+                        user_id: reply.users?.user_id,
+                        full_name: reply.users?.full_name || 'JourniTrip',
+                        avatar_url: reply.users?.avatar_url || null,
+                    },
+                })),
+                review_replies: (r.review_replies || []).map((reply: any) => ({
+                    reply_id: reply.reply_id,
+                    content: reply.content,
+                    created_at: reply.created_at.toISOString(),
+                    user: {
+                        user_id: reply.users?.user_id,
+                        full_name: reply.users?.full_name || 'JourniTrip',
+                        avatar_url: reply.users?.avatar_url || null,
+                    },
+                })),
+            })),
             tour_schedules: processedSchedules,
         };
     }

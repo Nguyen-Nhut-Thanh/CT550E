@@ -4,6 +4,7 @@ import { getSingleRoomSurchargeTotal } from "@/lib/booking/pricing";
 import { resolvePickupPoint } from '@/lib/booking/departure';
 import { formatVND } from "@/lib/utils/currency";
 import { Dialog } from '@/components/common/overlays/Dialog';
+import { Tooltip } from '@/components/common/overlays/Tooltip';
 import { ArrowLeft, Bus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import type { TourDepartureCalendarProps as Props, TourSchedule } from 'shared';
@@ -131,6 +132,36 @@ export default function TourDepartureCalendar({
         </div>
 
         <div className="space-y-4 pt-1">
+          {(selectedSchedule.schedule_promotion || selectedSchedule.schedule_promotions?.is_active) && (
+            <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 p-4 shadow-2xs text-amber-950">
+              <div className="flex items-center gap-2 font-black text-sm text-amber-900">
+                <span className="text-base">🎁</span>
+                <span>
+                  {selectedSchedule.schedule_promotion?.promotion_title ||
+                    selectedSchedule.schedule_promotions?.title ||
+                    "Ưu đãi đặc biệt cho đợt khởi hành này"}
+                </span>
+                <span className="ml-auto rounded-full bg-amber-500 text-white text-[11px] font-extrabold px-2.5 py-0.5 shadow-2xs">
+                  {selectedSchedule.schedule_promotion?.discount_type === "percentage" ||
+                  selectedSchedule.schedule_promotions?.discount_type === "percentage"
+                    ? `Giảm ${selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value}%`
+                    : `Giảm ${formatVND(selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value)}`}
+                </span>
+              </div>
+              {(selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description) && (
+                <p className="mt-1.5 text-xs font-semibold text-amber-800 flex items-center gap-1.5">
+                  <span>✨ Quà tặng:</span>
+                  <span>{selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description}</span>
+                </p>
+              )}
+              {selectedSchedule.original_price && selectedSchedule.original_price > Number(selectedSchedule.price) && (
+                <p className="mt-1.5 text-xs text-slate-600">
+                  Giá gốc: <span className="line-through">{formatVND(selectedSchedule.original_price)}</span> → Giá ưu đãi: <strong className="text-[#ef3b2d] font-extrabold">{formatVND(selectedSchedule.price)}</strong>
+                </p>
+              )}
+            </div>
+          )}
+
           <p className="font-semibold text-sky-800">Xuất phát: {selectedSchedule.departure_location?.name || "Chưa cập nhật"}</p>
           {!!selectedSchedule.pickup_points?.length && <div className="rounded-xl bg-sky-50 p-4 text-sm text-slate-700">
             <p className="font-bold">{selectedPickup ? 'Điểm đón đã chọn' : 'Chọn điểm đón'}</p>
@@ -218,7 +249,7 @@ export default function TourDepartureCalendar({
         </aside>
 
         {/* Calendar Grid Box */}
-        <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2 bg-slate-50/50">
             <button
               type="button"
@@ -272,8 +303,10 @@ export default function TourDepartureCalendar({
                 const daySchedules = scheduleMap.get(day) || [];
                 const schedule = daySchedules[0];
                 const needsChoice = daySchedules.length > 1 || daySchedules.some(item => (item.pickup_points?.length ?? 0) > 1);
+                const promoSchedules = daySchedules.filter(item => Boolean(item.schedule_promotion?.has_promotion || item.schedule_promotions?.is_active));
+                const hasDayPromo = promoSchedules.length > 0;
 
-                return (
+                const dayButton = (
                   <button
                     key={`${currentMonth}-${day}`}
                     type="button"
@@ -290,6 +323,12 @@ export default function TourDepartureCalendar({
                         : "cursor-default text-slate-300"
                     }`}
                   >
+                    {hasDayPromo && (
+                      <span className="absolute top-1 right-1 text-[9px] leading-none" aria-hidden="true">
+                        🎁
+                      </span>
+                    )}
+
                     <span
                       className={`text-xs sm:text-sm ${
                         schedule ? "font-bold text-slate-900" : "text-slate-300 font-normal"
@@ -308,6 +347,40 @@ export default function TourDepartureCalendar({
                     ) : null}
                   </button>
                 );
+
+                return hasDayPromo ? (
+                  <Tooltip
+                    key={`${currentMonth}-${day}`}
+                    className="min-w-0"
+                    trigger={dayButton}
+                    content={promoSchedules.map(promoSchedule => {
+                      const promotion = promoSchedule.schedule_promotion;
+                      const legacyPromotion = promoSchedule.schedule_promotions;
+                      const discountType = promotion?.discount_type ?? legacyPromotion?.discount_type;
+                      const discountValue = promotion?.discount_value ?? legacyPromotion?.discount_value;
+                      const title = promotion?.promotion_title || legacyPromotion?.title || 'Ưu đãi đợt khởi hành';
+                      const gift = promotion?.gift_description || legacyPromotion?.gift_description;
+                      const originalPrice = promotion?.original_price ?? promoSchedule.original_price;
+                      const effectivePrice = promotion?.effective_price ?? Number(promoSchedule.price);
+                      return (
+                        <div key={promoSchedule.tour_schedule_id} className="min-w-56 border-b border-amber-100 py-1 last:border-0">
+                          <div className="flex items-start gap-2 text-sm font-extrabold text-amber-900">
+                            <span aria-hidden="true">🎁</span>
+                            <span className="min-w-0 flex-1">{title}</span>
+                            <span className="shrink-0 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                              {discountType === 'percentage' ? `Giảm ${discountValue}%` : `Giảm ${formatVND(Number(discountValue ?? 0))}`}
+                            </span>
+                          </div>
+                          {originalPrice != null && Number(originalPrice) > effectivePrice && (
+                            <p className="mt-1.5 text-xs text-slate-600">Giá gốc: <span className="line-through">{formatVND(Number(originalPrice))}</span> → Giá ưu đãi: <strong className="font-extrabold text-[#ef3b2d]">{formatVND(effectivePrice)}</strong></p>
+                          )}
+                          {gift && <p className="mt-1.5 text-xs font-semibold text-amber-800">✨ Quà tặng: {gift}</p>}
+                          {daySchedules.length > 1 && <p className="mt-1 text-[10px] text-slate-500">Chuyến #{promoSchedule.tour_schedule_id}</p>}
+                        </div>
+                      );
+                    })}
+                  />
+                ) : dayButton;
               })}
             </div>
           </div>
@@ -383,8 +456,15 @@ export default function TourDepartureCalendar({
                           <span>{Math.max(schedule.quota - schedule.booked_count, 0)} chỗ</span>
                         </span>
 
-                        <span className="block text-lg font-extrabold text-slate-900 transition-colors group-hover:text-blue-600 sm:text-right">
-                          {formatVND(schedule.price)}
+                        <span className="block sm:text-right">
+                          <span className="block text-lg font-extrabold text-slate-900 transition-colors group-hover:text-blue-600">
+                            {formatVND(schedule.price)}
+                          </span>
+                          {(schedule.schedule_promotion || schedule.schedule_promotions?.is_active) && (
+                            <span className="inline-block mt-0.5 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded shadow-2xs">
+                              🎁 {schedule.schedule_promotion?.promotion_title || schedule.schedule_promotions?.title || "Ưu đãi"}
+                            </span>
+                          )}
                         </span>
                       </button>
                     ));

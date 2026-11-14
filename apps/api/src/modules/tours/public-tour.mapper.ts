@@ -86,6 +86,7 @@ export function buildCardSelect(scheduleFilter: Prisma.tour_schedulesWhereInput 
                         end_date: { gte: new Date() },
                     },
                 },
+                schedule_promotions: true,
             },
         },
         transports: {
@@ -119,6 +120,7 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
             const originalPrice = Number(s.price ?? 0);
             let salePrice = originalPrice;
             const flashDeal = s.flash_deals || null;
+            let schedulePromotion = null;
             if (flashDeal) {
                 const discountValue = Number(flashDeal.discount_value);
                 if (flashDeal.discount_type === 'percentage') {
@@ -127,12 +129,37 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
                 else {
                     salePrice = originalPrice - discountValue;
                 }
+            } else if (s.schedule_promotions && s.schedule_promotions.is_active) {
+                const p = s.schedule_promotions;
+                const pStart = new Date(p.start_date);
+                const pEnd = new Date(p.end_date);
+                const hasSlot = p.max_slots === null || p.max_slots === undefined || p.used_slots < p.max_slots;
+                if (pStart <= now && pEnd >= now && hasSlot) {
+                    const discountValue = Number(p.discount_value);
+                    if (p.discount_type === 'percentage') {
+                        salePrice = Math.max(0, originalPrice * (1 - discountValue / 100));
+                    } else {
+                        salePrice = Math.max(0, originalPrice - discountValue);
+                    }
+                    schedulePromotion = {
+                        has_promotion: true,
+                        promotion_title: p.title,
+                        discount_type: p.discount_type,
+                        discount_value: discountValue,
+                        effective_price: Math.round(salePrice),
+                        original_price: originalPrice,
+                        is_active: p.is_active,
+                        gift_description: p.gift_description,
+                    };
+                }
             }
             return {
                 ...s,
                 price: Math.round(salePrice),
                 original_price: originalPrice,
                 flash_deal: flashDeal,
+                schedule_promotions: s.schedule_promotions || null,
+                schedule_promotion: schedulePromotion,
             };
         })
         : [];

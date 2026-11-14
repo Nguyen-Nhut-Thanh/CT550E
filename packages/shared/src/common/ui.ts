@@ -14,6 +14,7 @@ export type ConfirmDialogProps = {
 export type DropdownOption = {
     label: string;
     value: string;
+    disabled?: boolean;
 };
 export type CustomDropdownProps = {
     label?: string;

@@ -16,6 +16,7 @@ import { useToast } from "@/lib/notifications/useToast";
 import {
   AlertCircle,
   Award,
+  ChevronDown,
   Compass,
   DollarSign,
   Gift,
@@ -35,6 +36,7 @@ export default function AdminAnalyticsPage() {
   const [activeTab, setActiveTab] = useState<
     "financials" | "tours" | "workforce" | "customers" | "marketing"
   >("financials");
+  const [showKpis, setShowKpis] = useState(true);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingCsv, setExportingCsv] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -196,10 +198,21 @@ export default function AdminAnalyticsPage() {
         onExportCsv={handleExportCsv}
         exportingExcel={exportingExcel}
         exportingCsv={exportingCsv}
+        rightSlot={data ? (
+          <button
+            type="button"
+            aria-expanded={showKpis}
+            aria-controls="analytics-kpi-cards"
+            onClick={() => setShowKpis((visible) => !visible)}
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-2xs transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          >
+            {showKpis ? "Ẩn chỉ số tổng quan" : "Hiện chỉ số tổng quan"}
+            <ChevronDown className={`h-4 w-4 transition-transform ${showKpis ? "rotate-180" : ""}`} />
+          </button>
+        ) : undefined}
       />
 
-      {/* KPI Cards Strip */}
-      {data && <AnalyticsKpiCards data={data} />}
+      {data && showKpis && <div id="analytics-kpi-cards"><AnalyticsKpiCards data={data} /></div>}
 
       {/* Nav Tabs */}
       <div className="border-b border-slate-200">

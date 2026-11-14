@@ -5,13 +5,13 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Briefcase,
-  CheckCircle2,
   Clock,
   Compass,
   CreditCard,
   DollarSign,
   Percent,
   Users,
+  XCircle,
 } from "lucide-react";
 import type { DashboardKpiCardsProps, DashboardTimeRange } from "shared";
 
@@ -117,20 +117,6 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-            <CheckCircle2 size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-400">
-              Đã xác nhận
-            </p>
-            <p className="text-base font-bold text-slate-900">
-              {kpis.confirmedBookings} đơn
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
             <CreditCard size={18} />
           </div>
@@ -140,6 +126,20 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
             </p>
             <p className="text-base font-bold text-slate-900">
               {kpis.paidBookings} đơn
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+            <XCircle size={18} />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Đã hủy
+            </p>
+            <p className="text-base font-bold text-slate-900">
+              {kpis.cancelledBookings} đơn
             </p>
           </div>
         </div>

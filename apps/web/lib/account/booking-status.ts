@@ -13,15 +13,86 @@ function dayKey(value?: string | null) {
 
 /** Trip progress uses calendar days in Vietnam, including the full last day. */
 export function getBookingTripStatus(
-  booking: { status?: string | null; tour_schedules?: { start_date?: string | null; end_date?: string | null } | null },
+  booking: {
+    status?: string | null;
+    created_at?: string | Date | null;
+    tour_schedules?: { start_date?: string | null; end_date?: string | null } | null;
+    note?: string | null;
+  },
   now = new Date(),
 ): Pick<BookingItemUI, "status" | "statusText"> {
   const status = booking.status?.trim().toLowerCase() || "";
+
+  // 1. Đơn đã hủy: Phân loại rõ theo nguyên nhân và đối tượng hủy
   if (["cancelled", "canceled", "đã hủy", "đã huỷ"].includes(status)) {
+    const note = booking.note || "";
+    if (note.includes("[AUTO_CANCELLED_EXPIRED_15M]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Hết hạn 15p)" };
+    }
+    if (note.includes("[AUTO_CANCELLED_DEPARTED]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Quá giờ đi)" };
+    }
+    if (note.includes("[ADMIN_CANCEL_APPROVED]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Theo yêu cầu)" };
+    }
+    if (note.includes("[ADMIN_CANCEL_ACTION]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Admin)" };
+    }
+    if (note.includes("[STAFF_CANCELLED_PENDING]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Admin)" };
+    }
+    if (note.includes("[CUSTOMER_CANCELLED_PENDING]")) {
+      return { status: "cancelled", statusText: "Đã hủy (Khách hủy)" };
+    }
     return { status: "cancelled", statusText: "Đã hủy" };
   }
-  if (status === "cancel_requested") return { status: "unknown", statusText: "Đang yêu cầu hủy" };
-  if (["completed", "đã hoàn thành"].includes(status)) return { status: "completed", statusText: "Đã hoàn thành" };
+
+  // 2. Đơn đang yêu cầu hủy
+  if (status === "cancel_requested") {
+    return { status: "unknown", statusText: "Đang yêu cầu hủy" };
+  }
+
+  // 3. Đơn CHỜ THANH TOÁN (pending): Áp dụng giới hạn 15 phút
+  if (status === "pending") {
+    const createdAt = booking.created_at ? new Date(booking.created_at) : null;
+    const isDeparted =
+      booking.tour_schedules?.start_date &&
+      new Date(booking.tour_schedules.start_date) <= now;
+
+    if (createdAt) {
+      const diffMs = now.getTime() - createdAt.getTime();
+      const fifteenMinutesMs = 15 * 60 * 1000;
+
+      if (diffMs > fifteenMinutesMs || isDeparted) {
+        return {
+          status: "cancelled",
+          statusText: "Đã hủy (Hết hạn 15p)",
+        };
+      }
+
+      const minsLeft = Math.max(1, Math.ceil((fifteenMinutesMs - diffMs) / 60000));
+      return {
+        status: "upcoming",
+        statusText: `Chờ thanh toán (còn ${minsLeft}p)`,
+      };
+    }
+
+    if (isDeparted) {
+      return {
+        status: "cancelled",
+        statusText: "Đã hủy (Quá giờ đi)",
+      };
+    }
+
+    return { status: "upcoming", statusText: "Chờ thanh toán (15p)" };
+  }
+
+  // 4. Đơn đã hoàn thành
+  if (["completed", "đã hoàn thành"].includes(status)) {
+    return { status: "completed", statusText: "Đã hoàn thành" };
+  }
+
+  // 5. Đơn ĐÃ THANH TOÁN / ĐÃ XÁC NHẬN: Tính tiến trình theo ngày thực tế
   const today = dayKey(now.toISOString());
   const start = dayKey(booking.tour_schedules?.start_date);
   const end = dayKey(booking.tour_schedules?.end_date);

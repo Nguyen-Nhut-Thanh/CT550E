@@ -27,6 +27,7 @@ export type TourItinerary = {
     day_number: number;
     title: string;
     content: string;
+    image_url?: string | null;
     meals?: string | null;
     activities?: ItineraryActivity[];
 };
@@ -84,6 +85,8 @@ export type TourSchedule = {
     tour_schedule_prices?: TourSchedulePrice[];
     tour_schedule_hotels?: TourScheduleHotel[];
     tour_schedule_transports?: TourScheduleTransport[];
+    schedule_promotions?: import('../admin/schedules/promotions').SchedulePromotion | null;
+    schedule_promotion?: import('../admin/schedules/promotions').SchedulePromotionSummary | null;
 };
 export type SchedulePickupPoint = {
     pickup_point_id: number;
@@ -99,12 +102,43 @@ export type TourImage = {
     is_cover: number;
     sort_order: number;
 };
+export type TourReviewReply = {
+    reply_id: number;
+    content: string;
+    created_at: string;
+    user?: {
+        user_id: number;
+        full_name: string;
+        avatar_url?: string | null;
+    } | null;
+    users?: {
+        user_id: number;
+        full_name: string;
+        avatar_url?: string | null;
+    } | null;
+};
+
 export type TourReview = {
     review_id: number;
     rating: number;
+    title?: string | null;
     comment: string | null;
+    images?: string[] | null;
+    likes_count?: number;
     created_at: string;
     user_id: number;
+    user?: {
+        user_id: number;
+        full_name: string;
+        avatar_url?: string | null;
+    } | null;
+    users?: {
+        user_id: number;
+        full_name: string;
+        avatar_url?: string | null;
+    } | null;
+    replies?: TourReviewReply[];
+    review_replies?: TourReviewReply[];
 };
 export type TourPolicy = {
     policy_id: number;
@@ -156,6 +190,11 @@ export type PublicTourDetail = {
     tour_policies?: TourPolicy[];
     rating_avg?: number | string | null;
     rating_count?: number | null;
+    rating_breakdown?: Array<{
+        stars: 1 | 2 | 3 | 4 | 5;
+        percent: number;
+        count?: number;
+    }>;
 };
 export type VideoItem = {
     id: number;

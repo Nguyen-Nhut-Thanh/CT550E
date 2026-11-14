@@ -21,6 +21,14 @@ export class ChatController {
     async create(
     @Req()
     req: AuthenticatedRequest) { return this.chat.getOrCreateConversation(await this.chat.actor(req.user)); }
+    @Post('conversations/user/:userId')
+    async openWithUser(
+    @Param('userId', ParseIntPipe)
+    userId: number,
+    @Req()
+    req: AuthenticatedRequest) {
+        return this.chat.getOrCreateConversationForUser(await this.chat.actor(req.user), userId);
+    }
     @Get('conversations/:id/contexts')
     async contexts(@Param('id', ParseIntPipe) id: number, @Req() req: AuthenticatedRequest) {
         return this.chat.contexts(id, await this.chat.actor(req.user));

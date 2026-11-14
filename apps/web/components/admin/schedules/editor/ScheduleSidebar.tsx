@@ -7,9 +7,10 @@ import { ImageUpload } from "@/components/common/forms/ImageUpload";
 import { Image, Info, Layers3, Loader2, NotebookText, Save } from "lucide-react";
 import type { ScheduleSidebarProps } from "shared";
 import { useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { TourEditorCard as ScheduleEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
 
-export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUploadingChange, onFormChange }: ScheduleSidebarProps) {
+export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUploadingChange, onFormChange, managementActions }: ScheduleSidebarProps & { managementActions?: ReactNode }) {
   const readOnly = useAdminContentReadOnly();
   const controlsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -43,6 +44,7 @@ export function ScheduleSidebar({ form, isPast, saving, uploading, onSave, onUpl
         </div>
       </div>
     </ScheduleEditorCard>
+    {managementActions}
     {!isPast ? <button type="button" onClick={onSave} disabled={readOnly || saving || uploading} className="relative mt-[2px] flex min-h-[54px] w-full items-center justify-center gap-[11px] rounded-[15px] border border-[#1c69f2] bg-[linear-gradient(135deg,#4c92ff,#1258ef_65%,#0646db)] px-5 py-[14px] text-[14px] font-bold text-white shadow-[0_6px_14px_#1a6af328,inset_0_1px_0_#ffffff50] transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-[0_9px_18px_#1a6af33a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500 disabled:cursor-wait disabled:opacity-60">{saving || uploading ? <Loader2 size={21} className="animate-spin" /> : <Save size={21} />}{saving ? "Đang lưu..." : uploading ? "Đang tải ảnh..." : "Lưu lịch trình ngay"}</button> : <p className="flex items-start gap-2 rounded-2xl bg-white/80 p-4 text-[12px] leading-[1.7] text-[#8493ab]"><Info size={18} className="mt-0.5 shrink-0" />Lịch khởi hành này đã diễn ra. Bạn chỉ có thể xem lại dữ liệu.</p>}
     </div>
   </aside>;

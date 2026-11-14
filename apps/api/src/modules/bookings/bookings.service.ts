@@ -1,14 +1,159 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { BookingPayload } from "shared";
-import { BOOKING_EXTRAS, isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipDiscount, membershipPrice, voucherAudienceAllows, voucherAudienceLabel } from "shared";
+import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import type { BookingPayload, CancelBookingPayload } from "shared";
+import { BOOKING_EXTRAS, calculateCancellationEstimate, isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipDiscount, membershipPrice, voucherAudienceAllows, voucherAudienceLabel } from "shared";
 import { customerCrewBooking } from './customer-crew';
 import { MembershipService } from "../membership/membership.service";
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { formatCurrency, mergeBookingNote, priceBookingExtras } from "./booking.helpers";
+import { sendBookingNotification } from "./booking-notifications";
+
+export const BOOKING_PAYMENT_TIMEOUT_MINUTES = 15;
+
 @Injectable()
-export class BookingsService {
+export class BookingsService implements OnModuleInit, OnModuleDestroy {
+    private readonly logger = new Logger(BookingsService.name);
+    private sweepIntervalRef?: NodeJS.Timeout;
+
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly mailService: MailService,
+        private readonly membership: MembershipService,
+    ) { }
+
+    onModuleInit() {
+        void this.cancelExpiredPendingBookings();
+        this.sweepIntervalRef = setInterval(() => {
+            void this.cancelExpiredPendingBookings();
+        }, 60_000);
+    }
+
+    onModuleDestroy() {
+        if (this.sweepIntervalRef) {
+            clearInterval(this.sweepIntervalRef);
+        }
+    }
+
+    /**
+     * Tự động quét và hủy các đơn hàng chờ thanh toán (pending) quá hạn 15 phút hoặc đợt khởi hành đã đến/qua ngày
+     */
+    async cancelExpiredPendingBookings(olderThanMinutes = BOOKING_PAYMENT_TIMEOUT_MINUTES): Promise<number> {
+        const threshold = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+        const now = new Date();
+
+        try {
+            const expiredBookings = await this.prisma.bookings.findMany({
+                where: {
+                    status: 'pending',
+                    OR: [
+                        { created_at: { lte: threshold } },
+                        { tour_schedules: { start_date: { lte: now } } },
+                    ],
+                },
+                include: {
+                    tour_schedules: {
+                        select: {
+                            tour_schedule_id: true,
+                            start_date: true,
+                            booked_count: true,
+                            tours: {
+                                select: {
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                take: 100,
+            });
+
+            if (!expiredBookings.length) return 0;
+
+            let cancelledCount = 0;
+
+            for (const b of expiredBookings) {
+                const totalGuests = (b.adult_count || 0) + (b.child_count || 0) + (b.infant_count || 0);
+                const isDeparted = b.tour_schedules && b.tour_schedules.start_date <= now;
+                const reasonText = isDeparted
+                    ? `[AUTO_CANCELLED_DEPARTED]\nHệ thống tự động hủy đơn do đợt khởi hành đã đến/qua ngày đi mà đơn chưa thanh toán.`
+                    : `[AUTO_CANCELLED_EXPIRED_15M]\nHệ thống tự động hủy đơn do quá thời hạn thanh toán ${olderThanMinutes} phút.`;
+
+                try {
+                    await this.prisma.$transaction(async (tx) => {
+                        const updated = await tx.bookings.updateMany({
+                            where: { booking_id: b.booking_id, status: 'pending' },
+                            data: {
+                                status: 'cancelled',
+                                note: mergeBookingNote(b.note, reasonText),
+                            },
+                        });
+
+                        if (updated.count !== 1) return;
+
+                        // Giảm booked_count trên schedule để nhả chỗ cho khách khác
+                        if (totalGuests > 0 && b.tour_schedule_id) {
+                            const sched = await tx.tour_schedules.findUnique({
+                                where: { tour_schedule_id: b.tour_schedule_id },
+                                select: { booked_count: true },
+                            });
+                            const newCount = Math.max(0, (sched?.booked_count || 0) - totalGuests);
+                            await tx.tour_schedules.update({
+                                where: { tour_schedule_id: b.tour_schedule_id },
+                                data: { booked_count: newCount },
+                            });
+                        }
+
+                        // Hoàn trả voucher nếu có
+                        if (b.voucher_id) {
+                            await tx.vouchers.updateMany({
+                                where: { voucher_id: b.voucher_id, used_count: { gt: 0 } },
+                                data: { used_count: { decrement: 1 } },
+                            });
+                        }
+
+                        // Hoàn trả ưu đãi đợt khởi hành nếu có
+                        if (b.tour_schedule_id) {
+                            const promoGuests = (b.adult_count || 0) + (b.child_count || 0);
+                            if (promoGuests > 0) {
+                                await tx.schedule_promotions.updateMany({
+                                    where: { tour_schedule_id: b.tour_schedule_id, used_slots: { gt: 0 } },
+                                    data: { used_slots: { decrement: promoGuests } },
+                                });
+                            }
+                        }
+
+                        // Đánh dấu payment pending thành expired
+                        await tx.payments.updateMany({
+                            where: { booking_id: b.booking_id, status: 'pending' },
+                            data: { status: 'expired' },
+                        });
+
+                        // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+                        await sendBookingNotification(tx, {
+                            type: isDeparted ? 'departed_cancelled' : 'timeout_cancelled',
+                            userId: b.user_id,
+                            bookingId: b.booking_id,
+                            tourName: b.tour_schedules?.tours?.name || 'Tour',
+                        });
+
+                        cancelledCount++;
+                    });
+                } catch (err) {
+                    this.logger.error(`Lỗi khi tự động hủy booking #${b.booking_id}: ${err instanceof Error ? err.message : err}`);
+                }
+            }
+
+            if (cancelledCount > 0) {
+                this.logger.log(`Đã tự động hủy ${cancelledCount} đơn đặt tour pending quá hạn 15 phút / quá giờ khởi hành.`);
+            }
+
+            return cancelledCount;
+        } catch (error) {
+            this.logger.error(`Lỗi trong cancelExpiredPendingBookings: ${error instanceof Error ? error.message : error}`);
+            return 0;
+        }
+    }
     getExtraServices() {
         return BOOKING_EXTRAS;
     }
@@ -27,8 +172,7 @@ export class BookingsService {
     async listForAccount(accountId: number) { return this.getMyBookings(await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.")); }
     async statsForAccount(accountId: number) { return this.getBookingStats(await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.")); }
     async detailForAccount(id: number, accountId: number) { return this.getBookingDetail(id, await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng.")); }
-    async cancelForAccount(id: number, accountId: number, reason?: string) { return this.requestCancel(id, await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng."), reason); }
-    constructor(private readonly prisma: PrismaService, private readonly mailService: MailService, private readonly membership: MembershipService) { }
+    async cancelForAccount(id: number, accountId: number, dto?: any) { return this.requestCancel(id, await getAccountUserId(this.prisma, accountId, "Không tìm thấy người dùng."), dto); }
 
     async checkScheduleConflicts(tourScheduleId: number, travelers: Array<{ fullName: string; idNumber?: string }>) {
         if (!tourScheduleId || !Array.isArray(travelers) || travelers.length === 0) {
@@ -201,6 +345,14 @@ export class BookingsService {
                     pickup_points: { orderBy: { sort_order: 'asc' } },
                     tour_schedule_prices: true,
                     tour_schedule_hotels: { include: { hotel_room_types: true } },
+                    flash_deals: {
+                        where: {
+                            status: 1,
+                            start_date: { lte: new Date() },
+                            end_date: { gte: new Date() },
+                        },
+                    },
+                    schedule_promotions: true,
                     tours: {
                         select: {
                             tour_id: true,
@@ -225,12 +377,51 @@ export class BookingsService {
             if (schedule.quota - schedule.booked_count < totalGuests) {
                 throw new BadRequestException('Không đủ chỗ trống cho số lượng khách yêu cầu.');
             }
-            const adultPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'ADULT')
+            let adultPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'ADULT')
                 ?.price ?? schedule.price);
-            const childPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'CHILD')
+            let childPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'CHILD')
                 ?.price ?? 0);
             const infantPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'INFANT')
                 ?.price ?? 0);
+
+            // Xử lý ưu đãi: Ưu tiên Flash Deal nếu có, kế tiếp đến Ưu đãi riêng của đợt khởi hành
+            const flashDeal = schedule.flash_deals;
+            let activeSchedulePromo = false;
+            let appliedPromoTitle = '';
+            let appliedGiftDescription: string | null = null;
+
+            if (flashDeal) {
+                const fDiscount = Number(flashDeal.discount_value);
+                if (flashDeal.discount_type === 'percentage') {
+                    adultPrice = Math.max(0, Math.round(adultPrice * (1 - fDiscount / 100)));
+                    if (childPrice > 0) childPrice = Math.max(0, Math.round(childPrice * (1 - fDiscount / 100)));
+                } else {
+                    adultPrice = Math.max(0, Math.round(adultPrice - fDiscount));
+                    if (childPrice > 0) childPrice = Math.max(0, Math.round(childPrice - fDiscount));
+                }
+            } else if (schedule.schedule_promotions && schedule.schedule_promotions.is_active) {
+                const promo = schedule.schedule_promotions;
+                const now = new Date();
+                const pStart = new Date(promo.start_date);
+                const pEnd = new Date(promo.end_date);
+                const promoGuests = dto.adult_count + dto.child_count;
+                const hasPromoSlot = promo.max_slots === null || promo.max_slots === undefined || (promo.used_slots + promoGuests <= promo.max_slots);
+
+                if (pStart <= now && pEnd >= now && hasPromoSlot) {
+                    activeSchedulePromo = true;
+                    appliedPromoTitle = promo.title;
+                    appliedGiftDescription = promo.gift_description;
+                    const pDiscount = Number(promo.discount_value);
+                    if (promo.discount_type === 'percentage') {
+                        adultPrice = Math.max(0, Math.round(adultPrice * (1 - pDiscount / 100)));
+                        if (childPrice > 0) childPrice = Math.max(0, Math.round(childPrice * (1 - pDiscount / 100)));
+                    } else {
+                        adultPrice = Math.max(0, Math.round(adultPrice - pDiscount));
+                        if (childPrice > 0) childPrice = Math.max(0, Math.round(childPrice - pDiscount));
+                    }
+                }
+            }
+
             const subtotal = dto.adult_count * adultPrice +
                 dto.child_count * childPrice +
                 dto.infant_count * infantPrice;
@@ -307,9 +498,10 @@ export class BookingsService {
             const contactIdCardNote = dto.contact_id_card?.trim()
                 ? `\n[CCCD_LIEN_HE]: ${dto.contact_id_card.trim()}`
                 : '';
-            const mergedNote = dto.note?.trim()
-                ? `${dto.note.trim()}\n\n${roomNote}${contactIdCardNote}`
-                : `${roomNote}${contactIdCardNote}`;
+            const promoNote = activeSchedulePromo
+                ? `[ƯU ĐÃI ĐỢT KHỞI HÀNH]: ${appliedPromoTitle}${appliedGiftDescription ? ` (Quà tặng: ${appliedGiftDescription})` : ''}`
+                : '';
+            const mergedNote = [promoNote, dto.note?.trim(), roomNote, contactIdCardNote].filter(Boolean).join('\n\n');
             const createdBooking = await tx.bookings.create({
                 data: {
                     user_id: dto.user_id,
@@ -361,6 +553,13 @@ export class BookingsService {
             });
             if (reserved.count !== 1)
                 throw new BadRequestException("Không đủ chỗ trống cho số lượng khách yêu cầu.");
+            if (activeSchedulePromo) {
+                const promoGuests = dto.adult_count + dto.child_count;
+                await tx.schedule_promotions.update({
+                    where: { tour_schedule_id: dto.tour_schedule_id },
+                    data: { used_slots: { increment: promoGuests } },
+                });
+            }
             if (voucherId) {
                 const consumed = await tx.vouchers.updateMany({ where: { voucher_id: voucherId, used_count: { lt: voucherUsageLimit }, status: 1, start_date: { lte: new Date() }, expiry_date: { gt: new Date() }, AND: [{ OR: [{ owner_user_id: null }, { owner_user_id: dto.user_id }] }, { OR: [{ eligible_tiers: { isEmpty: true } }, { eligible_tiers: { has: member.tier.id } }] }] }, data: { used_count: { increment: 1 } } });
                 if (consumed.count !== 1)
@@ -380,14 +579,28 @@ export class BookingsService {
             startDate: booking.start_date,
             totalAmount: Number(booking.total_amount),
         }).catch(() => { new Logger("BookingsService").warn("Không thể gửi email xác nhận; đơn đặt tour đã được lưu."); });
+
+        // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+        await sendBookingNotification(this.prisma, {
+            type: 'created',
+            userId: booking.user_id,
+            bookingId: booking.booking_id,
+            tourName: booking.tour_name,
+            totalAmount: Number(booking.total_amount),
+        });
+
         return booking;
     }
     async getMyBookings(userId: any) {
+        await this.cancelExpiredPendingBookings();
         const bookings = await this.prisma.bookings.findMany({
             where: { user_id: userId },
             include: {
                 tour_schedules: {
                     include: {
+                        departure_location: {
+                            select: { name: true },
+                        },
                         tours: {
                             include: {
                                 tour_images: {
@@ -427,6 +640,7 @@ export class BookingsService {
         return bookings.map(customerCrewBooking);
     }
     async getBookingStats(userId: any) {
+        await this.cancelExpiredPendingBookings();
         const [total, pending, upcoming] = await Promise.all([
             this.prisma.bookings.count({ where: { user_id: userId } }),
             this.prisma.bookings.count({
@@ -453,6 +667,7 @@ export class BookingsService {
         };
     }
     async getBookingDetail(bookingId: any, userId: any) {
+        await this.cancelExpiredPendingBookings();
         const booking = await this.prisma.bookings.findFirst({
             where: { booking_id: bookingId, user_id: userId },
             include: {
@@ -477,7 +692,7 @@ export class BookingsService {
         });
         return booking ? customerCrewBooking(booking) : null;
     }
-    async requestCancel(bookingId: any, userId: any, reason: any) {
+    async requestCancel(bookingId: any, userId: any, dtoOrReason: any) {
         const booking = await this.prisma.bookings.findFirst({
             where: { booking_id: bookingId, user_id: userId },
             include: {
@@ -493,25 +708,79 @@ export class BookingsService {
         if (!booking) {
             throw new NotFoundException('Không tìm thấy booking.');
         }
-        if (!['pending', 'paid'].includes(booking.status)) {
-            throw new BadRequestException('Booking hiện không thể gửi yêu cầu hủy.');
+        if (booking.status === 'cancelled') {
+            throw new BadRequestException('Đơn đặt tour này đã bị hủy trước đó.');
         }
-        const reasonText = reason?.trim();
+        if (booking.status === 'cancel_requested') {
+            throw new BadRequestException('Đơn đặt tour này đã gửi yêu cầu hủy và đang chờ xử lý.');
+        }
+        if (!['pending', 'paid', 'confirmed'].includes(booking.status)) {
+            throw new BadRequestException('Booking hiện không thể hủy hoặc gửi yêu cầu hủy.');
+        }
+        if (booking.tour_schedules?.start_date && new Date(booking.tour_schedules.start_date).getTime() <= Date.now()) {
+            throw new BadRequestException('Chuyến đi đã hoặc đang trong thời gian khởi hành, không thể thực hiện hủy tour.');
+        }
+
+        const payload: CancelBookingPayload = typeof dtoOrReason === 'string'
+            ? { reason: dtoOrReason }
+            : (dtoOrReason || { reason: 'Khách hàng yêu cầu hủy' });
+
+        const reasonText = (payload.reason || '').trim() || 'Khách hàng yêu cầu hủy tour';
+
+        const isPending = booking.status === 'pending';
+        let cancelRequestLines: string[];
+        let estimate: any = undefined;
+
+        if (isPending) {
+            cancelRequestLines = [
+                `[CUSTOMER_CANCEL_REQUEST]`,
+                `Lý do: ${reasonText}`,
+                `Trạng thái: Chưa thanh toán (Chờ duyệt hủy giữ chỗ)`,
+                `Số tiền đã thanh toán: 0đ`,
+                `Phí phạt hủy: 0đ`,
+                `Số tiền hoàn dự kiến: 0đ`,
+                `Thời gian gửi yêu cầu: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
+            ];
+        } else {
+            estimate = calculateCancellationEstimate({
+                startDate: booking.tour_schedules.start_date,
+                totalAmount: Number(booking.total_amount),
+                isPaid: true,
+            });
+
+            cancelRequestLines = [
+                `[CUSTOMER_CANCEL_REQUEST]`,
+                `Lý do: ${reasonText}`,
+                `Số ngày trước khởi hành: ${estimate.daysRemaining} ngày (${estimate.hoursRemaining} giờ)`,
+                `Mức phạt hủy theo quy định: ${estimate.tier.penaltyPercent}% (${estimate.tier.title})`,
+                `Số tiền đã thanh toán: ${formatCurrency(Number(booking.total_amount))}đ`,
+                `Phí phạt hủy: ${formatCurrency(estimate.penaltyAmount)}đ`,
+                `Số tiền hoàn dự kiến: ${formatCurrency(estimate.refundAmount)}đ`,
+                ...(payload.bankAccountNumber ? [
+                    `Thông tin nhận tiền hoàn:`,
+                    `- Ngân hàng: ${payload.bankName || 'Chưa cung cấp'}`,
+                    `- Số tài khoản: ${payload.bankAccountNumber || 'Chưa cung cấp'}`,
+                    `- Chủ tài khoản: ${payload.bankAccountName || 'Chưa cung cấp'}`,
+                ] : []),
+                `Thời gian gửi yêu cầu: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
+            ];
+        }
+
         const updated = await this.prisma.bookings.update({
             where: { booking_id: bookingId },
             data: {
                 status: 'cancel_requested',
-                note: reasonText
-                    ? mergeBookingNote(booking.note, `[CUSTOMER_CANCEL_REQUEST]\nLý do: ${reasonText}`)
-                    : booking.note,
+                note: mergeBookingNote(booking.note, cancelRequestLines.join('\n')),
             },
         });
+
         await this.mailService.sendCancelRequestEmail({
             email: booking.contact_email,
             contactName: booking.contact_name,
             bookingId: booking.booking_id,
             tourName: booking.tour_schedules?.tours?.name || 'Tour',
-        });
+        }).catch(() => {});
+
         await this.mailService.sendCancelRequestAdminNotification({
             bookingId: booking.booking_id,
             tourName: booking.tour_schedules?.tours?.name || 'Tour',
@@ -519,7 +788,24 @@ export class BookingsService {
             contactEmail: booking.contact_email,
             contactPhone: booking.contact_phone,
             reason: reasonText,
+        }).catch(() => {});
+
+        // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+        await sendBookingNotification(this.prisma, {
+            type: 'cancel_requested',
+            userId: booking.user_id,
+            bookingId: booking.booking_id,
+            tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            reason: reasonText,
         });
-        return updated;
+
+        return {
+            ...updated,
+            cancellation_type: 'cancel_requested',
+            estimate,
+            message: isPending
+                ? 'Yêu cầu hủy đơn đặt tour đã được gửi đến ban quản trị xem xét và phê duyệt.'
+                : 'Yêu cầu hủy tour và hoàn tiền đã được gửi đến ban quản trị xem xét và phê duyệt.',
+        };
     }
 }

@@ -10,6 +10,16 @@ export class VouchersAdminController {
     async findAll() {
         return this.vouchersService.findAll();
     }
+    @Get('admin/marketing/vouchers/home-campaign')
+    async getHomeCampaign() {
+        return this.vouchersService.getHomeVoucherConfig();
+    }
+    @Post('admin/marketing/vouchers/home-campaign')
+    async updateHomeCampaign(
+    @Body()
+    data: any) {
+        return this.vouchersService.updateHomeVoucherConfig(data);
+    }
     @Get('admin/marketing/vouchers/:id')
     async findOne(
     @Param('id')

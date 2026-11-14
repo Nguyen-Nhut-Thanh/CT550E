@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { formatCurrency, formatDate, formatDateTime, renderInfoCard, renderLayout } from "./mail.templates";
+import {
+    formatCurrency,
+    formatDate,
+    formatDateTime,
+    renderInfoCard,
+    renderLayout,
+    renderReceiptEmailHtml,
+    renderRefundStatementEmailHtml,
+} from "./mail.templates";
 @Injectable()
 export class MailService {
     private readonly logger = new Logger(MailService.name);
@@ -74,22 +82,56 @@ export class MailService {
     async sendBookingPaidEmail(params: {
         email: string;
         contactName: string;
+        contactPhone?: string;
         bookingId: number;
         tourName: string;
+        tourCode?: string;
+        startDate?: string | Date | null;
+        duration?: string;
+        departureName?: string;
         totalAmount: number | string;
+        subtotal?: number | string;
+        discountAmount?: number | string;
+        method?: string;
+        transactionCode?: string;
+        paidAt?: string | Date | null;
+        adultCount?: number;
+        adultPrice?: number | string;
+        childCount?: number;
+        childPrice?: number | string;
+        infantCount?: number;
+        infantPrice?: number | string;
+        voucherCode?: string;
+        pickupName?: string;
     }) {
         await this.sendMail({
             to: params.email,
-            subject: `Thanh toán thành công cho booking #${params.bookingId}`,
-            html: renderLayout(`Xin chào ${params.contactName || 'quý khách'},`, 'Chúng tôi đã xác nhận khoản thanh toán của bạn.', `
-          ${renderInfoCard([
-                ['Mã booking', `#${params.bookingId}`],
-                ['Tour', params.tourName],
-                ['Số tiền', formatCurrency(params.totalAmount)],
-                ['Trạng thái', 'Đã thanh toán'],
-            ], 'success')}
-          <p style="margin: 0;">Travol sẽ tiếp tục cập nhật các thông tin cần thiết cho chuyến đi của bạn.</p>
-        `),
+            subject: `[JourniTrip] Biên lai thanh toán booking #${params.bookingId}`,
+            html: renderReceiptEmailHtml({
+                contactName: params.contactName,
+                contactPhone: params.contactPhone,
+                contactEmail: params.email,
+                bookingId: params.bookingId,
+                tourName: params.tourName,
+                tourCode: params.tourCode,
+                startDate: params.startDate,
+                duration: params.duration,
+                departureName: params.departureName,
+                totalAmount: params.totalAmount,
+                subtotal: params.subtotal,
+                discountAmount: params.discountAmount,
+                method: params.method,
+                transactionCode: params.transactionCode,
+                paidAt: params.paidAt,
+                adultCount: params.adultCount,
+                adultPrice: params.adultPrice,
+                childCount: params.childCount,
+                childPrice: params.childPrice,
+                infantCount: params.infantCount,
+                infantPrice: params.infantPrice,
+                voucherCode: params.voucherCode,
+                pickupName: params.pickupName,
+            }),
         });
     }
     async sendCancelRequestEmail(params: {
@@ -140,32 +182,29 @@ export class MailService {
         contactName: string;
         bookingId: number;
         tourName: string;
+        totalAmount?: number | string;
         refundAmount?: number | null;
+        cancellationFee?: number | string;
+        reason?: string;
+        bankName?: string;
+        bankAccountNumber?: string;
+        bankAccountName?: string;
     }) {
-        const infoLines: Array<[
-            string,
-            string
-        ]> = [
-            ['Mã booking', `#${params.bookingId}`],
-            ['Tour', params.tourName],
-            ['Trạng thái', 'Đã hủy'],
-        ];
-        if (typeof params.refundAmount === 'number' &&
-            Number.isFinite(params.refundAmount)) {
-            infoLines.push([
-                'Số tiền hoàn dự kiến',
-                formatCurrency(params.refundAmount),
-            ]);
-        }
         await this.sendMail({
             to: params.email,
-            subject: `Yêu cầu hủy booking #${params.bookingId} đã được duyệt`,
-            html: renderLayout(`Xin chào ${params.contactName || 'quý khách'},`, 'Yêu cầu hủy booking của bạn đã được phê duyệt.', `
-          ${renderInfoCard(infoLines, 'neutral')}
-          <p style="margin: 0;">${infoLines.length > 3
-                ? 'Số tiền hoàn dự kiến đã được ghi nhận ở trên. Khoản hoàn thực tế sẽ được xử lý theo quy trình của Travol.'
-                : 'Nếu có khoản hoàn tiền, đội ngũ Travol sẽ liên hệ hoặc cập nhật cho bạn theo chính sách áp dụng.'}</p>
-        `),
+            subject: `[JourniTrip] Biên nhận xác nhận hủy tour & Quyết toán hoàn tiền #${params.bookingId}`,
+            html: renderRefundStatementEmailHtml({
+                contactName: params.contactName,
+                bookingId: params.bookingId,
+                tourName: params.tourName,
+                totalAmount: params.totalAmount || params.refundAmount || 0,
+                refundAmount: params.refundAmount || 0,
+                cancellationFee: params.cancellationFee,
+                reason: params.reason,
+                bankName: params.bankName,
+                bankAccountNumber: params.bankAccountNumber,
+                bankAccountName: params.bankAccountName,
+            }),
         });
     }
     async sendCancelRejectedEmail(params: {
@@ -173,16 +212,21 @@ export class MailService {
         contactName: string;
         bookingId: number;
         tourName: string;
+        reason?: string;
     }) {
+        const infoItems: [string, string][] = [
+            ['Mã booking', `#${params.bookingId}`],
+            ['Tour', params.tourName],
+            ['Trạng thái', 'Tiếp tục giữ chỗ'],
+        ];
+        if (params.reason) {
+            infoItems.push(['Lý do từ chối', params.reason]);
+        }
         await this.sendMail({
             to: params.email,
             subject: `Yêu cầu hủy booking #${params.bookingId} chưa được chấp nhận`,
             html: renderLayout(`Xin chào ${params.contactName || 'quý khách'},`, 'Hiện tại yêu cầu hủy booking của bạn chưa được phê duyệt.', `
-          ${renderInfoCard([
-                ['Mã booking', `#${params.bookingId}`],
-                ['Tour', params.tourName],
-                ['Trạng thái', 'Tiếp tục giữ chỗ'],
-            ], 'neutral')}
+          ${renderInfoCard(infoItems, 'neutral')}
           <p style="margin: 0;">Nếu cần thêm hỗ trợ, bạn có thể liên hệ bộ phận chăm sóc khách hàng để được hướng dẫn.</p>
         `),
         });

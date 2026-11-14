@@ -11,6 +11,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AdminDatePicker } from "@/components/admin/common/AdminDatePicker";
+import CustomDropdown from "@/components/common/forms/CustomDropdown";
+import type { ReactNode } from "react";
 
 interface AnalyticsHeaderProps {
   timeRange: string;
@@ -26,6 +29,7 @@ interface AnalyticsHeaderProps {
   onExportCsv: (section: string) => Promise<void>;
   exportingExcel: boolean;
   exportingCsv: string | null;
+  rightSlot?: ReactNode;
 }
 
 export function AnalyticsHeader({
@@ -42,6 +46,7 @@ export function AnalyticsHeader({
   onExportCsv,
   exportingExcel,
   exportingCsv,
+  rightSlot,
 }: AnalyticsHeaderProps) {
   const [showCsvMenu, setShowCsvMenu] = useState(false);
   const csvMenuRef = useRef<HTMLDivElement>(null);
@@ -168,61 +173,77 @@ export function AnalyticsHeader({
       </div>
 
       {/* Date Range Selector Pill Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2 sm:px-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div className={rightSlot ? "flex min-w-0 flex-col gap-2 lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(190px,1fr)] lg:items-stretch lg:gap-3" : ""}>
+      <div className="min-h-[52px] rounded-2xl border border-slate-200/80 bg-slate-50/70 p-1.5 sm:px-3 lg:flex lg:min-w-0 lg:items-center lg:justify-between">
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="mr-1 hidden sm:inline-flex items-center gap-1 text-xs font-bold text-slate-500">
             <Calendar size={13} />
             Kỳ báo cáo:
           </span>
-          {ranges.map((r) => {
-            const isActive = timeRange === r.key;
-            return (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setTimeRange(r.key)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900"
-                }`}
-              >
-                {r.label}
-              </button>
-            );
-          })}
+          <CustomDropdown
+            ariaLabel="Chọn kỳ báo cáo"
+            variant="compact"
+            selectedValue={timeRange === "custom" ? "month" : timeRange}
+            onSelect={setTimeRange}
+            options={ranges.filter((range) => range.key !== "custom").map(({ key, label }) => ({ value: key, label }))}
+            className="w-[155px] [&_button]:!h-8 [&_button]:!min-h-0 [&_button]:!min-w-0 [&_button]:!rounded-xl [&_button]:!px-3 [&_button]:!py-1 [&_button]:!text-xs"
+          />
+          <button
+            type="button"
+            onClick={() => setTimeRange("custom")}
+            aria-pressed={timeRange === "custom"}
+            className={`ml-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${timeRange === "custom" ? "border-blue-600 bg-blue-600 text-white shadow-xs" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"}`}
+          >
+            Tùy chọn
+          </button>
         </div>
 
         {/* Custom Date Pickers when 'custom' is active */}
-        {timeRange === "custom" && (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-              <span>Từ</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden"
-              />
+        <div
+          aria-hidden={timeRange !== "custom"}
+          inert={timeRange !== "custom"}
+          className={`grid min-w-0 overflow-hidden transition-[grid-template-rows,opacity,margin,width] duration-200 ease-out ${timeRange === "custom" ? "mt-1 w-full grid-rows-[1fr] opacity-100 lg:ml-auto lg:mt-0 lg:w-[470px] lg:shrink-0" : "mt-0 w-0 grid-rows-[0fr] opacity-0"}`}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="flex w-max flex-nowrap items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-600">
+                <span>Từ</span>
+                <div className="w-[150px] [&_button]:!h-8 [&_button]:!min-h-8 [&_button]:!py-1">
+                <AdminDatePicker
+                  variant="compact"
+                  placeholder="Từ ngày"
+                  value={startDate}
+                  onChange={setStartDate}
+                />
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-600">
+                <span>Đến</span>
+                <div className="w-[150px] [&_button]:!h-8 [&_button]:!min-h-8 [&_button]:!py-1">
+                <AdminDatePicker
+                  variant="compact"
+                  placeholder="Đến ngày"
+                  value={endDate}
+                  minDate={startDate}
+                  onChange={setEndDate}
+                />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onApplyCustomRange}
+                tabIndex={timeRange === "custom" ? 0 : -1}
+                className="h-8 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-xs transition-colors hover:bg-blue-700"
+              >
+                Áp dụng
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-              <span>Đến</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={onApplyCustomRange}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
-            >
-              Áp dụng
-            </button>
           </div>
-        )}
+        </div>
+        </div>
+      </div>
+      {rightSlot && <div className="flex justify-end lg:items-center lg:justify-end">{rightSlot}</div>}
       </div>
     </div>
   );

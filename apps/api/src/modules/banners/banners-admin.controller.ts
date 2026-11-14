@@ -14,6 +14,17 @@ export class BannersAdminController {
     async findAll() {
         return this.bannersService.findAll();
     }
+    @Get('admin/seasonal-theme')
+    async getSeasonalTheme() {
+        return this.bannersService.getSeasonalTheme();
+    }
+    @Post('admin/seasonal-theme')
+    async updateSeasonalTheme(
+        @Body()
+        data: any,
+    ) {
+        return this.bannersService.updateSeasonalTheme(data);
+    }
     @Get('admin/:id')
     async findOne(
     @Param('id')

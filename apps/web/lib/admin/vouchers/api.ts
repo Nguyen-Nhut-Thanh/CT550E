@@ -1,5 +1,24 @@
 import { requestAdminJson } from "@/lib/http/requestAdminJson";
-import type { Voucher, VoucherForm } from "shared";
+import type { HomeVoucherCampaignConfig, Voucher, VoucherForm } from "shared";
+
+export function getAdminHomeVoucherConfig() {
+  return requestAdminJson<HomeVoucherCampaignConfig>(
+    "/admin/marketing/vouchers/home-campaign",
+    { method: "GET" },
+    "Không thể tải cấu hình voucher trang chủ.",
+  );
+}
+
+export function saveAdminHomeVoucherConfig(payload: Partial<HomeVoucherCampaignConfig>) {
+  return requestAdminJson<HomeVoucherCampaignConfig>(
+    "/admin/marketing/vouchers/home-campaign",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    "Không thể lưu cấu hình voucher trang chủ.",
+  );
+}
 
 export function getAdminVouchers() {
   return requestAdminJson<Voucher[]>(

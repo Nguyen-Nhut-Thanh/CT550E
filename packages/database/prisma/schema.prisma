@@ -165,6 +165,25 @@ model flash_deals {
   @@index([status, start_date, end_date], map: "idx_flash_deals_active")
 }
 
+model schedule_promotions {
+  promotion_id     Int            @id @default(autoincrement())
+  tour_schedule_id Int            @unique
+  title            String         @db.VarChar(150)
+  discount_type    String         @default("percentage") @db.VarChar(20)
+  discount_value   Decimal        @db.Decimal(12, 2)
+  max_slots        Int?
+  used_slots       Int            @default(0)
+  start_date       DateTime       @db.Timestamp(6)
+  end_date         DateTime       @db.Timestamp(6)
+  gift_description String?        @db.VarChar(255)
+  is_active        Boolean        @default(true)
+  created_at       DateTime       @default(now()) @db.Timestamp(6)
+  updated_at       DateTime       @updatedAt @db.Timestamp(6)
+  tour_schedules   tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([is_active, start_date, end_date], map: "idx_schedule_promotions_active")
+}
+
 model vouchers {
   eligible_tiers      String[]   @default([])
   notifications       membership_notifications[]
@@ -302,7 +321,7 @@ model hotels {
 
 model locations {
   location_id                                  Int                  @id @default(autoincrement())
-  name                                         String               @unique @db.VarChar(255)
+  name                                         String               @db.VarChar(255)
   slug                                         String               @unique @db.VarChar(255)
   location_type                                String               @db.VarChar(50)
   level_id                                     Int
@@ -330,6 +349,7 @@ model locations {
   @@index([parent_id], map: "idx_locations_parent")
   @@index([slug], map: "idx_locations_slug")
   @@index([location_type], map: "idx_locations_type")
+  @@unique([level_id, parent_id, name], map: "uq_locations_level_parent_name")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -495,6 +515,7 @@ model tour_itineraries {
   day_number        Int            @default(1)
   title             String         @db.VarChar(255)
   content           String
+  image_url         String?
   meals             String?        @db.VarChar(100)
   draft_data        Json?
   activities        itinerary_activities[]
@@ -635,6 +656,7 @@ model tour_schedules {
   code                     String?                    @unique @db.VarChar(50)
   bookings                 bookings[]
   flash_deals              flash_deals?
+  schedule_promotions      schedule_promotions?
   tour_itineraries         tour_itineraries[]
   tour_schedule_hotels     tour_schedule_hotels[]
   tour_schedule_prices     tour_schedule_prices[]

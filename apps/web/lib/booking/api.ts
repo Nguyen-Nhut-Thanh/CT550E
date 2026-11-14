@@ -82,3 +82,21 @@ export function getPaymentStatus(reference: string, signal?: AbortSignal) {
 export function getBookingDetail(id: number, signal?: AbortSignal) {
   return requestWithToken<import("shared").BookingDetail | null>(`/bookings/${id}`, { signal });
 }
+
+export function requestBookingCancellation(
+  id: number,
+  payload: import("shared").CancelBookingPayload
+) {
+  return requestWithToken<{
+    success: boolean;
+    cancellation_type: "instant_cancelled" | "cancel_requested";
+    message: string;
+    estimate?: import("shared").CancellationEstimate;
+  }>(`/bookings/${id}/cancel-request`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}

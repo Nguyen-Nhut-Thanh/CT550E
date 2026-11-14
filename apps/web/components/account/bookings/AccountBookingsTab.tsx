@@ -1,20 +1,33 @@
 "use client";
 
+import { BookingCancelModal } from "@/components/booking/cancel/BookingCancelModal";
 import { getBookingPaymentStatus, getBookingTripStatus } from "@/lib/account/booking-status";
-import { openSupportChat } from "@/lib/chat/support";
-import { formatVND } from "@/lib/utils/currency";
-import { CalendarDays, CheckCircle2, Clock, CreditCard, Eye, MessageCircle, Star, User } from "lucide-react";
+import { useDismiss } from "@/lib/ui/useDismiss";
+import { formatDate } from "@/lib/utils/dateTime";
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Clock,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AccountBookingsTabProps, BookingItemUI, BookingStatusFilter } from "shared";
-import { AdminRowActions } from "@/components/admin/common/AdminRowActions";
+import { BookingHistoryCard } from "./BookingHistoryCard";
 import { TourReviewModal } from "./TourReviewModal";
 
 export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
   const [activeFilter, setActiveFilter] = useState<BookingStatusFilter>("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "departure">("newest");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement | null>(null);
+  useDismiss(sortRef, isSortOpen, () => setIsSortOpen(false));
+
   const [localReviews, setLocalReviews] = useState<Record<number, any>>({});
   const [reviewModalBooking, setReviewModalBooking] = useState<BookingItemUI | null>(null);
+  const [cancelModalBooking, setCancelModalBooking] = useState<any | null>(null);
 
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -26,8 +39,10 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
     if (bookings && bookings.length > 0) {
       return bookings.map((b) => {
         const id = b.booking_id;
-        const tourId = (b.tour_schedules?.tours as any)?.tour_id || 0;
-        const name = b.tour_schedules?.tours?.name || `Đơn đặt tour #${b.booking_id}`;
+        const tour = b.tour_schedules?.tours as any;
+        const tourId = tour?.tour_id || 0;
+        const name = tour?.name || `Đơn đặt tour #${b.booking_id}`;
+
         const startDate = b.tour_schedules?.start_date
           ? new Date(b.tour_schedules.start_date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
           : "Chưa xác định";
@@ -41,7 +56,6 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         if (b.infant_count) passParts.push(`${b.infant_count} em bé`);
         const passengers = passParts.join(", ") || "1 người lớn";
 
-        const tour = b.tour_schedules?.tours as any;
         const rawSummary = tour?.summary || tour?.description || "";
         const summary = rawSummary ? rawSummary.replace(/<[^>]*>/g, "").trim() : "";
 
@@ -52,6 +66,18 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         const image =
           b.tour_schedules?.tours?.tour_images?.[0]?.image_url ||
           "/images/shared/travel-cover.png";
+
+        const location = b.tour_schedules?.departure_location?.name || "Chưa cập nhật điểm khởi hành";
+
+        const duration = tour?.duration_days
+          ? `${tour.duration_days} ngày ${tour.duration_nights || tour.duration_days - 1} đêm`
+          : "";
+
+        const createdAt = b.created_at
+          ? typeof b.created_at === "string"
+            ? b.created_at
+            : new Date(b.created_at).toISOString()
+          : undefined;
 
         const review = localReviews[id] || (b.reviews?.[0] ? (b.reviews[0] as any) : null);
 
@@ -70,6 +96,9 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
           price,
           image,
           review,
+          location,
+          duration,
+          createdAt,
         };
       });
     }
@@ -79,6 +108,10 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
 
   const upcomingCount = useMemo(
     () => formattedBookings.filter((b) => b.status === "upcoming").length,
+    [formattedBookings]
+  );
+  const ongoingCount = useMemo(
+    () => formattedBookings.filter((b) => b.status === "ongoing").length,
     [formattedBookings]
   );
   const completedCount = useMemo(
@@ -91,203 +124,266 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
   );
 
   const filteredList = useMemo(() => {
-    if (activeFilter === "all") return formattedBookings;
-    return formattedBookings.filter((b) => b.status === activeFilter);
-  }, [formattedBookings, activeFilter]);
+    let result = [...formattedBookings];
+
+    if (activeFilter !== "all") {
+      result = result.filter((b) => b.status === activeFilter);
+    }
+
+    if (sortBy === "oldest") {
+      result.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    } else if (sortBy === "departure") {
+      result.sort((a, b) => new Date(a.startDate || 0).getTime() - new Date(b.startDate || 0).getTime());
+    } else {
+      // newest
+      result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
+
+    return result;
+  }, [formattedBookings, activeFilter, sortBy]);
 
   return (
-    <div className="space-y-6 pt-2">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">Lịch sử đặt tour</h1>
-        <p className="mt-1 text-sm font-medium text-slate-500">
-          Danh sách các tour bạn đã đặt và tình trạng hiện tại
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* FULL SCENIC HERO BANNER (Không đóng khung, ảnh phong cảnh trải dài tràn viền) */}
+      <div className="relative z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
+        {/* Full Landscape Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/about/travel-dreams-banner.png"
+            alt="Scenic banner"
+            fill
+            priority
+            className="object-cover object-[center_28%]"
+          />
+          {/* Soft bottom fade to blend with page background #f6f8fb */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent 85% to-[#f6f8fb]/40" />
+        </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2">
-        {([
-          { id: "all", label: "Tất cả", count: formattedBookings.length },
-          { id: "upcoming", label: "Sắp diễn ra", count: upcomingCount },
-          { id: "ongoing", label: "Đang diễn ra", count: formattedBookings.filter(item => item.status === "ongoing").length },
-          { id: "completed", label: "Đã hoàn thành", count: completedCount },
-          { id: "cancelled", label: "Đã hủy", count: cancelledCount },
-          { id: "unknown", label: "Khác", count: formattedBookings.filter(item => item.status === "unknown").length },
-        ] as const).filter(filter => filter.id !== "unknown" || filter.count > 0).map(filter => (
-          <button key={filter.id} type="button" onClick={() => setActiveFilter(filter.id)} aria-pressed={activeFilter === filter.id}
-            className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${activeFilter === filter.id ? "bg-[#1766c2] text-white shadow-sm" : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"}`}>
-            {filter.label} ({filter.count})
-          </button>
-        ))}
+        {/* Content Container */}
+        <div className="relative z-10 mx-auto max-w-[1240px] px-4 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 lg:px-8 flex flex-col justify-between min-h-[165px] sm:min-h-[185px]">
+          {/* Top Row: Title + Airplane */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-3.5">
+              {/* Rounded Calendar Icon Badge */}
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dbeafe]/90 text-[#1766c2] shadow-xs backdrop-blur-xs">
+                <CalendarDays className="h-6 w-6 text-[#1766c2] stroke-[2.3]" />
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+                  Lịch sử đặt tour
+                </h1>
+                <p className="mt-0.5 text-xs font-medium text-slate-700 sm:text-sm">
+                  Cùng nhìn lại những hành trình tuyệt vời mà bạn đã trải nghiệm cùng JourniTrip!
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Airplane SVG */}
+            <div className="hidden sm:flex items-center gap-3 shrink-0">
+              <svg
+                className="h-8 w-8 -rotate-12 text-slate-700/80 transition-transform duration-300 hover:translate-x-1 hover:-translate-y-1"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Bottom Row: Filter Pills & Sort Dropdown (Sitting directly over the water) */}
+          <div className="mt-5 sm:mt-6 lg:mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Tất cả */}
+              <button
+                type="button"
+                onClick={() => setActiveFilter("all")}
+                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
+                  activeFilter === "all"
+                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
+                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
+                }`}
+              >
+                {activeFilter === "all" && <Check className="h-3.5 w-3.5" />}
+                <span>Tất cả ({formattedBookings.length})</span>
+              </button>
+
+              {/* Đã hoàn thành */}
+              <button
+                type="button"
+                onClick={() => setActiveFilter("completed")}
+                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
+                  activeFilter === "completed"
+                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
+                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
+                }`}
+              >
+                {activeFilter === "completed" && <Check className="h-3.5 w-3.5" />}
+                <span>Đã hoàn thành ({completedCount})</span>
+              </button>
+
+              {/* Đang diễn ra */}
+              <button
+                type="button"
+                onClick={() => setActiveFilter("ongoing")}
+                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
+                  activeFilter === "ongoing"
+                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
+                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
+                }`}
+              >
+                {activeFilter === "ongoing" && <Check className="h-3.5 w-3.5" />}
+                <span>Đang diễn ra ({ongoingCount})</span>
+              </button>
+
+              {/* Sắp diễn ra (hiển thị khi có chuyến sắp tới) */}
+              {upcomingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("upcoming")}
+                  className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
+                    activeFilter === "upcoming"
+                      ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
+                      : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
+                  }`}
+                >
+                  {activeFilter === "upcoming" && <Check className="h-3.5 w-3.5" />}
+                  <span>Sắp diễn ra ({upcomingCount})</span>
+                </button>
+              )}
+
+              {/* Đã hủy */}
+              <button
+                type="button"
+                onClick={() => setActiveFilter("cancelled")}
+                className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold transition-all shadow-xs ${
+                  activeFilter === "cancelled"
+                    ? "bg-[#1766c2] text-white shadow-sm ring-2 ring-white/60"
+                    : "bg-white/90 text-slate-700 backdrop-blur-md hover:bg-white hover:text-slate-900"
+                }`}
+              >
+                {activeFilter === "cancelled" && <Check className="h-3.5 w-3.5" />}
+                <span>Đã hủy ({cancelledCount})</span>
+              </button>
+            </div>
+
+            {/* Right: Sort Dropdown (Thời gian đặt) */}
+            <div ref={sortRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsSortOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs backdrop-blur-md transition-all hover:bg-white hover:text-slate-900"
+              >
+                <CalendarDays className="h-3.5 w-3.5 text-slate-500" />
+                <span>
+                  {sortBy === "newest"
+                    ? "Thời gian đặt"
+                    : sortBy === "oldest"
+                    ? "Đặt cũ nhất"
+                    : "Khởi hành gần nhất"}
+                </span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-slate-400 transition-transform ${
+                    isSortOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isSortOpen && (
+                <div className="absolute right-0 top-full z-30 mt-1.5 w-48 overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortBy("newest");
+                      setIsSortOpen(false);
+                    }}
+                    className={`w-full rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${
+                      sortBy === "newest"
+                        ? "bg-blue-50 text-[#1766c2]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    Mới đặt nhất
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortBy("oldest");
+                      setIsSortOpen(false);
+                    }}
+                    className={`w-full rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${
+                      sortBy === "oldest"
+                        ? "bg-blue-50 text-[#1766c2]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    Đặt cũ nhất
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortBy("departure");
+                      setIsSortOpen(false);
+                    }}
+                    className={`w-full rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${
+                      sortBy === "departure"
+                        ? "bg-blue-50 text-[#1766c2]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    Khởi hành gần nhất
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Booking Cards List */}
       {filteredList.length === 0 ? (
-        <div className="rounded-2xl border border-slate-100 bg-white p-12 text-center shadow-sm">
-          <CalendarDays className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="text-sm font-bold text-slate-700">Chưa có đơn đặt tour nào trong mục này</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/80 px-6 py-16 text-center shadow-xs">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-[#1766c2] shadow-xs">
+            <CalendarDays className="h-7 w-7" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800">
+            {activeFilter === "all"
+              ? "Chưa có đơn đặt tour nào"
+              : activeFilter === "completed"
+              ? "Chưa có chuyến đi nào hoàn thành"
+              : activeFilter === "ongoing"
+              ? "Hiện không có chuyến đi nào đang diễn ra"
+              : activeFilter === "upcoming"
+              ? "Chưa có chuyến đi nào sắp diễn ra"
+              : "Không có đơn đặt tour nào đã hủy"}
+          </h3>
+          <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+            Khám phá các tour du lịch tuyệt vời và sẵn sàng cho những chuyến đi đáng nhớ cùng JourniTrip!
+          </p>
+          <Link
+            href="/tours"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#1766c2] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+          >
+            Khám phá tour ngay
+          </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredList.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              {/* Left Side: Thumbnail & Infos */}
-              <div className="flex items-start sm:items-stretch gap-4 min-w-0 flex-1">
-                <Link
-                  href={`/booking/${item.id}`}
-                  className="relative aspect-[16/10] w-36 sm:w-40 shrink-0 overflow-hidden rounded-xl bg-slate-100 block group self-start sm:self-auto"
-                >
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="(max-width: 640px) 144px, 160px"
-                  />
-                </Link>
-
-                <div className="flex flex-col justify-between min-w-0 flex-1 py-0.5 space-y-1 sm:space-y-0">
-                  {/* Hàng 1: Tên tour */}
-                  <h3 className="text-base font-extrabold text-slate-900 truncate leading-snug">
-                    <Link
-                      href={`/booking/${item.id}`}
-                      className="hover:text-[#095fff] transition-colors"
-                      title={item.name}
-                    >
-                      {item.name}
-                    </Link>
-                  </h3>
-
-                  {/* Hàng 2: Mô tả ngắn của tour */}
-                  <p className="text-xs text-slate-500 truncate" title={item.summary}>
-                    {item.summary || "Khám phá lịch trình du lịch hấp dẫn và trải nghiệm tuyệt vời."}
-                  </p>
-
-                  {/* Hàng 3: Lịch khởi hành */}
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <CalendarDays className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span>{item.startDate} - {item.endDate}</span>
-                  </div>
-
-                  {/* Hàng 4: Số lượng khách */}
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span>{item.passengers}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side: Status, Price & Action Buttons */}
-              <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                {/* Status & Price */}
-                <div className="text-left sm:text-right space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
-                    {/* Tag trạng thái thanh toán */}
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        item.paymentStatus === "paid"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : item.paymentStatus === "refunded"
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {item.paymentStatus === "paid" ? (
-                        <CheckCircle2 size={12} className="shrink-0" />
-                      ) : (
-                        <Clock size={12} className="shrink-0" />
-                      )}
-                      <span>{item.paymentStatusText}</span>
-                    </span>
-
-                    {/* Tag trạng thái chuyến đi */}
-                    {(item.status === "ongoing" || item.status === "unknown") && (
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${item.status === "ongoing" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
-                        {item.statusText}
-                      </span>
-                    )}
-                    {item.status === "completed" && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                          {item.statusText}
-                        </span>
-                        {item.review && (
-                          <span
-                            onClick={() => setReviewModalBooking(item)}
-                            title="Bấm để xem lại bài đánh giá"
-                            className="inline-flex items-center gap-1 cursor-pointer rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition shadow-2xs"
-                          >
-                            <Star size={11} className="fill-amber-400 text-amber-500" />
-                            <span>{item.review.rating}★</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {item.status === "upcoming" && (
-                      <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-700">
-                        {item.statusText}
-                      </span>
-                    )}
-                    {item.status === "cancelled" && (
-                      <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
-                        {item.statusText}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="text-base font-extrabold text-slate-900 sm:text-lg">
-                    {formatVND(item.price)}
-                  </div>
-                </div>
-
-                {/* Component Thao tác chuẩn như bên Quản lý tour */}
-                <div className="flex items-center">
-                  <AdminRowActions
-                    label={`Thao tác với đơn đặt tour #${item.id}`}
-                    actions={[
-                      ...(item.paymentStatus === "unpaid" && item.status !== "cancelled"
-                        ? [
-                            {
-                              label: "Thanh toán ngay",
-                              icon: <CreditCard size={16} className="text-emerald-600" />,
-                              href: `/booking/${item.id}`,
-                              access: "view" as const,
-                            },
-                          ]
-                        : []),
-                      {
-                        label: "Xem chi tiết",
-                        icon: <Eye size={16} />,
-                        href: `/booking/${item.id}`,
-                        access: "view",
-                      },
-                      {
-                        label: "Liên hệ nhân viên",
-                        icon: <MessageCircle size={16} />,
-                        onClick: () => openSupportChat({ booking_id: item.id }),
-                        access: "view",
-                      },
-                      {
-                        label: item.review ? `Xem đánh giá (${item.review.rating}★)` : "Đánh giá",
-                        icon: <Star size={16} />,
-                        disabled: item.status !== "completed",
-                        title:
-                          item.status !== "completed"
-                            ? "Chỉ có thể đánh giá sau khi hoàn thành chuyến đi"
-                            : undefined,
-                        onClick: () => setReviewModalBooking(item),
-                        access: "view",
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.05)]">
+          {filteredList.map((item, index) => {
+            const rawBooking = bookings.find((b) => b.booking_id === item.id);
+            return (
+              <BookingHistoryCard
+                key={item.id}
+                item={item}
+                striped={index % 2 === 0}
+                grouped
+                rawBooking={rawBooking}
+                onReview={(b) => setReviewModalBooking(b)}
+                onCancelRequest={(b) => setCancelModalBooking(b)}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -298,6 +394,17 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         onClose={() => setReviewModalBooking(null)}
         onSuccess={(bookingId, newReview) => {
           setLocalReviews((prev) => ({ ...prev, [bookingId]: newReview }));
+        }}
+      />
+
+      {/* Popup Modal Hủy Tour / Yêu Cầu Hủy */}
+      <BookingCancelModal
+        open={Boolean(cancelModalBooking)}
+        booking={cancelModalBooking}
+        onClose={() => setCancelModalBooking(null)}
+        onSuccess={() => {
+          setCancelModalBooking(null);
+          window.location.reload();
         }}
       />
     </div>

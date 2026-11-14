@@ -43,13 +43,43 @@ export default function TourBookingCard({
     <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.10)] space-y-5">
       {/* Price Header */}
       <div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Giá từ</span>
-        <div className="flex items-baseline gap-1 mt-0.5">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          {selectedSchedule ? "Giá chuyến đã chọn" : "Giá từ"}
+        </span>
+        <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
           <span className="text-3xl font-black text-[#ef3b2d] sm:text-4xl">
             {formatVND(displayPrice)}
           </span>
           <span className="text-sm font-semibold text-slate-500">/ khách</span>
+          {selectedSchedule?.original_price && selectedSchedule.original_price > displayPrice && (
+            <span className="text-sm font-semibold text-slate-400 line-through">
+              {formatVND(selectedSchedule.original_price)}
+            </span>
+          )}
         </div>
+        {(selectedSchedule?.schedule_promotion || selectedSchedule?.schedule_promotions?.is_active) && (
+          <div className="mt-2 flex flex-col gap-1">
+            <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 border border-amber-300 px-2.5 py-1 text-xs font-bold text-amber-900 shadow-2xs self-start">
+              <span>🎁</span>
+              <span>
+                {selectedSchedule.schedule_promotion?.promotion_title ||
+                  selectedSchedule.schedule_promotions?.title ||
+                  "Ưu đãi đợt khởi hành"}
+              </span>
+              <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] text-white font-extrabold">
+                {selectedSchedule.schedule_promotion?.discount_type === "percentage" ||
+                selectedSchedule.schedule_promotions?.discount_type === "percentage"
+                  ? `-${selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value}%`
+                  : `-${formatVND(selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value)}`}
+              </span>
+            </div>
+            {(selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description) && (
+              <span className="text-[11px] font-semibold text-amber-800">
+                ✨ Quà tặng: {selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* State 1: Đã chọn ngày khởi hành */}

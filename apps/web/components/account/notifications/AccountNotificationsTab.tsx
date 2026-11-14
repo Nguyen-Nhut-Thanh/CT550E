@@ -1,21 +1,157 @@
 "use client";
 
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  CheckCheck,
+  CheckCircle2,
+  Clock,
+  Inbox,
+  Loader2,
+  Sparkles,
+  Tag,
+  Ticket,
+  Users,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAccountResource } from "@/lib/account/useAccountResource";
 import {
   getMembership,
   markMembershipNotificationsRead,
 } from "@/lib/membership/api";
 
+type NotificationFilter = "all" | "trips" | "vouchers" | "unread";
+
+function getNotificationMeta(item: {
+  title: string;
+  booking_id?: number | null;
+  voucher_id?: number | null;
+}) {
+  const t = item.title.toLowerCase();
+
+  if (t.includes("hết hạn") || t.includes("hủy")) {
+    return {
+      icon: XCircle,
+      iconColor: "text-rose-600",
+      iconBg: "bg-rose-100",
+      borderColor: "border-rose-200",
+      activeBg: "bg-gradient-to-br from-rose-50/80 via-white to-rose-50/30",
+      badgeText: "Hủy tour",
+      badgeClass: "bg-rose-100 text-rose-800 border-rose-200",
+    };
+  }
+
+  if (t.includes("thanh toán thành công")) {
+    return {
+      icon: CheckCircle2,
+      iconColor: "text-emerald-600",
+      iconBg: "bg-emerald-100",
+      borderColor: "border-emerald-200",
+      activeBg: "bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30",
+      badgeText: "Thanh toán",
+      badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    };
+  }
+
+  if (
+    t.includes("đặt tour") ||
+    t.includes("chờ thanh toán") ||
+    t.includes("15 phút") ||
+    t.includes("tiếp nhận")
+  ) {
+    return {
+      icon: Clock,
+      iconColor: "text-amber-600",
+      iconBg: "bg-amber-100",
+      borderColor: "border-amber-200",
+      activeBg: "bg-gradient-to-br from-amber-50/80 via-white to-amber-50/30",
+      badgeText: "Đặt chỗ",
+      badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+    };
+  }
+
+  if (item.voucher_id || t.includes("voucher") || t.includes("ưu đãi")) {
+    return {
+      icon: Tag,
+      iconColor: "text-purple-600",
+      iconBg: "bg-purple-100",
+      borderColor: "border-purple-200",
+      activeBg: "bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30",
+      badgeText: "Ưu đãi",
+      badgeClass: "bg-purple-100 text-purple-800 border-purple-200",
+    };
+  }
+
+  if (t.includes("phụ trách") || t.includes("hướng dẫn")) {
+    return {
+      icon: Users,
+      iconColor: "text-sky-600",
+      iconBg: "bg-sky-100",
+      borderColor: "border-sky-200",
+      activeBg: "bg-gradient-to-br from-sky-50/80 via-white to-sky-50/30",
+      badgeText: "Chuyến đi",
+      badgeClass: "bg-sky-100 text-sky-800 border-sky-200",
+    };
+  }
+
+  return {
+    icon: Bell,
+    iconColor: "text-blue-600",
+    iconBg: "bg-blue-100",
+    borderColor: "border-blue-200",
+    activeBg: "bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30",
+    badgeText: "Hệ thống",
+    badgeClass: "bg-blue-100 text-blue-800 border-blue-200",
+  };
+}
+
 export function AccountNotificationsTab() {
   const { data, loading, error, refresh, update } = useAccountResource(
     "membership",
     getMembership,
   );
+  const [filter, setFilter] = useState<NotificationFilter>("all");
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState("");
+
+  const notifications = useMemo(() => data?.notifications || [], [data]);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read_at).length,
+    [notifications],
+  );
+
+  const tripsCount = useMemo(
+    () => notifications.filter((n) => n.booking_id != null).length,
+    [notifications],
+  );
+
+  const vouchersCount = useMemo(
+    () =>
+      notifications.filter(
+        (n) => n.voucher_id != null || n.title.toLowerCase().includes("voucher"),
+      ).length,
+    [notifications],
+  );
+
+  const filteredNotifications = useMemo(() => {
+    switch (filter) {
+      case "trips":
+        return notifications.filter((n) => n.booking_id != null);
+      case "vouchers":
+        return notifications.filter(
+          (n) =>
+            n.voucher_id != null || n.title.toLowerCase().includes("voucher"),
+        );
+      case "unread":
+        return notifications.filter((n) => !n.read_at);
+      default:
+        return notifications;
+    }
+  }, [notifications, filter]);
+
   async function readAll() {
     setSaving(true);
     setActionError("");
@@ -36,81 +172,209 @@ export function AccountNotificationsTab() {
       setSaving(false);
     }
   }
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-6 pt-2">
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Thông báo</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Cập nhật chuyến đi, người phụ trách, hạng thành viên và voucher mới.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Thông báo
+            </h1>
+            {unreadCount > 0 && (
+              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-rose-600 px-2 text-xs font-black text-white shadow-xs">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Cập nhật trạng thái đặt tour, hạn thanh toán 15 phút, yêu cầu hủy và ưu đãi mới
           </p>
         </div>
-        <button type="button" onClick={refresh} disabled={loading} className="self-start rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">Làm mới thông báo</button>
-        {data?.notifications.some((item) => !item.read_at) && (
+
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
-            disabled={saving}
-            onClick={() => void readAll()}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 disabled:opacity-50"
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-2xs cursor-pointer"
           >
-            <CheckCheck size={16} />
-            Đánh dấu đã đọc
+            Làm mới
           </button>
-        )}
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void readAll()}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white transition disabled:opacity-50 shadow-xs cursor-pointer"
+            >
+              <CheckCheck size={15} />
+              <span>Đánh dấu tất cả đã đọc</span>
+            </button>
+          )}
+        </div>
       </header>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
+        {(
+          [
+            { id: "all", label: "Tất cả", count: notifications.length },
+            { id: "trips", label: "Chuyến đi & Đặt tour", count: tripsCount },
+            { id: "vouchers", label: "Ưu đãi & Voucher", count: vouchersCount },
+            { id: "unread", label: "Chưa đọc", count: unreadCount },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setFilter(tab.id)}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              filter === tab.id
+                ? "bg-[#1766c2] text-white shadow-xs"
+                : "bg-slate-100/90 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
+
       {(error || actionError) && (
-        <p role="alert" className="text-sm text-rose-600">
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700"
+        >
           {error || actionError}
-          <button onClick={refresh} className="ml-3 underline">
+          <button
+            type="button"
+            onClick={refresh}
+            className="ml-2 font-bold underline cursor-pointer"
+          >
             Thử lại
           </button>
-        </p>
+        </div>
       )}
+
       {loading ? (
-        <p role="status" className="flex items-center gap-2 text-slate-500">
-          <Loader2 className="animate-spin" />
-          Đang tải thông báo...
-        </p>
-      ) : data?.notifications.length ? (
-        <ul className="space-y-3">
-          {data.notifications.map((item) => (
-            <li
-              key={item.notification_id}
-              className={`rounded-2xl border p-5 ${item.read_at ? "border-slate-200 bg-white" : "border-blue-200 bg-blue-50/70"}`}
-            >
-              <div className="flex items-start gap-3">
-                <Bell size={20} className="mt-1 shrink-0 text-blue-600" />
-                <div>
-                  <h2 className="font-bold text-slate-900">
-                    {item.title}
-                    {!item.read_at && (
-                      <span className="ml-2 text-xs text-blue-600">Mới</span>
-                    )}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {item.message}
-                  </p>
-                  <p className="mt-2 text-xs text-slate-400">
-                    {new Date(item.created_at).toLocaleString("vi-VN", {
-                      timeZone: "Asia/Ho_Chi_Minh",
-                    })}
-                  </p>
-                  <Link
-                    href={item.booking_id ? `/booking/${item.booking_id}` : item.voucher_id ? "/account/wallet" : "/account/membership"}
-                    className="mt-3 inline-block text-xs font-bold text-blue-700"
+        <div className="flex flex-col items-center justify-center p-12 text-slate-500 gap-3">
+          <Loader2 className="animate-spin text-blue-600" size={32} />
+          <p className="text-sm font-semibold text-slate-600">
+            Đang tải danh sách thông báo...
+          </p>
+        </div>
+      ) : filteredNotifications.length ? (
+        <ul className="space-y-3.5">
+          {filteredNotifications.map((item) => {
+            const meta = getNotificationMeta(item);
+            const Icon = meta.icon;
+            const isUnread = !item.read_at;
+
+            return (
+              <li
+                key={item.notification_id}
+                className={`group relative rounded-2xl border p-4 sm:p-5 transition shadow-2xs ${
+                  isUnread
+                    ? `${meta.borderColor} ${meta.activeBg}`
+                    : "border-slate-100 bg-white hover:border-slate-200"
+                }`}
+              >
+                <div className="flex items-start gap-3.5 sm:gap-4">
+                  {/* Icon Loại thông báo */}
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-xs ${meta.iconBg} ${meta.iconColor}`}
                   >
-                    {item.booking_id ? "Xem chi tiết chuyến đi →" : item.voucher_id ? "Xem voucher →" : "Xem hạng & quyền lợi →"}
-                  </Link>
+                    <Icon size={20} />
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    {/* Header thông báo: Tiêu đề + Tag phân loại + Mới */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full border px-2.5 py-0.5 text-[10.5px] font-bold leading-none ${meta.badgeClass}`}
+                        >
+                          {meta.badgeText}
+                        </span>
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                          {item.title}
+                        </h2>
+                      </div>
+
+                      {isUnread && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-2.5 py-0.5 text-[10.5px] font-black uppercase text-white shadow-xs">
+                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                          Mới
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Nội dung thông báo */}
+                    <p className="text-xs sm:text-sm leading-relaxed text-slate-700">
+                      {item.message}
+                    </p>
+
+                    {/* Footer: Thời gian + Nút xem chi tiết */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100/80">
+                      <span className="text-[11px] font-medium text-slate-400">
+                        {new Date(item.created_at).toLocaleString("vi-VN", {
+                          timeZone: "Asia/Ho_Chi_Minh",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </span>
+
+                      {item.booking_id ? (
+                        <Link
+                          href={`/booking/${item.booking_id}`}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 hover:underline"
+                        >
+                          <span>Xem chi tiết booking #{item.booking_id}</span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      ) : item.voucher_id ? (
+                        <Link
+                          href="/account/wallet"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 hover:text-purple-800 hover:underline"
+                        >
+                          <span>Xem ví voucher & ưu đãi</span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/account/membership"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 hover:underline"
+                        >
+                          <span>Xem quyền lợi thành viên</span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       ) : (
         !error && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <Bell className="mx-auto mb-3 text-sky-400" size={40} />
-            <p className="text-sm font-bold text-slate-700">
-              Bạn chưa có thông báo mới
+          <div className="rounded-2xl border border-slate-100 bg-white p-12 text-center shadow-2xs">
+            <Inbox className="mx-auto mb-3 text-slate-300" size={42} />
+            <p className="text-sm font-bold text-slate-800">
+              {filter === "unread"
+                ? "Bạn không có thông báo nào chưa đọc"
+                : filter === "trips"
+                ? "Chưa có thông báo nào về các chuyến đi"
+                : filter === "vouchers"
+                ? "Chưa có thông báo nào về voucher hoặc ưu đãi"
+                : "Bạn chưa có thông báo nào"}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Khi bạn đặt tour, thanh toán hoặc có cập nhật về chuyến đi, các thông báo sẽ xuất hiện ở đây.
             </p>
           </div>
         )

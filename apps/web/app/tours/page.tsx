@@ -61,6 +61,9 @@ function ToursContent() {
       max_price: searchParams.get("max_price") || "",
       collection: searchParams.get("collection") || "",
       deal: searchParams.get("deal") || "",
+      tour_type: (searchParams.get("type") || searchParams.get("tour_type")) === "international"
+        ? "outbound"
+        : searchParams.get("type") || searchParams.get("tour_type") || "",
       take: "20",
       skip: "0",
     }),
@@ -128,7 +131,9 @@ function ToursContent() {
         (t) => t.tour_type === "domestic" || !t.tour_type,
       );
     } else if (tourType === "international") {
-      filtered = filtered.filter((t) => t.tour_type === "international");
+      filtered = filtered.filter(
+        (t) => t.tour_type === "outbound" || t.tour_type === "international",
+      );
     }
 
     // Filter by Duration

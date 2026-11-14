@@ -10,34 +10,53 @@ export class ReviewsService {
         const reviews = await this.prisma.reviews.findMany({
             where: { user_id: userId },
             orderBy: [{ created_at: "desc" }, { review_id: "desc" }],
-            include: { tours: { select: { name: true, tour_images: {
-                            orderBy: [{ is_cover: "desc" }, { sort_order: "asc" }], take: 1,
+            include: {
+                tours: {
+                    select: {
+                        name: true,
+                        tour_images: {
+                            orderBy: [{ is_cover: "desc" }, { sort_order: "asc" }],
+                            take: 1,
                             select: { image_url: true },
-                        } } } },
+                        },
+                    },
+                },
+                review_replies: {
+                    orderBy: { created_at: "asc" },
+                    include: {
+                        users: {
+                            select: {
+                                full_name: true,
+                                avatar_url: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
-        return reviews.map((review: {
-            review_id: number;
-            tour_id: number;
-            rating: number;
-            title: string | null;
-            comment: string | null;
-            status: number;
-            created_at: Date;
-            images: unknown;
-            tours: {
-                name: string;
-                tour_images: {
-                    image_url: string;
-                }[];
-            };
-        }) => ({
-            review_id: review.review_id, tour_id: review.tour_id,
+        return reviews.map((review: any) => ({
+            review_id: review.review_id,
+            tour_id: review.tour_id,
             tour_name: review.tours.name,
             tour_image: review.tours.tour_images[0]?.image_url ?? null,
-            rating: review.rating, title: review.title, comment: review.comment,
-            status: review.status, created_at: review.created_at.toISOString(),
+            rating: review.rating,
+            title: review.title,
+            comment: review.comment,
+            status: review.status,
+            admin_note: review.admin_note ?? null,
+            created_at: review.created_at.toISOString(),
             images: Array.isArray(review.images)
-                ? review.images.filter((image): image is string => typeof image === "string") : [],
+                ? review.images.filter((image: any): image is string => typeof image === "string")
+                : [],
+            replies: (review.review_replies || []).map((reply: any) => ({
+                reply_id: reply.reply_id,
+                content: reply.content,
+                created_at: reply.created_at.toISOString(),
+                user: {
+                    full_name: reply.users?.full_name ?? null,
+                    avatar_url: reply.users?.avatar_url ?? null,
+                },
+            })),
         }));
     }
     async updateMyReview(accountId: number, reviewId: number, dto: {
@@ -422,6 +441,78 @@ export class ReviewsService {
             total,
             take,
             skip,
+        };
+    }
+    /**
+     * Admin xem chi tiết 1 đánh giá
+     */
+    async adminGetReviewDetail(reviewId: number) {
+        const r = await this.prisma.reviews.findUnique({
+            where: { review_id: reviewId },
+            include: {
+                users: {
+                    select: {
+                        user_id: true,
+                        full_name: true,
+                        avatar_url: true,
+                    },
+                },
+                tours: {
+                    select: {
+                        tour_id: true,
+                        code: true,
+                        name: true,
+                    },
+                },
+                review_replies: {
+                    include: {
+                        users: {
+                            select: {
+                                user_id: true,
+                                full_name: true,
+                                avatar_url: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!r) {
+            throw new NotFoundException("Đánh giá không tồn tại.");
+        }
+        return {
+            review_id: r.review_id,
+            user_id: r.user_id,
+            tour_id: r.tour_id,
+            booking_id: r.booking_id,
+            rating: r.rating,
+            title: r.title,
+            comment: r.comment,
+            images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
+            likes_count: r.likes_count,
+            status: r.status,
+            admin_note: r.admin_note,
+            created_at: r.created_at.toISOString(),
+            tour_name: r.tours.name,
+            tour_code: r.tours.code,
+            user: {
+                user_id: r.users.user_id,
+                full_name: r.users.full_name,
+                avatar_url: r.users.avatar_url,
+            },
+            replies: r.review_replies.map((reply: any) => ({
+                reply_id: reply.reply_id,
+                review_id: reply.review_id,
+                user_id: reply.user_id,
+                content: reply.content,
+                status: reply.status,
+                created_at: reply.created_at.toISOString(),
+                user: {
+                    user_id: reply.users.user_id,
+                    full_name: reply.users.full_name,
+                    avatar_url: reply.users.avatar_url,
+                },
+            })),
         };
     }
     /**

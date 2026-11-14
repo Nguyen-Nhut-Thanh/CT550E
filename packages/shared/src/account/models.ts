@@ -24,6 +24,8 @@ export type AccountStats = {
 export type AccountBooking = {
     booking_id: number;
     status: string;
+    created_at?: string | Date;
+    note?: string | null;
     total_amount: number | string;
     adult_count: number;
     child_count: number;
@@ -31,6 +33,9 @@ export type AccountBooking = {
     tour_schedules: {
         start_date: string;
         end_date?: string;
+        departure_location?: {
+            name?: string | null;
+        } | null;
         tours: {
             tour_id?: number;
             name: string;
@@ -86,6 +91,9 @@ export type BookingItemUI = {
     price: number;
     image: string;
     review?: BookingReviewInfo | null;
+    location?: string;
+    duration?: string;
+    createdAt?: string | Date;
 };
 export type BookingStatusFilter = "all" | BookingItemUI["status"];
 export type UserProfileLite = {
@@ -103,5 +111,15 @@ export interface AccountReviewItem {
     comment: string | null;
     images: string[];
     status: number;
+    admin_note?: string | null;
     created_at: string;
+    replies?: {
+        reply_id: number;
+        content: string;
+        created_at: string;
+        user?: {
+            full_name?: string | null;
+            avatar_url?: string | null;
+        } | null;
+    }[];
 }

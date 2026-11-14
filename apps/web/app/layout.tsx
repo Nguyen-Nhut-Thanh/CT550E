@@ -23,8 +23,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${manrope.variable} ${sora.variable} flex min-h-dvh flex-col bg-white font-sans text-gray-900 antialiased`}
       >
         <ToastProvider>

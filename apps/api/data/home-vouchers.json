@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "title": "SĂN VOUCHER ƯU ĐÃI",
+  "subtitle": "Nhận ngay các mã giảm giá hấp dẫn dành riêng cho chuyến du lịch của bạn!",
+  "badge": "ƯU ĐÃI ĐẶC BIỆT",
+  "voucher_ids": [
+    33,
+    32,
+    24,
+    5,
+    6,
+    7
+  ]
+}

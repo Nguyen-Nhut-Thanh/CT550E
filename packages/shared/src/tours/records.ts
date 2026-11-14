@@ -29,6 +29,8 @@ export type PublicScheduleRecord = {
     cover_image_url?: string | null;
     tour_schedule_transports?: import('./models').TourScheduleTransport[];
     flash_deals?: PublicFlashDealRecord | null;
+    schedule_promotions?: import('../admin/schedules/promotions').SchedulePromotion | null;
+    schedule_promotion?: import('../admin/schedules/promotions').SchedulePromotionSummary | null;
     tour_schedule_hotels?: Array<{
         schedule_hotel_id: number;
         hotel_id: number;

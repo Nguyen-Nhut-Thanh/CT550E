@@ -6,6 +6,7 @@ export type PublicToursFilters = {
     date_from: string;
     min_price: string;
     max_price: string;
+    tour_type: string;
 };
 export type PublicToursResponse = {
     items: PublicTourCard[];
@@ -23,6 +24,7 @@ export type PublicToursQuery = {
     max_price?: string;
     collection?: string;
     deal?: string;
+    tour_type?: string;
     take?: number | string;
     skip?: number | string;
 };

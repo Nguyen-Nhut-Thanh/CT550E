@@ -8,6 +8,7 @@ export type ScheduleItineraryPayload = {
     day_number?: number;
     title?: string;
     content?: string;
+    image_url?: string | null;
     description?: string;
     meals?: string | null;
     transport_id?: number | string | null;

@@ -18,7 +18,7 @@ export class FavoritesService {
             include: { tours: { include: {
                         departure_locations: { select: { name: true } },
                         tour_images: { orderBy: [{ is_cover: "desc" }, { sort_order: "asc" }], take: 1 },
-                        tour_schedules: { orderBy: { start_date: "asc" }, take: 1, select: { start_date: true } },
+                        tour_schedules: { orderBy: { start_date: "asc" }, take: 1, select: { start_date: true, quota: true } },
                     } } },
         });
     }

@@ -18,6 +18,7 @@ export const ImageUpload = ({
   maxFiles = 5,
   previewLayout = 'grid',
   disabled = false,
+  className = "",
   onUploadingChange,
 }: ImageUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -94,7 +95,7 @@ export const ImageUpload = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`.trim()}>
       {((!multiple && images.length === 0) || multiple) && (
         <div
           data-image-upload-dropzone=""
@@ -102,7 +103,7 @@ export const ImageUpload = ({
           aria-label={label}
           aria-disabled={disabled || isUploading}
           tabIndex={disabled || isUploading ? -1 : 0}
-          className={`relative rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+          className={`relative rounded-2xl border-2 border-dashed p-6 text-center transition-all flex-1 flex flex-col items-center justify-center ${
             isDragging
               ? "border-blue-500 bg-blue-50"
               : "border-slate-300 bg-slate-50 hover:border-blue-400"
@@ -146,13 +147,33 @@ export const ImageUpload = ({
 
       {error && <p className="text-sm font-medium text-red-500">{error}</p>}
 
-      {!multiple && images.length > 0 ? <div className="space-y-3">
-        <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-[#dce9f7] bg-slate-50"><img src={images[0]} alt="Ảnh đã chọn" className="size-full object-cover" /></div>
-        <div className="flex items-center justify-between gap-3">
-          <button type="button" disabled={disabled || isUploading} onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50">{isUploading ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}Thay ảnh</button>
-          <button type="button" disabled={disabled || isUploading} onClick={() => removeImage(0)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X size={15} />Xóa ảnh</button>
+      {!multiple && images.length > 0 ? (
+        <div className="flex-1 flex flex-col justify-between space-y-3 min-h-0">
+          <div className="flex-1 aspect-[4/3] min-h-[140px] max-h-[260px] w-full overflow-hidden rounded-2xl border border-[#dce9f7] bg-slate-50 mx-auto">
+            <img src={images[0]} alt="Ảnh đã chọn" className="size-full object-cover" />
+          </div>
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button
+              type="button"
+              disabled={disabled || isUploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isUploading ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}
+              Thay ảnh
+            </button>
+            <button
+              type="button"
+              disabled={disabled || isUploading}
+              onClick={() => removeImage(0)}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X size={15} />
+              Xóa ảnh
+            </button>
+          </div>
         </div>
-      </div> : images.length > 0 && multiple && previewLayout === 'carousel' ? <ImagePreviewCarousel images={images} disabled={disabled || isUploading} onRemove={removeImage} /> : images.length > 0 && (
+      ) : images.length > 0 && multiple && previewLayout === 'carousel' ? <ImagePreviewCarousel images={images} disabled={disabled || isUploading} onRemove={removeImage} /> : images.length > 0 && (
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
           {images.map((url, index) => (
             <div

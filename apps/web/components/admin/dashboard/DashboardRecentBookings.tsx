@@ -5,11 +5,14 @@ import { formatDate } from "@/lib/utils/dateTime";
 import { ArrowRight, Briefcase, Calendar, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import type { DashboardRecentBookingsProps } from "shared";
+import { useState } from "react";
+import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 
 export function DashboardRecentBookings({
   bookings,
   onShowStatus,
 }: DashboardRecentBookingsProps & { onShowStatus?: () => void }) {
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const statusConfig: Record<
     string,
     { label: string; badge: string; dot: string }
@@ -180,13 +183,15 @@ export function DashboardRecentBookings({
 
                   {/* Link action */}
                   <td className="px-3 py-3 text-right whitespace-nowrap">
-                    <Link
-                      href={`/admin/bookings?search=${booking.id}`}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBookingId(booking.bookingId)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
                       title="Xem chi tiết đơn"
+                      aria-label={`Xem chi tiết booking ${booking.id}`}
                     >
                       <ExternalLink size={14} />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               );
@@ -206,6 +211,11 @@ export function DashboardRecentBookings({
           </tbody>
         </table>
       </div>
+      <BookingDetailModal
+        bookingId={selectedBookingId}
+        open={selectedBookingId !== null}
+        onClose={() => setSelectedBookingId(null)}
+      />
     </div>
   );
 }

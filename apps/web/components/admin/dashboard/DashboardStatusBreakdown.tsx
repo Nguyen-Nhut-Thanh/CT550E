@@ -2,7 +2,6 @@
 
 import {
   Award,
-  CheckCircle2,
   Clock,
   CreditCard,
   PieChart,
@@ -13,10 +12,10 @@ import type { DashboardStatusBreakdownProps } from "shared";
 export function DashboardStatusBreakdown({
   statusBreakdown,
 }: DashboardStatusBreakdownProps) {
+  const paidCount = statusBreakdown.paid + (statusBreakdown.confirmed || 0);
   const total =
-    statusBreakdown.confirmed +
+    paidCount +
     statusBreakdown.pending +
-    statusBreakdown.paid +
     statusBreakdown.completed +
     statusBreakdown.cancelled;
 
@@ -28,19 +27,11 @@ export function DashboardStatusBreakdown({
   const items = [
     {
       label: "Đã thanh toán",
-      count: statusBreakdown.paid,
-      percent: getPercent(statusBreakdown.paid),
+      count: paidCount,
+      percent: getPercent(paidCount),
       color: "bg-emerald-500",
       badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
       icon: CreditCard,
-    },
-    {
-      label: "Đã xác nhận",
-      count: statusBreakdown.confirmed,
-      percent: getPercent(statusBreakdown.confirmed),
-      color: "bg-blue-500",
-      badgeColor: "bg-blue-50 text-blue-700 border-blue-100",
-      icon: CheckCircle2,
     },
     {
       label: "Đã hoàn thành",

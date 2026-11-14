@@ -95,7 +95,10 @@ export default function FlashDealsSection() {
   };
 
   return (
-    <section className="bg-[#eef8ff] px-4 py-4 sm:px-6 lg:px-20">
+    <section
+      data-seasonal-flash="true"
+      className="bg-[#eef8ff] px-4 py-4 sm:px-6 lg:px-20 transition-colors duration-700"
+    >
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div className="space-y-4">
@@ -103,7 +106,7 @@ export default function FlashDealsSection() {
               <h2 className="text-3xl font-black uppercase tracking-tight text-[#0f5cab] sm:text-4xl">
                 ƯU ĐÃI GIỜ CHÓT
               </h2>
-              <span className="absolute -bottom-2 left-0 h-[4px] w-16 rounded-full bg-[#0f5cab]" />
+              <span className="absolute -bottom-2 left-0 h-[4px] w-full rounded-full bg-[#0f5cab]" />
             </div>
 
             <p className="max-w-2xl text-base font-medium text-slate-700 sm:text-lg">

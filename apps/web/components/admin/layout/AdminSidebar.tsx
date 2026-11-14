@@ -11,6 +11,7 @@ import {
   Compass,
   FileText,
   Gem,
+  Hotel,
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -39,22 +40,20 @@ const menuItems = [
       { name: "Quản lý Booking", href: "/admin/bookings", icon: Briefcase },
       { name: "Quản lý Tour", href: "/admin/tours", icon: Map },
       { name: "Lịch khởi hành", href: "/admin/schedules", icon: CalendarDays },
+      { name: "Điều hành chuyến", href: "/admin/trips", icon: Compass },
       { name: "Quản lý Địa điểm", href: "/admin/locations", icon: MapPin },
-      {
-        name: "Địa điểm yêu thích",
-        href: "/admin/locations/featured",
-        icon: Star,
-      },
+      { name: "Dịch vụ & Đối tác", href: "/admin/services", icon: Hotel },
     ],
   },
   {
     group: "Nhân sự",
-    items: [{ name: "Nhân sự & điều hành", href: "/admin/workforce", icon: Users }],
+    items: [{ name: "Nhân sự & ca trực", href: "/admin/workforce", icon: Users }],
   },
   {
     group: "Khách hàng",
     items: [
       { name: "Người dùng", href: "/admin/users", icon: Users },
+      { name: "Duyệt đánh giá", href: "/admin/reviews", icon: Star },
       { name: "Hạng thành viên", href: "/admin/marketing/membership", icon: Gem },
       { name: "Hỗ trợ khách hàng", href: "/admin/chats", icon: MessageSquare },
     ],
@@ -71,11 +70,6 @@ const menuItems = [
     items: [
       { name: "Quản lý Banner", href: "/admin/banners", icon: ImageIcon },
       { name: "Bài viết", href: "/admin/marketing/posts", icon: FileText },
-      {
-        name: "Bố cục bài viết",
-        href: "/admin/marketing/posts/layout",
-        icon: LayoutDashboard,
-      },
     ],
   },
 ];
@@ -90,7 +84,7 @@ export const AdminSidebar = ({
   const pathname = usePathname();
   const router = useRouter();
   const identity = useWorkforceIdentity();
-  const visibleMenu = menuItems.map(group => ({ ...group, items: group.items.filter(item => identity?.isManager || item.href === '/admin/workforce' || (identity?.canChat && item.href === '/admin/chats')) })).filter(group => group.items.length);
+  const visibleMenu = menuItems.map(group => ({ ...group, items: group.items.filter(item => identity?.isManager || item.href === '/admin/workforce' || item.href === '/admin/trips' || (identity?.canChat && item.href === '/admin/chats')) })).filter(group => group.items.length);
 
   const handleLogout = () => {
     removeToken();

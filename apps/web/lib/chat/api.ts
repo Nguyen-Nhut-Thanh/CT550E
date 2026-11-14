@@ -14,6 +14,7 @@ export const chatApi = {
   me: () => chatRequest<ChatActor>('/me'),
   list: () => chatRequest<Conversation[]>('/conversations'),
   create: () => chatRequest<Conversation>('/conversations', { method: 'POST' }),
+  openWithUser: (userId: number) => chatRequest<Conversation>(`/conversations/user/${userId}`, { method: 'POST' }),
   contexts: (id: number) => chatRequest<ChatContextCard[]>(`/conversations/${id}/contexts`),
   messages: (id: number, cursor = '') => chatRequest<ChatMessagePage>(`/conversations/${id}/messages${cursor}`),
   upload: async (file: File) => {

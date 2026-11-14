@@ -45,6 +45,60 @@ export class ChatService {
                 ?? tx.conversations.create({ data: { user_id: actor.userId, status: 'IN_PROGRESS' } });
         });
     }
+    async getOrCreateConversationForUser(actor: ChatActor, targetUserId: number) {
+        if (!actor.isStaff) {
+            throw new ForbiddenException('Chỉ nhân viên mới có quyền mở hội thoại với khách hàng');
+        }
+        const targetUser = await this.prisma.users.findUnique({
+            where: { user_id: targetUserId },
+        });
+        if (!targetUser) {
+            throw new NotFoundException('Không tìm thấy người dùng này');
+        }
+        return this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw `SELECT pg_advisory_xact_lock(8421, ${targetUserId}::integer)`;
+            const existing = await tx.conversations.findFirst({
+                where: { user_id: targetUserId },
+                orderBy: { conversation_id: 'desc' },
+                include: {
+                    users: {
+                        select: {
+                            user_id: true,
+                            full_name: true,
+                            avatar_url: true,
+                            phone: true,
+                            address: true,
+                            created_at: true,
+                            accounts: { select: { email: true } },
+                        },
+                    },
+                },
+            });
+            if (existing) {
+                return { ...existing, unread_count: 0 };
+            }
+            const created = await tx.conversations.create({
+                data: {
+                    user_id: targetUserId,
+                    status: 'IN_PROGRESS',
+                },
+                include: {
+                    users: {
+                        select: {
+                            user_id: true,
+                            full_name: true,
+                            avatar_url: true,
+                            phone: true,
+                            address: true,
+                            created_at: true,
+                            accounts: { select: { email: true } },
+                        },
+                    },
+                },
+            });
+            return { ...created, unread_count: 0 };
+        });
+    }
     async list(actor: ChatActor) {
         if (actor.isStaff) this.requireStaff(actor);
         const rows = await this.prisma.conversations.findMany({
@@ -80,7 +134,7 @@ export class ChatService {
         const seen = new Set<string>();
         return rows.flatMap(row => {
             const card = row.context as unknown as ChatContextCard | null;
-            if (!card || !['tour', 'booking'].includes(card.kind)) return [];
+            if (!card || !['tour', 'booking', 'review'].includes(card.kind)) return [];
             const key = card.kind + ':' + card.id;
             if (seen.has(key)) return [];
             seen.add(key);
@@ -88,11 +142,39 @@ export class ChatService {
         });
     }
     private async context(input: ChatContextInput | undefined, owner: number): Promise<ChatContextCard> {
-        if (!input || Boolean(input.tour_id) === Boolean(input.booking_id))
-            throw new BadRequestException('Chọn một tour hoặc đơn đặt tour');
-        const id = input.tour_id ?? input.booking_id;
+        if (!input || [Boolean(input.tour_id), Boolean(input.booking_id), Boolean(input.review_id)].filter(Boolean).length !== 1)
+            throw new BadRequestException('Chọn một tour, đơn đặt tour hoặc đánh giá');
+        const id = input.tour_id ?? input.booking_id ?? input.review_id;
         if (!Number.isSafeInteger(id) || id! < 1)
             throw new BadRequestException('Thông tin tư vấn không hợp lệ');
+        if (input.review_id) {
+            const review = await this.prisma.reviews.findFirst({
+                where: { review_id: input.review_id },
+                include: {
+                    tours: {
+                        select: {
+                            tour_id: true,
+                            name: true,
+                            tour_images: {
+                                orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }],
+                                take: 1,
+                                select: { image_url: true },
+                            },
+                        },
+                    },
+                },
+            });
+            if (!review) throw new NotFoundException('Đánh giá không tồn tại');
+            return {
+                kind: 'review',
+                id: review.review_id,
+                title: `Đánh giá tour • ${review.tours.name}`,
+                summary: review.comment || review.title || 'Đánh giá chuyến đi',
+                rating: review.rating,
+                image_url: review.tours.tour_images[0]?.image_url,
+                url: `/account/reviews`,
+            };
+        }
         if (input.tour_id) {
             const tour = await this.prisma.tours.findFirst({ where: { tour_id: input.tour_id, status: 1 }, select: { name: true, summary: true, transports: { select: { name: true } }, tour_type: true, rating_avg: true, rating_count: true, tour_destinations: { orderBy: { visit_order: 'asc' }, take: 1, select: { locations: { select: { name: true } } } }, base_price: true, duration_days: true, duration_nights: true, cut_off_hours: true, tour_schedules: { where: { status: 1, start_date: { gte: new Date() } }, orderBy: [{ start_date: 'asc' }, { tour_schedule_id: 'asc' }], include: { tour_schedule_amenities: { where: { kind: { in: ['cuisine', 'transport', 'hotel'] } }, select: { kind: true, content: true, is_visible: true } }, tour_schedule_transports: { select: { transports: { select: { name: true } } } }, flash_deals: true, tour_schedule_hotels: { select: { hotels: { select: { star_rating: true } } } } } }, tour_images: { orderBy: [{ is_cover: 'desc' }, { sort_order: 'asc' }], take: 1, select: { image_url: true } } } });
             if (!tour)

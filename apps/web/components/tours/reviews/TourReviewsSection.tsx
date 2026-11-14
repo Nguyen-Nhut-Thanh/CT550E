@@ -1,11 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { ReviewAvatar } from "@/components/tours/reviews/ReviewAvatar";
-
 import { StarRating } from "@/components/common/tours/StarRating";
-
-import { ChevronRight } from "lucide-react";
-import type { TourReviewsSectionProps } from 'shared';
+import { CheckCircle, ChevronRight, X } from "lucide-react";
+import type { TourReviewsSectionProps } from "shared";
 
 export default function TourReviewsSection({
   averageRating = 5,
@@ -14,6 +13,7 @@ export default function TourReviewsSection({
   reviews = [],
   onViewAll,
 }: TourReviewsSectionProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const hasReviews = reviews && reviews.length > 0;
 
   return (
@@ -58,7 +58,7 @@ export default function TourReviewsSection({
 
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-[#0b63b6] transition-all"
+                        className="h-full rounded-full bg-amber-400 transition-all"
                         style={{
                           width: `${Math.max(0, Math.min(item.percent, 100))}%`,
                         }}
@@ -116,9 +116,62 @@ export default function TourReviewsSection({
                 </div>
               </div>
 
-              <p className="mt-2 text-sm leading-5 text-slate-600">
+              {review.title && (
+                <p className="mt-2 font-bold text-slate-900 text-sm">
+                  {review.title}
+                </p>
+              )}
+
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">
                 {review.content}
               </p>
+
+              {/* Uploaded Images */}
+              {review.images && review.images.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {review.images.map((imgUrl, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      onClick={() => setSelectedImage(imgUrl)}
+                      className="relative h-14 w-14 overflow-hidden rounded-xl border border-slate-200 transition hover:opacity-90 active:scale-95 cursor-pointer shadow-xs"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt="Ảnh chụp từ khách hàng"
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Replies from JourniTrip/Staff */}
+              {review.replies && review.replies.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {review.replies.map((reply) => (
+                    <div
+                      key={reply.id}
+                      className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 text-xs space-y-1"
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <CheckCircle size={10} />
+                        </span>
+                        <span>{reply.userName || "JourniTrip CSKH"}</span>
+                        {reply.createdAt && (
+                          <span className="text-[10px] font-normal text-slate-400">
+                            • {new Date(reply.createdAt).toLocaleDateString("vi-VN")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-700 leading-relaxed pl-5 whitespace-pre-wrap">
+                        {reply.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </article>
           ))
         )}
@@ -129,11 +182,34 @@ export default function TourReviewsSection({
           <button
             type="button"
             onClick={onViewAll}
-            className="group inline-flex items-center gap-1 text-sm font-extrabold text-[#0b63b6] transition hover:text-sky-700"
+            className="group inline-flex items-center gap-1 text-sm font-extrabold text-[#0b63b6] transition hover:text-sky-700 cursor-pointer"
           >
             Xem tất cả đánh giá
             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </button>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl bg-black">
+            <button
+              type="button"
+              onClick={() => setSelectedImage(null)}
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/90"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Ảnh phóng to"
+              className="max-h-[85vh] w-auto max-w-full object-contain"
+            />
+          </div>
         </div>
       )}
     </section>

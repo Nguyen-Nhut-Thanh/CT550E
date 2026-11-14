@@ -43,10 +43,14 @@ export class BookingsController {
     @Body()
     dto: {
         reason?: string;
+        bankName?: string;
+        bankAccountNumber?: string;
+        bankAccountName?: string;
+        estimatedRefundAmount?: number;
     },
     @Req()
     req: any) {
-        return this.service.cancelForAccount(id, req.user.accountId, dto.reason);
+        return this.service.cancelForAccount(id, req.user.accountId, dto);
     }
     @Get(":id")
     detail(

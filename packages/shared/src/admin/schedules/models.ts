@@ -78,6 +78,7 @@ export type ScheduleDetailResponse = {
         hotel_id?: number | null;
     }> | null;
     tour_schedule_hotels?: ScheduleHotelItem[] | null;
+    schedule_promotions?: import('./promotions').SchedulePromotion | null;
 };
 export type ScheduleEditorScheduleDetailResponse = Omit<ScheduleDetailResponse, 'tour_id' | 'booked_count' | 'notificationSent' | 'hasBookings' | 'tour_schedule_hotels'> & {
     tour_schedule_hotels?: Array<{
@@ -90,6 +91,7 @@ export type ScheduleEditorScheduleDetailResponse = Omit<ScheduleDetailResponse, 
 };
 export type ScheduleLike = Pick<AdminSchedule, 'start_date' | 'quota' | 'status'> & {
     booked_count?: number;
+    schedule_promotions?: import('./promotions').SchedulePromotion | null;
     _count?: {
         bookings?: number;
     };
@@ -105,6 +107,7 @@ export type AdminSchedule = {
     quota: number;
     status: number;
     booked_count?: number;
+    schedule_promotions?: import('./promotions').SchedulePromotion | null;
     _count?: {
         bookings: number;
     };

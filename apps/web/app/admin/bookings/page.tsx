@@ -4,6 +4,13 @@ import { BookingManagementHeader } from "@/components/admin/bookings/BookingMana
 import { BookingManagementStats } from "@/components/admin/bookings/BookingManagementStats";
 import { BookingManagementFilters } from "@/components/admin/bookings/BookingManagementFilters";
 import { BookingManagementTable } from "@/components/admin/bookings/BookingManagementTable";
+import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
+import {
+  AdminApproveModalContent,
+  AdminCancelBookingModal,
+  AdminRejectModalContent,
+  type CancelRequestDetails,
+} from "@/components/booking/cancel";
 
 import {
   DEFAULT_BOOKING_FILTERS,
@@ -13,25 +20,17 @@ import { getAdminTours } from "@/lib/admin/tours/api";
 import { getTourSchedules } from "@/lib/admin/schedules/api";
 import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
 import {
+  adminCancelBooking,
+  cancelPendingBooking,
   getAdminBookingDetail,
   getAdminBookingList,
   runAdminBookingAction,
 } from "@/lib/admin/bookings/api";
 import { useToast } from "@/lib/notifications/useToast";
-import {
-  Calendar,
-  CircleDollarSign,
-  CreditCard,
-  FileText,
-  Mail,
-  MapPin,
-  Phone,
-  Tag,
-  User,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { CircleDollarSign, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { parseBookingNote } from "shared";
+import type { BookingActionType } from "@/components/admin/bookings/BookingRowActions";
 import type {
   ActionModalState,
   AdminBooking,
@@ -60,24 +59,75 @@ const statusColor: Record<string, string> = {
   completed: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
+function extractCancelRequestDetails(
+  note?: string | null,
+): CancelRequestDetails | null {
+  if (!note) return null;
+  const match = note.match(/\[CUSTOMER_CANCEL_REQUEST\]([\s\S]*?)(?:\n\[|$)/i);
+  if (!match) return null;
+  const text = match[1];
+
+  const reason = text.match(/L[ýy]\s*do:\s*([^\n]+)/i)?.[1]?.trim();
+  const daysRemaining = text
+    .match(/S[ốo]\s*ng[àa]y\s*tr[ưu][ớo]c\s*kh[ởo]i\s*h[àa]nh:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const tierPenalty = text
+    .match(/M[ứu]c\s*ph[ạa]t\s*h[ủu]y\s*theo\s*quy\s*[đd][ịi]nh:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const totalPaid = text
+    .match(/S[ốo]\s*ti[ềe]n\s*[đd][aã]\s*thanh\s*to[áa]n:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const penaltyAmount = text
+    .match(/Ph[íi]\s*ph[ạa]t\s*h[ủu]y:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const refundEstimated = text
+    .match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n\s*d[ựu]\s*ki[ếe]n:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const bankName = text.match(/-\s*Ng[âa]n\s*h[àa]ng:\s*([^\n]+)/i)?.[1]?.trim();
+  const bankAccountNumber = text
+    .match(/-\s*S[ốo]\s*t[àa]i\s*kho[ảa]n:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const bankAccountName = text
+    .match(/-\s*Ch[ủu]\s*t[àa]i\s*kho[ảa]n:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+  const requestedAt = text
+    .match(/Th[ờo]i\s*gian\s*g[ửu]i\s*y[êe]u\s*c[ầa]u:\s*([^\n]+)/i)?.[1]
+    ?.trim();
+
+  let numericRefundAmount: number | undefined;
+  if (refundEstimated) {
+    const digits = refundEstimated.replace(/[^\d]/g, "");
+    if (digits) numericRefundAmount = Number(digits);
+  }
+
+  return {
+    reason,
+    daysRemaining,
+    tierPenalty,
+    totalPaid,
+    penaltyAmount,
+    refundEstimated,
+    bankName,
+    bankAccountNumber,
+    bankAccountName,
+    requestedAt,
+    numericRefundAmount,
+  };
+}
+
 function extractCancelReason(note?: string | null) {
   if (!note) return "";
+  const details = extractCancelRequestDetails(note);
+  if (details?.reason) return details.reason;
   const match = note.match(
-    /\[CUSTOMER_CANCEL_REQUEST\]\s*Ly do:\s*([\s\S]*?)(?:\n\[|$)/i,
+    /\[CUSTOMER_CANCEL_REQUEST\]\s*L[ýy]\s*do:\s*([\s\S]*?)(?:\n\[|$)/i,
   );
   return match?.[1]?.trim() || "";
 }
 
 function getDisplayBookingNote(note?: string | null) {
   if (!note) return "";
-
-  return note
-    .replace(
-      /(?:\r?\n)?\[(?:ROOM_SELECTION|CUSTOMER_CANCEL_REQUEST|ADMIN_CANCEL_APPROVED|ADMIN_CANCEL_REJECTED)\](?:\r?\n)?/gi,
-      "\n",
-    )
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return parseBookingNote(note).customerNote;
 }
 
 export default function AdminBookingsPage() {
@@ -102,6 +152,7 @@ export default function AdminBookingsPage() {
   const [modal, setModal] = useState<ActionModalState>(null);
   const [actionNote, setActionNote] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const loadData = useCallback(
     async (currentPage: number) => {
@@ -197,14 +248,32 @@ export default function AdminBookingsPage() {
 
   const openActionModal = (
     booking: AdminBooking,
-    type: "approve" | "reject" | "detail",
+    type: BookingActionType,
   ) => {
     if (type === "detail") {
       void loadDetail(booking.booking_id);
     } else {
       setModal({ booking, type });
       setActionNote("");
-      setRefundAmount("");
+      if (type === "approve") {
+        const details = extractCancelRequestDetails(booking.note);
+        if (
+          details?.numericRefundAmount !== undefined &&
+          !Number.isNaN(details.numericRefundAmount)
+        ) {
+          setRefundAmount(String(details.numericRefundAmount));
+        } else {
+          setRefundAmount("");
+        }
+      } else if (type === "cancel-pending") {
+        setActionNote("Nhân viên hủy do khách xác nhận không đi / quá hạn giữ chỗ");
+        setRefundAmount("");
+      } else if (type === "cancel-booking") {
+        setActionNote("Admin hủy đơn booking theo yêu cầu hoặc lý do vận hành");
+        setRefundAmount(String(Number(booking.total_amount) || ""));
+      } else {
+        setRefundAmount("");
+      }
     }
   };
 
@@ -232,23 +301,48 @@ export default function AdminBookingsPage() {
 
     try {
       setActingId(modal.booking.booking_id);
-      const payload: Record<string, unknown> = {
-        note: actionNote.trim() || undefined,
-      };
 
-      if (modal.type === "approve" && refundAmount.trim()) {
-        const numericRefundAmount = Number(refundAmount.replace(/[^\d]/g, ""));
-        if (Number.isNaN(numericRefundAmount)) {
-          throw new Error("Số tiền hoàn dự kiến không hợp lệ.");
+      if (modal.type === "cancel-pending") {
+        await cancelPendingBooking(modal.booking.booking_id, actionNote.trim() || undefined);
+        toast.success("Đã hủy đơn giữ chỗ thành công!");
+      } else if (modal.type === "cancel-booking") {
+        const numericRefund = refundAmount.trim() ? Number(refundAmount.replace(/[^\d]/g, "")) : undefined;
+        await adminCancelBooking(modal.booking.booking_id, {
+          reason: actionNote.trim() || "Admin hủy đơn đặt tour",
+          refundAmount: numericRefund,
+          note: actionNote.trim() || undefined,
+        });
+        toast.success("Đã hủy đơn đặt tour thành công!");
+      } else {
+        if (modal.type === "reject" && !actionNote.trim()) {
+          toast.error("Vui lòng nhập lý do từ chối yêu cầu hủy tour.");
+          return;
         }
-        payload.refundAmount = numericRefundAmount;
+
+        const payload: Record<string, unknown> = {
+          note: actionNote.trim() || undefined,
+        };
+
+        if (modal.type === "approve" && refundAmount.trim()) {
+          const numericRefundAmount = Number(refundAmount.replace(/[^\d]/g, ""));
+          if (Number.isNaN(numericRefundAmount)) {
+            throw new Error("Số tiền hoàn dự kiến không hợp lệ.");
+          }
+          payload.refundAmount = numericRefundAmount;
+        }
+
+        await runAdminBookingAction(
+          modal.booking.booking_id,
+          modal.type === "approve" ? "approve-cancel" : "reject-cancel",
+          payload,
+        );
+        toast.success(
+          modal.type === "approve"
+            ? "Đã duyệt yêu cầu hủy và gửi email xác nhận hoàn tiền cho khách!"
+            : "Đã từ chối yêu cầu hủy đơn!",
+        );
       }
 
-      await runAdminBookingAction(
-        modal.booking.booking_id,
-        modal.type === "approve" ? "approve-cancel" : "reject-cancel",
-        payload,
-      );
       closeModal();
       await loadData(page);
     } catch (actionError) {
@@ -257,10 +351,19 @@ export default function AdminBookingsPage() {
           ? actionError.message
           : "Không thể cập nhật booking.",
       );
+      toast.error(actionError instanceof Error ? actionError.message : "Thao tác thất bại.");
     } finally {
       setActingId(null);
     }
   };
+
+  const cancelDetails = useMemo(
+    () =>
+      modal?.type !== "detail"
+        ? extractCancelRequestDetails(modal?.booking.note)
+        : null,
+    [modal],
+  );
 
   const reasonPreview = useMemo(
     () =>
@@ -313,339 +416,107 @@ export default function AdminBookingsPage() {
         onPage={handlePageChange}
         onAction={openActionModal}
       />
-      {modal?.type === "detail" && (
-        <AdminModalShell
-          title={`Chi tiết đơn hàng #${modal.booking.booking_id}`}
-          icon={<FileText size={18} />}
-          onClose={closeModal}
-          maxWidthClassName="max-w-4xl"
-        >
-          <div className="max-h-[80vh] overflow-y-auto p-6 space-y-8">
-            {/* Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 mb-1">
-                  <Calendar size={14} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
-                    Ngày khởi hành
-                  </span>
-                </div>
-                <div className="text-sm font-black text-slate-900">
-                  {modal.booking.tour_schedules?.start_date
-                    ? new Date(
-                        modal.booking.tour_schedules.start_date,
-                      ).toLocaleDateString("vi-VN", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "—"}
-                </div>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 mb-1">
-                  <Tag size={14} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
-                    Mã Booking
-                  </span>
-                </div>
-                <div className="text-sm font-black text-slate-900">
-                  #{modal.booking.booking_id}
-                </div>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 mb-1">
-                  <CreditCard size={14} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
-                    Trạng thái
-                  </span>
-                </div>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border uppercase ${statusColor[modal.booking.status]}`}
-                >
-                  {statusLabel[modal.booking.status]}
-                </span>
-              </div>
-            </div>
+      <BookingDetailModal
+        booking={modal?.type === "detail" ? modal.booking : null}
+        open={modal?.type === "detail"}
+        onClose={closeModal}
+        onAction={openActionModal}
+      />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Tour & Contact */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <MapPin size={16} className="text-blue-600" /> Thông tin
-                    Tour
-                  </h3>
-                  <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">
-                        Tên tour
-                      </div>
-                      <div className="text-sm font-bold text-slate-900 leading-snug">
-                        {modal.booking.tour_schedules?.tours?.name}
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">
-                          Mã tour
-                        </div>
-                        <div className="text-sm font-black text-blue-600 uppercase">
-                          {modal.booking.tour_schedules?.tours?.code}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">
-                          Khởi hành từ
-                        </div>
-                        <div className="text-sm font-bold text-slate-900">
-                          {modal.booking.departure_name || modal.booking.tour_schedules?.departure_location?.name || "—"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      {/* Modal Hủy tour dành cho Admin với giao diện 2 cột đầy đủ (áp dụng cho cả đơn đã thanh toán & đơn giữ chỗ) */}
+      <AdminCancelBookingModal
+        booking={
+          modal?.type === "cancel-booking" || modal?.type === "cancel-pending"
+            ? modal.booking
+            : null
+        }
+        type={
+          modal?.type === "cancel-pending"
+            ? "cancel-pending"
+            : "cancel-booking"
+        }
+        open={
+          modal?.type === "cancel-booking" || modal?.type === "cancel-pending"
+        }
+        loading={Boolean(actingId)}
+        onClose={closeModal}
+        onConfirm={async ({
+          reason,
+          refundAmount: numericRefund,
+          note,
+          cancelType,
+          resolutionOption,
+          newScheduleId,
+        }) => {
+          if (!modal) return;
+          try {
+            setActingId(modal.booking.booking_id);
+            if (modal.type === "cancel-pending") {
+              await cancelPendingBooking(
+                modal.booking.booking_id,
+                note || reason,
+              );
+              toast.success("Đã hủy đơn giữ chỗ thành công!");
+            } else {
+              await adminCancelBooking(modal.booking.booking_id, {
+                reason,
+                refundAmount: numericRefund,
+                note,
+                cancelType,
+                resolutionOption,
+                newScheduleId,
+              });
+              if (resolutionOption === "reschedule") {
+                toast.success("Đã dời lịch khởi hành tour thành công!");
+              } else {
+                toast.success("Đã hủy đơn đặt tour thành công!");
+              }
+            }
+            closeModal();
+            await loadData(page);
+          } catch (actionError) {
+            setError(
+              actionError instanceof Error
+                ? actionError.message
+                : "Không thể cập nhật booking.",
+            );
+            toast.error(
+              actionError instanceof Error
+                ? actionError.message
+                : "Thao tác thất bại.",
+            );
+          } finally {
+            setActingId(null);
+          }
+        }}
+      />
 
-                {modal.booking.pickup_snapshot && <div className="rounded-2xl bg-sky-50 p-4 text-sm text-slate-700">
-                  <p className="font-bold">Điểm đón: {modal.booking.pickup_snapshot.name}</p>
-                  <p>{modal.booking.pickup_snapshot.address}</p>
-                  <p>{new Date(modal.booking.pickup_snapshot.pickup_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
-                  {modal.booking.pickup_snapshot.note && <p>{modal.booking.pickup_snapshot.note}</p>}
-                </div>}
-
-                <div>
-                  <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <User size={16} className="text-blue-600" /> Thông tin liên
-                    hệ
-                  </h3>
-                  <div className="rounded-2xl border border-slate-200 p-4 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                        <User size={14} />
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">
-                          Họ và tên
-                        </div>
-                        <div className="text-sm font-bold text-slate-900">
-                          {modal.booking.contact_name}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                          <Phone size={14} />
-                        </div>
-                        <div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">
-                            Số điện thoại
-                          </div>
-                          <div className="text-sm font-bold text-slate-900">
-                            {modal.booking.contact_phone}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
-                          <Mail size={14} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">
-                            Email
-                          </div>
-                          <div className="text-sm font-bold text-slate-900 truncate">
-                            {modal.booking.contact_email}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing & Travelers */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Users size={16} className="text-blue-600" /> Danh sách
-                    khách đi
-                  </h3>
-                  <div className="rounded-2xl border border-slate-200 overflow-hidden">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                          <th className="px-4 py-2 font-bold text-slate-500 uppercase">
-                            Họ tên
-                          </th>
-                          <th className="px-4 py-2 font-bold text-slate-500 uppercase">
-                            Loại
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {modal.booking.booking_travelers?.map((t) => (
-                          <tr key={t.traveler_id}>
-                            <td className="px-4 py-3">
-                              <div className="font-bold text-slate-900 uppercase">
-                                {t.full_name}
-                              </div>
-                              <div className="text-[10px] text-slate-500 mt-0.5">
-                                {t.gender === "male"
-                                  ? "Nam"
-                                  : t.gender === "female"
-                                    ? "Nữ"
-                                    : t.gender}
-                                {t.dob
-                                  ? ` • ${new Date(t.dob).toLocaleDateString("vi-VN")}`
-                                  : ""}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="inline-flex px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-black text-[9px] uppercase">
-                                {t.traveler_type === "ADULT"
-                                  ? "Người lớn"
-                                  : t.traveler_type === "CHILD"
-                                    ? "Trẻ em"
-                                    : "Em bé"}
-                              </span>
-                            </td>
-                          </tr>
-                        )) || (
-                          <tr>
-                            <td
-                              colSpan={2}
-                              className="px-4 py-4 text-center text-slate-400 italic"
-                            >
-                              Chưa có thông tin khách đi.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <CircleDollarSign size={16} className="text-blue-600" /> Chi
-                    tiết thanh toán
-                  </h3>
-                  <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#eef4ff_100%)] p-6 text-slate-900 shadow-sm">
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-xs font-bold uppercase text-slate-500">
-                        <span>Số lượng khách</span>
-                        <span className="text-slate-900">
-                          {[
-                            modal.booking.adult_count
-                              ? `${modal.booking.adult_count} người lớn`
-                              : null,
-                            modal.booking.child_count
-                              ? `${modal.booking.child_count} trẻ em`
-                              : null,
-                            modal.booking.infant_count
-                              ? `${modal.booking.infant_count} em bé`
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </span>
-                      </div>
-                      <div className="h-px bg-slate-200" />
-                      <div className="flex justify-between text-xs">
-                        <span className="font-bold uppercase text-slate-500">
-                          Tạm tính
-                        </span>
-                        <span className="font-black text-slate-900">
-                          {(
-                            Number(modal.booking.total_amount) +
-                            Number(modal.booking.discount_amount || 0)
-                          ).toLocaleString("vi-VN")}
-                          đ
-                        </span>
-                      </div>
-                      {modal.booking.discount_amount &&
-                        Number(modal.booking.discount_amount) > 0 && (
-                          <div className="flex justify-between text-xs text-rose-600">
-                            <span className="font-bold uppercase">
-                              Giảm giá{" "}
-                              {modal.booking.vouchers
-                                ? `(${modal.booking.vouchers.code})`
-                                : ""}
-                            </span>
-                            <span className="font-black">
-                              -
-                              {Number(
-                                modal.booking.discount_amount,
-                              ).toLocaleString("vi-VN")}
-                              đ
-                            </span>
-                          </div>
-                        )}
-                      <div className="pt-2 flex justify-between items-end border-t border-slate-200">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-sky-700">
-                          Tổng cộng
-                        </span>
-                        <span className="text-2xl font-black text-slate-950">
-                          {Number(modal.booking.total_amount).toLocaleString(
-                            "vi-VN",
-                          )}
-                          đ
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Note */}
-            {modal.booking.note && (
-              <div className="pt-6 border-t border-slate-100">
-                <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-widest mb-4">
-                  Ghi chú & Lịch sử xử lý
-                </h3>
-                <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-900 whitespace-pre-wrap leading-relaxed">
-                  {getDisplayBookingNote(modal.booking.note)}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-            <button
-              onClick={closeModal}
-              className="px-6 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all"
-            >
-              Đóng
-            </button>
-          </div>
-        </AdminModalShell>
-      )}
-
-      {modal?.type === "approve" || modal?.type === "reject" ? (
+      {modal &&
+      modal.type !== "detail" &&
+      modal.type !== "cancel-booking" &&
+      modal.type !== "cancel-pending" ? (
         <AdminModalShell
           title={
             modal.type === "approve"
-              ? "Duyệt hủy booking"
-              : "Từ chối yêu cầu hủy"
+              ? "Duyệt yêu cầu hủy & Hoàn tiền"
+              : "Từ chối yêu cầu hủy tour"
           }
           icon={
             modal.type === "approve" ? (
               <CircleDollarSign size={18} />
             ) : (
-              <XCircle size={18} />
+              <XCircle size={18} className="text-rose-600" />
             )
           }
           onClose={closeModal}
-          maxWidthClassName="max-w-xl"
+          maxWidthClassName="max-w-4xl lg:max-w-5xl"
           footer={
             <>
               <button
                 type="button"
                 onClick={closeModal}
                 disabled={Boolean(actingId)}
-                className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
+                className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 Đóng
               </button>
@@ -653,73 +524,43 @@ export default function AdminBookingsPage() {
                 type="button"
                 onClick={() => void runAction()}
                 disabled={Boolean(actingId)}
-                className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-white ${modal.type === "approve" ? "bg-emerald-600" : "bg-slate-950"}`}
+                className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition cursor-pointer ${
+                  modal.type === "approve"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700"
+                }`}
               >
                 {actingId
                   ? "Đang xử lý..."
                   : modal.type === "approve"
-                    ? "Xác nhận duyệt"
-                    : "Xác nhận từ chối"}
+                    ? "Xác nhận duyệt & Hoàn tiền"
+                    : "Xác nhận từ chối yêu cầu hủy"}
               </button>
             </>
           }
         >
-          <div className="space-y-5 p-6">
-            <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
-              <p className="font-semibold text-slate-950">
-                Booking #{modal.booking.booking_id}
-              </p>
-              <p className="mt-1">
-                {modal.booking.tour_schedules?.tours?.name || "Tour"}
-              </p>
-              {reasonPreview ? (
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Lý do khách gửi
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
-                    {reasonPreview}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            {modal.type === "approve" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-900">
-                  Số tiền hoàn dự kiến
-                </label>
-                <input
-                  value={refundAmount}
-                  onChange={(event) => setRefundAmount(event.target.value)}
-                  inputMode="numeric"
-                  placeholder="Ví dụ: 2500000"
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-                />
-                <p className="text-xs text-slate-500">
-                  Không bắt buộc. Giá trị này sẽ được ghi vào ghi chú xử lý
-                  booking.
-                </p>
-              </div>
-            ) : null}
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900">
-                {modal.type === "approve" ? "Ghi chú xử lý" : "Lý do từ chối"}
-              </label>
-              <textarea
-                value={actionNote}
-                onChange={(event) => setActionNote(event.target.value)}
-                rows={5}
-                placeholder={
-                  modal.type === "approve"
-                    ? "Ví dụ: Hoàn tiền theo chính sách chuyển/hủy tour của chương trình."
-                    : "Ví dụ: Booking đã sát ngày khởi hành, cần liên hệ trực tiếp để xử lý."
-                }
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-              />
-            </div>
-          </div>
+          {modal.type === "approve" ? (
+            <AdminApproveModalContent
+              booking={modal.booking}
+              cancelDetails={cancelDetails}
+              refundAmount={refundAmount}
+              setRefundAmount={setRefundAmount}
+              actionNote={actionNote}
+              setActionNote={setActionNote}
+              copiedField={copiedField}
+              setCopiedField={setCopiedField}
+            />
+          ) : (
+            <AdminRejectModalContent
+              booking={modal.booking}
+              cancelDetails={cancelDetails}
+              reasonPreview={reasonPreview}
+              actionNote={actionNote}
+              setActionNote={setActionNote}
+              copiedField={copiedField}
+              setCopiedField={setCopiedField}
+            />
+          )}
         </AdminModalShell>
       ) : null}
     </main>

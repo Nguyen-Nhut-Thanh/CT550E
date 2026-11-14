@@ -6,6 +6,7 @@ import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
 import { formatVnpayDate, parseVnpayDate, signedVnpayQuery, verifyVnpayQuery, vnpayIp, type VnpayFields, type VnpayQuery } from './vnpay';
+import { sendBookingNotification } from '../bookings/booking-notifications';
 
 type IpnResponse = { RspCode: string; Message: string };
 const response = (RspCode: string, Message: string): IpnResponse => ({ RspCode, Message });
@@ -51,6 +52,10 @@ export class PaymentService {
             const booking = await tx.bookings.findUniqueOrThrow({ where: { booking_id: bookingId }, include: { tour_schedules: { select: { start_date: true, status: true } } } });
             if (booking.status !== 'pending') throw new BadRequestException('Đơn đặt tour không ở trạng thái chờ thanh toán.');
             const now = new Date();
+            const createdAtTime = new Date(booking.created_at).getTime();
+            if (now.getTime() - createdAtTime > 15 * 60 * 1000) {
+                throw new BadRequestException('Đơn đặt tour đã quá thời hạn thanh toán 15 phút và đã bị hủy. Vui lòng đặt lại tour mới.');
+            }
             if (booking.tour_schedules.status !== 1 || booking.tour_schedules.start_date <= now) {
                 throw new BadRequestException('Đợt khởi hành này không còn nhận thanh toán. Vui lòng liên hệ hỗ trợ.');
             }
@@ -101,7 +106,22 @@ export class PaymentService {
         const outcome = await this.prisma.$transaction(async tx => {
             // Serialize callbacks and payment creation against the same booking.
             await tx.$queryRaw`SELECT booking_id FROM bookings WHERE booking_id = ${attempt.booking_id} FOR UPDATE`;
-            const current = await tx.payments.findUniqueOrThrow({ where: { provider_reference: fields.vnp_TxnRef }, include: { bookings: { include: { tour_schedules: { include: { tours: { select: { name: true } } } } } } } });
+            const current = await tx.payments.findUniqueOrThrow({
+                where: { provider_reference: fields.vnp_TxnRef },
+                include: {
+                    bookings: {
+                        include: {
+                            tour_schedules: {
+                                include: {
+                                    tours: { select: { name: true, code: true, duration_days: true, duration_nights: true } },
+                                    departure_location: { select: { name: true } },
+                                },
+                            },
+                            vouchers: { select: { code: true } },
+                        },
+                    },
+                },
+            });
             const booking = current.bookings;
             if (fields.vnp_Amount !== minorUnits(current.amount) || fields.vnp_Amount !== minorUnits(booking.total_amount)) return { result: response('04', 'Invalid Amount') };
             if (['completed', 'review'].includes(current.status)) return { result: response('02', 'Order already confirmed') };
@@ -125,10 +145,38 @@ export class PaymentService {
                 } });
                 if (payable) {
                     await tx.bookings.update({ where: { booking_id: booking.booking_id }, data: { status: 'paid' } });
-                    return { result: response('00', 'Confirm Success'), notification: {
-                        email: booking.contact_email, contactName: booking.contact_name, bookingId: booking.booking_id,
-                        tourName: booking.tour_schedules.tours.name, totalAmount: booking.total_amount.toString(),
-                    } };
+                    await sendBookingNotification(tx, {
+                        type: 'paid',
+                        userId: booking.user_id,
+                        bookingId: booking.booking_id,
+                        tourName: booking.tour_schedules.tours.name,
+                        totalAmount: booking.total_amount.toString(),
+                    });
+                    return {
+                        result: response('00', 'Confirm Success'),
+                        notification: {
+                            email: booking.contact_email,
+                            contactName: booking.contact_name,
+                            contactPhone: booking.contact_phone,
+                            bookingId: booking.booking_id,
+                            tourName: booking.tour_schedules.tours.name,
+                            tourCode: booking.tour_schedules.tours.code,
+                            duration: `${booking.tour_schedules.tours.duration_days} ngày ${booking.tour_schedules.tours.duration_nights} đêm`,
+                            departureName: booking.departure_name || booking.tour_schedules.departure_location?.name,
+                            totalAmount: booking.total_amount.toString(),
+                            method: 'VNPay',
+                            transactionCode: transactionCode || undefined,
+                            paidAt: fields.vnp_PayDate ? parseVnpayDate(fields.vnp_PayDate) : new Date(),
+                            adultCount: booking.adult_count,
+                            adultPrice: booking.adult_unit_price ? booking.adult_unit_price.toString() : undefined,
+                            childCount: booking.child_count,
+                            childPrice: booking.child_unit_price ? booking.child_unit_price.toString() : undefined,
+                            infantCount: booking.infant_count,
+                            infantPrice: booking.infant_unit_price ? booking.infant_unit_price.toString() : undefined,
+                            discountAmount: booking.discount_amount ? booking.discount_amount.toString() : undefined,
+                            voucherCode: booking.vouchers?.code,
+                        },
+                    };
                 }
                 return { result: response('00', 'Payment recorded for review') };
             }

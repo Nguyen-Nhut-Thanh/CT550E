@@ -14,10 +14,11 @@ export function requiresCrewOverride(schedule: WorkforceSchedule, now = Date.now
   return Boolean(schedule.crew_locked_at || schedule.crew_snapshot) || Date.parse(schedule.start_date) - now <= 86400_000;
 }
 
-export function CrewScheduleCard({ actor, schedule, busy, onlyMine, onEdit, onRegion, onRespond, onDecline, onHistory }: {
+export function CrewScheduleCard({ actor, schedule, busy, onlyMine, onEdit, onRegion, onRespond, onDecline, onHistory, onManifest }: {
   actor: WorkforceActor; schedule: WorkforceSchedule; busy: boolean; onlyMine: boolean;
   onEdit: () => void; onRegion: (id: number, region: string, reason?: string) => Promise<void>;
   onRespond: (id: number, action: string) => Promise<boolean>; onDecline: (id: number) => void; onHistory: () => void;
+  onManifest?: (id: number) => void;
 }) {
   const [region, setRegion] = useState(schedule.operating_region ?? '');
   const [reason, setReason] = useState('');
@@ -50,6 +51,38 @@ export function CrewScheduleCard({ actor, schedule, busy, onlyMine, onEdit, onRe
         {!!schedule.crew_issues.length && <ul className="list-inside list-disc rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2 text-[11px] leading-6 text-amber-800">{schedule.crew_issues.map(issue => <li key={issue}>{issue}</li>)}</ul>}
       </div>
     </div>
-    {actor.isManager && !onlyMine && <footer className="border-t border-slate-100 px-5 py-4 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-x-5 gap-y-3"><button type="button" disabled={busy || past || !canManage || !schedule.operating_region || (protectedData && !actor.isAdmin)} title={!canManage ? ADMIN_CONTENT_DENIED : undefined} onClick={onEdit} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"><UsersRound size={16} />{protectedData && actor.isAdmin ? 'Sửa ngoại lệ / thay người' : 'Phân công / thay người'}</button><button type="button" onClick={onHistory} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700"><History size={15} />Lịch sử thay đổi</button><Link href={`/admin/schedules/${schedule.tour_schedule_id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600"><CalendarDays size={15} />Chi tiết lịch khởi hành</Link></div>{!canManage && <AdminPermissionNotice className="ml-auto shrink-0" />}</div><p className="mt-3 text-[11px] leading-5 text-slate-500">{past ? 'Chuyến đã khởi hành, không thay đổi phân công.' : protectedData ? 'Thông tin đã chốt hoặc đã đến hạn 24 giờ. Chỉ admin được sửa ngoại lệ có lý do; hệ thống thông báo lại khi đội ngũ xác nhận đầy đủ.' : 'Hệ thống tự chốt và thông báo cho khách ngay khi đủ nhân sự nhận chuyến.'}</p></footer>}
+    <footer className="border-t border-slate-100 px-5 py-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button
+            type="button"
+            onClick={() => onManifest?.(schedule.tour_schedule_id)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/80 px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition shadow-xs"
+          >
+            <UsersRound size={15} />
+            <span>Xem danh sách đoàn ({schedule.booked_count} khách)</span>
+          </button>
+          {actor.isManager && !onlyMine && (
+            <>
+              <button type="button" disabled={busy || past || !canManage || !schedule.operating_region || (protectedData && !actor.isAdmin)} title={!canManage ? ADMIN_CONTENT_DENIED : undefined} onClick={onEdit} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40">
+                <UsersRound size={16} />{protectedData && actor.isAdmin ? 'Sửa ngoại lệ / thay người' : 'Phân công / thay người'}
+              </button>
+              <button type="button" onClick={onHistory} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">
+                <History size={15} />Lịch sử thay đổi
+              </button>
+              <Link href={`/admin/schedules/${schedule.tour_schedule_id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                <CalendarDays size={15} />Chi tiết lịch khởi hành
+              </Link>
+            </>
+          )}
+        </div>
+        {actor.isManager && !onlyMine && !canManage && <AdminPermissionNotice className="ml-auto shrink-0" />}
+      </div>
+      {actor.isManager && !onlyMine && (
+        <p className="mt-3 text-[11px] leading-5 text-slate-500">
+          {past ? 'Chuyến đã khởi hành, không thay đổi phân công.' : protectedData ? 'Thông tin đã chốt hoặc đã đến hạn 24 giờ. Chỉ admin được sửa ngoại lệ có lý do; hệ thống thông báo lại khi đội ngũ xác nhận đầy đủ.' : 'Hệ thống tự chốt và thông báo cho khách ngay khi đủ nhân sự nhận chuyến.'}
+        </p>
+      )}
+    </footer>
   </details>;
 }

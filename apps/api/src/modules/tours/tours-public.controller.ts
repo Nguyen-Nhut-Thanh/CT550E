@@ -25,6 +25,8 @@ export class ToursPublicController {
     collection?: string,
     @Query("deal")
     deal?: string,
+    @Query("tour_type")
+    tour_type?: string,
     @Query("take")
     take?: string,
     @Query("skip")
@@ -39,6 +41,7 @@ export class ToursPublicController {
       max_price,
       collection,
       deal,
+      tour_type,
       take,
       skip,
     });

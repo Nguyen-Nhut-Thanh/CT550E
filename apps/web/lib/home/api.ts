@@ -1,6 +1,28 @@
-import type { Banner } from "shared";
+import type { Banner, SeasonalThemeConfig } from "shared";
 
 import { API_BASE as API_BASE_URL } from "@/lib/http/config";
+
+const DEFAULT_SEASONAL_THEME: SeasonalThemeConfig = {
+  mode: "auto",
+  activeSeason: "spring",
+  enableParticles: true,
+  enableColors: true,
+  particleDensity: "normal",
+};
+
+export async function getPublicSeasonalTheme(): Promise<SeasonalThemeConfig> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/banners/seasonal-theme`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return DEFAULT_SEASONAL_THEME;
+    return await res.json();
+  } catch {
+    return DEFAULT_SEASONAL_THEME;
+  }
+}
 
 function normalizeBannerListResponse(data: unknown): Banner[] {
   if(Array.isArray(data)) {
@@ -71,7 +93,32 @@ export async function getFeaturedTours(
   return response.json();
 }
 
-import type { FlashDealResponse } from "shared";
+import type { FlashDealResponse, PublicHomeVouchersData } from "shared";
+
+const DEFAULT_PUBLIC_HOME_VOUCHERS: PublicHomeVouchersData = {
+  config: {
+    enabled: true,
+    title: "SĂN VOUCHER ƯU ĐÃI",
+    subtitle: "Nhận ngay các mã giảm giá hấp dẫn dành riêng cho chuyến du lịch của bạn!",
+    badge: "ƯU ĐÃI ĐẶC BIỆT",
+    voucher_ids: [],
+  },
+  vouchers: [],
+};
+
+export async function getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/public/vouchers/home-campaign`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return DEFAULT_PUBLIC_HOME_VOUCHERS;
+    return await res.json();
+  } catch {
+    return DEFAULT_PUBLIC_HOME_VOUCHERS;
+  }
+}
 
 export async function getFlashDeals(limit = 8): Promise<FlashDealResponse> {
   const response = await fetch(

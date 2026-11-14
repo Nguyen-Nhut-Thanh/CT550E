@@ -7,4 +7,8 @@ export class BannersPublicController {
     async getPublicBanners() {
         return this.bannersService.getPublicBanners();
     }
+    @Get("seasonal-theme")
+    async getSeasonalTheme() {
+        return this.bannersService.getSeasonalTheme();
+    }
 }

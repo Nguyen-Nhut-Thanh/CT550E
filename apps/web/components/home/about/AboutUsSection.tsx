@@ -41,7 +41,10 @@ const secondaryImage =
 
 export default function AboutUsSection() {
   return (
-    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fafdff_0%,#ffffff_52%,#f6fbff_100%)]">
+    <section
+      data-seasonal-about="true"
+      className="relative overflow-hidden bg-[linear-gradient(180deg,#fafdff_0%,#ffffff_52%,#f6fbff_100%)] transition-colors duration-700"
+    >
       {/* Background soft glow */}
       <div className="pointer-events-none absolute -left-24 top-10 h-[300px] w-[300px] rounded-full bg-blue-100/50 blur-3xl" />
 

@@ -1,0 +1,37 @@
+{
+  "dataset_root": "../../dataset",
+  "seed": 42,
+  "classes": {
+    "ben_thanh_market": "Chợ Bến Thành",
+    "dragon_bridge": "Cầu Rồng",
+    "golden_bridge": "Cầu Vàng",
+    "hanoi_opera_house": "Nhà hát Lớn Hà Nội",
+    "ho_chi_minh_mausoleum": "Lăng Chủ tịch Hồ Chí Minh",
+    "japanese_covered_bridge": "Chùa Cầu Hội An",
+    "ngo_mon_gate": "Ngọ Môn Huế",
+    "one_pillar_pagoda": "Chùa Một Cột",
+    "reunification_palace": "Dinh Độc Lập",
+    "saigon_central_post_office": "Bưu điện Trung tâm Sài Gòn",
+    "saigon_notre_dame": "Nhà thờ Đức Bà Sài Gòn",
+    "temple_of_literature": "Văn Miếu – Quốc Tử Giám",
+    "the_huc_bridge": "Cầu Thê Húc",
+    "thien_mu_pagoda": "Chùa Thiên Mụ",
+    "truong_tien_bridge": "Cầu Trường Tiền"
+  },
+  "excluded_directories": [
+    "overview"
+  ],
+  "split_strategy": "filename_train_test",
+  "validation_fraction_of_train": 0.125,
+  "calibration_fraction_of_train": 0.125,
+  "phash_distance": 6,
+  "batch_size": 16,
+  "epochs": 30,
+  "fine_tune_epochs": 10,
+  "patience": 7,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "workers": 0,
+  "torch_threads": 4,
+  "model_version": "resnet50-landmarks15-v2"
+}

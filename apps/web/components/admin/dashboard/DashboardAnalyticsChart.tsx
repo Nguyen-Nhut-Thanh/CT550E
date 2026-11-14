@@ -5,7 +5,12 @@ import { BarChart2, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import type { DashboardAnalyticsChartProps } from 'shared';
 
-export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps) {
+export function DashboardAnalyticsChart({
+  chart,
+  title = "Xu Hướng Tăng Trưởng",
+  description = "Biểu đồ diễn biến doanh thu và lượng đặt theo các mốc thời gian đã chọn.",
+  bookingsLabel = "Lượt đặt",
+}: DashboardAnalyticsChartProps & { title?: string; description?: string; bookingsLabel?: string }) {
   const [activeTab, setActiveTab] = useState<"revenue" | "bookings">("revenue");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -71,11 +76,11 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
               <TrendingUp size={18} />
             </div>
             <h2 className="text-base font-black tracking-tight text-slate-900">
-              Xu Hướng Tăng Trưởng
+              {title}
             </h2>
           </div>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Biểu đồ diễn biến doanh thu và lượng đặt theo các mốc thời gian đã chọn.
+            {description}
           </p>
         </div>
 
@@ -110,7 +115,7 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
               }`}
             >
               <BarChart2 size={14} />
-              Lượt đặt
+              {bookingsLabel}
             </button>
           </div>
         </div>
@@ -189,7 +194,6 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
             <path
               d={areaPath}
               fill={activeTab === "revenue" ? "url(#revenueGradient)" : "url(#bookingsGradient)"}
-              className="transition-all duration-500"
             />
           )}
 
@@ -202,7 +206,6 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="transition-all duration-500"
             />
           )}
 
@@ -294,7 +297,7 @@ export function DashboardAnalyticsChart({ chart }: DashboardAnalyticsChartProps)
             </div>
             <div className="mt-0.5 text-[11px] font-medium text-slate-300">
               {activeTab === "revenue"
-                ? `${hoveredItem.point.bookings} đơn đặt phòng`
+                ? `${hoveredItem.point.bookings} đơn đặt tour`
                 : formatVND(hoveredItem.point.revenue)}
             </div>
           </div>

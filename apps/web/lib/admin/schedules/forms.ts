@@ -41,6 +41,7 @@ export function createEmptyItineraryDay(dayNumber: number): ItineraryFormItem {
     day_number: dayNumber,
     title: "",
     content: "",
+    image_url: "",
     meals: "",
     transport_id: "",
     hotel_id: "",
@@ -126,7 +127,7 @@ export function buildScheduleFormFromResponse(
 
   const itinerary = ensureItineraryDays((data.tour_itineraries || []).map(item => ({ ...item, ...(item.draft_data || {}) })).map((item, index) => ({
     day_number: item.day_number ?? index + 1,
-    title: item.title ?? "", content: item.content ?? "", meals: item.meals ?? "", activities: item.activities ?? [],
+    title: item.title ?? "", content: item.content ?? "", image_url: item.image_url ?? "", meals: item.meals ?? "", activities: item.activities ?? [],
     transport_id: item.transport_id ?? "",
     hotel_id: item.draft_data ? item.hotel_id ?? "" : item.hotel_id ?? hotelByDay.get(item.day_number ?? index + 1)?.hotel_id ?? "",
     room_type_id: item.draft_data ? item.room_type_id ?? "" : item.room_type_id ?? hotelByDay.get(item.day_number ?? index + 1)?.room_type_id ?? "",
@@ -198,6 +199,7 @@ export function buildSchedulePayload(form: ScheduleFormState) {
     end_date: buildScheduleDateTime(form.end_date, form.end_time),
     itinerary: form.itinerary.map((item) => ({
       ...item,
+      image_url: item.image_url || null,
       transport_id: item.transport_id ? Number(item.transport_id) : null,
       hotel_id: item.hotel_id ? Number(item.hotel_id) : null,
       room_type_id: item.room_type_id ? Number(item.room_type_id) : null,

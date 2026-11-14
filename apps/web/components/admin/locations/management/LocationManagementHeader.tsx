@@ -20,7 +20,7 @@ export function LocationManagementHeader() {
       </div>
       <div className="ui-location-management-headerActions flex items-center gap-[10px] flex-wrap">
         <Link
-          href="/admin/locations/featured"
+          href="/admin/banners?tab=featured"
           className="ui-location-management-gridLink inline-flex items-center justify-center gap-[8px] rounded-[9px] p-[10px_14px] text-[12px] font-[650] whitespace-nowrap [background:#fff9e9] text-[#d88b10] [border:1px_solid_#fcecc8] [&:hover]:[background:#fff1cf] admin-max-750:text-[11px] admin-max-750:p-[9px_12px]"
         >
           <Settings2 size={16} />

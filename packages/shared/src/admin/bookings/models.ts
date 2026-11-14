@@ -4,6 +4,8 @@ export type AdminBooking = {
     booking_id: number;
     status: string;
     total_amount?: number | string | null;
+    services_total?: number | string | null;
+    additional_services?: Array<{ id: string; name: string; quantity: number; unit_price: number; amount: number }> | null;
     note?: string | null;
     contact_name?: string | null;
     contact_phone?: string | null;
@@ -17,17 +19,29 @@ export type AdminBooking = {
     infant_unit_price?: number | string;
     discount_amount?: number | string;
     membership_snapshot?: import("../../membership/models").MembershipBookingSnapshot | null;
+    users?: {
+        full_name?: string | null;
+        phone?: string | null;
+        accounts?: {
+            email?: string | null;
+        } | null;
+    } | null;
     tour_schedules?: {
         departure_location?: { name: string } | null;
         tour_schedule_id?: number;
         tour_id?: number;
         code?: string | null;
         start_date?: string | null;
+        end_date?: string | null;
         tours?: {
             tour_id?: number;
             tour_images?: Array<{ image_url: string }>;
             name?: string | null;
             code?: string | null;
+            summary?: string | null;
+            description?: string | null;
+            duration_days?: number | null;
+            duration_nights?: number | null;
             departure_locations?: {
                 name: string;
             } | null;
@@ -39,6 +53,7 @@ export type AdminBooking = {
         method?: string | null;
         amount?: number | string;
         transaction_code?: string | null;
+        created_at?: string | null;
         paid_at?: string | null;
     }>;
     booking_travelers?: Array<{
@@ -46,6 +61,7 @@ export type AdminBooking = {
         full_name: string;
         gender: string;
         dob: string | null;
+        id_number?: string | null;
         traveler_type: string;
     }>;
     vouchers?: {

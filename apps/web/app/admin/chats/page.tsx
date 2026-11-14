@@ -1,20 +1,86 @@
 "use client";
 
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChatWorkspace } from "@/components/admin/chats/ChatWorkspace";
 import { ConversationSidebar } from "@/components/admin/chats/ConversationSidebar";
 import { useChatConversation } from "@/lib/chat/useChatConversation";
 import { useChatSession } from "@/lib/chat/useChatSession";
-import { useMemo, useState } from "react";
-
 
 export default function AdminChatsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-full items-center justify-center bg-blue-50/70 text-xs text-slate-500">
+          Đang tải không gian chat...
+        </div>
+      }
+    >
+      <AdminChatsContent />
+    </Suspense>
+  );
+}
+
+function AdminChatsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlConversationId = searchParams.get("conversationId");
+  const urlInitialText = searchParams.get("initialText");
+  const urlTourName = searchParams.get("tourName");
+  const urlRating = searchParams.get("rating");
+  const urlReviewId = searchParams.get("reviewId");
+
   const session = useChatSession();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(
+    urlConversationId ? Number(urlConversationId) : null,
+  );
   const [search, setSearch] = useState("");
   const chat = useChatConversation(session.token, session.actor, selectedId);
   const selected =
     session.conversations.find((item) => item.conversation_id === selectedId) ??
     null;
+
+  const isTargetReviewConv = Boolean(
+    urlConversationId && selectedId === Number(urlConversationId),
+  );
+
+  const sentReviewCardRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (urlConversationId) {
+      const convId = Number(urlConversationId);
+      setSelectedId(convId);
+    }
+  }, [urlConversationId]);
+
+  // Auto-send review context card once connected if opening from review management and not already in chat
+  useEffect(() => {
+    if (
+      isTargetReviewConv &&
+      urlReviewId &&
+      chat.connected &&
+      !chat.loading &&
+      sentReviewCardRef.current !== Number(urlReviewId)
+    ) {
+      const reviewId = Number(urlReviewId);
+      const alreadyPresent = chat.messages.some(
+        (m) => m.context?.kind === "review" && m.context.id === reviewId,
+      );
+      if (!alreadyPresent) {
+        sentReviewCardRef.current = reviewId;
+        void chat.send("Xử lý đánh giá tour", "CONTEXT", { review_id: reviewId });
+      } else {
+        sentReviewCardRef.current = reviewId;
+      }
+    }
+  }, [isTargetReviewConv, urlReviewId, chat.connected, chat.loading, chat.messages, chat.send]);
+
+  const handleSelectConversation = (id: number) => {
+    setSelectedId(id);
+    // Replace URL to clean up initialText, reviewId, tourName, etc.
+    router.replace(`/admin/chats?conversationId=${id}`);
+  };
+
   const visible = useMemo(
     () =>
       session.conversations.filter((item) => {
@@ -26,6 +92,7 @@ export default function AdminChatsPage() {
       }),
     [session.conversations, search],
   );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {(session.error || chat.error) && (
@@ -54,7 +121,7 @@ export default function AdminChatsPage() {
           searchTerm={search}
           onSearchChange={setSearch}
           onRefresh={() => void session.refresh()}
-          onSelect={setSelectedId}
+          onSelect={handleSelectConversation}
         />
         <ChatWorkspace
           conversation={selected}
@@ -64,6 +131,16 @@ export default function AdminChatsPage() {
           connected={chat.connected}
           typing={chat.typing}
           busy={false}
+          initialText={isTargetReviewConv ? (urlInitialText || undefined) : undefined}
+          reviewBanner={
+            isTargetReviewConv && urlTourName
+              ? {
+                  tourName: urlTourName,
+                  rating: urlRating,
+                  reviewId: urlReviewId,
+                }
+              : undefined
+          }
           onBack={() => setSelectedId(null)}
           onSend={chat.send}
           onTyping={chat.sendTyping}

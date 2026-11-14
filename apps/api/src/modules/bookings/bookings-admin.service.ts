@@ -2,11 +2,17 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { formatCurrency, mergeBookingNote, resolveRollbackStatus } from "./booking.helpers";
+import { sendBookingNotification } from "./booking-notifications";
 import type { AdminBookingFilters } from "shared";
 import { buildBookingListWhere } from "./booking-list";
+import { BookingsService } from "./bookings.service";
 @Injectable()
 export class BookingsAdminService {
-    constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly mailService: MailService,
+        private readonly bookingsService: BookingsService,
+    ) { }
     adminBookingInclude = {
         users: {
             select: {
@@ -82,6 +88,7 @@ export class BookingsAdminService {
     }
     async listAdminBookings(isStaff: any, page: number = 1, limit: number = 10, filters: AdminBookingFilters = {}) {
         this.ensureStaffAccess(isStaff);
+        await this.bookingsService.cancelExpiredPendingBookings();
         if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new BadRequestException('Phân trang không hợp lệ.');
         const where = buildBookingListWhere(filters);
         const skip = (page - 1) * limit;
@@ -131,6 +138,9 @@ export class BookingsAdminService {
         if (booking.status !== 'cancel_requested') {
             throw new BadRequestException('Booking này không ở trạng thái yêu cầu hủy.');
         }
+        if (booking.tour_schedules?.start_date && new Date(booking.tour_schedules.start_date).getTime() <= Date.now()) {
+            throw new BadRequestException('Chuyến đi đã hoặc đang trong thời gian khởi hành, không thể duyệt hủy đơn.');
+        }
         const totalGuests = booking.adult_count + booking.child_count + booking.infant_count;
         const adminNote = note?.trim();
         const normalizedRefundAmount = typeof refundAmount === 'number' && Number.isFinite(refundAmount)
@@ -144,6 +154,7 @@ export class BookingsAdminService {
             if (normalizedRefundAmount !== null) {
                 approvalLines.push(`Số tiền hoàn dự kiến: ${formatCurrency(normalizedRefundAmount)}đ`);
             }
+            approvalLines.push(`Thời gian duyệt: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
             const claimed = await tx.bookings.updateMany({
                 where: { booking_id: bookingId, status: 'cancel_requested' },
                 data: {
@@ -153,17 +164,36 @@ export class BookingsAdminService {
             });
             if (claimed.count !== 1) throw new BadRequestException('Yêu cầu hủy này đã được xử lý.');
             const cancelled = await tx.bookings.findUnique({ where: { booking_id: bookingId } });
-            await tx.tour_schedules.update({
-                where: { tour_schedule_id: booking.tour_schedule_id },
-                data: {
-                    booked_count: {
-                        decrement: totalGuests,
-                    },
-                },
-            });
+            
+            // Giảm an toàn số lượng chỗ đã đặt
+            if (totalGuests > 0 && booking.tour_schedule_id) {
+                const currentSchedule = await tx.tour_schedules.findUnique({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    select: { booked_count: true },
+                });
+                const newCount = Math.max(0, (currentSchedule?.booked_count || 0) - totalGuests);
+                await tx.tour_schedules.update({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    data: { booked_count: newCount },
+                });
+            }
+
+            // Hoàn lại voucher nếu có
             if (booking.voucher_id) {
                 await tx.vouchers.updateMany({ where: { voucher_id: booking.voucher_id, used_count: { gt: 0 } }, data: { used_count: { decrement: 1 } } });
             }
+
+            // Hoàn lại lượt ưu đãi đợt khởi hành nếu có
+            if (booking.tour_schedule_id) {
+                const guestSlots = (booking.adult_count || 0) + (booking.child_count || 0);
+                if (guestSlots > 0) {
+                    await tx.schedule_promotions.updateMany({
+                        where: { tour_schedule_id: booking.tour_schedule_id, used_slots: { gt: 0 } },
+                        data: { used_slots: { decrement: guestSlots } },
+                    });
+                }
+            }
+
             return cancelled;
         });
         await this.mailService.sendCancelApprovedEmail({
@@ -171,7 +201,17 @@ export class BookingsAdminService {
             contactName: booking.contact_name,
             bookingId: booking.booking_id,
             tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            totalAmount: booking.total_amount ? booking.total_amount.toString() : 0,
             refundAmount: normalizedRefundAmount,
+            reason: adminNote,
+        });
+        await sendBookingNotification(this.prisma, {
+            type: 'cancel_approved',
+            userId: booking.user_id,
+            bookingId: booking.booking_id,
+            tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            refundAmount: normalizedRefundAmount ?? undefined,
+            note: adminNote,
         });
         return updated;
     }
@@ -180,6 +220,9 @@ export class BookingsAdminService {
         const booking = await this.findBookingForCancelActionOrThrow(bookingId);
         if (booking.status !== 'cancel_requested') {
             throw new BadRequestException('Booking này không ở trạng thái yêu cầu hủy.');
+        }
+        if (booking.tour_schedules?.start_date && new Date(booking.tour_schedules.start_date).getTime() <= Date.now()) {
+            throw new BadRequestException('Chuyến đi đã hoặc đang trong thời gian khởi hành, không thể duyệt hủy đơn.');
         }
         const adminNote = note?.trim();
         const updated = await this.prisma.$transaction(async tx => {
@@ -202,7 +245,308 @@ export class BookingsAdminService {
             contactName: booking.contact_name,
             bookingId: booking.booking_id,
             tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            reason: adminNote,
         });
+        await sendBookingNotification(this.prisma, {
+            type: 'cancel_rejected',
+            userId: booking.user_id,
+            bookingId: booking.booking_id,
+            tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            note: adminNote,
+        });
+        return updated;
+    }
+
+    async cancelPendingBooking(bookingId: number, isStaff: boolean, reason?: string) {
+        this.ensureStaffAccess(isStaff);
+        const booking = await this.prisma.bookings.findUnique({
+            where: { booking_id: bookingId },
+            include: {
+                tour_schedules: {
+                    include: {
+                        tours: true,
+                    },
+                },
+            },
+        });
+        if (!booking) {
+            throw new NotFoundException('Không tìm thấy đơn đặt tour.');
+        }
+        if (booking.status !== 'pending') {
+            throw new BadRequestException('Chỉ có thể hủy và nhả chỗ trực tiếp cho đơn đang ở trạng thái Chờ thanh toán (Pending).');
+        }
+
+        const totalGuests = (booking.adult_count || 0) + (booking.child_count || 0) + (booking.infant_count || 0);
+        const cancelReason = reason?.trim() || 'Nhân viên hủy do khách xác nhận không đi / quá hạn giữ chỗ';
+        const noteLine = `[STAFF_CANCELLED_PENDING]\nLý do: ${cancelReason}\nThời gian: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`;
+
+        return this.prisma.$transaction(async (tx) => {
+            const updated = await tx.bookings.update({
+                where: { booking_id: bookingId },
+                data: {
+                    status: 'cancelled',
+                    note: mergeBookingNote(booking.note, noteLine),
+                },
+            });
+
+            // Giảm booked_count để giải phóng chỗ cho người khác đặt
+            if (totalGuests > 0 && booking.tour_schedule_id) {
+                const currentSchedule = await tx.tour_schedules.findUnique({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    select: { booked_count: true },
+                });
+                const newCount = Math.max(0, (currentSchedule?.booked_count || 0) - totalGuests);
+                await tx.tour_schedules.update({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    data: { booked_count: newCount },
+                });
+            }
+
+            // Hoàn trả voucher nếu có
+            if (booking.voucher_id) {
+                await tx.vouchers.updateMany({
+                    where: { voucher_id: booking.voucher_id, used_count: { gt: 0 } },
+                    data: { used_count: { decrement: 1 } },
+                });
+            }
+
+            // Hoàn lại lượt ưu đãi đợt khởi hành nếu có
+            if (booking.tour_schedule_id) {
+                const guestSlots = (booking.adult_count || 0) + (booking.child_count || 0);
+                if (guestSlots > 0) {
+                    await tx.schedule_promotions.updateMany({
+                        where: { tour_schedule_id: booking.tour_schedule_id, used_slots: { gt: 0 } },
+                        data: { used_slots: { decrement: guestSlots } },
+                    });
+                }
+            }
+
+            // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+            await sendBookingNotification(tx, {
+                type: 'staff_cancelled_pending',
+                userId: booking.user_id,
+                bookingId: booking.booking_id,
+                tourName: booking.tour_schedules?.tours?.name || 'Tour',
+                reason: cancelReason,
+            });
+
+            return updated;
+        });
+    }
+
+    async adminCancelBooking(
+        bookingId: number,
+        isStaff: boolean,
+        reason?: string,
+        refundAmount?: number,
+        note?: string,
+        cancelType: 'operator_fault' | 'customer_request' = 'customer_request',
+        resolutionOption: 'full_refund' | 'reschedule' = 'full_refund',
+        newScheduleId?: number,
+    ) {
+        this.ensureStaffAccess(isStaff);
+        const booking = await this.prisma.bookings.findUnique({
+            where: { booking_id: bookingId },
+            include: {
+                tour_schedules: {
+                    include: {
+                        tours: true,
+                    },
+                },
+            },
+        });
+        if (!booking) {
+            throw new NotFoundException('Không tìm thấy đơn đặt tour.');
+        }
+        if (['cancelled', 'canceled'].includes(booking.status)) {
+            throw new BadRequestException('Booking này đã bị hủy trước đó.');
+        }
+
+        const isDeparted = booking.tour_schedules?.start_date && new Date(booking.tour_schedules.start_date).getTime() <= Date.now();
+        if (isDeparted) {
+            throw new BadRequestException('Chuyến đi đã hoặc đang trong thời gian khởi hành, không thể thực hiện hủy hoặc dời lịch tour.');
+        }
+
+        const totalGuests = (booking.adult_count || 0) + (booking.child_count || 0) + (booking.infant_count || 0);
+        const cancelReason = reason?.trim() || (cancelType === 'operator_fault' ? 'Hủy do sự cố vận hành / thời tiết' : 'Khách hàng yêu cầu hủy tour');
+        const adminNote = note?.trim();
+
+        // TRƯỜNG HỢP: Dời lịch khởi hành sang đợt khác (Reschedule)
+        if (resolutionOption === 'reschedule') {
+            if (!newScheduleId) {
+                throw new BadRequestException('Vui lòng chọn đợt khởi hành mới để dời lịch.');
+            }
+            if (newScheduleId === booking.tour_schedule_id) {
+                throw new BadRequestException('Đợt khởi hành mới phải khác đợt khởi hành hiện tại.');
+            }
+            const newSchedule = await this.prisma.tour_schedules.findUnique({
+                where: { tour_schedule_id: newScheduleId },
+                include: { tours: true },
+            });
+            if (!newSchedule) {
+                throw new BadRequestException('Đợt khởi hành mới không tồn tại.');
+            }
+            if (newSchedule.start_date && new Date(newSchedule.start_date).getTime() <= Date.now()) {
+                throw new BadRequestException('Đợt khởi hành mới đã qua ngày khởi hành.');
+            }
+            const remainingSlots = (newSchedule.quota || 0) - (newSchedule.booked_count || 0);
+            if (totalGuests > remainingSlots) {
+                throw new BadRequestException(`Đợt khởi hành mới chỉ còn ${remainingSlots} chỗ, không đủ cho ${totalGuests} khách.`);
+            }
+
+            const actionLines = ['[ADMIN_RESCHEDULE_ACTION]'];
+            actionLines.push(`Hình thức: Dời lịch khởi hành (Khách bảo lưu 100% tiền tour)`);
+            actionLines.push(`Lý do: ${cancelReason}`);
+            actionLines.push(`Từ đợt: #${booking.tour_schedule_id} (${booking.tour_schedules?.start_date ? new Date(booking.tour_schedules.start_date).toLocaleDateString('vi-VN') : ''})`);
+            actionLines.push(`Sang đợt: #${newScheduleId} (${newSchedule.start_date ? new Date(newSchedule.start_date).toLocaleDateString('vi-VN') : ''})`);
+            if (adminNote) actionLines.push(`Ghi chú: ${adminNote}`);
+            actionLines.push(`Thời gian xử lý: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
+
+            const updated = await this.prisma.$transaction(async (tx) => {
+                const res = await tx.bookings.update({
+                    where: { booking_id: bookingId },
+                    data: {
+                        tour_schedule_id: newScheduleId,
+                        note: mergeBookingNote(booking.note, actionLines.join('\n')),
+                    },
+                });
+
+                // Giảm booked_count đợt cũ
+                if (totalGuests > 0 && booking.tour_schedule_id) {
+                    const currentSchedule = await tx.tour_schedules.findUnique({
+                        where: { tour_schedule_id: booking.tour_schedule_id },
+                        select: { booked_count: true },
+                    });
+                    const newCount = Math.max(0, (currentSchedule?.booked_count || 0) - totalGuests);
+                    await tx.tour_schedules.update({
+                        where: { tour_schedule_id: booking.tour_schedule_id },
+                        data: { booked_count: newCount },
+                    });
+                }
+
+                // Tăng booked_count đợt mới
+                if (totalGuests > 0) {
+                    await tx.tour_schedules.update({
+                        where: { tour_schedule_id: newScheduleId },
+                        data: { booked_count: { increment: totalGuests } },
+                    });
+                }
+
+                return res;
+            });
+
+            // Gửi email cập nhật lịch trình cho khách
+            if (booking.contact_email) {
+                await this.mailService.sendScheduleUpdatedEmail({
+                    email: booking.contact_email,
+                    contactName: booking.contact_name,
+                    bookingId: booking.booking_id,
+                    tourName: newSchedule.tours?.name || booking.tour_schedules?.tours?.name || 'Tour',
+                    oldStartDate: booking.tour_schedules?.start_date,
+                    newStartDate: newSchedule.start_date,
+                    oldEndDate: booking.tour_schedules?.end_date,
+                    newEndDate: newSchedule.end_date,
+                });
+            }
+
+            // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+            await sendBookingNotification(this.prisma, {
+                type: 'rescheduled',
+                userId: booking.user_id,
+                bookingId: booking.booking_id,
+                tourName: newSchedule.tours?.name || 'Tour',
+                note: `Dời sang ngày ${new Date(newSchedule.start_date).toLocaleDateString('vi-VN')} do: ${cancelReason}`,
+            });
+
+            return updated;
+        }
+
+        // TRƯỜNG HỢP: Hủy booking và hoàn tiền
+        const isOperatorFault = cancelType === 'operator_fault';
+        const defaultRefund = isOperatorFault ? Number(booking.total_amount) || 0 : undefined;
+        const targetRefund = typeof refundAmount === 'number' && Number.isFinite(refundAmount)
+            ? Math.max(refundAmount, 0)
+            : defaultRefund;
+
+        const actionLines = ['[ADMIN_CANCEL_ACTION]'];
+        actionLines.push(isOperatorFault
+            ? 'Loại hủy: Sự cố / Bất khả kháng / Phía công ty (Miễn phí phạt 100%)'
+            : 'Loại hủy: Theo yêu cầu của khách hàng (Áp dụng chính sách hủy tour)'
+        );
+        actionLines.push(`Lý do hủy: ${cancelReason}`);
+        if (adminNote) {
+            actionLines.push(`Ghi chú: ${adminNote}`);
+        }
+        if (targetRefund !== undefined && targetRefund !== null) {
+            actionLines.push(`Số tiền hoàn: ${formatCurrency(targetRefund)}đ`);
+        }
+        actionLines.push(`Thời gian hủy: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
+
+        const updated = await this.prisma.$transaction(async (tx) => {
+            const res = await tx.bookings.update({
+                where: { booking_id: bookingId },
+                data: {
+                    status: 'cancelled',
+                    note: mergeBookingNote(booking.note, actionLines.join('\n')),
+                },
+            });
+
+            // Giảm booked_count
+            if (totalGuests > 0 && booking.tour_schedule_id) {
+                const currentSchedule = await tx.tour_schedules.findUnique({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    select: { booked_count: true },
+                });
+                const newCount = Math.max(0, (currentSchedule?.booked_count || 0) - totalGuests);
+                await tx.tour_schedules.update({
+                    where: { tour_schedule_id: booking.tour_schedule_id },
+                    data: { booked_count: newCount },
+                });
+            }
+
+            // Hoàn lại voucher nếu có
+            if (booking.voucher_id) {
+                await tx.vouchers.updateMany({
+                    where: { voucher_id: booking.voucher_id, used_count: { gt: 0 } },
+                    data: { used_count: { decrement: 1 } },
+                });
+            }
+
+            // Hoàn lại lượt ưu đãi đợt khởi hành nếu có
+            if (booking.tour_schedule_id) {
+                const guestSlots = (booking.adult_count || 0) + (booking.child_count || 0);
+                if (guestSlots > 0) {
+                    await tx.schedule_promotions.updateMany({
+                        where: { tour_schedule_id: booking.tour_schedule_id, used_slots: { gt: 0 } },
+                        data: { used_slots: { decrement: guestSlots } },
+                    });
+                }
+            }
+
+            return res;
+        });
+
+        if (booking.contact_email) {
+            await this.mailService.sendCancelApprovedEmail({
+                email: booking.contact_email,
+                contactName: booking.contact_name,
+                bookingId: booking.booking_id,
+                tourName: booking.tour_schedules?.tours?.name || 'Tour',
+                refundAmount: targetRefund,
+            });
+        }
+
+        // Gửi thông báo đến trang Thông báo trong tài khoản của khách
+        await sendBookingNotification(this.prisma, {
+            type: 'admin_cancelled',
+            userId: booking.user_id,
+            bookingId: booking.booking_id,
+            tourName: booking.tour_schedules?.tours?.name || 'Tour',
+            reason: cancelReason,
+            refundAmount: targetRefund,
+            note: adminNote,
+        });
+
         return updated;
     }
 }

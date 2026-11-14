@@ -111,6 +111,7 @@ export interface ImageUploadProps {
     maxFiles?: number;
     previewLayout?: 'grid' | 'carousel';
     disabled?: boolean;
+    className?: string;
     onUploadingChange?: (uploading: boolean) => void;
 }
 export interface PriceInputProps {

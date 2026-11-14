@@ -15,8 +15,28 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const pathname = usePathname();
-  const { navLocationData, isLoadingNav } = useNavLocationData(!pathname.startsWith("/admin"));
-  const isHome = pathname === "/";
+  const safePathname = pathname ?? "";
+  const isAdmin = safePathname.startsWith("/admin");
+  const { navLocationData, isLoadingNav } = useNavLocationData(!isAdmin);
+  const isHome = safePathname === "/";
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!isHome) {
+      setIsScrolled(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHome]);
+
+  const isLight = !isHome || isScrolled;
 
   useEffect(() => {
     const checkAuth = () => {
@@ -30,7 +50,7 @@ export default function Header() {
     return () => window.removeEventListener("auth-change", checkAuth);
   }, [pathname]);
 
-  if (pathname.startsWith("/admin")) return null;
+  if (isAdmin) return null;
 
   const toggleExpand = (title: string) => {
     setExpandedItems((prev) =>
@@ -41,10 +61,19 @@ export default function Header() {
   return (
     <>
       {/* Desktop Header Overlay */}
-      <header className={`${isHome ? "absolute left-0 top-0" : "sticky top-0 border-b border-gray-100 bg-white"} z-[100] flex w-full items-center justify-between px-[42px] py-5 max-[991px]:px-6 max-[991px]:py-5`}>
+      <header
+        suppressHydrationWarning
+        className={`z-[100] flex w-full items-center justify-between px-[42px] py-3.5 transition-all duration-300 max-[991px]:px-6 max-[991px]:py-3.5 ${
+          !isHome
+            ? "sticky top-0 border-b border-gray-100 bg-white"
+            : isScrolled
+              ? "fixed left-0 top-0 border-b border-gray-100 bg-white/95 backdrop-blur-md shadow-sm animate-slide-down"
+              : "fixed left-0 top-0 bg-transparent"
+        }`}
+      >
         <Link
           href="/"
-          className={`text-[24px] font-black italic tracking-[-0.5px] no-underline ${isHome ? "text-white" : "text-blue-600"}`}
+          className={`text-[24px] font-black italic tracking-[-0.5px] no-underline transition-colors ${isLight ? "text-blue-600" : "text-white"}`}
         >
           JourniTrip<span className="text-[#f2c94c]">.</span>
         </Link>
@@ -54,7 +83,7 @@ export default function Header() {
             {navData.map((item) => (
               <div key={item.title} className="group relative flex items-center">
                 {item.isMega ? (
-                  <button className={`flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[1px] no-underline transition-colors py-2 outline-none ${isHome ? "text-white/85 hover:text-white" : "text-gray-700 hover:text-blue-600"}`}>
+                  <button className={`flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[1px] no-underline transition-colors py-2 outline-none ${isLight ? "text-gray-700 hover:text-blue-600" : "text-white/85 hover:text-white"}`}>
                     <NavItemLabel item={item} />
                     <ChevronDown
                       size={14}
@@ -65,9 +94,9 @@ export default function Header() {
                   <Link
                     href={item.href}
                     className={`relative text-[14px] font-bold uppercase tracking-[1px] no-underline transition-colors py-2 ${
-                      (pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`)))
-                        ? `${isHome ? "text-white" : "text-blue-600"} after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-[#f2c94c] after:content-['']`
-                        : isHome ? "text-white/85 hover:text-white" : "text-gray-700 hover:text-blue-600"
+                      (safePathname === item.href || (item.href !== "/" && safePathname.startsWith(`${item.href}/`)))
+                        ? `${isLight ? "text-blue-600" : "text-white"} after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-[#f2c94c] after:content-['']`
+                        : isLight ? "text-gray-700 hover:text-blue-600" : "text-white/85 hover:text-white"
                     }`}
                   >
                     <NavItemLabel item={item} />
@@ -141,14 +170,14 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-[24px] border-l border-gray-200/30 pl-[24px] max-[640px]:gap-[12px] max-[640px]:pl-[12px]">
+          <div className={`flex items-center gap-[24px] border-l pl-[24px] max-[640px]:gap-[12px] max-[640px]:pl-[12px] transition-colors ${isLight ? "border-gray-200" : "border-gray-200/30"}`}>
             <div className="flex items-center gap-2.5 leading-none cursor-pointer max-[480px]:hidden">
               <img
                 src="/images/shared/vietnam-flag.svg"
                 className="w-7 h-5 rounded-sm object-cover shadow-sm"
                 alt="Vietnam Flag"
               />
-              <span className={`text-[12px] font-bold uppercase tracking-[0.5px] ${isHome ? "text-white" : "text-gray-700"}`}>
+              <span className={`text-[12px] font-bold uppercase tracking-[0.5px] transition-colors ${isLight ? "text-gray-700" : "text-white"}`}>
                 VND
               </span>
             </div>
@@ -158,7 +187,7 @@ export default function Header() {
               className={`flex h-[38px] w-[38px] items-center justify-center rounded-full backdrop-blur-[10px] transition-all ${
                 isLoggedIn
                   ? "bg-[#f2c94c] text-black shadow-[0_0_15px_rgba(242,201,76,0.4)]"
-                  : isHome ? "bg-white/10 text-white hover:bg-[#f2c94c] hover:text-black" : "bg-gray-100 text-gray-600 hover:bg-[#f2c94c] hover:text-black"
+                  : isLight ? "bg-gray-100 text-gray-600 hover:bg-[#f2c94c] hover:text-black" : "bg-white/10 text-white hover:bg-[#f2c94c] hover:text-black"
               }`}
               aria-label="User Account"
             >
@@ -166,7 +195,7 @@ export default function Header() {
             </Link>
 
             <button
-              aria-label="Mở menu di động" className={`lg:hidden p-2 rounded-lg transition-colors ${isHome ? "text-white hover:bg-white/10" : "text-gray-700 hover:bg-gray-100"}`}
+              aria-label="Mở menu di động" className={`lg:hidden p-2 rounded-lg transition-colors ${isLight ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/10"}`}
               onClick={() => setIsMenuOpen(true)}
             >
               <Menu size={24} />

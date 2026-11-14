@@ -12,7 +12,7 @@ import {
 } from "@/lib/admin/bookings/management";
 import { formatVND } from "@/lib/utils/currency";
 import type { AdminBooking } from "shared";
-import { BookingRowActions } from "./BookingRowActions";
+import { BookingRowActions, type BookingActionType } from "./BookingRowActions";
 
 export function BookingManagementTable({
   items,
@@ -31,7 +31,7 @@ export function BookingManagementTable({
   loading: boolean;
   busy: boolean;
   onPage: (page: number) => void;
-  onAction: (item: AdminBooking, type: "detail" | "approve" | "reject") => void;
+  onAction: (item: AdminBooking, type: BookingActionType) => void;
 }) {
   const [selected, setSelected] = useState<number[]>([]);
   const all =
@@ -203,7 +203,7 @@ export function BookingManagementTable({
                         className="ui-booking-management-status inline-block p-[5px_8px] rounded-[20px] [border:1px_solid_#e1e8f2] [background:#f1f5f9] text-[#6a7f9e] text-[9px] font-[650] uppercase [&[data-status=pending]]:[background:#fff9e8] [&[data-status=pending]]:[border-color:#ffebbd] [&[data-status=pending]]:text-[#d8880e] [&[data-status=paid]]:[background:#eafbf3] [&[data-status=paid]]:[border-color:#c4efdf] [&[data-status=paid]]:text-[#0aa376] [&[data-status=completed]]:[background:#eff7ff] [&[data-status=completed]]:[border-color:#cee5ff] [&[data-status=completed]]:text-[#0867ee] [&[data-status='cancel\_requested']]:[background:#fff0f3] [&[data-status='cancel\_requested']]:[border-color:#ffd4df] [&[data-status='cancel\_requested']]:text-[#dc4868] [&[data-status=cancelled]]:[background:#f0f3f7] [&[data-status=cancelled]]:text-[#8b9ab0] min-[1400px]:text-[10px] [&[data-status=confirmed]]:[background:#f0f1ff] [&[data-status=confirmed]]:[border-color:#dce0ff] [&[data-status=confirmed]]:text-[#5868b2]"
                         data-status={item.status}
                       >
-                        {getBookingStatusLabel(item.status)}
+                        {getBookingStatusLabel(item.status, item.note)}
                       </span>
                     </td>
                     <td>

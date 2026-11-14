@@ -15,7 +15,17 @@ export function parseBookingStats(value: unknown): AdminBookingStats | null {
   }
   return value as AdminBookingStats;
 }
-export function getBookingStatusLabel(status: string) { return BOOKING_STATUSES.find(option => option.value === status)?.label ?? status; }
+export function getBookingStatusLabel(status: string, note?: string | null) {
+  if (status === "cancelled" && note) {
+    if (note.includes("[AUTO_CANCELLED_EXPIRED_15M]")) return "Đã hủy (Hết hạn 15p)";
+    if (note.includes("[AUTO_CANCELLED_DEPARTED]")) return "Đã hủy (Quá giờ đi)";
+    if (note.includes("[ADMIN_CANCEL_APPROVED]")) return "Đã hủy (Theo yêu cầu)";
+    if (note.includes("[ADMIN_CANCEL_ACTION]")) return "Đã hủy (Admin)";
+    if (note.includes("[STAFF_CANCELLED_PENDING]")) return "Đã hủy (Admin)";
+    if (note.includes("[CUSTOMER_CANCELLED_PENDING]")) return "Đã hủy (Khách hủy)";
+  }
+  return BOOKING_STATUSES.find(option => option.value === status)?.label ?? status;
+}
 export function getBookingGuestCount(booking: AdminBooking) { return (booking.adult_count ?? 0) + (booking.child_count ?? 0) + (booking.infant_count ?? 0); }
 export function formatBookingDate(value?: string | null, time = false) {
   const date = value ? new Date(value) : null;

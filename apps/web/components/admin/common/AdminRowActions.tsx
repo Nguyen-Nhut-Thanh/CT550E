@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreVertical } from "lucide-react";
+import { MoreHorizontal, MoreVertical } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useDismiss } from "@/lib/ui/useDismiss";
 import { Popover } from "@/components/common/overlays/Popover";
@@ -24,10 +24,14 @@ export function AdminRowActions({
   label,
   actions,
   disabled = false,
+  buttonText,
+  orientation = "vertical",
 }: {
   label: string;
   actions: AdminRowAction[];
   disabled?: boolean;
+  buttonText?: string;
+  orientation?: "horizontal" | "vertical";
 }) {
   const [open, setOpen] = useState(false);
   const readOnly = useAdminContentReadOnly();
@@ -46,7 +50,7 @@ export function AdminRowActions({
         type="button"
         ref={anchor}
         disabled={disabled}
-        className="ui-admin-row-actions-trigger inline-grid place-items-center w-[34px] h-[36px] [border:1px_solid_#e1eaf7] rounded-[9px] text-[#496ba4] [background:white] [&:hover]:[background:#edf4ff] [&:hover]:[border-color:#b0ceff] [&:disabled]:opacity-[.45] [&:disabled]:cursor-wait [&:focus-visible]:[outline:2px_solid_#3b82f6] [&:focus-visible]:outline-offset-[2px]"
+        className={`ui-admin-row-actions-trigger inline-flex items-center justify-center gap-1.5 ${buttonText ? "h-8 rounded-full border border-blue-200 bg-blue-50/70 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100" : "h-[36px] w-[34px] rounded-[9px] border border-[#e1eaf7] bg-white text-[#496ba4] hover:bg-[#edf4ff] hover:border-[#b0ceff]"} [&:disabled]:opacity-[.45] [&:disabled]:cursor-wait [&:focus-visible]:[outline:2px_solid_#3b82f6] [&:focus-visible]:outline-offset-[2px]`}
         aria-label={label}
         aria-expanded={open}
         aria-controls={open ? id : undefined}
@@ -61,7 +65,8 @@ export function AdminRowActions({
           }
         }}
       >
-        <MoreVertical size={19} />
+        {buttonText || orientation === "horizontal" ? <MoreHorizontal size={16} /> : <MoreVertical size={19} />}
+        {buttonText && <span>{buttonText}</span>}
       </button>
       {open && (
         <Popover

@@ -3,11 +3,31 @@
 import { BookingCrewCard } from './BookingCrewCard';
 import { BookingPaymentButton } from '../checkout/BookingPaymentButton';
 import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
+import { BookingCancelModal } from "@/components/booking/cancel/BookingCancelModal";
+import { BookingCancelledBanner } from "./BookingCancelledBanner";
+import { BookingReceiptModal } from "./BookingReceiptModal";
+import { PaymentCountdownCard } from "./PaymentCountdownCard";
 import { formatVND } from "@/lib/utils/currency";
-import { ArrowLeft, CalendarDays, ChevronRight, Clock3, Home, MapPin, Plane, ReceiptText, Ticket, UserRound, UsersRound } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  Clock3,
+  FileText,
+  Home,
+  MapPin,
+  Plane,
+  ReceiptText,
+  Ticket,
+  UserRound,
+  UsersRound,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import type { BookingDetail } from "shared";
+import { useState, type ReactNode } from "react";
+import { parseBookingNote, type BookingDetail } from "shared";
 
 const money = (value: number | string | null | undefined) => formatVND(Number(value) || 0);
 function date(value?: string | null, withTime = false) {
@@ -33,7 +53,18 @@ function SectionTitle({ icon, title, description }: { icon: ReactNode; title: st
 function Field({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
   return <div className={`[background:linear-gradient(125deg,_#f3f8fd,_#f6faff)] rounded-[14px] min-w-0 px-4.5 py-[15px] [&_dt]:text-[10px] [&_dt]:uppercase [&_dt]:tracking-[.075em]! [&_dt]:text-[#6283af] [&_dt]:mb-[7px] [&_dd]:text-[13px] [&_dd]:leading-[1.7] [&_dd]:font-[650] [&_dd]:wrap-anywhere [&_a:hover]:text-[#0064ff] [[data-booking-tour-copy]_&]:pt-[9px] [[data-booking-tour-copy]_&]:pb-3 [[data-booking-tour-copy]_&]:[background:linear-gradient(110deg,_#fff,_#f5f9fd)] [[data-booking-tour-copy]_&]:px-[7px] min-[1450px]:[&_dd]:text-[14px] max-[480px]:[&_dd]:text-[12px] max-[480px]:[[data-booking-tour-copy]_&]:px-0 max-[480px]:[[data-booking-tour-copy]_&]:py-2 max-[480px]:[[data-booking-contact-grid]_&]:p-[13px] max-[480px]:[&_dt]:text-[9px] ${(wide) ? ("col-span-full") : ("")}`}><dt>{label}</dt><dd>{children || "Chưa cập nhật"}</dd></div>;
 }
+
 export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const parsedNote = parseBookingNote(b.note);
+  const isPast = b.tour_schedules?.start_date
+    ? new Date(b.tour_schedules.start_date).getTime() <= Date.now()
+    : false;
+  const canCancel =
+    b.status === "pending" ||
+    (["paid", "confirmed"].includes(b.status) && !isPast);
+
   const tour = b.tour_schedules?.tours;
   const name = tour?.name || `Đơn đặt tour #${b.booking_id}`;
   const tourSummary = tour?.summary?.trim() || (tour?.description ? tour.description.replace(/<[^>]*>/g, '').trim() : "");
@@ -63,6 +94,41 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
             <div className="flex items-center mb-1 gap-3.5 flex-wrap [&_h1]:text-[clamp(21px,_2vw,_28px)] [&_h1]:leading-[1.25] [&_h1]:tracking-[-.025em]! [&_h1]:font-extrabold max-[800px]:gap-2 max-[480px]:[&_h1]:text-[19px]">
               <h1>{name}</h1>
               <Status value={b.status} />
+              {["paid", "confirmed", "completed"].includes(b.status) && (
+                <button
+                  type="button"
+                  onClick={() => setReceiptModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-blue-700 bg-white/95 border border-blue-200 hover:bg-blue-50 transition shadow-2xs cursor-pointer ml-auto sm:ml-2"
+                >
+                  <FileText size={14} className="text-blue-600" />
+                  <span>Xem biên lai thanh toán</span>
+                </button>
+              )}
+              {b.status === "cancelled" && (
+                <button
+                  type="button"
+                  onClick={() => setReceiptModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-rose-700 bg-white/95 border border-rose-200 hover:bg-rose-50 transition shadow-2xs cursor-pointer ml-auto sm:ml-2"
+                >
+                  <FileText size={14} className="text-rose-600" />
+                  <span>Xem biên nhận hoàn tiền</span>
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={() => setCancelModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-rose-600 bg-white/95 border border-rose-200 hover:bg-rose-50 transition shadow-2xs cursor-pointer ml-auto sm:ml-2"
+                >
+                  <XCircle size={14} />
+                  <span>Yêu cầu hủy tour</span>
+                </button>
+              )}
+              {isPast && ["paid", "confirmed"].includes(b.status) && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-100/90 px-3 py-1 rounded-full border border-slate-200 ml-auto sm:ml-2">
+                  Đã qua ngày khởi hành
+                </span>
+              )}
             </div>
             {tourSummary && (
               <p className="text-[12.5px] leading-relaxed text-[#4e709b] max-w-2xl line-clamp-2 mb-1.5 font-normal">
@@ -77,7 +143,58 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
         <Plane aria-hidden="true" className="absolute right-[10%] top-[45px] text-[white] [transform:rotate(-13deg)] max-[1150px]:hidden" size={40} strokeWidth={1.4} />
       </div>
     </header>
-    <div className="w-[min(1430px,_93%)] grid grid-cols-[minmax(0,_1.42fr)_minmax(0,_1fr)] relative z-[2] -mt-2 mx-auto gap-4 max-[1150px]:grid-cols-[minmax(0,_1.2fr)_minmax(0,_1fr)] max-[1150px]:gap-3.5 max-[800px]:w-[92%] max-[800px]:grid-cols-[1fr]">
+
+    {b.status === "cancel_requested" && (
+      <div className="w-[min(1430px,_93%)] mx-auto mt-4 mb-2 rounded-2xl border border-amber-200 bg-amber-50/95 p-4 shadow-sm text-amber-900">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
+            <Clock size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-amber-950">
+                Đơn đặt tour đang chờ ban quản trị duyệt yêu cầu hủy
+              </h3>
+              <span className="inline-flex items-center rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800">
+                Đang xử lý
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-amber-800 leading-relaxed">
+              Yêu cầu hủy tour của bạn đã được tiếp nhận và chuyển đến bộ phận quản lý. Tiền hoàn (nếu có) sẽ được đối soát theo chính sách hủy tour và hoàn trả về tài khoản ngân hàng của bạn trong vòng 1-3 ngày làm việc.
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {b.status !== "cancelled" && parsedNote.adminRejection && (
+      <div className="w-[min(1430px,_93%)] mx-auto mt-4 mb-2 rounded-2xl border border-blue-200 bg-blue-50/90 p-4 shadow-sm text-blue-900">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+            <AlertCircle size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-blue-950">
+              Phản hồi yêu cầu hủy tour từ Ban quản lý
+            </h3>
+            <p className="mt-1 text-xs text-blue-800 leading-relaxed">
+              Yêu cầu hủy của bạn chưa được chấp thuận:{" "}
+              <strong>{parsedNote.adminRejection.note || "Vui lòng liên hệ hotline để được hướng dẫn thêm."}</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {b.status === "cancelled" && (
+      <BookingCancelledBanner
+        parsedNote={parsedNote}
+        tourId={tour?.tour_id}
+        onViewRefundSlip={() => setReceiptModalOpen(true)}
+      />
+    )}
+
+    <div className={`w-[min(1430px,_93%)] grid grid-cols-[minmax(0,_1.42fr)_minmax(0,_1fr)] relative z-[2] ${b.status === "cancelled" ? "mt-4" : b.status === "cancel_requested" ? "mt-2" : "-mt-2"} mx-auto gap-4 max-[1150px]:grid-cols-[minmax(0,_1.2fr)_minmax(0,_1fr)] max-[1150px]:gap-3.5 max-[800px]:w-[92%] max-[800px]:grid-cols-[1fr]`}>
       <div className="flex flex-col min-w-0 gap-4 max-[480px]:gap-3">
         <section className="bg-[#ffffffed] rounded-[19px] shadow-[0_3px_18px_#c9e9fa08] min-w-0 border border-[#dcecff] border-solid p-4.5 max-[1150px]:p-4 max-[480px]:rounded-[17px] max-[480px]:p-3.5" aria-label="Thông tin tour">
           <div className="flex mb-3.5 gap-4 max-[800px]:gap-3 max-[480px]:gap-2.5">
@@ -104,8 +221,8 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
           )}
         </section>
         <BookingCrewCard booking={b} />
-        {b.status === 'pending' && b.tour_schedules?.start_date && new Date(b.tour_schedules.start_date).getTime() > Date.now() && <section aria-label="Thanh toán đơn đặt tour" className="space-y-3 rounded-2xl border border-blue-100 bg-white p-5">{payments.some(item => item.status === 'review') ? <div><h2 className="text-base font-bold text-slate-900">Giao dịch đang được đối soát</h2><p className="mt-1 text-sm leading-6 text-slate-500">Vui lòng liên hệ hỗ trợ để kiểm tra giao dịch trước khi thanh toán thêm.</p></div> : <><div><h2 className="text-base font-bold text-slate-900">Đơn đang chờ thanh toán</h2><p className="mt-1 text-sm leading-6 text-slate-500">Thanh toán {money(b.total_amount)} qua VNPay để hoàn tất đơn đặt tour.</p></div><BookingPaymentButton bookingId={b.booking_id} /></>}</section>}
-        <section className="bg-[#ffffffed] rounded-[19px] pt-5 pb-7.5 shadow-[0_3px_18px_#c9e9fa08] min-w-0 flex-1 border border-[#dcecff] border-solid px-5 min-[1450px]:p-[21px] max-[1150px]:p-4 max-[800px]:pt-4.5 max-[800px]:pb-5 max-[800px]:px-4.5 max-[480px]:rounded-[17px] max-[480px]:p-[15px]" aria-label="Thông tin người đặt tour"><SectionTitle icon={<UserRound size={26} />} title="Thông tin người đặt tour" description="Người đại diện đặt tour, các thông tin liên hệ sẽ được sử dụng để xác nhận và gửi thông báo." /><dl className="grid grid-cols-[1fr_1fr] gap-[13px] max-[480px]:gap-2.5" data-booking-contact-grid=""><Field label="Họ và tên">{b.contact_name}</Field><Field label="Số điện thoại">{b.contact_phone}</Field><Field label="Email" wide>{b.contact_email}</Field><Field label="Ghi chú" wide><span className="font-normal whitespace-pre-line">{b.note?.replace(/\[ROOM_SELECTION\]\s*/g, "").trim() || "Không có ghi chú."}</span></Field></dl></section>
+        {b.status === 'pending' && <PaymentCountdownCard booking={b} payments={payments} />}
+        <section className="bg-[#ffffffed] rounded-[19px] pt-5 pb-7.5 shadow-[0_3px_18px_#c9e9fa08] min-w-0 flex-1 border border-[#dcecff] border-solid px-5 min-[1450px]:p-[21px] max-[1150px]:p-4 max-[800px]:pt-4.5 max-[800px]:pb-5 max-[800px]:px-4.5 max-[480px]:rounded-[17px] max-[480px]:p-[15px]" aria-label="Thông tin người đặt tour"><SectionTitle icon={<UserRound size={26} />} title="Thông tin người đặt tour" description="Người đại diện đặt tour, các thông tin liên hệ sẽ được sử dụng để xác nhận và gửi thông báo." /><dl className="grid grid-cols-[1fr_1fr] gap-[13px] max-[480px]:gap-2.5" data-booking-contact-grid=""><Field label="Họ và tên">{b.contact_name}</Field><Field label="Số điện thoại">{b.contact_phone}</Field><Field label="Email" wide>{b.contact_email}</Field><Field label="Ghi chú" wide><span className="font-normal whitespace-pre-line">{parsedNote.customerNote || "Không có ghi chú."}</span></Field></dl></section>
       </div>
       <div className="flex flex-col min-w-0 gap-5 max-[480px]:gap-[15px]">
         <section className="bg-[#ffffffed] rounded-[19px] shadow-[0_3px_18px_#c9e9fa08] min-w-0 border border-[#dcecff] border-solid p-5 min-[1450px]:p-[21px] max-[1150px]:p-4 max-[800px]:p-4.5 max-[480px]:rounded-[17px] max-[480px]:p-[15px]" aria-label="Danh sách hành khách"><SectionTitle icon={<UsersRound size={25} />} title="Danh sách hành khách" description="Thông tin hành khách đi cùng trong booking này." /><div className="rounded-[15px] overflow-auto border border-[#e0edff] border-solid"><table className="w-full border-collapse text-left whitespace-nowrap text-[11px] [&_thead]:bg-[#f3f8fe] [&_th]:text-[9px] [&_th]:font-medium [&_th]:tracking-[.07em]! [&_th]:text-[#6687b0] [&_th]:uppercase [&_th]:px-[15px] [&_th]:py-3 [&_td]:border-b [&_td]:[border-bottom-style:solid] [&_td]:border-b-[#edf4fc] [&_td]:align-middle [&_td]:px-[15px] [&_td]:py-3 [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:last-child_td]:[border-bottom-style:none] [&_tbody_tr:last-child_td]:border-b-[currentColor] [&_strong]:font-[650] [&_small]:block [&_small]:text-[#8295ad] [&_small]:text-[10px] [&_small]:mt-[3px] min-[1450px]:text-[12px] min-[1450px]:[&_th]:text-[10px] max-[1150px]:[&_th]:px-2.5 max-[1150px]:[&_td]:px-2.5 max-[800px]:text-[12px] max-[800px]:[&_th]:text-[10px] max-[480px]:text-[11px] max-[480px]:[&_th]:text-[9px]"><thead><tr><th>Họ tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Giấy tờ</th></tr></thead><tbody>{b.booking_travelers?.length ? b.booking_travelers.map(traveler => <tr key={traveler.traveler_id}><td><strong>{traveler.full_name}</strong><small>{{ adult: "Người lớn", child: "Trẻ em", infant: "Em bé" }[traveler.traveler_type.toLowerCase()] || traveler.traveler_type}</small></td><td>{date(traveler.dob)}</td><td>{{ male: "Nam", female: "Nữ", other: "Khác" }[traveler.gender.toLowerCase()] || traveler.gender || "—"}</td><td>{traveler.id_number || "Chưa cập nhật"}</td></tr>) : <tr><td colSpan={4} className="text-center! text-[#8295ad] p-5.5!">Chưa có thông tin hành khách.</td></tr>}</tbody></table></div></section>
@@ -114,5 +231,23 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
         </section>
       </div>
     </div>
+
+    {/* Popup Modal Hủy Tour / Yêu Cầu Hủy */}
+    <BookingCancelModal
+      open={cancelModalOpen}
+      booking={b}
+      onClose={() => setCancelModalOpen(false)}
+      onSuccess={() => {
+        setCancelModalOpen(false);
+        window.location.reload();
+      }}
+    />
+
+    {/* Popup Modal Xem & In Biên lai / Biên nhận hoàn tiền */}
+    <BookingReceiptModal
+      open={receiptModalOpen}
+      onClose={() => setReceiptModalOpen(false)}
+      booking={b}
+    />
   </div>;
 }

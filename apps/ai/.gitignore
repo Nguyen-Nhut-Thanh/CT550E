@@ -1,0 +1,9 @@
+.venv/
+.cache/
+__pycache__/
+.pytest_cache/
+*.pyc
+ai-service/models/
+ai-service/reports/
+ai-service/manifests/
+ai-service/archives/

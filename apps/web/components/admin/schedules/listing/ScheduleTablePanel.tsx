@@ -38,6 +38,8 @@ export function ScheduleTablePanel({
   onDelete,
   onToggleStatus,
   onPageChange,
+  onViewManifest,
+  onConfigurePromotion,
   pendingIds = [],
 }: ScheduleTablePanelProps) {
   const readOnly = useAdminContentReadOnly();
@@ -209,6 +211,23 @@ export function ScheduleTablePanel({
                         <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[4px] text-[11px] text-[#7d93b9]">
                           / khách
                         </span>
+                        {schedule.schedule_promotions && (
+                          <div className="mt-1.5 flex items-center gap-1">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold shadow-2xs ${
+                                schedule.schedule_promotions.is_active
+                                  ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                  : "bg-slate-100 text-slate-500 border border-slate-200"
+                              }`}
+                              title={schedule.schedule_promotions.title}
+                            >
+                              🎁 {schedule.schedule_promotions.discount_type === "percentage"
+                                ? `-${schedule.schedule_promotions.discount_value}%`
+                                : `-${formatVND(schedule.schedule_promotions.discount_value)}`}
+                              {!schedule.schedule_promotions.is_active && " (Tắt)"}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td>
                         <div className="ui-schedule-overview-capacity min-w-[114px] [&>span]:flex [&>span]:items-center [&>span]:gap-[8px] [&>span]:text-[#496d9f] [&>span_svg]:text-[#075bff]">
@@ -261,6 +280,8 @@ export function ScheduleTablePanel({
                           onEdit={onEdit}
                           onDelete={onDelete}
                           onToggleStatus={onToggleStatus}
+                          onViewManifest={onViewManifest}
+                          onConfigurePromotion={onConfigurePromotion}
                         />
                       </td>
                     </tr>

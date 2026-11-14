@@ -13,4 +13,9 @@ export class VouchersPublicController {
     tourId?: string) {
         return this.vouchersService.validatePublicVoucher(code, rawAmount, undefined, tourId ? Number(tourId) : undefined);
     }
+
+    @Get('home-campaign')
+    getHomeCampaign() {
+        return this.vouchersService.getPublicHomeVouchers();
+    }
 }
