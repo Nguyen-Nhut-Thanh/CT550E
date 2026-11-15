@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChatWorkspace } from "@/components/admin/chats/ChatWorkspace";
 import { ConversationSidebar } from "@/components/admin/chats/ConversationSidebar";
+import { disconnectSocket } from "@/lib/chat/socket";
 import { useChatConversation } from "@/lib/chat/useChatConversation";
 import { useChatSession } from "@/lib/chat/useChatSession";
 
@@ -45,6 +46,12 @@ function AdminChatsContent() {
   );
 
   const sentReviewCardRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   useEffect(() => {
     if (urlConversationId) {

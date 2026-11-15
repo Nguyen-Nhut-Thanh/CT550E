@@ -1,80 +1,66 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Logger, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors, } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
-import type { BannerPayload } from 'shared';
-import { CloudinaryService } from '../../infrastructure/storage/cloudinary.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+} from '@nestjs/common';
+import type { BannerPayload, SeasonalThemeConfig } from 'shared';
+import { UseImageUpload } from '../../common/decorators/use-image-upload.decorator';
 import { AdminAuthGuard } from '../auth/admin.guard';
 import { BannersService } from './banners.service';
+
 @Controller('banners')
 @UseGuards(AdminAuthGuard)
 export class BannersAdminController {
-    private readonly logger = new Logger(BannersAdminController.name);
-    constructor(private readonly bannersService: BannersService, private readonly cloudinaryService: CloudinaryService) { }
-    @Get('admin')
-    async findAll() {
-        return this.bannersService.findAll();
-    }
-    @Get('admin/seasonal-theme')
-    async getSeasonalTheme() {
-        return this.bannersService.getSeasonalTheme();
-    }
-    @Post('admin/seasonal-theme')
-    async updateSeasonalTheme(
-        @Body()
-        data: any,
-    ) {
-        return this.bannersService.updateSeasonalTheme(data);
-    }
-    @Get('admin/:id')
-    async findOne(
-    @Param('id')
-    id: string) {
-        return this.bannersService.findOne(Number(id));
-    }
-    @Post('admin')
-    async create(
-    @Body()
-    data: BannerPayload) {
-        return this.bannersService.create(data);
-    }
-    @Patch('admin/:id')
-    async update(
-    @Param('id')
-    id: string,
-    @Body()
-    data: BannerPayload) {
-        return this.bannersService.update(Number(id), data);
-    }
-    @Delete('admin/:id')
-    async remove(
-    @Param('id')
-    id: string) {
-        return this.bannersService.remove(Number(id));
-    }
-    @Post('admin/upload')
-    @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
-    async uploadBanner(
-    @UploadedFile()
-    file: Express.Multer.File) {
-        if (!file) {
-            throw new BadRequestException('Không tìm thấy file để upload');
-        }
-        try {
-            this.logger.log(`[Upload Banner] Received file: ${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}`);
-            if (!process.env.CLOUDINARY_NAME || !process.env.CLOUDINARY_KEY) {
-                throw new InternalServerErrorException('Cấu hình Cloudinary bị thiếu trên server');
-            }
-            const result = await this.cloudinaryService.uploadBuffer(file.buffer, {
-                folder: 'travel_v2/banners',
-                resource_type: 'auto',
-            });
-            return { url: result.secure_url };
-        }
-        catch (error) {
-            this.logger.error('[Upload Banner Final Error]', error);
-            const uploadError = error as Error;
-            const message = uploadError.message || 'Lỗi không xác định';
-            throw new InternalServerErrorException(`Lỗi upload: ${message}`);
-        }
-    }
+  constructor(private readonly bannersService: BannersService) {}
+
+  @Get('admin')
+  async findAll() {
+    return this.bannersService.findAll();
+  }
+
+  @Get('admin/seasonal-theme')
+  async getSeasonalTheme() {
+    return this.bannersService.getSeasonalTheme();
+  }
+
+  @Post('admin/seasonal-theme')
+  async updateSeasonalTheme(@Body() data: Partial<SeasonalThemeConfig>) {
+    return this.bannersService.updateSeasonalTheme(data);
+  }
+
+  @Get('admin/:id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.bannersService.findOne(id);
+  }
+
+  @Post('admin')
+  async create(@Body() data: BannerPayload) {
+    return this.bannersService.create(data);
+  }
+
+  @Patch('admin/:id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: BannerPayload,
+  ) {
+    return this.bannersService.update(id, data);
+  }
+
+  @Delete('admin/:id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.bannersService.remove(id);
+  }
+
+  @Post('admin/upload')
+  @UseImageUpload()
+  async uploadBanner(@UploadedFile() file: Express.Multer.File) {
+    return this.bannersService.uploadBanner(file);
+  }
 }

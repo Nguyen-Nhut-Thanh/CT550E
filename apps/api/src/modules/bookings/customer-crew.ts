@@ -1,4 +1,4 @@
-/** Contact details are published only to customers with a confirmed/paid booking. */
+/** Contact details are published only to customers with a paid booking. */
 export function customerCrewBooking<
   T extends {
     status: string;
@@ -7,7 +7,7 @@ export function customerCrewBooking<
 >(booking: T): T {
   if (
     booking.tour_schedules &&
-    !["paid", "confirmed", "completed"].includes(booking.status)
+    !["paid", "completed"].includes(booking.status)
   ) {
     return {
       ...booking,

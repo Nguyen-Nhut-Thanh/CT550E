@@ -2,26 +2,22 @@
 
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
 import TransportIcon from "@/components/common/tours/TransportIcon";
-import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
 import { useCountdown } from "@/lib/hooks/useCountdown";
-import { useToast } from "@/lib/notifications/useToast";
+import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { getTransportLabel } from "@/lib/tours/display";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { Calendar, Clock, Hash, MapPin, Users } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import type { FlashDealItem } from "shared";
 
 export default function FlashDealCard({ item }: { item: FlashDealItem }) {
-  const router = useRouter();
-  const toast = useToast();
   const countdown = useCountdown(
     item.countdown_to || item.end_date || new Date().toISOString(),
   );
-  const { isFavorite, isPending, toggleFavorite } = useFavoriteTours();
+  const { favorite, pending, handleFavoriteClick } = useTourFavorite(item.tour_id, item.name);
 
   const countdownLabel = useMemo(() => {
     const d = String(countdown.days).padStart(2, "0");
@@ -46,36 +42,6 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
   const accentBorder = "border-red-600";
   const accentHover = "hover:bg-red-600 hover:shadow-red-100";
 
-  const handleFavoriteClick = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const result = await toggleFavorite(item.tour_id);
-
-    if (!result.ok) {
-      if (result.reason === "unauthenticated") {
-        toast.info(result.message);
-        router.push(
-          `/login?callbackUrl=${encodeURIComponent(
-            window.location.pathname + window.location.search,
-          )}`,
-        );
-        return;
-      }
-
-      toast.error(result.message);
-      return;
-    }
-
-    toast.success(
-      result.action === "added"
-        ? `Đã thêm "${item.name}" vào tour yêu thích.`
-        : `Đã bỏ "${item.name}" khỏi tour yêu thích.`,
-    );
-  };
-
   return (
     <article className="group w-[280px] flex-shrink-0 overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)] sm:w-[300px] lg:w-[310px]">
       <div className="relative h-48 overflow-hidden">
@@ -86,17 +52,17 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
         />
 
         <FavoriteButton
-          active={isFavorite(item.tour_id)}
-          loading={isPending(item.tour_id)}
+          active={favorite}
+          loading={pending}
           onClick={handleFavoriteClick}
           className={`absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all hover:scale-110 ${
-            isFavorite(item.tour_id)
+            favorite
               ? "bg-rose-500 text-white"
               : "bg-black/20 text-white hover:bg-white/25"
           }`}
           iconClassName="h-5 w-5"
           label={
-            isFavorite(item.tour_id)
+            favorite
               ? "Bỏ khỏi yêu thích"
               : "Thêm vào yêu thích"
           }

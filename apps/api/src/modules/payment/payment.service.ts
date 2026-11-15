@@ -226,7 +226,7 @@ export class PaymentService {
         const attempt = await this.prisma.payments.findFirst({ where: { provider_reference: reference, bookings: { user_id: userId } }, include: { bookings: { select: { booking_id: true, status: true } } } });
         if (!attempt) throw new NotFoundException('Không tìm thấy giao dịch của bạn.');
         const status = attempt.status === 'review' ? 'review'
-            : attempt.status === 'completed' ? (['paid', 'confirmed', 'completed'].includes(attempt.bookings.status) ? 'success' : 'review')
+            : attempt.status === 'completed' ? (['paid', 'completed'].includes(attempt.bookings.status) ? 'success' : 'review')
             : attempt.status === 'failed' ? (attempt.response_code === '24' ? 'cancelled' : 'failed')
             : attempt.expires_at && attempt.expires_at.getTime() <= Date.now() ? 'expired' : 'pending';
         return { bookingId: attempt.booking_id, reference, status, amount: attempt.amount.toString(),

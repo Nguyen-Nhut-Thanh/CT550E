@@ -4,17 +4,9 @@ import { useState } from "react";
 import { Check, Copy, Sparkles, Tag, Ticket, ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
 import { cleanVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import { useToast } from "@/lib/notifications/useToast";
 import type { Voucher } from "shared";
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "Asia/Ho_Chi_Minh",
-  });
-}
 
 export function HomeVoucherCard({
   voucher,

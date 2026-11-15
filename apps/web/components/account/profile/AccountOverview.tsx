@@ -110,7 +110,6 @@ export function AccountOverview({ stats, bookings = [], favorites = [], loading,
               const startDate = booking.tour_schedules?.start_date;
               const statusLabels: Record<string, string> = {
                 paid: "Đã thanh toán",
-                confirmed: "Đã xác nhận",
                 completed: "Đã hoàn thành",
                 cancelled: "Đã hủy",
                 cancel_requested: "Chờ duyệt hủy",

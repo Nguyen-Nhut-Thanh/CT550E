@@ -1,5 +1,5 @@
 import { adminFetch } from "@/lib/http/adminFetch";
-import type { StaffFormData, UserItem } from "shared";
+import type { UserItem } from "shared";
 
 async function requestAdminUsers<T>(
   path: string,
@@ -45,16 +45,5 @@ export function updateAdminUserStatus(userId: number, status: number) {
       body: JSON.stringify({ status }),
     },
     "Không thể cập nhật trạng thái tài khoản.",
-  );
-}
-
-export function createAdminStaff(body: StaffFormData) {
-  return requestAdminUsers(
-    "/admin/users/staff",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    },
-    "Không thể tạo tài khoản nhân viên.",
   );
 }

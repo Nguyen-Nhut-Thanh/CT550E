@@ -22,19 +22,9 @@ import Link from "next/link";
 import { Dialog } from "@/components/common/overlays/Dialog";
 import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
 import { cleanVND } from "@/lib/utils/currency";
+import { formatDateTime } from "@/lib/utils/dateTime";
 import { useToast } from "@/lib/notifications/useToast";
 import { voucherAudienceLabel, type Voucher } from "shared";
-
-function formatDateTime(dateStr: string) {
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "—";
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${hours}:${minutes} ${day}/${month}/${year}`;
-}
 
 export function HomeVoucherDetailModal({
   voucher,

@@ -35,6 +35,12 @@ export function useChatSession() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
+
+  useEffect(() => {
     generation.current += 1; setActor(null); setConversations([]); setError('');
     if(!token) {
       if(hadToken.current) disconnectSocket();

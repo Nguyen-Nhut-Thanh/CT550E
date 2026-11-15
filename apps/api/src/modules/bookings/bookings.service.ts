@@ -723,7 +723,7 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
         if (booking.status === 'cancel_requested') {
             throw new BadRequestException('Đơn đặt tour này đã gửi yêu cầu hủy và đang chờ xử lý.');
         }
-        if (!['pending', 'paid', 'confirmed'].includes(booking.status)) {
+        if (!['pending', 'paid'].includes(booking.status)) {
             throw new BadRequestException('Booking hiện không thể hủy hoặc gửi yêu cầu hủy.');
         }
         if (booking.tour_schedules?.start_date && new Date(booking.tour_schedules.start_date).getTime() <= Date.now()) {

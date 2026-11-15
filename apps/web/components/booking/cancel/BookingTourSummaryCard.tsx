@@ -76,7 +76,6 @@ export function BookingTourSummaryCard({
     propIsPaid !== undefined
       ? propIsPaid
       : booking.status === "paid" ||
-        booking.status === "confirmed" ||
         booking.status === "cancel_requested";
 
   return (

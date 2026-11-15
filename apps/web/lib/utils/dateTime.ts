@@ -39,6 +39,21 @@ export function formatDate(value?: string | Date | null) {
   }).format(date);
 }
 
+export function formatDateTime(value?: string | Date | null, options?: { withSeconds?: boolean }) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(options?.withSeconds ? { second: "2-digit" } : {}),
+  }).format(date);
+}
+
 export function parseViDateTime(value?: string | null): Date | null {
   if (!value || typeof value !== "string") return null;
   const cleaned = value.trim();

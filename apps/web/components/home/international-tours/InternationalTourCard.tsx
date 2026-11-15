@@ -1,21 +1,17 @@
 "use client";
 
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
-import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
-import { useToast } from "@/lib/notifications/useToast";
+import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { ArrowRight, CalendarDays, Clock3, Globe2, MapPin, Plane, Star } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
-import { useRouter } from "next/navigation";
 import type { PublicTourCard } from "shared";
 
 export function InternationalTourCard({ tour }: { tour: PublicTourCard }) {
-  const router = useRouter();
-  const toast = useToast();
-  const { isFavorite, isPending, toggleFavorite } = useFavoriteTours();
+  const { favorite, pending, handleFavoriteClick } = useTourFavorite(tour.tour_id, tour.name);
   const clipId = `international-tour-wave-${useId().replace(/:/g, "")}`;
   const schedule = tour.next_schedule;
   const imageUrl = normalizeImageSrc(schedule?.cover_image_url || tour.cover_image) || "/images/shared/default-tour-beach.jpg";
@@ -26,22 +22,6 @@ export function InternationalTourCard({ tour }: { tour: PublicTourCard }) {
   const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
   const airline = tour.transport?.name || "Đang cập nhật";
   const href = `/tours/${tour.tour_id}`;
-
-  const handleFavorite = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const result = await toggleFavorite(tour.tour_id);
-    if (!result.ok) {
-      if (result.reason === "unauthenticated") {
-        toast.info(result.message);
-        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-        return;
-      }
-      toast.error(result.message);
-      return;
-    }
-    toast.success(result.action === "added" ? `Đã thêm "${tour.name}" vào tour yêu thích.` : `Đã bỏ "${tour.name}" khỏi tour yêu thích.`);
-  };
 
   return (
     <article className="group relative flex h-[240px] w-full max-w-[560px] min-w-0 shrink-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[300px] max-sm:flex-col">
@@ -68,12 +48,12 @@ export function InternationalTourCard({ tour }: { tour: PublicTourCard }) {
           <img src={imageUrl} alt={tour.name} className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
           <FavoriteButton
-            active={isFavorite(tour.tour_id)}
-            loading={isPending(tour.tour_id)}
-            onClick={handleFavorite}
-            className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all hover:scale-110 ${isFavorite(tour.tour_id) ? "text-rose-500" : "text-slate-500"}`}
+            active={favorite}
+            loading={pending}
+            onClick={handleFavoriteClick}
+            className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all hover:scale-110 ${favorite ? "text-rose-500" : "text-slate-500"}`}
             iconClassName="h-5 w-5"
-            label={isFavorite(tour.tour_id) ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
+            label={favorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
           />
           <span className="absolute bottom-6 left-4 inline-flex max-w-[82%] items-center gap-1.5 truncate rounded-full border border-white/15 bg-slate-900/45 px-3.5 py-1.5 text-sm font-medium text-white backdrop-blur-md">
             <MapPin className="h-4 w-4 shrink-0" /> {destination}

@@ -7,7 +7,7 @@ import {
 
 export const BOOKING_STATUSES = [
   { value: "all", label: "Tất cả trạng thái" }, { value: "pending", label: "Chờ thanh toán" },
-  { value: "paid", label: "Đã thanh toán" }, { value: "confirmed", label: "Đã xác nhận" }, { value: "cancel_requested", label: "Yêu cầu hủy" },
+  { value: "paid", label: "Đã thanh toán" }, { value: "cancel_requested", label: "Yêu cầu hủy" },
   { value: "cancelled", label: "Đã hủy" }, { value: "completed", label: "Hoàn thành" },
 ];
 export const DEFAULT_BOOKING_FILTERS: Required<AdminBookingFilters> = { search: "", status: "all", tourId: "all", scheduleId: "all", dateFrom: "", dateTo: "", dateField: "created" };

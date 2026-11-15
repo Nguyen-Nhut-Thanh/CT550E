@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { BestSellerStat, PublicItineraryRecord, PublicListParams, PublicScheduleRecord } from 'shared';
+import { calculateSchedulePricing } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { queryBestSellerStats } from './best-seller.helper';
 import { buildCardSelect, fixMojibakeText, formatTourCard, parseMoney } from "./public-tour.mapper";
@@ -464,49 +465,14 @@ export class ToursPublicService {
             return isTimeValid && hasSpace;
         })
             .map((s: PublicScheduleRecord) => {
-            const originalPrice = Number(s.price || 0);
-            let effectivePrice = originalPrice;
-            const flashDeal = s.flash_deals;
-            let schedulePromotion = null;
-            if (flashDeal) {
-                if (flashDeal.discount_type === 'percentage') {
-                    effectivePrice =
-                        originalPrice * (1 - Number(flashDeal.discount_value) / 100);
-                }
-                else {
-                    effectivePrice = originalPrice - Number(flashDeal.discount_value);
-                }
-            } else if (s.schedule_promotions && s.schedule_promotions.is_active) {
-                const p = s.schedule_promotions;
-                const pStart = new Date(p.start_date);
-                const pEnd = new Date(p.end_date);
-                const hasSlot = p.max_slots === null || p.max_slots === undefined || p.used_slots < p.max_slots;
-                if (pStart <= now && pEnd >= now && hasSlot) {
-                    const discountVal = Number(p.discount_value);
-                    if (p.discount_type === 'percentage') {
-                        effectivePrice = Math.max(0, originalPrice * (1 - discountVal / 100));
-                    } else {
-                        effectivePrice = Math.max(0, originalPrice - discountVal);
-                    }
-                    schedulePromotion = {
-                        has_promotion: true,
-                        promotion_title: p.title,
-                        discount_type: p.discount_type,
-                        discount_value: discountVal,
-                        effective_price: Math.round(effectivePrice),
-                        original_price: originalPrice,
-                        is_active: p.is_active,
-                        gift_description: p.gift_description,
-                    };
-                }
-            }
+            const pricing = calculateSchedulePricing(s, now);
             return {
                 ...s,
-                original_price: originalPrice,
-                price: Math.round(effectivePrice),
-                flash_deal: flashDeal,
+                original_price: pricing.originalPrice,
+                price: pricing.effectivePrice,
+                flash_deal: pricing.flashDeal,
                 schedule_promotions: s.schedule_promotions || null,
-                schedule_promotion: schedulePromotion,
+                schedule_promotion: pricing.schedulePromotion,
                 tour_itineraries: s.tour_itineraries?.map((item: PublicItineraryRecord) => ({
                     ...item,
                     title: fixMojibakeText(item.title),

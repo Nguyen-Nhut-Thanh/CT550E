@@ -1,7 +1,51 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import type { AdminReviewQuery, AdminUpdateReviewStatusPayload, CreateReplyPayload, CreateReviewPayload, } from "shared";
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+
+export function mapReviewReplies(replies?: any[]) {
+    if (!Array.isArray(replies)) return [];
+    return replies.map((reply: any) => ({
+        reply_id: reply.reply_id,
+        review_id: reply.review_id,
+        user_id: reply.user_id,
+        content: reply.content,
+        status: reply.status,
+        created_at: reply.created_at instanceof Date ? reply.created_at.toISOString() : String(reply.created_at),
+        user: {
+            user_id: reply.users?.user_id,
+            full_name: reply.users?.full_name ?? null,
+            avatar_url: reply.users?.avatar_url ?? null,
+        },
+    }));
+}
+
+export function mapReviewResponse(r: any, currentUserId?: number) {
+    return {
+        review_id: r.review_id,
+        user_id: r.user_id,
+        tour_id: r.tour_id,
+        booking_id: r.booking_id,
+        rating: r.rating,
+        title: r.title,
+        comment: r.comment,
+        images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
+        likes_count: r.likes_count,
+        is_liked: currentUserId ? (Array.isArray(r.review_likes) && r.review_likes.length > 0) : false,
+        status: r.status,
+        admin_note: r.admin_note,
+        created_at: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+        tour_name: r.tours?.name,
+        tour_code: r.tours?.code,
+        user: r.users ? {
+            user_id: r.users.user_id,
+            full_name: r.users.full_name,
+            avatar_url: r.users.avatar_url,
+        } : null,
+        replies: mapReviewReplies(r.review_replies),
+    };
+}
 @Injectable()
 export class ReviewsService {
     constructor(private readonly prisma: PrismaService) { }
@@ -74,23 +118,25 @@ export class ReviewsService {
         if (!review)
             throw new NotFoundException("Không tìm thấy đánh giá của bạn.");
         await this.prisma.$transaction(async (tx) => {
-            await tx.reviews.update({ where: { review_id: reviewId }, data: {
-                    rating: dto.rating, comment: dto.comment.trim(), status: 0, admin_note: null,
-                } });
-            const aggregate = await tx.reviews.aggregate({
-                where: { tour_id: review.tour_id, status: 1 }, _avg: { rating: true }, _count: { rating: true },
+            await tx.reviews.update({
+                where: { review_id: reviewId },
+                data: {
+                    rating: dto.rating,
+                    comment: dto.comment.trim(),
+                    status: 0,
+                    admin_note: null,
+                },
             });
-            await tx.tours.update({ where: { tour_id: review.tour_id }, data: {
-                    rating_avg: Number((aggregate._avg.rating ?? 0).toFixed(2)), rating_count: aggregate._count.rating,
-                } });
+            await this.recalculateTourRating(review.tour_id, tx);
         });
         return { message: "Đã lưu đánh giá. Nội dung mới đang chờ duyệt." };
     }
     /**
      * Tự động tính lại rating_avg và rating_count trên Tour gốc sau khi Admin duyệt / ẩn review
      */
-    async recalculateTourRating(tourId: number): Promise<void> {
-        const aggregate = await this.prisma.reviews.aggregate({
+    async recalculateTourRating(tourId: number, tx?: Prisma.TransactionClient): Promise<void> {
+        const db = tx || this.prisma;
+        const aggregate = await db.reviews.aggregate({
             where: {
                 tour_id: tourId,
                 status: 1, // Chỉ tính các review đã được duyệt
@@ -106,7 +152,7 @@ export class ReviewsService {
             ? Number(aggregate._avg.rating.toFixed(2))
             : 0;
         const ratingCount = aggregate._count.rating || 0;
-        await this.prisma.tours.update({
+        await db.tours.update({
             where: { tour_id: tourId },
             data: {
                 rating_avg: ratingAvg,
@@ -162,38 +208,7 @@ export class ReviewsService {
                     : false,
             },
         });
-        return reviews.map((r: any) => ({
-            review_id: r.review_id,
-            user_id: r.user_id,
-            tour_id: r.tour_id,
-            booking_id: r.booking_id,
-            rating: r.rating,
-            title: r.title,
-            comment: r.comment,
-            images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
-            likes_count: r.likes_count,
-            is_liked: currentUserId ? (r.review_likes as any[])?.length > 0 : false,
-            status: r.status,
-            created_at: r.created_at.toISOString(),
-            user: {
-                user_id: r.users.user_id,
-                full_name: r.users.full_name,
-                avatar_url: r.users.avatar_url,
-            },
-            replies: r.review_replies.map((reply: any) => ({
-                reply_id: reply.reply_id,
-                review_id: reply.review_id,
-                user_id: reply.user_id,
-                content: reply.content,
-                status: reply.status,
-                created_at: reply.created_at.toISOString(),
-                user: {
-                    user_id: reply.users.user_id,
-                    full_name: reply.users.full_name,
-                    avatar_url: reply.users.avatar_url,
-                },
-            })),
-        }));
+        return reviews.map((r: any) => mapReviewResponse(r, currentUserId || undefined));
     }
     /**
      * Người dùng gửi đánh giá mới (Mặc định status = 0: Chờ Admin duyệt)
@@ -216,7 +231,7 @@ export class ReviewsService {
             where: {
                 user_id: userId,
                 tour_schedules: { tour_id: tourId },
-                status: { in: ['completed', 'paid', 'confirmed'] },
+                status: { in: ['completed', 'paid'] },
                 ...(dto.booking_id ? { booking_id: dto.booking_id } : {}),
             },
         });
@@ -425,40 +440,7 @@ export class ReviewsService {
             this.prisma.reviews.count({ where }),
         ]);
         return {
-            items: items.map((r: any) => ({
-                review_id: r.review_id,
-                user_id: r.user_id,
-                tour_id: r.tour_id,
-                booking_id: r.booking_id,
-                rating: r.rating,
-                title: r.title,
-                comment: r.comment,
-                images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
-                likes_count: r.likes_count,
-                status: r.status,
-                admin_note: r.admin_note,
-                created_at: r.created_at.toISOString(),
-                tour_name: r.tours.name,
-                tour_code: r.tours.code,
-                user: {
-                    user_id: r.users.user_id,
-                    full_name: r.users.full_name,
-                    avatar_url: r.users.avatar_url,
-                },
-                replies: r.review_replies.map((reply: any) => ({
-                    reply_id: reply.reply_id,
-                    review_id: reply.review_id,
-                    user_id: reply.user_id,
-                    content: reply.content,
-                    status: reply.status,
-                    created_at: reply.created_at.toISOString(),
-                    user: {
-                        user_id: reply.users.user_id,
-                        full_name: reply.users.full_name,
-                        avatar_url: reply.users.avatar_url,
-                    },
-                })),
-            })),
+            items: items.map((r: any) => mapReviewResponse(r)),
             total,
             take,
             skip,
@@ -501,40 +483,7 @@ export class ReviewsService {
         if (!r) {
             throw new NotFoundException("Đánh giá không tồn tại.");
         }
-        return {
-            review_id: r.review_id,
-            user_id: r.user_id,
-            tour_id: r.tour_id,
-            booking_id: r.booking_id,
-            rating: r.rating,
-            title: r.title,
-            comment: r.comment,
-            images: Array.isArray(r.images) ? r.images : r.images ? [String(r.images)] : [],
-            likes_count: r.likes_count,
-            status: r.status,
-            admin_note: r.admin_note,
-            created_at: r.created_at.toISOString(),
-            tour_name: r.tours.name,
-            tour_code: r.tours.code,
-            user: {
-                user_id: r.users.user_id,
-                full_name: r.users.full_name,
-                avatar_url: r.users.avatar_url,
-            },
-            replies: r.review_replies.map((reply: any) => ({
-                reply_id: reply.reply_id,
-                review_id: reply.review_id,
-                user_id: reply.user_id,
-                content: reply.content,
-                status: reply.status,
-                created_at: reply.created_at.toISOString(),
-                user: {
-                    user_id: reply.users.user_id,
-                    full_name: reply.users.full_name,
-                    avatar_url: reply.users.avatar_url,
-                },
-            })),
-        };
+        return mapReviewResponse(r);
     }
     /**
      * Admin duyệt (status = 1) hoặc từ chối / ẩn (status = 2) đánh giá
@@ -546,15 +495,18 @@ export class ReviewsService {
         if (!review) {
             throw new NotFoundException("Đánh giá không tồn tại.");
         }
-        const updated = await this.prisma.reviews.update({
-            where: { review_id: reviewId },
-            data: {
-                status: dto.status,
-                admin_note: dto.admin_note || null,
-            },
+        const updated = await this.prisma.$transaction(async (tx) => {
+            const u = await tx.reviews.update({
+                where: { review_id: reviewId },
+                data: {
+                    status: dto.status,
+                    admin_note: dto.admin_note || null,
+                },
+            });
+            // Tự động tính toán lại rating_avg & rating_count cho Tour gốc!
+            await this.recalculateTourRating(review.tour_id, tx);
+            return u;
         });
-        // Tự động tính toán lại rating_avg & rating_count cho Tour gốc!
-        await this.recalculateTourRating(review.tour_id);
         return {
             message: dto.status === 1
                 ? "Đã phê duyệt đánh giá thành công!"

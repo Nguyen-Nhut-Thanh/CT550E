@@ -18,7 +18,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class DashboardService {
     constructor(private readonly prisma: PrismaService) { }
-    private readonly revenueStatuses = ['confirmed', 'completed', 'paid'] as const;
+    private readonly revenueStatuses = ['completed', 'paid'] as const;
     private calculateTrend(current: number, previous: number): number {
         if (previous === 0)
             return current > 0 ? 100 : 0;
@@ -145,7 +145,7 @@ export class DashboardService {
                 SELECT
                     ts.tour_id,
                     COUNT(b.booking_id)::int AS bookings_count,
-                    COALESCE(SUM(CASE WHEN b.status IN ('completed', 'confirmed', 'paid') THEN b.total_amount ELSE 0 END), 0)::numeric AS revenue
+                    COALESCE(SUM(CASE WHEN b.status IN ('completed', 'paid') THEN b.total_amount ELSE 0 END), 0)::numeric AS revenue
                 FROM bookings b
                 JOIN tour_schedules ts ON ts.tour_schedule_id = b.tour_schedule_id
                 WHERE b.created_at >= ${startDate} AND b.created_at <= ${now} AND b.status NOT IN ('cancelled', 'canceled')
@@ -161,7 +161,6 @@ export class DashboardService {
         const usersTrend = this.calculateTrend(currentUsersCount, prevUsersCount);
         // Tính phân bổ trạng thái
         const statusBreakdown: DashboardStatusBreakdown = {
-            confirmed: 0,
             pending: 0,
             paid: 0,
             completed: 0,
@@ -169,9 +168,7 @@ export class DashboardService {
         };
         for (const group of statusGroups) {
             const statusKey = group.status.toLowerCase();
-            if (statusKey === 'confirmed')
-                statusBreakdown.confirmed += group._count.booking_id;
-            else if (statusKey === 'pending')
+            if (statusKey === 'pending')
                 statusBreakdown.pending += group._count.booking_id;
             else if (statusKey === 'paid')
                 statusBreakdown.paid += group._count.booking_id;
@@ -181,7 +178,7 @@ export class DashboardService {
                 statusBreakdown.cancelled += group._count.booking_id;
             }
         }
-        const successfulBookings = statusBreakdown.confirmed + statusBreakdown.paid + statusBreakdown.completed;
+        const successfulBookings = statusBreakdown.paid + statusBreakdown.completed;
         const conversionRate = currentBookingsCount > 0
             ? parseFloat(((successfulBookings / currentBookingsCount) * 100).toFixed(1))
             : 0;
@@ -199,7 +196,6 @@ export class DashboardService {
             pendingBookings: statusBreakdown.pending,
             cancelledBookings: statusBreakdown.cancelled,
             completedBookings: statusBreakdown.completed,
-            confirmedBookings: statusBreakdown.confirmed,
             conversionRate,
         };
         // Tạo các mốc thời gian cho biểu đồ (Chart points)
@@ -672,7 +668,7 @@ export class DashboardService {
             totalUsersCount,
             newUsersCount,
             usersByTier,
-            vipBookings,
+            topVipAgg,
         ] = await Promise.all([
             this.prisma.users.count(),
             this.prisma.users.count({
@@ -682,24 +678,18 @@ export class DashboardService {
                 by: ['tier'],
                 _count: { user_id: true },
             }),
-            this.prisma.bookings.findMany({
+            this.prisma.bookings.groupBy({
+                by: ['user_id'],
                 where: {
                     status: { in: [...this.revenueStatuses] },
                 },
-                select: {
-                    user_id: true,
-                    total_amount: true,
-                    created_at: true,
-                    users: {
-                        select: {
-                            user_id: true,
-                            full_name: true,
-                            phone: true,
-                            membership: { select: { tier: true } },
-                            accounts: { select: { email: true } },
-                        },
-                    },
+                _sum: { total_amount: true },
+                _count: { booking_id: true },
+                _max: { created_at: true },
+                orderBy: {
+                    _sum: { total_amount: 'desc' },
                 },
+                take: 10,
             }),
         ]);
 
@@ -877,34 +867,36 @@ export class DashboardService {
             count: t._count.user_id,
         }));
 
-        // Top 10 khách hàng VIP
-        const customerMap = new Map<number, CustomerVipItem>();
-        for (const b of vipBookings) {
-            if (!b.users) continue;
-            const uid = b.users.user_id;
-            const tierKey = b.users.membership?.tier || 'bronze';
-            const item = customerMap.get(uid) || {
-                userId: uid,
-                fullName: b.users.full_name || 'Khách hàng',
-                email: b.users.accounts?.email || 'N/A',
-                phone: b.users.phone || 'N/A',
-                membershipTier: tierLabels[tierKey] || tierKey || 'Đồng',
-                totalBookings: 0,
-                totalSpent: 0,
-                lastBookingDate: null,
-            };
-            item.totalBookings += 1;
-            item.totalSpent += Number(b.total_amount || 0);
-            const bDate = b.created_at.toISOString().split('T')[0];
-            if (!item.lastBookingDate || bDate > item.lastBookingDate) {
-                item.lastBookingDate = bDate;
-            }
-            customerMap.set(uid, item);
-        }
+        // Top 10 khách hàng VIP (Query tổng hợp trực tiếp từ DB)
+        const vipUserIds = topVipAgg.map((v) => v.user_id);
+        const vipUsers = vipUserIds.length
+            ? await this.prisma.users.findMany({
+                where: { user_id: { in: vipUserIds } },
+                select: {
+                    user_id: true,
+                    full_name: true,
+                    phone: true,
+                    membership: { select: { tier: true } },
+                    accounts: { select: { email: true } },
+                },
+            })
+            : [];
+        const vipUserMap = new Map(vipUsers.map((u) => [u.user_id, u]));
 
-        const topVip = Array.from(customerMap.values())
-            .sort((a, b) => b.totalSpent - a.totalSpent)
-            .slice(0, 10);
+        const topVip: CustomerVipItem[] = topVipAgg.map((v) => {
+            const u = vipUserMap.get(v.user_id);
+            const tierKey = u?.membership?.tier || 'bronze';
+            return {
+                userId: v.user_id,
+                fullName: u?.full_name || 'Khách hàng',
+                email: u?.accounts?.email || 'N/A',
+                phone: u?.phone || 'N/A',
+                membershipTier: tierLabels[tierKey] || tierKey || 'Đồng',
+                totalBookings: v._count.booking_id,
+                totalSpent: Number(v._sum.total_amount || 0),
+                lastBookingDate: v._max.created_at ? v._max.created_at.toISOString().split('T')[0] : null,
+            };
+        });
 
         // Đánh giá & Review Analytics
         const starsCount = { star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 };

@@ -98,7 +98,7 @@ export async function notifyCrewCustomers(
   const bookings = await tx.bookings.findMany({
     where: {
       tour_schedule_id: scheduleId,
-      status: { in: ["paid", "confirmed", "completed"] },
+      status: { in: ["paid", "completed"] },
     },
     select: { booking_id: true, user_id: true },
   });
@@ -141,10 +141,6 @@ export async function finalizeCrewIfReady(
   if (!schedule || schedule.status !== 1 || schedule.end_date <= now)
     return false;
   const previous = readCrewSnapshot(schedule.crew_snapshot);
-  if (schedule.crew_locked_at && previous) {
-    // Đã chốt nhân sự trước đó, không cần gửi thông báo lặp lại mỗi chu kỳ sweep
-    return true;
-  }
   const assessment = crewReadiness(schedule);
   if (!assessment.ready) return false;
   const members = [...assessment.confirmed]
@@ -178,6 +174,11 @@ export async function finalizeCrewIfReady(
     previous &&
     signature(previous.operating_region, previous.members) ===
       signature(schedule.operating_region, members);
+
+  if (same && schedule.crew_locked_at) {
+    return true;
+  }
+
   const snapshot: CrewContactSnapshot = same
     ? previous
     : {
@@ -208,6 +209,8 @@ export async function finalizeCrewIfReady(
       },
     },
   });
-  await notifyCrewCustomers(tx, scheduleId, snapshot, now);
+  if (!same || !schedule.crew_locked_at) {
+    await notifyCrewCustomers(tx, scheduleId, snapshot, now);
+  }
   return true;
 }

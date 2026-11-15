@@ -17,11 +17,6 @@ export function DashboardRecentBookings({
     string,
     { label: string; badge: string; dot: string }
   > = {
-    confirmed: {
-      label: "Đã xác nhận",
-      badge: "bg-blue-50 text-blue-700 border-blue-200",
-      dot: "bg-blue-500",
-    },
     paid: {
       label: "Đã thanh toán",
       badge: "bg-emerald-50 text-emerald-700 border-emerald-200",

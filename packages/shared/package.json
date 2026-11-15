@@ -15,5 +15,8 @@
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
   }
 }

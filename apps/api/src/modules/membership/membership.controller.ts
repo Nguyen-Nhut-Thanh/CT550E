@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt.guard";
+import { type AuthenticatedRequest } from "../../common/auth";
 import { MembershipService } from "./membership.service";
 import { VouchersService } from "../vouchers/vouchers.service";
 
@@ -19,16 +20,16 @@ export class MembershipController {
     private readonly vouchers: VouchersService,
   ) {}
   @Get("me")
-  me(@Req() req: any) {
+  me(@Req() req: AuthenticatedRequest) {
     return this.service.forAccount(req.user.accountId);
   }
   @Post("notifications/read")
-  read(@Req() req: any) {
+  read(@Req() req: AuthenticatedRequest) {
     return this.service.readNotifications(req.user.accountId);
   }
   @Get("vouchers/validate")
   async validate(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query("code") code: string,
     @Query("amount") rawAmount: string,
     @Query("tour_id") tourId?: string,
@@ -41,7 +42,6 @@ export class MembershipController {
       amount <= 0
     )
       throw new BadRequestException("Mã hoặc giá trị đơn không hợp lệ.");
-    await this.service.forAccount(req.user.accountId);
     return this.vouchers.validateForAccount(
       req.user.accountId,
       code,

@@ -1,4 +1,4 @@
-import type { AdminLocationFetcher, AdminLocationItem, LocationDetailForm, LocationHierarchyState } from 'shared';
+import { slugify, type AdminLocationFetcher, type AdminLocationItem, type LocationDetailForm, type LocationHierarchyState } from 'shared';
 export const LOCATION_LEVEL_LABELS: Record<number, string> = {
   1: "Toàn cầu",
   2: "Nhóm Châu lục",
@@ -35,16 +35,7 @@ export function createDefaultLocationDetailForm(): LocationDetailForm {
 }
 
 export function slugifyLocationName(text: string) {
-  return text
-    .toString()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/([^0-9a-z-\s])/g, "")
-    .replace(/(\s+)/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return slugify(text);
 }
 
 export function getLocationHierarchyPreview(params: {

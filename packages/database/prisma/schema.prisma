@@ -36,8 +36,6 @@ model posts {
 
   category     post_categories @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
   author       accounts?       @relation(fields: [author_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
-  users        users?          @relation(fields: [usersUser_id], references: [user_id])
-  usersUser_id Int?
 }
 
 model blog_placements {
@@ -770,7 +768,6 @@ model users {
   review_replies    review_replies[]
   review_likes      review_likes[]
   role_users        role_users[]
-  posts             posts[]
   accounts          accounts         @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
   conversations     conversations[]
   assigned_conversations conversations[] @relation("ConversationAssignee")

@@ -3,20 +3,18 @@
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
 import { Dialog } from "@/components/common/overlays/Dialog";
 import { PLACEHOLDER_IMAGE } from "@/lib/utils/images";
-import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
+import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { useToast } from "@/lib/notifications/useToast";
 import { Check, ChevronLeft, ChevronRight, Image as ImageIcon, MapPin, Share2, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import type { TourDetailHeroProps } from 'shared';
 
 export default function TourDetailHero({ tour }: TourDetailHeroProps) {
-  const router = useRouter();
   const galleryTitleId = useId();
   const toast = useToast();
-  const { isFavorite, isPending, toggleFavorite } = useFavoriteTours();
+  const { favorite, pending, handleFavoriteClick } = useTourFavorite(tour.tour_id, tour.name);
   
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
@@ -29,24 +27,6 @@ export default function TourDetailHero({ tour }: TourDetailHeroProps) {
       : [PLACEHOLDER_IMAGE];
 
   const mainImage = images[activeImageIndex] || images[0];
-
-  const handleFavoriteClick = async () => {
-    const result = await toggleFavorite(tour.tour_id);
-    if (!result.ok) {
-      if (result.reason === "unauthenticated") {
-        toast.info(result.message);
-        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
-        return;
-      }
-      toast.error(result.message);
-      return;
-    }
-    toast.success(
-      result.action === "added"
-        ? `Đã thêm "${tour.name}" vào tour yêu thích.`
-        : `Đã bỏ "${tour.name}" khỏi tour yêu thích.`
-    );
-  };
 
   const handleShareClick = () => {
     if (navigator.clipboard) {
@@ -110,11 +90,11 @@ export default function TourDetailHero({ tour }: TourDetailHeroProps) {
         {/* Action Buttons: Yêu thích & Chia sẻ */}
         <div className="flex items-center gap-2 shrink-0 pt-1">
           <FavoriteButton
-            active={isFavorite(tour.tour_id)}
-            loading={isPending(tour.tour_id)}
+            active={favorite}
+            loading={pending}
             onClick={handleFavoriteClick}
             className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all shadow-sm ${
-              isFavorite(tour.tour_id)
+              favorite
                 ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
             }`}

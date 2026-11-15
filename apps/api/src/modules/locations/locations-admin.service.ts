@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { LOCATION_TYPE_BY_LEVEL, type LocationAdminPayload, type LocationListParams, type LocationUsageSummary } from 'shared';
+import { LOCATION_TYPE_BY_LEVEL, slugify, type LocationAdminPayload, type LocationListParams, type LocationUsageSummary } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 @Injectable()
 export class LocationsAdminService {
@@ -79,7 +79,7 @@ export class LocationsAdminService {
         return `Không thể thay đổi cấu trúc của địa điểm "${locationName}" vì ${reasons.join(', ')}. Bạn vẫn có thể cập nhật tên, mô tả, ảnh và trạng thái nổi bật.`;
     }
     private createSlug(name?: string) {
-        return (name || '').trim().toLowerCase().replace(/\s+/g, '-');
+        return slugify(name || '');
     }
     private async validateUniqueName(
         db: Prisma.TransactionClient | PrismaService,

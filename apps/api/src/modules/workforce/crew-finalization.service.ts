@@ -17,7 +17,17 @@ export class CrewFinalizationService implements OnApplicationBootstrap, OnModule
         try {
             let cursor = 0;
             while (!this.stopped) {
-                const schedules = await this.prisma.tour_schedules.findMany({ where: { tour_schedule_id: { gt: cursor }, status: 1, end_date: { gt: new Date() } }, select: { tour_schedule_id: true }, orderBy: { tour_schedule_id: 'asc' }, take: 100 });
+                const schedules = await this.prisma.tour_schedules.findMany({
+                    where: {
+                        tour_schedule_id: { gt: cursor },
+                        status: 1,
+                        crew_locked_at: null,
+                        end_date: { gt: new Date() },
+                    },
+                    select: { tour_schedule_id: true },
+                    orderBy: { tour_schedule_id: 'asc' },
+                    take: 100,
+                });
                 if (!schedules.length) break;
                 for (const schedule of schedules) {
                     try { await this.prisma.$transaction(tx => finalizeCrewIfReady(tx, schedule.tour_schedule_id), { timeout: 20_000 }); }

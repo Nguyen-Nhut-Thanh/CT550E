@@ -110,7 +110,7 @@ export function creditForBooking(
 ): MembershipCredit | null {
   const completionAt = tourCompletionAt(booking.tour_schedules.end_date);
   if (
-    !["paid", "confirmed", "completed"].includes(booking.status) ||
+    !["paid", "completed"].includes(booking.status) ||
     completionAt > now
   )
     return null;

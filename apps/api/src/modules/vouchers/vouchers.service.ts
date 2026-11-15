@@ -1,315 +1,635 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma, vouchers } from '@prisma/client';
-import * as fs from 'fs';
-import * as path from 'path';
-import { MEMBERSHIP_TIERS, membershipDiscount, voucherAudienceAllows, voucherAudienceLabel, type HomeVoucherCampaignConfig, type PublicHomeVouchersData, type VoucherPayload } from 'shared';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
+import type { Prisma, vouchers } from "@prisma/client";
+import * as fs from "fs";
+import * as path from "path";
+import {
+  MEMBERSHIP_TIERS,
+  membershipDiscount,
+  voucherAudienceAllows,
+  voucherAudienceLabel,
+  type HomeVoucherCampaignConfig,
+  type PublicHomeVouchersData,
+  type VoucherPayload,
+} from "shared";
 
 const DEFAULT_HOME_VOUCHER_CONFIG: HomeVoucherCampaignConfig = {
-    enabled: true,
-    title: 'SĂN VOUCHER ƯU ĐÃI',
-    subtitle: 'Nhận ngay các mã giảm giá hấp dẫn dành riêng cho chuyến du lịch của bạn!',
-    badge: 'ƯU ĐÃI ĐẶC BIỆT',
-    voucher_ids: [],
+  enabled: true,
+  title: "SĂN VOUCHER ƯU ĐÃI",
+  subtitle:
+    "Nhận ngay các mã giảm giá hấp dẫn dành riêng cho chuyến du lịch của bạn!",
+  badge: "ƯU ĐÃI ĐẶC BIỆT",
+  voucher_ids: [],
 };
-import { getAccountUserId } from '../../common/auth/account-user';
-import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { getAccountUserId } from "../../common/auth/account-user";
+import { PrismaService } from "../../infrastructure/database/prisma.service";
 
 @Injectable()
 export class VouchersService {
-    constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(VouchersService.name);
+  constructor(private readonly prisma: PrismaService) {}
 
-    async validateForAccount(accountId: number, code: string, rawAmount: string, tourId?: number) {
-        return this.validatePublicVoucher(code, rawAmount, await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.'), tourId);
+  async validateForAccount(
+    accountId: number,
+    code: string,
+    rawAmount: string,
+    tourId?: number,
+  ) {
+    return this.validatePublicVoucher(
+      code,
+      rawAmount,
+      await getAccountUserId(
+        this.prisma,
+        accountId,
+        "Không tìm thấy người dùng.",
+      ),
+      tourId,
+    );
+  }
+
+  async validatePublicVoucher(
+    code: string,
+    rawAmount: string,
+    userId?: number,
+    tourId?: number,
+  ) {
+    const amount = Number(rawAmount);
+    if (
+      !code?.trim() ||
+      !rawAmount?.trim() ||
+      !Number.isFinite(amount) ||
+      amount <= 0
+    )
+      throw new BadRequestException(
+        "Mã giảm giá hoặc giá trị đơn không hợp lệ.",
+      );
+    const voucher = await this.prisma.vouchers.findFirst({
+      where: {
+        code: code.trim().toUpperCase(),
+        OR: [
+          { owner_user_id: null },
+          ...(userId ? [{ owner_user_id: userId }] : []),
+        ],
+        status: 1,
+        start_date: { lte: new Date() },
+        expiry_date: { gt: new Date() },
+      },
+    });
+    if (
+      !voucher ||
+      voucher.used_count >= voucher.usage_limit ||
+      amount < Number(voucher.min_order_value)
+    )
+      throw new BadRequestException(
+        "Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng.",
+      );
+
+    // Kiểm tra giới hạn số lần sử dụng trên mỗi khách hàng
+    if (userId) {
+      const userUsedCount = await this.prisma.bookings.count({
+        where: {
+          user_id: userId,
+          voucher_id: voucher.voucher_id,
+          status: { notIn: ["cancelled", "rejected"] },
+        },
+      });
+      const maxPerUser = voucher.usage_limit_per_user ?? 1;
+      if (userUsedCount >= maxPerUser) {
+        throw new BadRequestException(
+          `Bạn đã sử dụng hết lượt cho mã giảm giá này (tối đa ${maxPerUser} lần/tài khoản).`,
+        );
+      }
     }
 
-    async validatePublicVoucher(code: string, rawAmount: string, userId?: number, tourId?: number) {
-        const amount = Number(rawAmount);
-        if (!code?.trim() || !rawAmount?.trim() || !Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Mã giảm giá hoặc giá trị đơn không hợp lệ.');
-        const voucher = await this.prisma.vouchers.findFirst({
-            where: {
-                code: code.trim().toUpperCase(),
-                OR: [{ owner_user_id: null }, ...(userId ? [{ owner_user_id: userId }] : [])],
-                status: 1, start_date: { lte: new Date() }, expiry_date: { gt: new Date() },
-            },
+    // Kiểm tra phạm vi tour áp dụng (loại tour hoặc tour cụ thể)
+    if (
+      tourId &&
+      voucher.applicable_scope &&
+      voucher.applicable_scope !== "all"
+    ) {
+      const tour = await this.prisma.tours.findUnique({
+        where: { tour_id: tourId },
+        select: { tour_id: true, tour_type: true, name: true },
+      });
+      if (!tour) {
+        throw new BadRequestException("Tour không tồn tại.");
+      }
+      if (
+        voucher.applicable_scope === "tour_type" &&
+        voucher.applicable_tour_types.length > 0
+      ) {
+        if (!voucher.applicable_tour_types.includes(tour.tour_type)) {
+          const typeLabels: Record<string, string> = {
+            domestic: "Tour trong nước",
+            outbound: "Tour nước ngoài",
+            international: "Tour quốc tế",
+          };
+          const allowed = voucher.applicable_tour_types
+            .map((t: string) => typeLabels[t] || t)
+            .join(", ");
+          throw new BadRequestException(
+            `Mã giảm giá này chỉ áp dụng cho: ${allowed}.`,
+          );
+        }
+      } else if (
+        voucher.applicable_scope === "specific_tours" &&
+        voucher.applicable_tour_ids.length > 0
+      ) {
+        if (!voucher.applicable_tour_ids.includes(tour.tour_id)) {
+          throw new BadRequestException(
+            "Mã giảm giá này chỉ áp dụng cho một số tour nhất định.",
+          );
+        }
+      }
+    }
+
+    const membership = userId
+      ? await this.prisma.memberships.findUnique({
+          where: { user_id: userId },
+          select: { tier: true },
+        })
+      : null;
+    if (
+      !voucherAudienceAllows(
+        voucher.eligible_tiers,
+        userId ? (membership?.tier ?? "bronze") : null,
+      )
+    ) {
+      throw new BadRequestException(
+        userId
+          ? `Voucher chỉ áp dụng cho: ${voucherAudienceLabel(voucher.eligible_tiers)}.`
+          : "Vui lòng đăng nhập để kiểm tra hạng thành viên được dùng voucher này.",
+      );
+    }
+    const discount = membershipDiscount(
+      {
+        discount_type: voucher.discount_type,
+        discount_value: Number(voucher.discount_value),
+        min_order_value: Number(voucher.min_order_value),
+        max_discount_amount:
+          voucher.max_discount_amount === null
+            ? null
+            : Number(voucher.max_discount_amount),
+      },
+      amount,
+    );
+    return {
+      voucher_id: voucher.voucher_id,
+      code: voucher.code,
+      discount_amount: discount,
+      final_amount: amount - discount,
+    };
+  }
+
+  private normalizePayload(data: VoucherPayload) {
+    if (
+      data.eligible_tiers !== undefined &&
+      (!Array.isArray(data.eligible_tiers) ||
+        data.eligible_tiers.length > 5 ||
+        new Set(data.eligible_tiers).size !== data.eligible_tiers.length ||
+        data.eligible_tiers.some(
+          (tier) => !MEMBERSHIP_TIERS.some((item) => item.id === tier),
+        ))
+    ) {
+      throw new BadRequestException("Đối tượng áp dụng không hợp lệ.");
+    }
+    const payload = {
+      code:
+        data.code !== undefined
+          ? String(data.code).trim().toUpperCase()
+          : undefined,
+      name:
+        data.name !== undefined
+          ? data.name
+            ? String(data.name).trim()
+            : null
+          : undefined,
+      short_description:
+        data.short_description !== undefined
+          ? data.short_description
+            ? String(data.short_description).trim()
+            : null
+          : undefined,
+      image_url:
+        data.image_url !== undefined
+          ? data.image_url
+            ? String(data.image_url).trim()
+            : null
+          : undefined,
+      discount_type: data.discount_type,
+      discount_value:
+        data.discount_value !== undefined
+          ? Number(data.discount_value)
+          : undefined,
+      min_order_value:
+        data.min_order_value != null ? Number(data.min_order_value) : undefined,
+      max_discount_amount:
+        data.max_discount_amount === null
+          ? null
+          : data.max_discount_amount !== undefined
+            ? Number(data.max_discount_amount)
+            : undefined,
+      usage_limit:
+        data.usage_limit !== undefined ? Number(data.usage_limit) : undefined,
+      usage_limit_per_user:
+        data.usage_limit_per_user !== undefined
+          ? Number(data.usage_limit_per_user)
+          : undefined,
+      applicable_scope:
+        data.applicable_scope !== undefined ? data.applicable_scope : undefined,
+      applicable_tour_types:
+        data.applicable_tour_types !== undefined
+          ? Array.isArray(data.applicable_tour_types)
+            ? data.applicable_tour_types
+            : []
+          : undefined,
+      applicable_tour_ids:
+        data.applicable_tour_ids !== undefined
+          ? Array.isArray(data.applicable_tour_ids)
+            ? data.applicable_tour_ids.map(Number).filter(Number.isInteger)
+            : []
+          : undefined,
+      start_date: data.start_date ? new Date(data.start_date) : undefined,
+      expiry_date: data.expiry_date ? new Date(data.expiry_date) : undefined,
+      status: data.status !== undefined ? Number(data.status) : undefined,
+      eligible_tiers: data.eligible_tiers,
+    };
+    if (payload.code !== undefined && !/^[A-Z0-9_-]{1,50}$/.test(payload.code))
+      throw new BadRequestException(
+        "Mã voucher cần 1–50 ký tự chữ, số, gạch ngang hoặc gạch dưới.",
+      );
+    if (
+      payload.discount_type !== undefined &&
+      !["percentage", "fixed", "fixed_amount"].includes(payload.discount_type)
+    )
+      throw new BadRequestException("Loại giảm giá không hợp lệ.");
+    for (const value of [
+      payload.discount_value,
+      payload.min_order_value,
+      payload.max_discount_amount,
+    ])
+      if (
+        value != null &&
+        (!Number.isFinite(value) || value < 0 || value > 9_999_999_999)
+      )
+        throw new BadRequestException("Giá trị tiền không hợp lệ.");
+    if (
+      payload.usage_limit !== undefined &&
+      (!Number.isSafeInteger(payload.usage_limit) ||
+        payload.usage_limit < 1 ||
+        payload.usage_limit > 2147483647)
+    )
+      throw new BadRequestException("Số lượng voucher không hợp lệ.");
+    if (
+      payload.usage_limit_per_user !== undefined &&
+      (!Number.isSafeInteger(payload.usage_limit_per_user) ||
+        payload.usage_limit_per_user < 1 ||
+        payload.usage_limit_per_user > 2147483647)
+    )
+      throw new BadRequestException(
+        "Giới hạn lượt dùng trên mỗi khách không hợp lệ.",
+      );
+    if (
+      payload.applicable_scope !== undefined &&
+      !["all", "tour_type", "specific_tours"].includes(payload.applicable_scope)
+    )
+      throw new BadRequestException("Phạm vi áp dụng tour không hợp lệ.");
+    if (payload.status !== undefined && ![0, 1].includes(payload.status))
+      throw new BadRequestException("Trạng thái voucher không hợp lệ.");
+    if (
+      [payload.start_date, payload.expiry_date].some(
+        (date) => date && Number.isNaN(date.getTime()),
+      )
+    )
+      throw new BadRequestException("Thời gian voucher không hợp lệ.");
+    return payload;
+  }
+
+  private validateDiscount(
+    type: string,
+    value: number,
+    start: Date,
+    end: Date,
+  ) {
+    if (value <= 0 || (type === "percentage" && value > 100))
+      throw new BadRequestException(
+        "Mức giảm phải lớn hơn 0, phần trăm không vượt quá 100.",
+      );
+    if (end <= start)
+      throw new BadRequestException("Ngày hết hạn phải sau ngày bắt đầu.");
+  }
+
+  private async ensureExists(id: number) {
+    if (!Number.isSafeInteger(id) || id < 1)
+      throw new BadRequestException("Mã voucher không hợp lệ.");
+    const voucher = await this.prisma.vouchers.findUnique({
+      where: { voucher_id: id },
+    });
+    if (!voucher) throw new NotFoundException("Không tìm thấy voucher.");
+    return voucher;
+  }
+
+  // Asynchronous notifications dispatched after voucher commit to prevent transaction timeout.
+  private async notifyAudience(
+    client: Prisma.TransactionClient | PrismaService,
+    voucher: vouchers,
+  ): Promise<number> {
+    if (
+      voucher.status !== 1 ||
+      voucher.expiry_date <= new Date() ||
+      voucher.owner_user_id !== null
+    )
+      return 0;
+    const tierFilter: Prisma.usersWhereInput = voucher.eligible_tiers.length
+      ? {
+          OR: [
+            { membership: { is: { tier: { in: voucher.eligible_tiers } } } },
+            ...(voucher.eligible_tiers.includes("bronze")
+              ? [{ membership: { is: null } }]
+              : []),
+          ],
+        }
+      : {};
+    const money = (value: number) => `${value.toLocaleString("vi-VN")}đ`;
+    const date = (value: Date) =>
+      value.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+    const discount =
+      voucher.discount_type === "percentage"
+        ? `${Number(voucher.discount_value)}%${voucher.max_discount_amount === null ? "" : `, tối đa ${money(Number(voucher.max_discount_amount))}`}`
+        : money(Number(voucher.discount_value));
+    const message = `Mã ${voucher.code}: giảm ${discount} cho tiền tour, đơn từ ${money(Number(voucher.min_order_value))}. Hiệu lực từ ${date(voucher.start_date)} đến ${date(voucher.expiry_date)}. Áp dụng cho ${voucherAudienceLabel(voucher.eligible_tiers)}. Chương trình có ${voucher.usage_limit} lượt sử dụng chung, tùy số lượt còn lại.`;
+    let cursor = 0,
+      count = 0;
+    while (true) {
+      const customers = await client.users.findMany({
+        where: {
+          ...tierFilter,
+          user_id: { gt: cursor },
+          is_staff: false,
+          accounts: { status: 1 },
+        },
+        select: { user_id: true },
+        orderBy: { user_id: "asc" },
+        take: 500,
+      });
+      if (!customers.length) break;
+      const inserted = await client.membership_notifications.createMany({
+        data: customers.map((user) => ({
+          user_id: user.user_id,
+          voucher_id: voucher.voucher_id,
+          event_key: `voucher:${voucher.voucher_id}:${user.user_id}`,
+          title: `Ưu đãi mới: ${voucher.code}`,
+          message,
+        })),
+        skipDuplicates: true,
+      });
+      count += inserted.count;
+      cursor = customers[customers.length - 1].user_id;
+    }
+    return count;
+  }
+
+  async findAll() {
+    const vouchers = await this.prisma.vouchers.findMany({
+      where: { owner_user_id: null },
+      include: { _count: { select: { notifications: true } } },
+      orderBy: { created_at: "desc" },
+    });
+    return vouchers.map((voucher) => ({
+      ...voucher,
+      notification_count: voucher._count.notifications,
+    }));
+  }
+  async findOne(id: number) {
+    return this.ensureExists(id);
+  }
+
+  async create(data: VoucherPayload) {
+    const payload = this.normalizePayload(data);
+    if (
+      !payload.code ||
+      !payload.discount_type ||
+      payload.discount_value === undefined ||
+      !payload.start_date ||
+      !payload.expiry_date
+    )
+      throw new BadRequestException("Vui lòng nhập đầy đủ thông tin voucher.");
+    this.validateDiscount(
+      payload.discount_type,
+      payload.discount_value,
+      payload.start_date,
+      payload.expiry_date,
+    );
+    const record = {
+      code: payload.code,
+      name: payload.name ?? null,
+      short_description: payload.short_description ?? null,
+      image_url: payload.image_url ?? null,
+      discount_type: payload.discount_type,
+      discount_value: payload.discount_value,
+      min_order_value: payload.min_order_value ?? 0,
+      max_discount_amount: payload.max_discount_amount,
+      usage_limit: payload.usage_limit ?? 100,
+      usage_limit_per_user: payload.usage_limit_per_user ?? 1,
+      applicable_scope: payload.applicable_scope ?? "all",
+      applicable_tour_types: payload.applicable_tour_types ?? [],
+      applicable_tour_ids: payload.applicable_tour_ids ?? [],
+      start_date: payload.start_date,
+      expiry_date: payload.expiry_date,
+      status: payload.status ?? 1,
+      eligible_tiers: payload.eligible_tiers ?? [],
+    };
+    let voucher: vouchers;
+    try {
+      voucher = await this.prisma.vouchers.create({ data: record });
+    } catch (error) {
+      if ((error as { code?: string }).code === "P2002")
+        throw new BadRequestException("Mã voucher này đã tồn tại.");
+      throw error;
+    }
+    // Gửi thông báo bất đồng bộ sau khi commit thành công
+    this.notifyAudience(this.prisma, voucher).catch((err) => {
+      this.logger.error("[Notify Voucher Audience Error]", err);
+    });
+    return { ...voucher, notification_count: 0 };
+  }
+
+  async update(id: number, data: VoucherPayload) {
+    await this.ensureExists(id);
+    const payload = this.normalizePayload(data);
+    const { voucher, shouldNotify } = await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT voucher_id FROM vouchers WHERE voucher_id = ${id} FOR UPDATE`;
+        const current = await tx.vouchers.findUnique({
+          where: { voucher_id: id },
         });
-        if (!voucher || voucher.used_count >= voucher.usage_limit || amount < Number(voucher.min_order_value)) throw new BadRequestException('Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng.');
-
-        // Kiểm tra giới hạn số lần sử dụng trên mỗi khách hàng
-        if (userId) {
-            const userUsedCount = await this.prisma.bookings.count({
-                where: {
-                    user_id: userId,
-                    voucher_id: voucher.voucher_id,
-                    status: { notIn: ['cancelled', 'rejected'] },
-                },
-            });
-            const maxPerUser = voucher.usage_limit_per_user ?? 1;
-            if (userUsedCount >= maxPerUser) {
-                throw new BadRequestException(`Bạn đã sử dụng hết lượt cho mã giảm giá này (tối đa ${maxPerUser} lần/tài khoản).`);
-            }
+        if (!current) throw new NotFoundException("Không tìm thấy voucher.");
+        if (
+          current.used_count &&
+          Object.entries(payload).some(
+            ([key, value]) => key !== "status" && value !== undefined,
+          )
+        )
+          throw new BadRequestException(
+            "Voucher đã sử dụng chỉ có thể đổi trạng thái.",
+          );
+        const expires = payload.expiry_date ?? current.expiry_date;
+        if (payload.status === 1 && current.status !== 1) {
+          if (expires <= new Date())
+            throw new BadRequestException(
+              "Voucher đã hết hạn, không thể mở lại.",
+            );
+          if (
+            current.used_count >= (payload.usage_limit ?? current.usage_limit)
+          )
+            throw new BadRequestException(
+              "Voucher đã hết lượt, không thể mở lại.",
+            );
         }
+        this.validateDiscount(
+          payload.discount_type ?? current.discount_type,
+          payload.discount_value ?? Number(current.discount_value),
+          payload.start_date ?? current.start_date,
+          expires,
+        );
+        const updated = await tx.vouchers.update({
+          where: { voucher_id: id },
+          data: payload,
+        });
+        const shouldNotify = current.status !== 1 && updated.status === 1;
+        return { voucher: updated, shouldNotify };
+      },
+      { timeout: 30_000 },
+    );
 
-        // Kiểm tra phạm vi tour áp dụng (loại tour hoặc tour cụ thể)
-        if (tourId && voucher.applicable_scope && voucher.applicable_scope !== 'all') {
-            const tour = await this.prisma.tours.findUnique({
-                where: { tour_id: tourId },
-                select: { tour_id: true, tour_type: true, name: true },
-            });
-            if (tour) {
-                if (voucher.applicable_scope === 'tour_type' && voucher.applicable_tour_types.length > 0) {
-                    if (!voucher.applicable_tour_types.includes(tour.tour_type)) {
-                        const typeLabels: Record<string, string> = {
-                            domestic: 'Tour trong nước',
-                            outbound: 'Tour nước ngoài',
-                            international: 'Tour quốc tế',
-                        };
-                        const allowed = voucher.applicable_tour_types.map((t: string) => typeLabels[t] || t).join(', ');
-                        throw new BadRequestException(`Mã giảm giá này chỉ áp dụng cho: ${allowed}.`);
-                    }
-                } else if (voucher.applicable_scope === 'specific_tours' && voucher.applicable_tour_ids.length > 0) {
-                    if (!voucher.applicable_tour_ids.includes(tour.tour_id)) {
-                        throw new BadRequestException('Mã giảm giá này chỉ áp dụng cho một số tour nhất định.');
-                    }
-                }
-            }
-        }
-
-        const membership = userId ? await this.prisma.memberships.findUnique({ where: { user_id: userId }, select: { tier: true } }) : null;
-        if (!voucherAudienceAllows(voucher.eligible_tiers, userId ? membership?.tier ?? 'bronze' : null)) {
-            throw new BadRequestException(userId ? `Voucher chỉ áp dụng cho: ${voucherAudienceLabel(voucher.eligible_tiers)}.` : 'Vui lòng đăng nhập để kiểm tra hạng thành viên được dùng voucher này.');
-        }
-        const discount = membershipDiscount({ discount_type: voucher.discount_type, discount_value: Number(voucher.discount_value), min_order_value: Number(voucher.min_order_value), max_discount_amount: voucher.max_discount_amount === null ? null : Number(voucher.max_discount_amount) }, amount);
-        return { voucher_id: voucher.voucher_id, code: voucher.code, discount_amount: discount, final_amount: amount - discount };
+    if (shouldNotify) {
+      this.notifyAudience(this.prisma, voucher).catch((err) => {
+        this.logger.error("[Notify Voucher Audience Error]", err);
+      });
     }
+    return { ...voucher, notification_count: 0 };
+  }
 
-    private normalizePayload(data: VoucherPayload) {
-        if (data.eligible_tiers !== undefined && (!Array.isArray(data.eligible_tiers) || data.eligible_tiers.length > 5 || new Set(data.eligible_tiers).size !== data.eligible_tiers.length || data.eligible_tiers.some(tier => !MEMBERSHIP_TIERS.some(item => item.id === tier)))) {
-            throw new BadRequestException('Đối tượng áp dụng không hợp lệ.');
-        }
-        const payload = {
-            code: data.code !== undefined ? String(data.code).trim().toUpperCase() : undefined,
-            name: data.name !== undefined ? (data.name ? String(data.name).trim() : null) : undefined,
-            short_description: data.short_description !== undefined ? (data.short_description ? String(data.short_description).trim() : null) : undefined,
-            image_url: data.image_url !== undefined ? (data.image_url ? String(data.image_url).trim() : null) : undefined,
-            discount_type: data.discount_type,
-            discount_value: data.discount_value !== undefined ? Number(data.discount_value) : undefined,
-            min_order_value: data.min_order_value != null ? Number(data.min_order_value) : undefined,
-            max_discount_amount: data.max_discount_amount === null ? null : data.max_discount_amount !== undefined ? Number(data.max_discount_amount) : undefined,
-            usage_limit: data.usage_limit !== undefined ? Number(data.usage_limit) : undefined,
-            usage_limit_per_user: data.usage_limit_per_user !== undefined ? Number(data.usage_limit_per_user) : undefined,
-            applicable_scope: data.applicable_scope !== undefined ? data.applicable_scope : undefined,
-            applicable_tour_types: data.applicable_tour_types !== undefined ? (Array.isArray(data.applicable_tour_types) ? data.applicable_tour_types : []) : undefined,
-            applicable_tour_ids: data.applicable_tour_ids !== undefined ? (Array.isArray(data.applicable_tour_ids) ? data.applicable_tour_ids.map(Number).filter(Number.isInteger) : []) : undefined,
-            start_date: data.start_date ? new Date(data.start_date) : undefined,
-            expiry_date: data.expiry_date ? new Date(data.expiry_date) : undefined,
-            status: data.status !== undefined ? Number(data.status) : undefined,
-            eligible_tiers: data.eligible_tiers,
-        };
-        if (payload.code !== undefined && (!/^[A-Z0-9_-]{1,50}$/.test(payload.code))) throw new BadRequestException('Mã voucher cần 1–50 ký tự chữ, số, gạch ngang hoặc gạch dưới.');
-        if (payload.discount_type !== undefined && !['percentage', 'fixed', 'fixed_amount'].includes(payload.discount_type)) throw new BadRequestException('Loại giảm giá không hợp lệ.');
-        for (const value of [payload.discount_value, payload.min_order_value, payload.max_discount_amount]) if (value != null && (!Number.isFinite(value) || value < 0 || value > 9_999_999_999)) throw new BadRequestException('Giá trị tiền không hợp lệ.');
-        if (payload.usage_limit !== undefined && (!Number.isSafeInteger(payload.usage_limit) || payload.usage_limit < 1 || payload.usage_limit > 2147483647)) throw new BadRequestException('Số lượng voucher không hợp lệ.');
-        if (payload.usage_limit_per_user !== undefined && (!Number.isSafeInteger(payload.usage_limit_per_user) || payload.usage_limit_per_user < 1 || payload.usage_limit_per_user > 2147483647)) throw new BadRequestException('Giới hạn lượt dùng trên mỗi khách không hợp lệ.');
-        if (payload.applicable_scope !== undefined && !['all', 'tour_type', 'specific_tours'].includes(payload.applicable_scope)) throw new BadRequestException('Phạm vi áp dụng tour không hợp lệ.');
-        if (payload.status !== undefined && ![0, 1].includes(payload.status)) throw new BadRequestException('Trạng thái voucher không hợp lệ.');
-        if ([payload.start_date, payload.expiry_date].some(date => date && Number.isNaN(date.getTime()))) throw new BadRequestException('Thời gian voucher không hợp lệ.');
-        return payload;
+  async remove(id: number) {
+    const voucher = await this.ensureExists(id);
+    if (voucher.used_count)
+      throw new BadRequestException("Không thể xóa voucher đã được sử dụng.");
+    return this.prisma.vouchers.delete({ where: { voucher_id: id } });
+  }
+
+  private getHomeConfigFilePath(): string {
+    const cwd = process.cwd();
+    const baseDir =
+      cwd.endsWith(path.join("apps", "api")) || cwd.endsWith("apps/api")
+        ? path.join(cwd, "data")
+        : path.join(cwd, "apps", "api", "data");
+    if (!fs.existsSync(baseDir)) {
+      try {
+        fs.mkdirSync(baseDir, { recursive: true });
+      } catch {
+        /* ignore */
+      }
     }
+    return path.join(baseDir, "home-vouchers.json");
+  }
 
-    private validateDiscount(type: string, value: number, start: Date, end: Date) {
-        if (value <= 0 || (type === 'percentage' && value > 100)) throw new BadRequestException('Mức giảm phải lớn hơn 0, phần trăm không vượt quá 100.');
-        if (end <= start) throw new BadRequestException('Ngày hết hạn phải sau ngày bắt đầu.');
-    }
-
-    private async ensureExists(id: number) {
-        if (!Number.isSafeInteger(id) || id < 1) throw new BadRequestException('Mã voucher không hợp lệ.');
-        const voucher = await this.prisma.vouchers.findUnique({ where: { voucher_id: id } });
-        if (!voucher) throw new NotFoundException('Không tìm thấy voucher.');
-        return voucher;
-    }
-
-    // One transaction publishes the voucher and its in-account notifications together.
-    private async notifyAudience(tx: Prisma.TransactionClient, voucher: vouchers): Promise<number> {
-        if (voucher.status !== 1 || voucher.expiry_date <= new Date() || voucher.owner_user_id !== null) return 0;
-        const tierFilter: Prisma.usersWhereInput = voucher.eligible_tiers.length ? {
-            OR: [{ membership: { is: { tier: { in: voucher.eligible_tiers } } } }, ...(voucher.eligible_tiers.includes('bronze') ? [{ membership: { is: null } }] : [])],
-        } : {};
-        const money = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
-        const date = (value: Date) => value.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-        const discount = voucher.discount_type === 'percentage' ? `${Number(voucher.discount_value)}%${voucher.max_discount_amount === null ? '' : `, tối đa ${money(Number(voucher.max_discount_amount))}`}` : money(Number(voucher.discount_value));
-        const message = `Mã ${voucher.code}: giảm ${discount} cho tiền tour, đơn từ ${money(Number(voucher.min_order_value))}. Hiệu lực từ ${date(voucher.start_date)} đến ${date(voucher.expiry_date)}. Áp dụng cho ${voucherAudienceLabel(voucher.eligible_tiers)}. Chương trình có ${voucher.usage_limit} lượt sử dụng chung, tùy số lượt còn lại.`;
-        let cursor = 0, count = 0;
-        while (true) {
-            const customers = await tx.users.findMany({ where: { ...tierFilter, user_id: { gt: cursor }, is_staff: false, accounts: { status: 1 } }, select: { user_id: true }, orderBy: { user_id: 'asc' }, take: 500 });
-            if (!customers.length) break;
-            const inserted = await tx.membership_notifications.createMany({ data: customers.map(user => ({ user_id: user.user_id, voucher_id: voucher.voucher_id, event_key: `voucher:${voucher.voucher_id}:${user.user_id}`, title: `Ưu đãi mới: ${voucher.code}`, message })), skipDuplicates: true });
-            count += inserted.count;
-            cursor = customers[customers.length - 1].user_id;
-        }
-        return count;
-    }
-
-    async findAll() {
-        const vouchers = await this.prisma.vouchers.findMany({ where: { owner_user_id: null }, include: { _count: { select: { notifications: true } } }, orderBy: { created_at: 'desc' } });
-        return vouchers.map(voucher => ({ ...voucher, notification_count: voucher._count.notifications }));
-    }
-    async findOne(id: number) { return this.ensureExists(id); }
-
-    async create(data: VoucherPayload) {
-        const payload = this.normalizePayload(data);
-        if (!payload.code || !payload.discount_type || payload.discount_value === undefined || !payload.start_date || !payload.expiry_date) throw new BadRequestException('Vui lòng nhập đầy đủ thông tin voucher.');
-        this.validateDiscount(payload.discount_type, payload.discount_value, payload.start_date, payload.expiry_date);
-        const record = {
-            code: payload.code,
-            name: payload.name ?? null,
-            short_description: payload.short_description ?? null,
-            image_url: payload.image_url ?? null,
-            discount_type: payload.discount_type,
-            discount_value: payload.discount_value,
-            min_order_value: payload.min_order_value ?? 0,
-            max_discount_amount: payload.max_discount_amount,
-            usage_limit: payload.usage_limit ?? 100,
-            usage_limit_per_user: payload.usage_limit_per_user ?? 1,
-            applicable_scope: payload.applicable_scope ?? 'all',
-            applicable_tour_types: payload.applicable_tour_types ?? [],
-            applicable_tour_ids: payload.applicable_tour_ids ?? [],
-            start_date: payload.start_date,
-            expiry_date: payload.expiry_date,
-            status: payload.status ?? 1,
-            eligible_tiers: payload.eligible_tiers ?? [],
-        };
-        try {
-            return await this.prisma.$transaction(async tx => {
-                const voucher = await tx.vouchers.create({ data: record });
-                const notification_count = await this.notifyAudience(tx, voucher);
-                return { ...voucher, notification_count };
-            }, { timeout: 30_000 });
-        } catch (error) {
-            if ((error as { code?: string }).code === 'P2002') throw new BadRequestException('Mã voucher này đã tồn tại.');
-            throw error;
-        }
-    }
-
-    async update(id: number, data: VoucherPayload) {
-        await this.ensureExists(id);
-        const payload = this.normalizePayload(data);
-        return this.prisma.$transaction(async tx => {
-            await tx.$queryRaw`SELECT voucher_id FROM vouchers WHERE voucher_id = ${id} FOR UPDATE`;
-            const current = await tx.vouchers.findUnique({ where: { voucher_id: id } });
-            if (!current) throw new NotFoundException('Không tìm thấy voucher.');
-            if (current.used_count && Object.entries(payload).some(([key, value]) => key !== 'status' && value !== undefined)) throw new BadRequestException('Voucher đã sử dụng chỉ có thể đổi trạng thái.');
-            const expires = payload.expiry_date ?? current.expiry_date;
-            if (payload.status === 1 && current.status !== 1) {
-                if (expires <= new Date()) throw new BadRequestException('Voucher đã hết hạn, không thể mở lại.');
-                if (current.used_count >= (payload.usage_limit ?? current.usage_limit)) throw new BadRequestException('Voucher đã hết lượt, không thể mở lại.');
-            }
-            this.validateDiscount(payload.discount_type ?? current.discount_type, payload.discount_value ?? Number(current.discount_value), payload.start_date ?? current.start_date, expires);
-            const voucher = await tx.vouchers.update({ where: { voucher_id: id }, data: payload });
-            const notification_count = current.status !== 1 && voucher.status === 1 ? await this.notifyAudience(tx, voucher) : 0;
-            return { ...voucher, notification_count };
-        }, { timeout: 30_000 });
-    }
-
-    async remove(id: number) {
-        const voucher = await this.ensureExists(id);
-        if (voucher.used_count) throw new BadRequestException('Không thể xóa voucher đã được sử dụng.');
-        return this.prisma.vouchers.delete({ where: { voucher_id: id } });
-    }
-
-    private getHomeConfigFilePath(): string {
-        const cwd = process.cwd();
-        const baseDir = cwd.endsWith(path.join('apps', 'api')) || cwd.endsWith('apps/api')
-            ? path.join(cwd, 'data')
-            : path.join(cwd, 'apps', 'api', 'data');
-        if (!fs.existsSync(baseDir)) {
-            try { fs.mkdirSync(baseDir, { recursive: true }); } catch { /* ignore */ }
-        }
-        return path.join(baseDir, 'home-vouchers.json');
-    }
-
-    async getHomeVoucherConfig(): Promise<HomeVoucherCampaignConfig> {
-        try {
-            const filePath = this.getHomeConfigFilePath();
-            if (fs.existsSync(filePath)) {
-                const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-                return {
-                    enabled: parsed.enabled !== undefined ? Boolean(parsed.enabled) : true,
-                    title: parsed.title || DEFAULT_HOME_VOUCHER_CONFIG.title,
-                    subtitle: parsed.subtitle || DEFAULT_HOME_VOUCHER_CONFIG.subtitle,
-                    badge: parsed.badge || DEFAULT_HOME_VOUCHER_CONFIG.badge,
-                    voucher_ids: Array.isArray(parsed.voucher_ids) ? parsed.voucher_ids.map(Number) : [],
-                };
-            }
-        } catch {
-            // fallback
-        }
-        return { ...DEFAULT_HOME_VOUCHER_CONFIG };
-    }
-
-    async updateHomeVoucherConfig(payload: Partial<HomeVoucherCampaignConfig>): Promise<HomeVoucherCampaignConfig> {
-        const current = await this.getHomeVoucherConfig();
-        const updated: HomeVoucherCampaignConfig = {
-            enabled: payload.enabled !== undefined ? Boolean(payload.enabled) : current.enabled,
-            title: payload.title?.trim() || current.title,
-            subtitle: payload.subtitle?.trim() || current.subtitle,
-            badge: payload.badge?.trim() || current.badge,
-            voucher_ids: Array.isArray(payload.voucher_ids) ? payload.voucher_ids.map(Number) : current.voucher_ids,
-        };
-        try {
-            const filePath = this.getHomeConfigFilePath();
-            fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8');
-        } catch {
-            throw new BadRequestException('Không thể ghi file cấu hình voucher trang chủ.');
-        }
-        return updated;
-    }
-
-    async getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
-        const config = await this.getHomeVoucherConfig();
-        if (!config.enabled) {
-            return { config, vouchers: [] };
-        }
-
-        const now = new Date();
-        const baseWhere = {
-            owner_user_id: null,
-            status: 1,
-            start_date: { lte: now },
-            expiry_date: { gt: now },
-        };
-
-        let voucherList: any[] = [];
-        if (config.voucher_ids && config.voucher_ids.length > 0) {
-            const found = await this.prisma.vouchers.findMany({
-                where: {
-                    ...baseWhere,
-                    voucher_id: { in: config.voucher_ids },
-                },
-            });
-            voucherList = config.voucher_ids
-                .map(id => found.find(v => v.voucher_id === id))
-                .filter(Boolean);
-        }
-
-        if (!voucherList.length) {
-            voucherList = await this.prisma.vouchers.findMany({
-                where: baseWhere,
-                orderBy: [
-                    { discount_value: 'desc' },
-                    { created_at: 'desc' },
-                ],
-                take: 6,
-            });
-        }
-
+  async getHomeVoucherConfig(): Promise<HomeVoucherCampaignConfig> {
+    try {
+      const filePath = this.getHomeConfigFilePath();
+      if (fs.existsSync(filePath)) {
+        const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         return {
-            config,
-            vouchers: voucherList.map(v => ({
-                ...v,
-                discount_value: Number(v.discount_value),
-                min_order_value: Number(v.min_order_value),
-                max_discount_amount: v.max_discount_amount !== null ? Number(v.max_discount_amount) : null,
-            })),
+          enabled:
+            parsed.enabled !== undefined ? Boolean(parsed.enabled) : true,
+          title: parsed.title || DEFAULT_HOME_VOUCHER_CONFIG.title,
+          subtitle: parsed.subtitle || DEFAULT_HOME_VOUCHER_CONFIG.subtitle,
+          badge: parsed.badge || DEFAULT_HOME_VOUCHER_CONFIG.badge,
+          voucher_ids: Array.isArray(parsed.voucher_ids)
+            ? parsed.voucher_ids.map(Number)
+            : [],
         };
+      }
+    } catch {
+      // fallback
     }
+    return { ...DEFAULT_HOME_VOUCHER_CONFIG };
+  }
+
+  async updateHomeVoucherConfig(
+    payload: Partial<HomeVoucherCampaignConfig>,
+  ): Promise<HomeVoucherCampaignConfig> {
+    const current = await this.getHomeVoucherConfig();
+    const updated: HomeVoucherCampaignConfig = {
+      enabled:
+        payload.enabled !== undefined
+          ? Boolean(payload.enabled)
+          : current.enabled,
+      title: payload.title?.trim() || current.title,
+      subtitle: payload.subtitle?.trim() || current.subtitle,
+      badge: payload.badge?.trim() || current.badge,
+      voucher_ids: Array.isArray(payload.voucher_ids)
+        ? payload.voucher_ids.map(Number)
+        : current.voucher_ids,
+    };
+    try {
+      const filePath = this.getHomeConfigFilePath();
+      fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), "utf-8");
+    } catch {
+      throw new BadRequestException(
+        "Không thể ghi file cấu hình voucher trang chủ.",
+      );
+    }
+    return updated;
+  }
+
+  async getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
+    const config = await this.getHomeVoucherConfig();
+    if (!config.enabled) {
+      return { config, vouchers: [] };
+    }
+
+    const now = new Date();
+    const baseWhere = {
+      owner_user_id: null,
+      status: 1,
+      start_date: { lte: now },
+      expiry_date: { gt: now },
+    };
+
+    let voucherList: any[] = [];
+    if (config.voucher_ids && config.voucher_ids.length > 0) {
+      const found = await this.prisma.vouchers.findMany({
+        where: {
+          ...baseWhere,
+          voucher_id: { in: config.voucher_ids },
+        },
+      });
+      voucherList = config.voucher_ids
+        .map((id) => found.find((v) => v.voucher_id === id))
+        .filter(Boolean);
+    }
+
+    if (!voucherList.length) {
+      voucherList = await this.prisma.vouchers.findMany({
+        where: baseWhere,
+        orderBy: [{ discount_value: "desc" }, { created_at: "desc" }],
+        take: 6,
+      });
+    }
+
+    return {
+      config,
+      vouchers: voucherList.map((v) => ({
+        ...v,
+        discount_value: Number(v.discount_value),
+        min_order_value: Number(v.min_order_value),
+        max_discount_amount:
+          v.max_discount_amount !== null ? Number(v.max_discount_amount) : null,
+      })),
+    };
+  }
 }

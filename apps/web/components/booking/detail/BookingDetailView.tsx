@@ -39,7 +39,7 @@ export function bookingStatus(value: string) {
   if (["cancelled", "canceled", "đã hủy"].includes(status)) return { label: "Đã hủy", tone: "cancelled" };
   if (status === "cancel_requested") return { label: "Đang yêu cầu hủy", tone: "pending" };
   if (["completed", "đã hoàn thành"].includes(status)) return { label: "Đã hoàn thành", tone: "success" };
-  if (["paid", "confirmed"].includes(status)) return { label: status === "paid" ? "Đã thanh toán" : "Đã xác nhận", tone: "success" };
+  if (status === "paid") return { label: "Đã thanh toán", tone: "success" };
   if (status === "pending") return { label: "Chờ thanh toán", tone: "pending" };
   return { label: value || "Chưa cập nhật", tone: "pending" };
 }
@@ -63,7 +63,7 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
     : false;
   const canCancel =
     b.status === "pending" ||
-    (["paid", "confirmed"].includes(b.status) && !isPast);
+    (b.status === "paid" && !isPast);
 
   const tour = b.tour_schedules?.tours;
   const name = tour?.name || `Đơn đặt tour #${b.booking_id}`;
@@ -94,7 +94,7 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
             <div className="flex items-center mb-1 gap-3.5 flex-wrap [&_h1]:text-[clamp(21px,_2vw,_28px)] [&_h1]:leading-[1.25] [&_h1]:tracking-[-.025em]! [&_h1]:font-extrabold max-[800px]:gap-2 max-[480px]:[&_h1]:text-[19px]">
               <h1>{name}</h1>
               <Status value={b.status} />
-              {["paid", "confirmed", "completed"].includes(b.status) && (
+              {["paid", "completed"].includes(b.status) && (
                 <button
                   type="button"
                   onClick={() => setReceiptModalOpen(true)}
@@ -124,7 +124,7 @@ export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
                   <span>Yêu cầu hủy tour</span>
                 </button>
               )}
-              {isPast && ["paid", "confirmed"].includes(b.status) && (
+              {isPast && b.status === "paid" && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-100/90 px-3 py-1 rounded-full border border-slate-200 ml-auto sm:ml-2">
                   Đã qua ngày khởi hành
                 </span>

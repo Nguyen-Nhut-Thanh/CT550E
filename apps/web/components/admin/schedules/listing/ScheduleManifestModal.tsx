@@ -152,7 +152,7 @@ export function ScheduleManifestModal({
       }
 
       if (paymentFilter !== "all") {
-        const isPaid = ["paid", "completed", "confirmed"].includes(b.status.toLowerCase());
+        const isPaid = ["paid", "completed"].includes(b.status.toLowerCase());
         if (paymentFilter === "paid" && !isPaid) return false;
         if (paymentFilter === "pending" && b.status.toLowerCase() !== "pending") return false;
         if (paymentFilter === "cancel_requested" && b.status.toLowerCase() !== "cancel_requested") return false;
@@ -241,7 +241,7 @@ export function ScheduleManifestModal({
     let counter = 1;
 
     filteredBookings.forEach((b) => {
-      const isPaid = ["paid", "completed", "confirmed"].includes(b.status.toLowerCase());
+      const isPaid = ["paid", "completed"].includes(b.status.toLowerCase());
       const paymentText = isPaid ? "Đã thanh toán" : "Chờ thanh toán";
       const pickupText = b.pickup_snapshot
         ? `${b.pickup_snapshot.name || ""} - ${b.pickup_snapshot.address || ""}`.trim()
@@ -480,7 +480,7 @@ export function ScheduleManifestModal({
               ) : (
                 filteredBookings.map((b) => {
                   const isCancelRequested = b.status === "cancel_requested";
-                  const isPaid = ["paid", "completed", "confirmed"].includes(
+                  const isPaid = ["paid", "completed"].includes(
                     b.status.toLowerCase(),
                   );
                   const isPending = b.status === "pending";

@@ -65,7 +65,7 @@ export function BookingRowActions({
       danger: true,
       onClick: () => onAction(booking, "cancel-pending"),
     });
-  } else if (["paid", "confirmed"].includes(booking.status)) {
+  } else if (booking.status === "paid") {
     actions.push({
       label: "Hủy đơn tour (Admin)",
       icon: <AlertTriangle size={16} />,

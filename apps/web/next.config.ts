@@ -8,8 +8,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const apiOrigin = (process.env.API_INTERNAL_URL || "http://127.0.0.1:4000").replace(/\/+$/, "");
     return [
-      // Forward socket.io traffic with path and query preserved
-      { source: "/api/socket.io/:path*", destination: `${apiOrigin}/socket.io/:path*` },
       { source: "/api/:path*", destination: `${apiOrigin}/:path*` },
     ];
   },

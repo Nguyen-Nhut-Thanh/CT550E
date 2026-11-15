@@ -47,7 +47,7 @@ export function useBookingCancelPolicy(
     const status = String(booking.status || "").toLowerCase();
     const paymentStatus = String(booking.paymentStatus || "").toLowerCase();
     return (
-      ["paid", "confirmed", "completed"].includes(status) ||
+      ["paid", "completed"].includes(status) ||
       paymentStatus === "paid" ||
       (Array.isArray(booking.payments) &&
         booking.payments.some((p: any) =>

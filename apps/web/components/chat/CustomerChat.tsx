@@ -5,6 +5,7 @@ import { ChatReviewEditModal } from "@/components/chat/ChatReviewEditModal";
 import { ChatTimeline } from "@/components/chat/ChatTimeline";
 import { CustomerTourPicker } from "@/components/chat/CustomerTourPicker";
 import { chatApi } from "@/lib/chat/api";
+import { disconnectSocket } from "@/lib/chat/socket";
 import { chatStatusLabel } from "@/lib/chat/support";
 import { useChatConversation } from "@/lib/chat/useChatConversation";
 import { useChatSession } from "@/lib/chat/useChatSession";
@@ -38,6 +39,12 @@ export function CustomerChat() {
     (total, item) => total + item.unread_count,
     0,
   );
+
+  useEffect(() => {
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("support-chat:context");

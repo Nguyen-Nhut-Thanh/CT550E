@@ -54,7 +54,7 @@ export class MembershipService
               {
                 bookings: {
                   some: {
-                    status: { in: ["paid", "confirmed", "completed"] },
+                    status: { in: ["paid", "completed"] },
                     tour_schedules: { end_date: { lte: new Date() } },
                   },
                 },
@@ -328,7 +328,7 @@ export class MembershipService
         this.prisma.bookings.aggregate({
           where: {
             OR: [{ vouchers: { owner_user_id: { not: null } } }, { membership_snapshot: { path: ["tourDiscount"], gt: 0 } }, { membership_snapshot: { path: ["serviceDiscount"], gt: 0 } }],
-            status: { in: ["paid", "confirmed", "completed"] },
+            status: { in: ["paid", "completed"] },
           },
           _sum: { discount_amount: true },
         }),

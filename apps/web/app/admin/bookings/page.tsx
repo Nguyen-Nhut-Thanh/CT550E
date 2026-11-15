@@ -44,7 +44,6 @@ import type {
 const statusLabel: Record<string, string> = {
   pending: "Chờ thanh toán",
   paid: "Đã thanh toán",
-  confirmed: "Đã xác nhận",
   cancel_requested: "Yêu cầu hủy",
   cancelled: "Đã hủy",
   completed: "Hoàn thành",
@@ -53,7 +52,6 @@ const statusLabel: Record<string, string> = {
 const statusColor: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
   paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  confirmed: "bg-indigo-50 text-indigo-700 border-indigo-200",
   cancel_requested: "bg-rose-50 text-rose-700 border-rose-200",
   cancelled: "bg-slate-50 text-slate-500 border-slate-200",
   completed: "bg-blue-50 text-blue-700 border-blue-200",

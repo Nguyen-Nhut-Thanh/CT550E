@@ -2,7 +2,7 @@ import { Phone, UsersRound } from 'lucide-react';
 import { CREW_ROLES, type BookingDetail } from 'shared';
 
 export function BookingCrewCard({ booking }: { booking: BookingDetail }) {
-  if (!['paid', 'confirmed', 'completed'].includes(booking.status)) return null;
+  if (!['paid', 'completed'].includes(booking.status)) return null;
   const snapshot = booking.tour_schedules?.crew_snapshot;
   return <section className="rounded-2xl border border-[#dfeafb] bg-white p-5">
     <header className="flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-[#15264a]"><UsersRound size={19} className="text-blue-600" />Người phụ trách chuyến đi</h2>{snapshot && <span className="text-[11px] text-slate-400">Cập nhật {new Date(snapshot.published_at).toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>}</header>

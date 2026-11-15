@@ -4,6 +4,7 @@ import type { Toast, ToastListener, ToastType } from "shared";
 
 let toastStore: Toast[] = [];
 const toastListeners = new Set<ToastListener>();
+const toastTimers = new Map<string, number>();
 let nextToastId = 0;
 
 function emitToastStore() {
@@ -20,6 +21,13 @@ export function subscribeToasts(listener: ToastListener) {
 }
 
 export function removeToast(id: string) {
+  const timer = toastTimers.get(id);
+  if (timer) {
+    if (typeof window !== "undefined") {
+      window.clearTimeout(timer);
+    }
+    toastTimers.delete(id);
+  }
   toastStore = toastStore.filter((toast) => toast.id !== id);
   emitToastStore();
 }
@@ -31,8 +39,11 @@ export function pushToast(message: string, type: ToastType) {
   toastStore = [...toastStore, { id, message, type }];
   emitToastStore();
 
-  window.setTimeout(() => {
-    removeToast(id);
-  }, 5000);
+  if (typeof window !== "undefined") {
+    const timer = window.setTimeout(() => {
+      removeToast(id);
+    }, 5000);
+    toastTimers.set(id, timer);
+  }
 }
 

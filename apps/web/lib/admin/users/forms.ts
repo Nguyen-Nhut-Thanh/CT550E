@@ -1,14 +1,4 @@
-import type { StaffFormData, UserItem } from 'shared';
-export function createDefaultStaffForm(): StaffFormData {
-  return {
-    email: "",
-    password: "",
-    full_name: "",
-    phone: "",
-    position: "Nhân viên",
-    employee_code: "",
-  };
-}
+import type { UserItem } from 'shared';
 
 export function matchesUserSearch(user: UserItem, search: string) {
   const normalizedSearch = search.trim().toLowerCase();

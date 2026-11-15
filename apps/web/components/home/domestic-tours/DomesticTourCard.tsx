@@ -1,39 +1,19 @@
 "use client";
 
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
-import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
-import { useToast } from "@/lib/notifications/useToast";
+import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { ArrowRight, Calendar, Clock, MapPin, MoreHorizontal, Star, Users } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { FlashDealItem } from "shared";
 
 export function DomesticTourCard({ item }: { item: FlashDealItem }) {
-  const router = useRouter();
-  const toast = useToast();
-  const { isFavorite, isPending, toggleFavorite } = useFavoriteTours();
+  const { favorite, pending, handleFavoriteClick } = useTourFavorite(item.tour_id, item.name);
   const imageUrl = normalizeImageSrc(item.cover_image_url || item.image_url) || "/images/shared/default-tour-beach.jpg";
   const displayPrice = item.sale_price || item.original_price || 0;
   const hasDiscount = !!item.original_price && item.original_price > (item.sale_price || 0);
-
-  const handleFavoriteClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const result = await toggleFavorite(item.tour_id);
-    if (!result.ok) {
-      if (result.reason === "unauthenticated") {
-        toast.info(result.message);
-        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-        return;
-      }
-      toast.error(result.message);
-      return;
-    }
-    toast.success(result.action === "added" ? `Đã thêm "${item.name}" vào tour yêu thích.` : `Đã bỏ "${item.name}" khỏi tour yêu thích.`);
-  };
 
   return (
     <article className="group relative flex h-[240px] w-full max-w-[560px] min-w-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[300px] max-sm:flex-col">
@@ -54,12 +34,12 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
           </span>
         )}
         <FavoriteButton
-          active={isFavorite(item.tour_id)}
-          loading={isPending(item.tour_id)}
+          active={favorite}
+          loading={pending}
           onClick={handleFavoriteClick}
-          className={`absolute right-4 top-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-lg transition hover:scale-105 ${isFavorite(item.tour_id) ? "bg-rose-500/70 text-white" : "bg-white/45 text-rose-500 hover:bg-white/60"}`}
+          className={`absolute right-4 top-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-lg transition hover:scale-105 ${favorite ? "bg-rose-500/70 text-white" : "bg-white/45 text-rose-500 hover:bg-white/60"}`}
           iconClassName="h-4 w-4"
-          label={isFavorite(item.tour_id) ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
+          label={favorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
         />
         <div className="absolute bottom-3 left-3 max-w-[80%] truncate rounded-full bg-slate-950/55 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
           {item.departure_name || "Khám phá Việt Nam"}

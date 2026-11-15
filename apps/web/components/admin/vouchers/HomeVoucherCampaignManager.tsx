@@ -21,14 +21,10 @@ import {
 } from "lucide-react";
 import { getAdminHomeVoucherConfig, getAdminVouchers, saveAdminHomeVoucherConfig } from "@/lib/admin/vouchers/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { formatVND } from "@/lib/utils/currency";
+import { cleanVND, formatVND } from "@/lib/utils/currency";
 import { HomeVoucherCard } from "@/components/home/vouchers/HomeVoucherCard";
 import { HomeVoucherDetailModal } from "@/components/home/vouchers/HomeVoucherDetailModal";
 import type { HomeVoucherCampaignConfig, Voucher } from "shared";
-
-function cleanVND(val: number | string | null | undefined) {
-  return formatVND(val).replace(/\s*đ/, "đ");
-}
 
 export function HomeVoucherCampaignManager() {
   const toast = useToast();

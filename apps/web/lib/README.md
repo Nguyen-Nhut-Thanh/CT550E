@@ -33,7 +33,7 @@ Trong mỗi nhóm, `api.ts` gửi request, `forms.ts` xử lý dữ liệu form;
 `http/config.ts` dùng `/api` cho mọi request từ trình duyệt. Next.js chuyển tiếp
 `/api/:path*` tới `API_INTERNAL_URL` (mặc định `http://127.0.0.1:4000`).
 Local, public và điện thoại đều gọi cùng origin với trang đang mở.
-Chat dùng namespace `/chat` với WebSocket path `/api/socket.io` qua cùng proxy.
+Chat dùng namespace `/chat` kết nối trực tiếp Socket.IO tới API backend.
 Server rendering gọi trực tiếp `API_INTERNAL_URL`.
 Các request công khai, có token và admin giữ
 cách xử lý response riêng để phù hợp với các API hiện tại.

@@ -1,15 +1,14 @@
 "use client";
 
-import { CreateStaffModal } from "@/components/admin/users/CreateStaffModal";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
-import { createAdminStaff, getAdminUsers, updateAdminUserStatus } from "@/lib/admin/users/api";
-import { createDefaultStaffForm, matchesUserSearch } from "@/lib/admin/users/forms";
+import { getAdminUsers, updateAdminUserStatus } from "@/lib/admin/users/api";
+import { matchesUserSearch } from "@/lib/admin/users/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { UserPlus } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from "react";
-import type { StaffFormData, UserItem } from "shared";
+import type { UserItem } from "shared";
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -18,9 +17,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<StaffFormData>(createDefaultStaffForm);
   const { success, error: showError } = useToast();
 
   const loadUsers = useCallback(
@@ -65,23 +61,6 @@ export default function AdminUsersPage() {
     } catch {
       setUsers(oldUsers);
       showError("Lỗi kết nối");
-    }
-  };
-
-  const handleCreateStaff = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSaving(true);
-
-    try {
-      await createAdminStaff(formData);
-      success("Tạo tài khoản nhân viên thành công");
-      setIsModalOpen(false);
-      setFormData(createDefaultStaffForm());
-      void loadUsers();
-    } catch {
-      showError("Lỗi kết nối máy chủ");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -137,15 +116,6 @@ export default function AdminUsersPage() {
         pageSize={pageSize}
         onToggleStatus={handleToggleStatus}
         onPageChange={setCurrentPage}
-      />
-
-      <CreateStaffModal
-        open={isModalOpen}
-        saving={saving}
-        formData={formData}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateStaff}
-        onFormChange={setFormData}
       />
     </div>
   );

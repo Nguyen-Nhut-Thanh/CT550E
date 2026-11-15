@@ -2,22 +2,18 @@
 
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
 import TransportIcon from "@/components/common/tours/TransportIcon";
-import { useFavoriteTours } from "@/lib/favorites/useFavoriteTours";
-import { useToast } from "@/lib/notifications/useToast";
+import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { getTourPriceValue, getTransportLabel } from "@/lib/tours/display";
 import { formatVND } from "@/lib/utils/currency";
 import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { Calendar, Clock, Hotel, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { TourCardProps } from 'shared';
 import TourCardTagStrip from "./TourCardTagStrip";
 
 export default function TourCard({ tour, onTourClick }: TourCardProps) {
-  const router = useRouter();
-  const toast = useToast();
-  const { isFavorite, isPending, toggleFavorite } = useFavoriteTours();
+  const { favorite, pending, handleFavoriteClick } = useTourFavorite(tour.tour_id, tour.name);
 
   const tourPrice = getTourPriceValue(tour.base_price, tour.next_schedule?.price);
   const imageSrc = normalizeImageSrc(tour.cover_image) || PLACEHOLDER_IMAGE;
@@ -29,44 +25,10 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
     }
   }
 
-  const handleFavoriteClick = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const result = await toggleFavorite(tour.tour_id);
-
-    if (!result.ok) {
-      if (result.reason === "unauthenticated") {
-        toast.info(result.message);
-        router.push(
-          `/login?callbackUrl=${encodeURIComponent(
-            window.location.pathname + window.location.search,
-          )}`,
-        );
-        return;
-      }
-
-      toast.error(result.message);
-      return;
-    }
-
-    toast.success(
-      result.action === "added"
-        ? `Đã lưu "${tour.name}" vào yêu thích.`
-        : `Đã bỏ "${tour.name}" khỏi yêu thích.`,
-    );
-  };
-
+  const nextSched = tour.next_schedule;
   const discountPercent =
-    tour.next_schedule?.original_price &&
-    tour.next_schedule.original_price > tour.next_schedule.price
-      ? Math.round(
-          ((tour.next_schedule.original_price - tour.next_schedule.price) /
-            tour.next_schedule.original_price) *
-            100,
-        )
+    nextSched?.original_price && nextSched.original_price > nextSched.price
+      ? Math.round(((nextSched.original_price - nextSched.price) / nextSched.original_price) * 100)
       : null;
 
   return (
@@ -83,17 +45,17 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
           />
 
           <FavoriteButton
-            active={isFavorite(tour.tour_id)}
-            loading={isPending(tour.tour_id)}
+            active={favorite}
+            loading={pending}
             onClick={handleFavoriteClick}
             className={`absolute left-3 top-3 rounded-full p-2 shadow-sm transition-colors ${
-              isFavorite(tour.tour_id)
+              favorite
                 ? "bg-rose-500 text-white"
                 : "bg-white/90 text-gray-500 hover:text-rose-500"
             }`}
             iconClassName="h-5 w-5"
             label={
-              isFavorite(tour.tour_id)
+              favorite
                 ? "Bỏ khỏi yêu thích"
                 : "Thêm vào yêu thích"
             }

@@ -12,7 +12,7 @@ import type { DashboardStatusBreakdownProps } from "shared";
 export function DashboardStatusBreakdown({
   statusBreakdown,
 }: DashboardStatusBreakdownProps) {
-  const paidCount = statusBreakdown.paid + (statusBreakdown.confirmed || 0);
+  const paidCount = statusBreakdown.paid;
   const total =
     paidCount +
     statusBreakdown.pending +

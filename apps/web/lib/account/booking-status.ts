@@ -101,7 +101,7 @@ export function getBookingPaymentStatus(booking: {
     return { paymentStatus: "refunded", paymentStatusText: "Đã hoàn tiền" };
   }
 
-  if (hasSuccessfulPayment || ["paid", "confirmed", "completed"].includes(status)) {
+  if (hasSuccessfulPayment || ["paid", "completed"].includes(status)) {
     return { paymentStatus: "paid", paymentStatusText: "Đã thanh toán" };
   }
 

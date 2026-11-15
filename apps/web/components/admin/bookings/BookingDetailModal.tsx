@@ -48,7 +48,7 @@ export function bookingStatus(value?: string | null) {
   if (["cancelled", "canceled", "đã hủy"].includes(status)) return { label: "Đã hủy", tone: "cancelled" };
   if (status === "cancel_requested") return { label: "Yêu cầu hủy", tone: "cancel_requested" };
   if (["completed", "đã hoàn thành"].includes(status)) return { label: "Đã hoàn thành", tone: "success" };
-  if (["paid", "confirmed"].includes(status)) return { label: status === "paid" ? "Đã thanh toán" : "Đã xác nhận", tone: "success" };
+  if (status === "paid") return { label: "Đã thanh toán", tone: "success" };
   if (status === "pending") return { label: "Chờ thanh toán", tone: "pending" };
   return { label: value || "Chưa cập nhật", tone: "pending" };
 }
@@ -291,7 +291,7 @@ export function BookingDetailModal({
                       {tourName}
                     </h2>
                     <StatusBadge value={b.status} />
-                    {["paid", "confirmed", "completed"].includes(b.status) && (
+                    {["paid", "completed"].includes(b.status) && (
                       <button
                         type="button"
                         onClick={() => setReceiptModalOpen(true)}
@@ -844,7 +844,7 @@ export function BookingDetailModal({
                   </button>
                 )}
 
-                {["paid", "confirmed"].includes(b.status) && onAction && (
+                {b.status === "paid" && onAction && (
                   <button
                     type="button"
                     onClick={() => onAction(b, "cancel-booking")}

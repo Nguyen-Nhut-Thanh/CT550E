@@ -1,6 +1,6 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConnectedSocket, MessageBody, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import type { JoinPayload, JwtChatPayload, ReadPayload, SendPayload, TypingPayload } from 'shared';
+import type { ChatActor, JoinPayload, JwtChatPayload, ReadPayload, SendPayload, TypingPayload } from 'shared';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { getCorsOrigins } from '../../config/cors';
@@ -37,14 +37,35 @@ export class ChatGateway implements OnGatewayInit {
         return this.chat.actor(payload);
     }
     async notify(id: number, event: string, payload: unknown, roomOnly = false, except?: string) {
+        if (roomOnly) {
+            const sockets = await this.server.in(`conv_${id}`).fetchSockets();
+            await Promise.all(sockets.map(async (socket) => {
+                if (socket.id === except)
+                    return;
+                // For high-frequency ephemeral events like typing, sockets in the room are already authorized
+                if (event === 'chat:typing') {
+                    socket.emit(event, payload);
+                    return;
+                }
+                try {
+                    const token = socket.handshake.auth?.token ?? socket.handshake.headers.authorization?.split(' ')[1];
+                    const actor = (socket.data?.actor as ChatActor | undefined) ?? await this.chat.actor(this.jwt.verify<JwtChatPayload>(String(token)));
+                    await this.chat.authorize(id, actor);
+                    socket.emit(event, payload);
+                }
+                catch { /* A revoked or unrelated connection must receive no conversation data. */ }
+            }));
+            return;
+        }
+
         // Recheck recipients, including idle sockets whose account or role changed.
         const sockets = await this.server.fetchSockets();
         await Promise.all(sockets.map(async (socket) => {
-            if (socket.id === except || (roomOnly && !socket.rooms.has(`conv_${id}`)))
+            if (socket.id === except)
                 return;
             try {
                 const token = socket.handshake.auth?.token ?? socket.handshake.headers.authorization?.split(' ')[1];
-                const actor = await this.chat.actor(this.jwt.verify<JwtChatPayload>(String(token)));
+                const actor = (socket.data?.actor as ChatActor | undefined) ?? await this.chat.actor(this.jwt.verify<JwtChatPayload>(String(token)));
                 await this.chat.authorize(id, actor);
                 socket.emit(event, payload);
             }

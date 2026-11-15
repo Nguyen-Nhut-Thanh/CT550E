@@ -17,60 +17,76 @@ export class LocationsPublicService {
                 featured_order: 'asc',
             },
         });
-        const regions = await Promise.all(featuredTabs.map(async (tab: any) => {
-            // 2. Với mỗi Tab, lấy các địa điểm con trực tiếp được đánh dấu là Featured
-            const locations = await this.prisma.locations.findMany({
-                where: {
-                    parent_id: tab.location_id,
-                    is_featured: true,
-                },
-                orderBy: [{ featured_order: 'asc' }, { name: 'asc' }],
-                take: 9,
-                select: {
-                    location_id: true,
-                    name: true,
-                    slug: true,
-                    featured_image: true,
-                    location_images: {
-                        where: {
-                            status: 1,
-                        },
-                        orderBy: [
-                            { is_cover: 'desc' },
-                            { sort_order: 'asc' },
-                            { image_id: 'asc' },
-                        ],
-                        take: 1,
-                        select: {
-                            image_url: true,
-                            alt_text: true,
-                        },
+
+        const tabIds = featuredTabs.map((t) => t.location_id);
+        if (tabIds.length === 0) {
+            return { regions: [] };
+        }
+
+        // 2. Query toàn bộ địa điểm con trong 1 lần gọi Prisma duy nhất (Fix N+1 query)
+        const allLocations = await this.prisma.locations.findMany({
+            where: {
+                parent_id: { in: tabIds },
+                is_featured: true,
+            },
+            orderBy: [{ featured_order: 'asc' }, { name: 'asc' }],
+            select: {
+                parent_id: true,
+                location_id: true,
+                name: true,
+                slug: true,
+                featured_image: true,
+                location_images: {
+                    where: {
+                        status: 1,
                     },
-                    tour_destinations: {
-                        select: {
-                            tour_id: true,
-                        },
+                    orderBy: [
+                        { is_cover: 'desc' },
+                        { sort_order: 'asc' },
+                        { image_id: 'asc' },
+                    ],
+                    take: 1,
+                    select: {
+                        image_url: true,
+                        alt_text: true,
                     },
                 },
-            });
-            const items: FeaturedDestinationItem[] = locations.map((location: any) => {
+                tour_destinations: {
+                    select: {
+                        tour_id: true,
+                    },
+                },
+            },
+        });
+
+        // 3. Gom nhóm theo parent_id bằng Map trên memory (tối đa 9 items mỗi tab)
+        const locationMap = new Map<number, FeaturedDestinationItem[]>();
+        for (const location of allLocations) {
+            if (location.parent_id == null) continue;
+            let group = locationMap.get(location.parent_id);
+            if (!group) {
+                group = [];
+                locationMap.set(location.parent_id, group);
+            }
+            if (group.length < 9) {
                 const firstImage = location.location_images[0];
-                return {
+                group.push({
                     location_id: location.location_id,
                     name: location.name,
                     slug: location.slug,
                     image_url: location.featured_image || firstImage?.image_url || null,
                     alt_text: firstImage?.alt_text ?? location.name,
                     total_tours: location.tour_destinations.length,
-                };
-            });
-            return {
-                key: tab.slug,
-                label: tab.name,
-                items,
-            };
+                });
+            }
+        }
+
+        const regions = featuredTabs.map((tab) => ({
+            key: tab.slug,
+            label: tab.name,
+            items: locationMap.get(tab.location_id) || [],
         }));
-        // Lọc bỏ các vùng không có item nào nếu cần, hoặc trả về hết
+
         return { regions };
     }
     async getNavigationData() {

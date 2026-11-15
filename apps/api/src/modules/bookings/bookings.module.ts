@@ -6,6 +6,11 @@ import { BookingsController } from "./bookings.controller";
 import { BookingsAdminService } from './bookings-admin.service';
 import { BookingsService } from "./bookings.service";
 import { MembershipModule } from "../membership/membership.module";
-@Module({ imports: [MailModule, MembershipModule], controllers: [BookingServicesController, BookingsController, BookingsAdminController], providers: [BookingsService, BookingsAdminService] })
-export class BookingsModule {
-}
+import { WorkforceModule } from "../workforce/workforce.module";
+
+@Module({
+  imports: [MailModule, MembershipModule, WorkforceModule],
+  controllers: [BookingServicesController, BookingsController, BookingsAdminController],
+  providers: [BookingsService, BookingsAdminService],
+})
+export class BookingsModule {}

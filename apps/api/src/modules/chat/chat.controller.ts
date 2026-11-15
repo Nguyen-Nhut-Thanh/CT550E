@@ -1,6 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Req, UploadedFile, UseGuards } from '@nestjs/common';
 import type { AuthenticatedRequest, ChatManageInput } from 'shared';
+import { UseImageUpload, uploadToFolder } from '../../common/decorators';
 import { CloudinaryService } from '../../infrastructure/storage/cloudinary.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ChatGateway } from './chat.gateway';
@@ -76,28 +76,12 @@ export class ChatController {
         return this.manage(id, req, { action: 'close' });
     }
     @Post('upload-image')
-    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+    @UseImageUpload()
     async upload(
-    @Req()
-    req: AuthenticatedRequest,
-    @UploadedFile()
-    file: Express.Multer.File) {
+        @Req() req: AuthenticatedRequest,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
         await this.chat.actor(req.user);
-        if (!file)
-            throw new BadRequestException('Hãy chọn ảnh');
-        const b = file.buffer;
-        const valid = (file.mimetype === 'image/jpeg' && b[0] === 255 && b[1] === 216 && b[2] === 255)
-            || (file.mimetype === 'image/png' && b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
-            || (file.mimetype === 'image/gif' && ['GIF87a', 'GIF89a'].includes(b.subarray(0, 6).toString()))
-            || (file.mimetype === 'image/webp' && b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP');
-        if (!valid)
-            throw new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG, GIF, WebP tối đa 5 MB');
-        try {
-            const image = await this.cloudinary.uploadBuffer(b, { folder: 'travel_v2/chat_images', resource_type: 'image' });
-            return { url: image.secure_url };
-        }
-        catch {
-            throw new BadRequestException('Tải ảnh thất bại, vui lòng thử lại');
-        }
+        return uploadToFolder(this.cloudinary, file, 'JourniTrip/chat_images');
     }
 }

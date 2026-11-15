@@ -13,7 +13,7 @@ export interface DashboardKpi {
     pendingBookings: number;
     cancelledBookings: number;
     completedBookings: number;
-    confirmedBookings: number;
+    confirmedBookings?: number;
     conversionRate: number;
 }
 export interface DashboardChartPoint {
@@ -47,7 +47,7 @@ export interface DashboardTopTour {
     priceFrom?: number;
 }
 export interface DashboardStatusBreakdown {
-    confirmed: number;
+    confirmed?: number;
     pending: number;
     paid: number;
     completed: number;

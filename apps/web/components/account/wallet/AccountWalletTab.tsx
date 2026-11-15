@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useAccountResource } from "@/lib/account/useAccountResource";
 import { getMembership } from "@/lib/membership/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { formatVND } from "@/lib/utils/currency";
+import { cleanVND, formatVND } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/dateTime";
 import type { MembershipVoucher } from "shared";
 import { AccountPageBanner } from "@/components/account/layout/AccountPageBanner";
 
@@ -16,19 +17,6 @@ const tabs: { value: WalletFilter; label: string }[] = [
   { value: "used", label: "Đã sử dụng" },
   { value: "expired", label: "Hết hạn" },
 ];
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "Asia/Ho_Chi_Minh",
-  });
-}
-
-function cleanVND(val: number | string | null | undefined) {
-  return formatVND(val).replace(/\s*đ/, "đ");
-}
 
 export function AccountWalletTab() {
   const { data, loading, error, refresh } = useAccountResource(
