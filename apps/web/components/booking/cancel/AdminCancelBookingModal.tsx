@@ -108,6 +108,15 @@ export function AdminCancelBookingModal({
 
   // Parse thông tin tài khoản nếu khách có gửi yêu cầu hủy trước đó
   const customerCancelInfo = useMemo(() => {
+    if (booking?.cancellation_meta?.cancelRequest) {
+      const cr = booking.cancellation_meta.cancelRequest;
+      return {
+        bankName: cr.bankName,
+        bankAccountNumber: cr.bankAccountNumber,
+        bankAccountName: cr.bankAccountName,
+        customerReason: cr.reason,
+      };
+    }
     if (!booking?.note) return null;
     const match = String(booking.note).match(
       /\[CUSTOMER_CANCEL_REQUEST\]([\s\S]*?)(?:\n\[|$)/i,

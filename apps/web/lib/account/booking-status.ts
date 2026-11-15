@@ -1,4 +1,4 @@
-import type { BookingItemUI } from "shared";
+import { BOOKING_PENDING_EXPIRY_MS, getCancelledBookingLabel, type BookingItemUI } from "shared";
 
 const vietnamDate = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
@@ -25,26 +25,7 @@ export function getBookingTripStatus(
 
   // 1. Đơn đã hủy: Phân loại rõ theo nguyên nhân và đối tượng hủy
   if (["cancelled", "canceled", "đã hủy", "đã huỷ"].includes(status)) {
-    const note = booking.note || "";
-    if (note.includes("[AUTO_CANCELLED_EXPIRED_15M]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Hết hạn 15p)" };
-    }
-    if (note.includes("[AUTO_CANCELLED_DEPARTED]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Quá giờ đi)" };
-    }
-    if (note.includes("[ADMIN_CANCEL_APPROVED]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Theo yêu cầu)" };
-    }
-    if (note.includes("[ADMIN_CANCEL_ACTION]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Admin)" };
-    }
-    if (note.includes("[STAFF_CANCELLED_PENDING]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Admin)" };
-    }
-    if (note.includes("[CUSTOMER_CANCELLED_PENDING]")) {
-      return { status: "cancelled", statusText: "Đã hủy (Khách hủy)" };
-    }
-    return { status: "cancelled", statusText: "Đã hủy" };
+    return { status: "cancelled", statusText: getCancelledBookingLabel(booking) };
   }
 
   // 2. Đơn đang yêu cầu hủy
@@ -61,7 +42,7 @@ export function getBookingTripStatus(
 
     if (createdAt) {
       const diffMs = now.getTime() - createdAt.getTime();
-      const fifteenMinutesMs = 15 * 60 * 1000;
+      const fifteenMinutesMs = BOOKING_PENDING_EXPIRY_MS;
 
       if (diffMs > fifteenMinutesMs || isDeparted) {
         return {

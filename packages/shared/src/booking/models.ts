@@ -49,6 +49,9 @@ export interface BookingDetail {
   contact_phone: string;
   contact_email: string;
   note?: string | null;
+  room_selection?: { type?: string; surcharge?: number } | null;
+  contact_id_card?: string | null;
+  cancellation_meta?: Record<string, unknown> | null;
   created_at: string;
   adult_count: number;
   child_count: number;

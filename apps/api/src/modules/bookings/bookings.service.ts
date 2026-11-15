@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import type { BookingPayload, CancelBookingPayload } from "shared";
+import type { BookingCancellationMeta, BookingPayload, CancelBookingPayload } from "shared";
 import { BOOKING_EXTRAS, calculateCancellationEstimate, isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipDiscount, membershipPrice, voucherAudienceAllows, voucherAudienceLabel } from "shared";
 import { customerCrewBooking } from './customer-crew';
 import { MembershipService } from "../membership/membership.service";
@@ -75,9 +75,18 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
             for (const b of expiredBookings) {
                 const totalGuests = (b.adult_count || 0) + (b.child_count || 0) + (b.infant_count || 0);
                 const isDeparted = b.tour_schedules && b.tour_schedules.start_date <= now;
-                const reasonText = isDeparted
-                    ? `[AUTO_CANCELLED_DEPARTED]\nHệ thống tự động hủy đơn do đợt khởi hành đã đến/qua ngày đi mà đơn chưa thanh toán.`
-                    : `[AUTO_CANCELLED_EXPIRED_15M]\nHệ thống tự động hủy đơn do quá thời hạn thanh toán ${olderThanMinutes} phút.`;
+                const cancelMeta: BookingCancellationMeta = {
+                    type: isDeparted ? 'expired_departure' : 'expired_15m',
+                    actor: 'Hệ thống tự động',
+                    title: isDeparted
+                        ? 'Hủy tự động do tour đã đến thời gian khởi hành'
+                        : 'Hủy tự động do hết hạn thanh toán (quá 15 phút)',
+                    reason: isDeparted
+                        ? 'Hệ thống tự động hủy đơn do đợt khởi hành đã đến/qua ngày đi mà đơn chưa thanh toán.'
+                        : `Hệ thống tự động hủy đơn do quá thời hạn thanh toán ${olderThanMinutes} phút.`,
+                    cancelledAt: new Date().toISOString(),
+                    time: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                };
 
                 try {
                     await this.prisma.$transaction(async (tx) => {
@@ -85,7 +94,7 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
                             where: { booking_id: b.booking_id, status: 'pending' },
                             data: {
                                 status: 'cancelled',
-                                note: mergeBookingNote(b.note, reasonText),
+                                cancellation_meta: cancelMeta as any,
                             },
                         });
 
@@ -492,16 +501,14 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
             const { tourDiscount, serviceDiscount } = membershipPrice(member.tier, subtotal, extras.total, voucherDiscount);
             discountAmount += tourDiscount + serviceDiscount;
             const totalAmount = Math.max(subtotal + singleRoomSurcharge + extras.total - discountAmount, 0);
-            const roomNote = dto.room_type === 'single'
-                ? `[ROOM_SELECTION]\nLoại phòng: PHÒNG ĐƠN\nPhụ thu phòng đơn: ${formatCurrency(singleRoomSurcharge)}đ`
-                : `[ROOM_SELECTION]\nLoại phòng: GHÉP PHÒNG\nPhụ thu phòng đơn: 0đ`;
-            const contactIdCardNote = dto.contact_id_card?.trim()
-                ? `\n[CCCD_LIEN_HE]: ${dto.contact_id_card.trim()}`
-                : '';
+            const roomSelection = {
+                type: dto.room_type === 'single' ? 'single' : 'shared',
+                surcharge: dto.room_type === 'single' ? singleRoomSurcharge : 0,
+            };
             const promoNote = activeSchedulePromo
                 ? `[ƯU ĐÃI ĐỢT KHỞI HÀNH]: ${appliedPromoTitle}${appliedGiftDescription ? ` (Quà tặng: ${appliedGiftDescription})` : ''}`
                 : '';
-            const mergedNote = [promoNote, dto.note?.trim(), roomNote, contactIdCardNote].filter(Boolean).join('\n\n');
+            const mergedNote = [promoNote, dto.note?.trim()].filter(Boolean).join('\n\n');
             const createdBooking = await tx.bookings.create({
                 data: {
                     user_id: dto.user_id,
@@ -522,6 +529,8 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
                     total_amount: totalAmount,
                     status: 'pending',
                     note: mergedNote,
+                    room_selection: roomSelection,
+                    contact_id_card: dto.contact_id_card?.trim() || null,
                     voucher_id: voucherId,
                     additional_services: extras.items,
                     membership_snapshot: {
@@ -728,49 +737,43 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
         const reasonText = (payload.reason || '').trim() || 'Khách hàng yêu cầu hủy tour';
 
         const isPending = booking.status === 'pending';
-        let cancelRequestLines: string[];
         let estimate: any = undefined;
 
-        if (isPending) {
-            cancelRequestLines = [
-                `[CUSTOMER_CANCEL_REQUEST]`,
-                `Lý do: ${reasonText}`,
-                `Trạng thái: Chưa thanh toán (Chờ duyệt hủy giữ chỗ)`,
-                `Số tiền đã thanh toán: 0đ`,
-                `Phí phạt hủy: 0đ`,
-                `Số tiền hoàn dự kiến: 0đ`,
-                `Thời gian gửi yêu cầu: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
-            ];
-        } else {
+        if (!isPending) {
             estimate = calculateCancellationEstimate({
                 startDate: booking.tour_schedules.start_date,
                 totalAmount: Number(booking.total_amount),
                 isPaid: true,
             });
-
-            cancelRequestLines = [
-                `[CUSTOMER_CANCEL_REQUEST]`,
-                `Lý do: ${reasonText}`,
-                `Số ngày trước khởi hành: ${estimate.daysRemaining} ngày (${estimate.hoursRemaining} giờ)`,
-                `Mức phạt hủy theo quy định: ${estimate.tier.penaltyPercent}% (${estimate.tier.title})`,
-                `Số tiền đã thanh toán: ${formatCurrency(Number(booking.total_amount))}đ`,
-                `Phí phạt hủy: ${formatCurrency(estimate.penaltyAmount)}đ`,
-                `Số tiền hoàn dự kiến: ${formatCurrency(estimate.refundAmount)}đ`,
-                ...(payload.bankAccountNumber ? [
-                    `Thông tin nhận tiền hoàn:`,
-                    `- Ngân hàng: ${payload.bankName || 'Chưa cung cấp'}`,
-                    `- Số tài khoản: ${payload.bankAccountNumber || 'Chưa cung cấp'}`,
-                    `- Chủ tài khoản: ${payload.bankAccountName || 'Chưa cung cấp'}`,
-                ] : []),
-                `Thời gian gửi yêu cầu: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
-            ];
         }
+
+        const cancellationMeta: BookingCancellationMeta = {
+            type: 'customer_cancel_request',
+            actor: 'Khách hàng',
+            title: isPending ? 'Yêu cầu hủy giữ chỗ từ khách hàng' : 'Yêu cầu hủy tour & hoàn tiền từ khách hàng',
+            reason: reasonText,
+            time: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+            refundAmount: estimate ? `${formatCurrency(estimate.refundAmount)}đ` : '0đ',
+            cancelRequest: {
+                reason: reasonText,
+                requestedAt: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                daysRemaining: estimate ? `${estimate.daysRemaining} ngày (${estimate.hoursRemaining} giờ)` : undefined,
+                tierPenalty: estimate ? `${estimate.tier.penaltyPercent}% (${estimate.tier.title})` : undefined,
+                totalPaid: isPending ? '0đ' : `${formatCurrency(Number(booking.total_amount))}đ`,
+                penaltyAmount: estimate ? `${formatCurrency(estimate.penaltyAmount)}đ` : '0đ',
+                refundEstimated: estimate ? `${formatCurrency(estimate.refundAmount)}đ` : '0đ',
+                numericRefundAmount: estimate ? estimate.refundAmount : 0,
+                bankName: payload.bankName,
+                bankAccountNumber: payload.bankAccountNumber,
+                bankAccountName: payload.bankAccountName,
+            },
+        };
 
         const updated = await this.prisma.bookings.update({
             where: { booking_id: bookingId },
             data: {
                 status: 'cancel_requested',
-                note: mergeBookingNote(booking.note, cancelRequestLines.join('\n')),
+                cancellation_meta: cancellationMeta as any,
             },
         });
 

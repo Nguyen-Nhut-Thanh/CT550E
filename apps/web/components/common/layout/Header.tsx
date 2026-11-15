@@ -63,7 +63,7 @@ export default function Header() {
       {/* Desktop Header Overlay */}
       <header
         suppressHydrationWarning
-        className={`z-[100] flex w-full items-center justify-between px-[42px] py-3.5 transition-all duration-300 max-[991px]:px-6 max-[991px]:py-3.5 ${
+        className={`z-40 flex w-full items-center justify-between px-[42px] py-3.5 transition-all duration-300 max-[991px]:px-6 max-[991px]:py-3.5 ${
           !isHome
             ? "sticky top-0 border-b border-gray-100 bg-white"
             : isScrolled
@@ -206,7 +206,7 @@ export default function Header() {
 
       {/* Mobile Menu Sidebar */}
       <div
-        className={`fixed inset-0 z-[110] lg:hidden transition-all duration-300 ${isMenuOpen ? "visible" : "invisible"}`}
+        className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${isMenuOpen ? "visible" : "invisible"}`}
       >
         <div
           className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? "opacity-100" : "opacity-0"}`}

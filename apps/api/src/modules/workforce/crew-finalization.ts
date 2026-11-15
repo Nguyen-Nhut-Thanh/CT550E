@@ -142,7 +142,7 @@ export async function finalizeCrewIfReady(
     return false;
   const previous = readCrewSnapshot(schedule.crew_snapshot);
   if (schedule.crew_locked_at && previous) {
-    await notifyCrewCustomers(tx, scheduleId, previous, now);
+    // Đã chốt nhân sự trước đó, không cần gửi thông báo lặp lại mỗi chu kỳ sweep
     return true;
   }
   const assessment = crewReadiness(schedule);

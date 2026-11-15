@@ -133,6 +133,9 @@ model bookings {
   total_amount      Decimal             @default(0) @db.Decimal(12, 2)
   status            String              @default("pending") @db.VarChar(50)
   note              String?
+  room_selection    Json?
+  contact_id_card   String?             @db.VarChar(32)
+  cancellation_meta Json?
   created_at        DateTime            @default(now()) @db.Timestamp(6)
   discount_amount   Decimal             @default(0) @db.Decimal(12, 2)
   voucher_id        Int?
@@ -148,6 +151,7 @@ model bookings {
 
   @@index([tour_schedule_id], map: "idx_bookings_schedule")
   @@index([user_id], map: "idx_bookings_user")
+  @@index([status, created_at], map: "idx_bookings_status_created")
 }
 
 model flash_deals {
@@ -471,19 +475,6 @@ model roles {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model staff_profiles {
-  staff_id      Int      @id @default(autoincrement())
-  user_id       Int
-  employee_code String   @unique @db.VarChar(20)
-  position      String   @db.VarChar(100)
-  status        Int      @default(1) @db.SmallInt
-  created_at    DateTime @default(now()) @db.Timestamp(6)
-  updated_at    DateTime @updatedAt @db.Timestamp(6)
-  users         users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([user_id, position])
-}
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model tour_destinations {
   tour_id     Int
@@ -726,6 +717,8 @@ model tours {
   schedule_template   tour_schedule_templates?
   departure_locations locations           @relation("tours_departure_location_idTolocations", fields: [departure_location], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   transports          transports          @relation(fields: [transport_id], references: [transport_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([status, tour_type], map: "idx_tours_status_type")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -777,7 +770,6 @@ model users {
   review_replies    review_replies[]
   review_likes      review_likes[]
   role_users        role_users[]
-  staff_profiles    staff_profiles[]
   posts             posts[]
   accounts          accounts         @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction)
   conversations     conversations[]

@@ -15,4 +15,3 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export { PrismaClient } from "@prisma/client";
-export { connectMongo, disconnectMongo } from "./mongodb";

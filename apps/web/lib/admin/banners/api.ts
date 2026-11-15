@@ -1,6 +1,7 @@
 import { getToken } from "@/lib/auth/session";
 import { adminFetch } from "@/lib/http/adminFetch";
 import { API_BASE } from "@/lib/http/config";
+import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
 import type { AdminBannerPayload, Banner, SeasonalThemeConfig } from 'shared';
 
 async function parseJsonResponse<T>(response: Response) {
@@ -60,22 +61,18 @@ export async function deleteAdminBanner(bannerId: string | number) {
 }
 
 export async function uploadAdminBannerImage(file: File) {
-  const formData = new FormData();
-  formData.append("file", file);
+  const data = await uploadAuthenticatedFile(
+    `${API_BASE}/banners/admin/upload`,
+    getToken() || "",
+    file,
+    "Không thể upload ảnh banner",
+  );
 
-  const response = await fetch(`${API_BASE}/banners/admin/upload`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken() || ""}`,
-    },
-    body: formData,
-  });
-
-  if(!response.ok) {
-    throw new Error("Không thể upload ảnh banner");
+  if (!data?.url) {
+    throw new Error(data?.message || "Không thể upload ảnh banner");
   }
 
-  return parseJsonResponse<{ url: string }>(response);
+  return { url: data.url };
 }
 
 export async function fetchAdminSeasonalTheme(): Promise<SeasonalThemeConfig> {

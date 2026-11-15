@@ -20,7 +20,7 @@ src/
     utils/                   # Tiện ích số và ngày
     validation/              # Kiểm tra payload và chuẩn hóa giá
   infrastructure/
-    database/                # Prisma, MongoDB và vòng đời kết nối
+    database/                # Prisma và vòng đời kết nối
     mail/                    # Gửi email và dựng nội dung email
     security/                # JwtModule dùng chung
     storage/                 # Cấu hình Cloudinary và upload buffer
@@ -47,7 +47,7 @@ dùng hậu tố tên file để nhận biết vai trò.
   công khai, endpoint xem tài khoản admin vẫn kiểm tra quyền trong handler.
 - Đăng ký service tại module sở hữu. `DatabaseModule` là global module duy
   nhất cung cấp Prisma cho các chức năng; không thêm Prisma vào providers
-  của từng module. PostgreSQL và MongoDB được khởi tạo/đóng bằng lifecycle
+  của từng module. PostgreSQL được khởi tạo/đóng bằng lifecycle
   của Nest, trước khi ứng dụng bắt đầu nhận request.
 - Các module cần gửi email hoặc upload phải import `MailModule` hoặc
   `CloudinaryModule`; không tự cấu hình lại client. Controller giữ tên thư mục

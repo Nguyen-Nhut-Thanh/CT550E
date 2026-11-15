@@ -102,9 +102,9 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
   );
 }
 
-export function getDisplayBookingNote(note?: string | null) {
-  if (!note) return "";
-  const parsed = parseBookingNote(note);
+export function getDisplayBookingNote(note?: string | null, meta?: any) {
+  if (!note && !meta) return "";
+  const parsed = parseBookingNote(note, meta);
   return parsed.customerNote;
 }
 
@@ -607,8 +607,8 @@ export function BookingDetailModal({
               </div>
 
               {/* Ghi chú, Loại phòng & Thông tin hủy */}
-              {b.note && (() => {
-                const parsed = parseBookingNote(b.note);
+              {(b.note || b.cancellation_meta || b.room_selection) && (() => {
+                const parsed = parseBookingNote(b.note, b);
                 const hasCancellation =
                   b.status === "cancel_requested" ||
                   b.status === "cancelled" ||

@@ -1,7 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
 @import "tailwindcss";
-@source "../components/admin";
-@source "../components/common";
+@source "../components";
 @source "./admin";
 
 .font-handwriting {

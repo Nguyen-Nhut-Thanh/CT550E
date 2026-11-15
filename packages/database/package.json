@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./mongodb": {
-      "types": "./dist/mongodb.d.ts",
-      "default": "./dist/mongodb.js"
     }
   },
   "scripts": {
@@ -23,8 +19,7 @@
     "prisma:push": "prisma db push --schema prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^6.15.0",
-    "mongoose": "^8.18.0"
+    "@prisma/client": "^6.15.0"
   },
   "devDependencies": {
     "prisma": "^6.15.0"

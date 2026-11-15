@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, } from "@nestjs/common";
 import type { AdminReviewQuery, AdminUpdateReviewStatusPayload, CreateReplyPayload, CreateReviewPayload, } from "shared";
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from "../../infrastructure/database/prisma.service";
@@ -210,6 +210,20 @@ export class ReviewsService {
         if (dto.rating < 1 || dto.rating > 5) {
             throw new BadRequestException("Số sao đánh giá phải từ 1 đến 5.");
         }
+
+        // Kiểm tra người dùng đã có đơn hàng hợp lệ (paid/completed) cho tour này chưa
+        const eligibleBooking = await this.prisma.bookings.findFirst({
+            where: {
+                user_id: userId,
+                tour_schedules: { tour_id: tourId },
+                status: { in: ['completed', 'paid', 'confirmed'] },
+                ...(dto.booking_id ? { booking_id: dto.booking_id } : {}),
+            },
+        });
+        if (!eligibleBooking) {
+            throw new ForbiddenException("Bạn chỉ có thể đánh giá tour sau khi đã hoàn thành hoặc thanh toán chuyến đi.");
+        }
+
         if (dto.booking_id) {
             const existingReview = await this.prisma.reviews.findFirst({
                 where: { user_id: userId, booking_id: dto.booking_id },
@@ -252,23 +266,14 @@ export class ReviewsService {
      */
     async toggleLikeReview(accountId: number, reviewId: number) {
         const userId = await getAccountUserId(this.prisma, accountId, "Không tìm thấy thông tin tài khoản người dùng.");
-        const review = await this.prisma.reviews.findUnique({
-            where: { review_id: reviewId },
-        });
-        if (!review) {
-            throw new NotFoundException("Đánh giá không tồn tại.");
-        }
-        const existingLike = await this.prisma.review_likes.findUnique({
-            where: {
-                review_id_user_id: {
-                    review_id: reviewId,
-                    user_id: userId,
-                },
-            },
-        });
-        let isLiked = false;
-        if (existingLike) {
-            await this.prisma.review_likes.delete({
+        return this.prisma.$transaction(async (tx) => {
+            const review = await tx.reviews.findUnique({
+                where: { review_id: reviewId },
+            });
+            if (!review) {
+                throw new NotFoundException("Đánh giá không tồn tại.");
+            }
+            const existingLike = await tx.review_likes.findUnique({
                 where: {
                     review_id_user_id: {
                         review_id: reviewId,
@@ -276,43 +281,59 @@ export class ReviewsService {
                     },
                 },
             });
-            await this.prisma.reviews.update({
-                where: { review_id: reviewId },
-                data: {
-                    likes_count: { decrement: 1 },
-                },
-            });
-            isLiked = false;
-        }
-        else {
-            await this.prisma.review_likes.create({
-                data: {
-                    review_id: reviewId,
-                    user_id: userId,
-                },
-            });
-            await this.prisma.reviews.update({
-                where: { review_id: reviewId },
-                data: {
-                    likes_count: { increment: 1 },
-                },
-            });
-            isLiked = true;
-        }
-        const updated = await this.prisma.reviews.findUnique({
-            where: { review_id: reviewId },
-            select: { likes_count: true },
+            if (existingLike) {
+                await tx.review_likes.delete({
+                    where: {
+                        review_id_user_id: {
+                            review_id: reviewId,
+                            user_id: userId,
+                        },
+                    },
+                });
+                const updated = await tx.reviews.update({
+                    where: { review_id: reviewId },
+                    data: {
+                        likes_count: { decrement: 1 },
+                    },
+                    select: { likes_count: true },
+                });
+                return {
+                    is_liked: false,
+                    likes_count: Math.max(0, updated.likes_count),
+                };
+            } else {
+                await tx.review_likes.create({
+                    data: {
+                        review_id: reviewId,
+                        user_id: userId,
+                    },
+                });
+                const updated = await tx.reviews.update({
+                    where: { review_id: reviewId },
+                    data: {
+                        likes_count: { increment: 1 },
+                    },
+                    select: { likes_count: true },
+                });
+                return {
+                    is_liked: true,
+                    likes_count: updated.likes_count,
+                };
+            }
         });
-        return {
-            is_liked: isLiked,
-            likes_count: updated?.likes_count ?? 0,
-        };
     }
     /**
-     * Thêm phản hồi / trả lời vào 1 đánh giá
+     * Thêm phản hồi / trả lời vào 1 đánh giá (Chỉ nhân viên hoặc Quản trị viên)
      */
     async createReply(accountId: number, reviewId: number, dto: CreateReplyPayload) {
         const userId = await getAccountUserId(this.prisma, accountId, "Không tìm thấy thông tin tài khoản người dùng.");
+        const user = await this.prisma.users.findUnique({
+            where: { user_id: userId },
+            select: { is_staff: true },
+        });
+        if (!user?.is_staff) {
+            throw new ForbiddenException("Chỉ quản trị viên hoặc nhân viên mới có quyền phản hồi đánh giá.");
+        }
         if (!dto.content || !dto.content.trim()) {
             throw new BadRequestException("Nội dung trả lời không được để trống.");
         }

@@ -21,13 +21,9 @@ import {
 import Link from "next/link";
 import { Dialog } from "@/components/common/overlays/Dialog";
 import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
-import { formatVND } from "@/lib/utils/currency";
+import { cleanVND } from "@/lib/utils/currency";
 import { useToast } from "@/lib/notifications/useToast";
 import { voucherAudienceLabel, type Voucher } from "shared";
-
-function cleanVND(val: number | string | null | undefined) {
-  return formatVND(val).replace(/\s*đ/, "đ");
-}
 
 function formatDateTime(dateStr: string) {
   const d = new Date(dateStr);
@@ -88,9 +84,9 @@ export function HomeVoucherDetailModal({
 
   return (
     <Dialog labelledBy={headingId} onClose={onClose}>
-      <section className="my-auto flex max-h-[min(88vh,660px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-2xl">
+      <section className="my-auto flex max-h-[calc(100dvh-2rem)] sm:max-h-[min(88dvh,580px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-2xl">
         {/* Modal Header */}
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3 sm:px-6 sm:py-3.5">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3 sm:px-6 sm:py-3.5 bg-white">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-xs">
               <Ticket className="h-5 w-5" />
@@ -116,12 +112,12 @@ export function HomeVoucherDetailModal({
         </header>
 
         {/* Modal Body */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-5">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-3.5 sm:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-stretch">
             {/* LEFT COLUMN: Poster Card + How To Use */}
-            <div className="md:col-span-5 flex flex-col gap-3">
+            <div className="md:col-span-5 flex flex-col gap-2.5 sm:gap-3">
               {/* Poster Card */}
-              <div className="relative min-h-[220px] sm:min-h-[240px] overflow-hidden rounded-2xl p-4 flex flex-col justify-between shadow-md">
+              <div className="relative min-h-[170px] sm:min-h-[185px] overflow-hidden rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between shadow-md">
                 {/* Background image & gradient overlay */}
                 <ImageWithFallback
                   src={bgImage}
@@ -131,36 +127,36 @@ export function HomeVoucherDetailModal({
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-blue-900/40" />
 
                 {/* Top Info */}
-                <div className="relative z-10 space-y-1.5">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600/90 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-white shadow-sm backdrop-blur-xs">
+                <div className="relative z-10 space-y-1 sm:space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600/90 px-2.5 py-0.5 text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider text-white shadow-sm backdrop-blur-xs">
                     <Sparkles size={11} className="text-amber-300" />
                     Ưu đãi du lịch
                   </span>
 
                   {/* Tên voucher hiển thị nổi bật */}
-                  <h3 className="text-base sm:text-lg font-bold text-white drop-shadow-md line-clamp-2 pt-0.5 leading-snug">
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-white drop-shadow-md line-clamp-2 pt-0.5 leading-snug">
                     {voucher.name || "Voucher Tour Du Lịch"}
                   </h3>
 
                   {/* Mức giảm to rõ */}
-                  <div className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-lg pt-0.5">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-lg pt-0.5">
                     {discountText}
                   </div>
 
                   {/* Pill điều kiện tối thiểu */}
-                  <div className="inline-block rounded-full bg-white/95 px-3 py-0.5 text-[11px] font-bold text-slate-800 shadow-sm backdrop-blur-xs mt-1">
+                  <div className="inline-block rounded-full bg-white/95 px-2.5 sm:px-3 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-slate-800 shadow-sm backdrop-blur-xs mt-0.5 sm:mt-1">
                     Đơn tối thiểu từ {cleanVND(voucher.min_order_value)}
                   </div>
                 </div>
 
                 {/* Bottom Code Box */}
-                <div className="relative z-10 rounded-xl sm:rounded-2xl border border-white/80 bg-white/95 p-2.5 px-3.5 shadow-xl backdrop-blur-md mt-3">
+                <div className="relative z-10 rounded-xl sm:rounded-2xl border border-white/80 bg-white/95 p-2 sm:p-2.5 px-3 sm:px-3.5 shadow-xl backdrop-blur-md mt-2.5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                      <span className="block text-[8.5px] sm:text-[9px] font-bold uppercase tracking-wider text-slate-400">
                         Mã voucher
                       </span>
-                      <code className="text-sm sm:text-base font-black font-mono tracking-wide text-blue-700">
+                      <code className="text-xs sm:text-sm md:text-base font-black font-mono tracking-wide text-blue-700">
                         {voucher.code}
                       </code>
                     </div>
@@ -182,12 +178,12 @@ export function HomeVoucherDetailModal({
               </div>
 
               {/* How to use Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-[#f4f9fd] p-3.5 sm:p-4 flex flex-col justify-between">
+              <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-[#f4f9fd] p-3 sm:p-3.5 flex flex-col justify-between">
                 <div>
-                  <h4 className="flex items-center gap-2 text-xs sm:text-[13px] font-bold text-slate-900 mb-2 sm:mb-2.5">
+                  <h4 className="flex items-center gap-2 text-xs sm:text-[13px] font-bold text-slate-900 mb-1.5 sm:mb-2">
                     <span className="text-blue-500">💡</span> Cách sử dụng mã giảm giá:
                   </h4>
-                  <ol className="space-y-2 text-xs text-slate-700 leading-relaxed font-medium">
+                  <ol className="space-y-1.5 text-[11.5px] sm:text-xs text-slate-700 leading-relaxed font-medium">
                     <li className="flex items-start gap-2">
                       <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white mt-0.5">
                         1
@@ -209,64 +205,64 @@ export function HomeVoucherDetailModal({
 
                 {/* Landmark watermark */}
                 <div className="pointer-events-none absolute -bottom-2 -right-2 opacity-15">
-                  <Compass size={55} className="text-blue-600" />
+                  <Compass size={50} className="text-blue-600" />
                 </div>
               </div>
             </div>
 
             {/* RIGHT COLUMN: Grid Cards */}
-            <div className="md:col-span-7 flex flex-col gap-2.5 sm:gap-3 justify-between">
+            <div className="md:col-span-7 flex flex-col gap-2 sm:gap-2.5 justify-between">
               {/* Row 1: Giá trị giảm & Đơn hàng tối thiểu */}
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Tag size={14} className="text-blue-600" />
+                    <Tag size={13} className="text-blue-600" />
                     <span>Giá trị giảm</span>
                   </div>
-                  <p className="mt-1.5 text-base sm:text-lg font-black text-slate-900">
+                  <p className="mt-1 text-sm sm:text-base font-black text-slate-900">
                     {discountText}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <ShoppingCart size={14} className="text-blue-600" />
+                    <ShoppingCart size={13} className="text-blue-600" />
                     <span>Đơn hàng tối thiểu</span>
                   </div>
-                  <p className="mt-1.5 text-base sm:text-lg font-black text-slate-900">
+                  <p className="mt-1 text-sm sm:text-base font-black text-slate-900">
                     {cleanVND(voucher.min_order_value)}
                   </p>
                 </div>
               </div>
 
               {/* Row 2: Hiệu lực từ & Hạn sử dụng đến */}
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Calendar size={14} className="text-blue-600" />
+                    <Calendar size={13} className="text-blue-600" />
                     <span>Hiệu lực từ</span>
                   </div>
-                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-slate-800">
+                  <p className="mt-1 text-[11.5px] sm:text-xs font-bold text-slate-800">
                     {formatDateTime(voucher.start_date)}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Clock size={14} className="text-blue-600" />
+                    <Clock size={13} className="text-blue-600" />
                     <span>Hạn sử dụng đến</span>
                   </div>
-                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-rose-600">
+                  <p className="mt-1 text-[11.5px] sm:text-xs font-bold text-rose-600">
                     {formatDateTime(voucher.expiry_date)}
                   </p>
                 </div>
               </div>
 
               {/* Row 3: Số lượt còn lại with Circular Progress Ring */}
-              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 px-4 flex items-center gap-4 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 px-3.5 flex items-center gap-3.5 shadow-2xs">
                 {/* SVG Donut Ring */}
-                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 36 36">
+                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90 transform" viewBox="0 0 36 36">
                     <path
                       className="text-slate-100"
                       strokeWidth="3.5"
@@ -285,69 +281,69 @@ export function HomeVoucherDetailModal({
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-xs font-black text-slate-900 leading-tight">
+                    <span className="text-[11px] font-black text-slate-900 leading-tight">
                       {remainingPercent}%
                     </span>
-                    <span className="text-[8.5px] font-semibold text-slate-500 leading-tight">
+                    <span className="text-[8px] font-semibold text-slate-500 leading-tight">
                       Còn lại
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">
+                  <span className="text-[11px] sm:text-xs font-semibold text-slate-500">
                     Số lượt còn lại
                   </span>
-                  <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+                  <p className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
                     {remainingCount} / {voucher.usage_limit} lượt
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[10.5px] text-slate-500">
                     (Đã dùng {usagePercent}%)
                   </p>
                 </div>
               </div>
 
               {/* Row 4: Giới hạn mỗi khách hàng & Đối tượng áp dụng */}
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Users size={14} className="text-blue-600" />
+                    <Users size={13} className="text-blue-600" />
                     <span>Giới hạn mỗi khách hàng</span>
                   </div>
-                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-slate-900">
+                  <p className="mt-1 text-[11.5px] sm:text-xs font-bold text-slate-900">
                     {voucher.usage_limit_per_user || 1} lần / tài khoản
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+                <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <Globe size={14} className="text-blue-600" />
+                    <Globe size={13} className="text-blue-600" />
                     <span>Đối tượng áp dụng</span>
                   </div>
-                  <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-blue-700">
+                  <p className="mt-1 text-[11.5px] sm:text-xs font-bold text-blue-700">
                     {audienceText}
                   </p>
                 </div>
               </div>
 
               {/* Row 5: Phạm vi tour */}
-              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-3 sm:p-3.5 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#fbfdff] p-2.5 sm:p-3 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                  <Plane size={14} className="text-blue-600" />
+                  <Plane size={13} className="text-blue-600" />
                   <span>Phạm vi tour</span>
                 </div>
-                <p className="mt-1 text-xs sm:text-[13px] font-bold text-slate-800">
+                <p className="mt-1 text-[11.5px] sm:text-xs font-bold text-slate-800">
                   {scopeLabel}
                 </p>
               </div>
 
               {/* Row 6: Lưu ý quan trọng */}
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3 sm:p-3.5">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-2.5 sm:p-3">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                  <Info size={14} className="text-blue-600" />
+                  <Info size={13} className="text-blue-600" />
                   <span>Lưu ý quan trọng</span>
                 </div>
-                <p className="mt-1 text-[11.5px] text-slate-600 leading-relaxed">
+                <p className="mt-1 text-[11px] text-slate-600 leading-relaxed">
                   Voucher chỉ áp dụng cho các tour thuộc phạm vi và điều kiện nêu trên.
                   {voucher.discount_type === "percentage" && voucher.max_discount_amount !== null && (
                     <> Mức giảm tối đa là {cleanVND(voucher.max_discount_amount)} cho mỗi đơn hàng.</>
@@ -359,11 +355,11 @@ export function HomeVoucherDetailModal({
         </div>
 
         {/* Modal Footer Actions */}
-        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50/40">
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-2.5 sm:px-6 sm:py-3 bg-slate-50/40">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-300 bg-white px-6 py-2 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-2 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50"
           >
             Đóng
           </button>

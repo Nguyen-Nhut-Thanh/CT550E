@@ -1,7 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-import { MongoConnectionService } from './mongo-connection.service';
 import { PrismaService } from './prisma.service';
 @Global()
-@Module({ providers: [PrismaService, MongoConnectionService], exports: [PrismaService] })
+@Module({ providers: [PrismaService], exports: [PrismaService] })
 export class DatabaseModule {
 }

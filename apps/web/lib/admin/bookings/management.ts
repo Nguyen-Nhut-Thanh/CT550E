@@ -1,4 +1,9 @@
-import type { AdminBooking, AdminBookingFilters, AdminBookingStats } from "shared";
+import {
+  getCancelledBookingLabel,
+  type AdminBooking,
+  type AdminBookingFilters,
+  type AdminBookingStats,
+} from "shared";
 
 export const BOOKING_STATUSES = [
   { value: "all", label: "Tất cả trạng thái" }, { value: "pending", label: "Chờ thanh toán" },
@@ -15,14 +20,13 @@ export function parseBookingStats(value: unknown): AdminBookingStats | null {
   }
   return value as AdminBookingStats;
 }
-export function getBookingStatusLabel(status: string, note?: string | null) {
-  if (status === "cancelled" && note) {
-    if (note.includes("[AUTO_CANCELLED_EXPIRED_15M]")) return "Đã hủy (Hết hạn 15p)";
-    if (note.includes("[AUTO_CANCELLED_DEPARTED]")) return "Đã hủy (Quá giờ đi)";
-    if (note.includes("[ADMIN_CANCEL_APPROVED]")) return "Đã hủy (Theo yêu cầu)";
-    if (note.includes("[ADMIN_CANCEL_ACTION]")) return "Đã hủy (Admin)";
-    if (note.includes("[STAFF_CANCELLED_PENDING]")) return "Đã hủy (Admin)";
-    if (note.includes("[CUSTOMER_CANCELLED_PENDING]")) return "Đã hủy (Khách hủy)";
+export function getBookingStatusLabel(
+  status: string,
+  noteOrBooking?: string | null | { note?: string | null; cancellation_meta?: any },
+  meta?: any,
+) {
+  if (status === "cancelled") {
+    return getCancelledBookingLabel(noteOrBooking, meta);
   }
   return BOOKING_STATUSES.find(option => option.value === status)?.label ?? status;
 }
@@ -33,6 +37,6 @@ export function formatBookingDate(value?: string | null, time = false) {
   return time ? date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 export function buildBookingsCsv(items: AdminBooking[]) {
-  const rows = [["Mã booking", "Khách hàng", "SĐT", "Mã tour", "Ngày đi", "Số người", "Tổng tiền", "Trạng thái", "Ngày đặt"], ...items.map(item => [item.booking_id, item.contact_name ?? "", item.contact_phone ?? "", item.tour_schedules?.tours?.code ?? "", formatBookingDate(item.tour_schedules?.start_date), getBookingGuestCount(item), item.total_amount ?? 0, getBookingStatusLabel(item.status), formatBookingDate(item.created_at)])];
+  const rows = [["Mã booking", "Khách hàng", "SĐT", "Mã tour", "Ngày đi", "Số người", "Tổng tiền", "Trạng thái", "Ngày đặt"], ...items.map(item => [item.booking_id, item.contact_name ?? "", item.contact_phone ?? "", item.tour_schedules?.tours?.code ?? "", formatBookingDate(item.tour_schedules?.start_date), getBookingGuestCount(item), item.total_amount ?? 0, getBookingStatusLabel(item.status, item), formatBookingDate(item.created_at)])];
   return "\uFEFF" + rows.map(row => row.map(cell => `"${String(cell).replace(/^[\s]*[=+@-]/, "'$&").replaceAll('"', '""')}"`).join(",")).join("\r\n");
 }

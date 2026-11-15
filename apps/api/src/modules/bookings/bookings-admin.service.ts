@@ -3,7 +3,7 @@ import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { formatCurrency, mergeBookingNote, resolveRollbackStatus } from "./booking.helpers";
 import { sendBookingNotification } from "./booking-notifications";
-import type { AdminBookingFilters } from "shared";
+import type { AdminBookingFilters, BookingCancellationMeta } from "shared";
 import { buildBookingListWhere } from "./booking-list";
 import { BookingsService } from "./bookings.service";
 @Injectable()
@@ -147,19 +147,28 @@ export class BookingsAdminService {
             ? Math.max(refundAmount, 0)
             : null;
         const updated = await this.prisma.$transaction(async (tx: any) => {
-            const approvalLines = ['[ADMIN_CANCEL_APPROVED]'];
-            if (adminNote) {
-                approvalLines.push(`Ghi chú: ${adminNote}`);
-            }
-            if (normalizedRefundAmount !== null) {
-                approvalLines.push(`Số tiền hoàn dự kiến: ${formatCurrency(normalizedRefundAmount)}đ`);
-            }
-            approvalLines.push(`Thời gian duyệt: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
+            const existingMeta = (booking.cancellation_meta as BookingCancellationMeta) || {};
+            const cancellationMeta: BookingCancellationMeta = {
+                ...existingMeta,
+                type: 'customer_request_approved',
+                actor: 'Khách hàng',
+                title: 'Hủy theo yêu cầu của khách hàng (Ban quản trị đã duyệt)',
+                reason: existingMeta.cancelRequest?.reason || existingMeta.reason || 'Khách hàng gửi yêu cầu hủy và đã được Ban quản trị phê duyệt',
+                time: existingMeta.cancelRequest?.requestedAt || existingMeta.time || new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                cancelledAt: new Date().toISOString(),
+                refundAmount: normalizedRefundAmount !== null ? `${formatCurrency(normalizedRefundAmount)}đ` : existingMeta.refundAmount,
+                note: adminNote || undefined,
+                adminApproval: {
+                    approvedAt: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                    note: adminNote || undefined,
+                    refundAmount: normalizedRefundAmount !== null ? `${formatCurrency(normalizedRefundAmount)}đ` : undefined,
+                },
+            };
             const claimed = await tx.bookings.updateMany({
                 where: { booking_id: bookingId, status: 'cancel_requested' },
                 data: {
                     status: 'cancelled',
-                    note: mergeBookingNote(booking.note, approvalLines.join('\n')),
+                    cancellation_meta: cancellationMeta as any,
                 },
             });
             if (claimed.count !== 1) throw new BadRequestException('Yêu cầu hủy này đã được xử lý.');
@@ -232,11 +241,20 @@ export class BookingsAdminService {
                 payments: { where: { status: { in: ['completed', 'review'] } }, orderBy: { payment_id: 'desc' }, take: 1 },
             } });
             if (current.status !== 'cancel_requested') throw new BadRequestException('Yêu cầu hủy này đã được xử lý.');
+            const existingMeta = (current.cancellation_meta as BookingCancellationMeta) || {};
+            const cancellationMeta: BookingCancellationMeta = {
+                ...existingMeta,
+                type: 'admin_cancel_rejected',
+                adminRejection: {
+                    rejectedAt: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                    note: adminNote || undefined,
+                },
+            };
             return tx.bookings.update({
                 where: { booking_id: bookingId },
                 data: {
                     status: resolveRollbackStatus(current.payments[0]?.status),
-                    note: adminNote ? mergeBookingNote(current.note, `[ADMIN_CANCEL_REJECTED]\nGhi chú: ${adminNote}`) : current.note,
+                    cancellation_meta: cancellationMeta as any,
                 },
             });
         });
@@ -278,14 +296,21 @@ export class BookingsAdminService {
 
         const totalGuests = (booking.adult_count || 0) + (booking.child_count || 0) + (booking.infant_count || 0);
         const cancelReason = reason?.trim() || 'Nhân viên hủy do khách xác nhận không đi / quá hạn giữ chỗ';
-        const noteLine = `[STAFF_CANCELLED_PENDING]\nLý do: ${cancelReason}\nThời gian: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`;
+        const cancellationMeta: BookingCancellationMeta = {
+            type: 'staff_cancelled_pending',
+            actor: 'Ban quản trị / Nhân viên',
+            title: 'Hủy đơn giữ chỗ bởi Nhân viên điều hành',
+            reason: cancelReason,
+            cancelledAt: new Date().toISOString(),
+            time: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+        };
 
         return this.prisma.$transaction(async (tx) => {
             const updated = await tx.bookings.update({
                 where: { booking_id: bookingId },
                 data: {
                     status: 'cancelled',
-                    note: mergeBookingNote(booking.note, noteLine),
+                    cancellation_meta: cancellationMeta as any,
                 },
             });
 
@@ -394,20 +419,24 @@ export class BookingsAdminService {
                 throw new BadRequestException(`Đợt khởi hành mới chỉ còn ${remainingSlots} chỗ, không đủ cho ${totalGuests} khách.`);
             }
 
-            const actionLines = ['[ADMIN_RESCHEDULE_ACTION]'];
-            actionLines.push(`Hình thức: Dời lịch khởi hành (Khách bảo lưu 100% tiền tour)`);
-            actionLines.push(`Lý do: ${cancelReason}`);
-            actionLines.push(`Từ đợt: #${booking.tour_schedule_id} (${booking.tour_schedules?.start_date ? new Date(booking.tour_schedules.start_date).toLocaleDateString('vi-VN') : ''})`);
-            actionLines.push(`Sang đợt: #${newScheduleId} (${newSchedule.start_date ? new Date(newSchedule.start_date).toLocaleDateString('vi-VN') : ''})`);
-            if (adminNote) actionLines.push(`Ghi chú: ${adminNote}`);
-            actionLines.push(`Thời gian xử lý: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
+            const existingMeta = (booking.cancellation_meta as BookingCancellationMeta) || {};
+            const cancellationMeta: BookingCancellationMeta = {
+                ...existingMeta,
+                reschedule: {
+                    oldScheduleId: booking.tour_schedule_id,
+                    newScheduleId,
+                    reason: cancelReason,
+                    note: adminNote || undefined,
+                    rescheduledAt: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                },
+            };
 
             const updated = await this.prisma.$transaction(async (tx) => {
                 const res = await tx.bookings.update({
                     where: { booking_id: bookingId },
                     data: {
                         tour_schedule_id: newScheduleId,
-                        note: mergeBookingNote(booking.note, actionLines.join('\n')),
+                        cancellation_meta: cancellationMeta as any,
                     },
                 });
 
@@ -468,26 +497,31 @@ export class BookingsAdminService {
             ? Math.max(refundAmount, 0)
             : defaultRefund;
 
-        const actionLines = ['[ADMIN_CANCEL_ACTION]'];
-        actionLines.push(isOperatorFault
-            ? 'Loại hủy: Sự cố / Bất khả kháng / Phía công ty (Miễn phí phạt 100%)'
-            : 'Loại hủy: Theo yêu cầu của khách hàng (Áp dụng chính sách hủy tour)'
-        );
-        actionLines.push(`Lý do hủy: ${cancelReason}`);
-        if (adminNote) {
-            actionLines.push(`Ghi chú: ${adminNote}`);
-        }
-        if (targetRefund !== undefined && targetRefund !== null) {
-            actionLines.push(`Số tiền hoàn: ${formatCurrency(targetRefund)}đ`);
-        }
-        actionLines.push(`Thời gian hủy: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
+        const cancellationMeta: BookingCancellationMeta = {
+            type: 'admin_cancelled',
+            actor: 'Ban quản trị / Nhân viên',
+            title: 'Hủy bởi Ban quản trị / Bộ phận điều hành',
+            reason: cancelReason,
+            cancelledAt: new Date().toISOString(),
+            time: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+            refundAmount: targetRefund !== undefined && targetRefund !== null ? `${formatCurrency(targetRefund)}đ` : undefined,
+            note: adminNote || undefined,
+            adminAction: {
+                cancelType,
+                reason: cancelReason,
+                note: adminNote || undefined,
+                refundAmount: targetRefund !== undefined && targetRefund !== null ? `${formatCurrency(targetRefund)}đ` : undefined,
+                time: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                cancelledAt: new Date().toISOString(),
+            },
+        };
 
         const updated = await this.prisma.$transaction(async (tx) => {
             const res = await tx.bookings.update({
                 where: { booking_id: bookingId },
                 data: {
                     status: 'cancelled',
-                    note: mergeBookingNote(booking.note, actionLines.join('\n')),
+                    cancellation_meta: cancellationMeta as any,
                 },
             });
 

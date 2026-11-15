@@ -57,7 +57,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 export function BookingDetailView({ booking: b }: { booking: BookingDetail }) {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const parsedNote = parseBookingNote(b.note);
+  const parsedNote = parseBookingNote(b.note, b);
   const isPast = b.tour_schedules?.start_date
     ? new Date(b.tour_schedules.start_date).getTime() <= Date.now()
     : false;

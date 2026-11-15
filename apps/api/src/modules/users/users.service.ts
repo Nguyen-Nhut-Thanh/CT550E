@@ -24,7 +24,7 @@ export class UsersService {
                         provider: true,
                     },
                 },
-                staff_profiles: true,
+                employee_profile: true,
                 role_users: {
                     include: {
                         roles: true,
@@ -48,7 +48,7 @@ export class UsersService {
                         provider: true,
                     },
                 },
-                staff_profiles: true,
+                employee_profile: true,
                 role_users: {
                     include: {
                         roles: true,
@@ -79,7 +79,6 @@ export class UsersService {
         if (await this.prisma.employee_profiles.findUnique({ where: { user_id: userId } })) throw new BadRequestException('Nhân viên có hồ sơ nhân sự. Hãy ngưng hoạt động để giữ lịch sử phân công thay vì xóa tài khoản.');
         const user = await this.findUserAccountOrThrow(userId);
         return this.prisma.$transaction(async (tx) => {
-            await tx.staff_profiles.deleteMany({ where: { user_id: userId } });
             await tx.role_users.deleteMany({ where: { user_id: userId } });
             await tx.favorites.deleteMany({ where: { user_id: userId } });
             await tx.reviews.deleteMany({ where: { user_id: userId } });

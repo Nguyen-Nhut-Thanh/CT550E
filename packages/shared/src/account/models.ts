@@ -26,6 +26,7 @@ export type AccountBooking = {
     status: string;
     created_at?: string | Date;
     note?: string | null;
+    cancellation_meta?: import("../admin/schedules/manifest").BookingCancellationMeta | Record<string, unknown> | null;
     total_amount: number | string;
     adult_count: number;
     child_count: number;

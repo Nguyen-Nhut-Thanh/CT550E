@@ -3,13 +3,9 @@
 import { useState } from "react";
 import { Check, Copy, Sparkles, Tag, Ticket, ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { formatVND } from "@/lib/utils/currency";
+import { cleanVND } from "@/lib/utils/currency";
 import { useToast } from "@/lib/notifications/useToast";
 import type { Voucher } from "shared";
-
-function cleanVND(val: number | string | null | undefined) {
-  return formatVND(val).replace(/\s*đ/, "đ");
-}
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("vi-VN", {

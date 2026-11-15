@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
 import type { FlashDealItem, FlashDealPayload, FlashDealTourRecord } from 'shared';
+import { applyDiscount } from 'shared';
 import { slugify } from "shared";
 import { toNumber } from "../../common/utils/numbers";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -32,6 +33,20 @@ export class FlashDealsService {
             status: data.status !== undefined ? Number(data.status) : undefined,
         };
     }
+    private validateFlashDeal(discountType?: string, discountValue?: number, schedulePrice?: number) {
+        if (discountType !== undefined && !['percentage', 'fixed_amount', 'fixed'].includes(discountType)) {
+            throw new BadRequestException('discount_type không hợp lệ, phải là percentage hoặc fixed_amount/fixed');
+        }
+        if (discountValue !== undefined && discountValue <= 0) {
+            throw new BadRequestException('discount_value phải lớn hơn 0');
+        }
+        if (discountType === 'percentage' && discountValue !== undefined && discountValue > 100) {
+            throw new BadRequestException('Phần trăm giảm không được vượt quá 100%');
+        }
+        if (discountType !== 'percentage' && discountValue !== undefined && schedulePrice !== undefined && schedulePrice > 0 && discountValue >= schedulePrice) {
+            throw new BadRequestException('Giảm giá không được lớn hơn hoặc bằng giá gốc của lịch trình');
+        }
+    }
     async findAllAdmin() {
         return this.prisma.tour_schedules.findMany({
             include: {
@@ -63,6 +78,7 @@ export class FlashDealsService {
             throw new BadRequestException('Lịch khởi hành này đã có flash deal rồi');
         }
         const schedule = await this.ensureScheduleExists(payload.tour_schedule_id!);
+        this.validateFlashDeal(payload.discount_type, payload.discount_value, Number(schedule.price || 0));
         const startDate = payload.start_date || new Date();
         return this.prisma.flash_deals.create({
             data: {
@@ -76,9 +92,22 @@ export class FlashDealsService {
         });
     }
     async update(id: number, data: FlashDealPayload) {
+        const payload = this.normalizePayload(data);
+        const existing = await this.prisma.flash_deals.findUnique({
+            where: { deal_id: id },
+            include: { tour_schedules: true },
+        });
+        if (!existing) {
+            throw new NotFoundException('Không tìm thấy flash deal');
+        }
+        const discountType = payload.discount_type ?? existing.discount_type;
+        const discountValue = payload.discount_value ?? Number(existing.discount_value);
+        const schedulePrice = Number(existing.tour_schedules?.price || 0);
+        this.validateFlashDeal(discountType, discountValue, schedulePrice);
+
         return this.prisma.flash_deals.update({
             where: { deal_id: id },
-            data: this.normalizePayload(data),
+            data: payload,
         });
     }
     async remove(id: number) {
@@ -131,17 +160,11 @@ export class FlashDealsService {
             const schedule = deal.tour_schedules;
             const tour = schedule.tours as FlashDealTourRecord;
             const originalPrice = toNumber(schedule.tour_schedule_prices[0]?.price ?? schedule.price);
-            let salePrice = originalPrice;
-            let discountPercent = 0;
-            if (deal.discount_type === 'percentage') {
-                discountPercent = toNumber(deal.discount_value);
-                salePrice = this.roundToThousand(originalPrice * (1 - discountPercent / 100));
-            }
-            else {
-                const discountAmount = toNumber(deal.discount_value);
-                salePrice = originalPrice - discountAmount;
-                discountPercent = Math.round((discountAmount / originalPrice) * 100);
-            }
+            const discountValue = toNumber(deal.discount_value);
+            const salePrice = this.roundToThousand(applyDiscount(originalPrice, deal.discount_type, discountValue));
+            const discountPercent = deal.discount_type === 'percentage'
+                ? discountValue
+                : (originalPrice > 0 ? Math.round((discountValue / originalPrice) * 100) : 0);
             const seatsLeft = Math.max(toNumber(schedule.quota) - toNumber(schedule.booked_count), 0);
             const slug = slugify(tour.name);
             return {
@@ -164,7 +187,7 @@ export class FlashDealsService {
                 seats_left: seatsLeft,
                 discount_percent: discountPercent,
                 countdown_to: deal.end_date.toISOString(),
-                link: `/tours/${tour.tour_id}-${slug}`,
+                link: `/tours/${tour.tour_id}`,
                 promotion_info: schedule.tour_schedule_amenities[0]?.content || null,
                 transport_type: tour.transports?.name || null,
             };

@@ -48,8 +48,21 @@ export type { ScheduleAdminPayload, ScheduleItineraryPayload, SchedulePricePaylo
 export type { SchedulePickupPoint } from "./tours/models";
 export type { ItineraryFormItem, ScheduleFormState, SchedulePriceItem } from "./admin/schedules/forms";
 export type { AdminSchedule, HotelItem, RoomTypeItem, ScheduleDetailResponse, ScheduleEditorScheduleDetailResponse, ScheduleHotelItem, ScheduleLike, ScheduleManagementItem, ScheduleOverviewTour, ScheduleTablePanelTour, TourInfo, TransportItem } from "./admin/schedules/models";
-export type { ManifestTraveler, ManifestBookingGroup, ScheduleManifestResponse, ParsedBookingNote, BookingCancellationInfo } from "./admin/schedules/manifest";
-export { parseBookingNote } from "./admin/schedules/manifest";
+export type {
+    ManifestTraveler,
+    ManifestBookingGroup,
+    ScheduleManifestResponse,
+    ParsedBookingNote,
+    BookingCancellationInfo,
+    BookingCancellationMeta,
+    BookingCancelRequestDetails,
+    BookingAdminApprovalDetails,
+    BookingAdminRejectionDetails,
+    BookingAdminActionDetails,
+    BookingRescheduleDetails,
+    BookingMetadataSource,
+} from "./admin/schedules/manifest";
+export { parseBookingNote, getCancelledBookingLabel, CANCELLATION_STATUS_LABELS } from "./admin/schedules/manifest";
 export type { SchedulePromotion, SaveSchedulePromotionPayload, SchedulePromotionSummary } from "./admin/schedules/promotions";
 export type { ScheduleBasicInfoCardProps, ScheduleItinerarySectionProps, ScheduleSidebarProps, ScheduleStartFieldsProps, ScheduleTablePanelProps, TourListPanelProps } from "./admin/schedules/props";
 export type { AdminHotel, HotelPayload, AdminHotelRoomType, RoomTypePayload, AdminTransport, TransportPayload, AdminProvider, ProviderPayload } from "./admin/services/models";
@@ -68,7 +81,7 @@ export type { GoogleAuthSectionProps, GoogleCredentialResponse } from "./auth/pr
 export type { AuthAccountWithUser, AuthRequest, AuthRequestUser, JwtRequest } from "./auth/server";
 export type { Banner, SeasonType, SeasonMode, SeasonalThemeConfig } from "./banners/models";
 export type { BlogHeroProps, RelatedPost } from "./blog/types";
-export { BOOKING_EXTRAS } from "./booking/constants";
+export { BOOKING_EXTRAS, BOOKING_PENDING_EXPIRY_MINUTES, BOOKING_PENDING_EXPIRY_MS } from "./booking/constants";
 export { isValidVietnamesePhone, isValidEmail, isValidCitizenId } from "./booking/validation";
 export {
   DEFAULT_CANCELLATION_TIERS,
@@ -125,6 +138,7 @@ export type { BookingDetail } from "./booking/models";
 export type { PaymentResultStatus, PaymentStatusResponse, PaymentUrlResponse } from "./booking/payment";
 export { TOUR_AMENITY_DEFINITIONS, copyTourAmenities } from './tours/amenities';
 export type { TourAmenity, TourAmenityKind, ScheduleAmenity } from './tours/amenities';
+export { applyDiscount } from "./tours/pricing";
 export { getTourNightRange, isValidTourDuration } from './tours/duration';
 export { MAX_TOUR_IMAGES } from './tours/images';
 export { getDayTransport } from "./admin/schedules/transports";

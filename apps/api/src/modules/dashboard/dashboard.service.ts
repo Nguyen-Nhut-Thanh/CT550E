@@ -140,28 +140,19 @@ export class DashboardService {
                 },
                 orderBy: { created_at: 'asc' },
             }),
-            // Top tour có lượt đặt cao nhất
-            this.prisma.tours.findMany({
-
-                include: {
-                    tour_images: {
-                        where: { is_cover: 1 },
-                        take: 1,
-                        select: { image_url: true },
-                    },
-                    tour_schedules: {
-                        include: {
-                            bookings: {
-                                where: { created_at: { gte: startDate, lte: now }, status: { not: 'cancelled' } },
-                                select: {
-                                    total_amount: true,
-                                    status: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            }),
+            // Top tour có lượt đặt cao nhất (thống kê tổng hợp tối ưu qua SQL)
+            this.prisma.$queryRaw<{ tour_id: number; bookings_count: number; revenue: number }[]>`
+                SELECT
+                    ts.tour_id,
+                    COUNT(b.booking_id)::int AS bookings_count,
+                    COALESCE(SUM(CASE WHEN b.status IN ('completed', 'confirmed', 'paid') THEN b.total_amount ELSE 0 END), 0)::numeric AS revenue
+                FROM bookings b
+                JOIN tour_schedules ts ON ts.tour_schedule_id = b.tour_schedule_id
+                WHERE b.created_at >= ${startDate} AND b.created_at <= ${now} AND b.status NOT IN ('cancelled', 'canceled')
+                GROUP BY ts.tour_id
+                ORDER BY bookings_count DESC, revenue DESC
+                LIMIT 10
+            `,
         ]);
         const totalRevenue = Number(currentRevenueAgg._sum.total_amount || 0);
         const prevRevenue = Number(prevRevenueAgg._sum.total_amount || 0);
@@ -230,31 +221,61 @@ export class DashboardService {
             status: b.status,
             paxCount: (b.adult_count || 1) + (b.child_count || 0) + (b.infant_count || 0),
         }));
-        // Xử lý top tour
+        // Xử lý top tour (đã tổng hợp từ SQL)
+        const topTourIds = topToursRaw.map(s => s.tour_id);
+        const topToursDetails = topTourIds.length > 0 ? await this.prisma.tours.findMany({
+            where: { tour_id: { in: topTourIds } },
+            include: {
+                tour_images: {
+                    where: { is_cover: 1 },
+                    take: 1,
+                    select: { image_url: true },
+                },
+            },
+        }) : [];
+        const topToursMap = new Map(topToursDetails.map(t => [t.tour_id, t]));
         const topTours: DashboardTopTour[] = topToursRaw
-            .map((t) => {
-            let tourBookingsCount = 0;
-            let tourRevenue = 0;
-            for (const schedule of t.tour_schedules) {
-                for (const booking of schedule.bookings) {
-                    tourBookingsCount++;
-                    if (this.revenueStatuses.includes(booking.status as any)) {
-                        tourRevenue += Number(booking.total_amount || 0);
-                    }
-                }
+            .map((s): DashboardTopTour | null => {
+                const t = topToursMap.get(s.tour_id);
+                if (!t) return null;
+                return {
+                    tourId: t.tour_id,
+                    name: t.name,
+                    code: t.code,
+                    featuredImage: t.tour_images[0]?.image_url || null,
+                    bookingsCount: s.bookings_count,
+                    revenue: Number(s.revenue || 0),
+                    rating: Number(t.rating_avg || 5.0),
+                    priceFrom: Number(t.base_price || 0),
+                };
+            })
+            .filter((t): t is DashboardTopTour => t !== null);
+
+        if (topTours.length === 0) {
+            const fallbackTours = await this.prisma.tours.findMany({
+                where: { status: 1 },
+                take: 5,
+                include: {
+                    tour_images: {
+                        where: { is_cover: 1 },
+                        take: 1,
+                        select: { image_url: true },
+                    },
+                },
+            });
+            for (const t of fallbackTours) {
+                topTours.push({
+                    tourId: t.tour_id,
+                    name: t.name,
+                    code: t.code,
+                    featuredImage: t.tour_images[0]?.image_url || null,
+                    bookingsCount: 0,
+                    revenue: 0,
+                    rating: Number(t.rating_avg || 5.0),
+                    priceFrom: Number(t.base_price || 0),
+                });
             }
-            return {
-                tourId: t.tour_id,
-                name: t.name,
-                code: t.code,
-                featuredImage: t.tour_images[0]?.image_url || null,
-                bookingsCount: tourBookingsCount,
-                revenue: tourRevenue,
-                rating: Number(t.rating_avg || 5.0),
-                priceFrom: Number(t.base_price || 0),
-            };
-        })
-            .sort((a, b) => b.bookingsCount - a.bookingsCount || b.revenue - a.revenue || a.tourId - b.tourId);
+        }
         return {
             timeRange: range,
             kpis,
@@ -555,7 +576,8 @@ export class DashboardService {
             // 7. Giao dịch VNPAY thành công
             this.prisma.payments.aggregate({
                 where: {
-                    status: 'success',
+                    method: 'vnpay',
+                    status: 'completed',
                     paid_at: { gte: startDate, lte: endDate },
                 },
                 _count: true,
@@ -620,9 +642,9 @@ export class DashboardService {
             staffProfiles,
             crewAssignments,
         ] = await Promise.all([
-            this.prisma.staff_profiles.count(),
-            this.prisma.staff_profiles.count({ where: { status: 1 } }),
-            this.prisma.staff_profiles.findMany({
+            this.prisma.employee_profiles.count(),
+            this.prisma.employee_profiles.count({ where: { status: 'active' } }),
+            this.prisma.employee_profiles.findMany({
                 select: { position: true, status: true },
             }),
             this.prisma.schedule_crew.findMany({
@@ -685,6 +707,7 @@ export class DashboardService {
         const [
             voucherAgg,
             vouchersActive,
+            voucherDiscountAgg,
             reviewsCount,
             reviewsRatingAgg,
             reviewsGrouped,
@@ -694,6 +717,13 @@ export class DashboardService {
                 _sum: { used_count: true },
             }),
             this.prisma.vouchers.count({ where: { status: 1 } }),
+            this.prisma.bookings.aggregate({
+                where: {
+                    voucher_id: { not: null },
+                    status: { in: [...this.revenueStatuses] },
+                },
+                _sum: { discount_amount: true },
+            }),
             this.prisma.reviews.count(),
             this.prisma.reviews.aggregate({
                 _avg: { rating: true },
@@ -838,6 +868,7 @@ export class DashboardService {
             bronze: 'Đồng',
             silver: 'Bạc',
             gold: 'Vàng',
+            platinum: 'Bạch Kim',
             diamond: 'Kim Cương',
         };
         const byTier = usersByTier.map((t) => ({
@@ -930,7 +961,7 @@ export class DashboardService {
                 vouchers: {
                     totalIssued: voucherAgg._count || 0,
                     totalUsed: Number(voucherAgg._sum.used_count || 0),
-                    totalDiscountAmount: 0,
+                    totalDiscountAmount: Number(voucherDiscountAgg._sum.discount_amount || 0),
                     activeCount: vouchersActive,
                 },
                 reviews: {

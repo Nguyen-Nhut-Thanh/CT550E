@@ -7,6 +7,9 @@ export type AdminBooking = {
     services_total?: number | string | null;
     additional_services?: Array<{ id: string; name: string; quantity: number; unit_price: number; amount: number }> | null;
     note?: string | null;
+    room_selection?: { type?: string; surcharge?: number } | null;
+    contact_id_card?: string | null;
+    cancellation_meta?: Record<string, unknown> | null;
     contact_name?: string | null;
     contact_phone?: string | null;
     contact_email?: string | null;

@@ -1,6 +1,6 @@
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { disconnectMongo, prisma } from 'database';
+import { prisma } from 'database';
 import { AppModule } from './app.module';
 import { getCorsOrigins } from './config/cors';
 export async function bootstrap(): Promise<void> {
@@ -19,7 +19,7 @@ export async function bootstrap(): Promise<void> {
         if (app)
             await app.close().catch(closeError => logger.error('Không thể đóng API', closeError));
         // Also release clients if application creation failed before hooks were registered.
-        await Promise.allSettled([prisma.$disconnect(), disconnectMongo()]);
+        await prisma.$disconnect().catch(() => undefined);
         process.exitCode = 1;
     }
 }

@@ -109,17 +109,23 @@ export class LocationsAdminService {
         excludeId?: number,
     ) {
         const baseSlug = slug.trim() || `location-${levelId}`;
-        let candidate = baseSlug;
-        let suffix = 1;
-        while (await db.locations.findFirst({
+        const existing = await db.locations.findMany({
             where: {
-                slug: candidate,
+                slug: { startsWith: baseSlug },
                 location_id: excludeId ? { not: excludeId } : undefined,
             },
-            select: { location_id: true },
-        })) {
-            candidate = `${baseSlug}-${levelId}${suffix > 1 ? `-${suffix}` : ''}`;
+            select: { slug: true },
+        });
+        const taken = new Set(existing.map((item) => item.slug));
+        if (!taken.has(baseSlug)) {
+            return baseSlug;
+        }
+
+        let candidate = `${baseSlug}-${levelId}`;
+        let suffix = 1;
+        while (taken.has(candidate)) {
             suffix += 1;
+            candidate = `${baseSlug}-${levelId}-${suffix}`;
         }
         return candidate;
     }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, } from '@nestjs/common';
 import type { ScheduleAdminPayload } from 'shared';
-import { getScheduleEditRestriction, getSchedulePickupTimeError } from 'shared';
+import { BOOKING_PENDING_EXPIRY_MS, getScheduleEditRestriction, getSchedulePickupTimeError } from 'shared';
 import { requireFields, validatePrice } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
@@ -518,7 +518,6 @@ export class SchedulesAdminService {
             throw new NotFoundException('Không tìm thấy lịch khởi hành.');
         }
 
-        const HOLDING_HOURS = 12; // 12 tiếng giữ chỗ cho đơn chưa thanh toán
         let totalTravelers = 0;
         let adultCount = 0;
         let childCount = 0;
@@ -545,7 +544,7 @@ export class SchedulesAdminService {
             }
 
             const createdAtTime = new Date(b.created_at).getTime();
-            const expiresTime = createdAtTime + HOLDING_HOURS * 3600 * 1000;
+            const expiresTime = createdAtTime + BOOKING_PENDING_EXPIRY_MS;
             const isHoldingExpired = b.status === 'pending' && Date.now() > expiresTime;
 
             // Map travelers kèm gán số điện thoại cho người lớn
@@ -577,6 +576,9 @@ export class SchedulesAdminService {
                 contact_phone: b.contact_phone,
                 contact_email: b.contact_email,
                 note: b.note,
+                room_selection: b.room_selection as any,
+                contact_id_card: b.contact_id_card,
+                cancellation_meta: b.cancellation_meta as any,
                 pickup_snapshot: b.pickup_snapshot as any,
                 departure_name: b.departure_name,
                 adult_count: adults,

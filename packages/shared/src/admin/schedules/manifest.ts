@@ -1,3 +1,72 @@
+export interface BookingCancelRequestDetails {
+  reason?: string;
+  daysRemaining?: string;
+  hoursRemaining?: string;
+  tierPenalty?: string;
+  totalPaid?: string;
+  penaltyAmount?: string;
+  refundEstimated?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
+  requestedAt?: string;
+  numericRefundAmount?: number;
+}
+
+export interface BookingAdminApprovalDetails {
+  note?: string;
+  refundAmount?: string;
+  approvedAt?: string;
+}
+
+export interface BookingAdminRejectionDetails {
+  note?: string;
+  rejectedAt?: string;
+}
+
+export interface BookingAdminActionDetails {
+  cancelType?: "operator_fault" | "customer_request" | string;
+  reason?: string;
+  note?: string;
+  refundAmount?: string;
+  time?: string;
+  cancelledAt?: string;
+}
+
+export interface BookingRescheduleDetails {
+  oldScheduleId?: number;
+  newScheduleId?: number;
+  reason?: string;
+  note?: string;
+  rescheduledAt?: string;
+}
+
+export interface BookingCancellationMeta {
+  type?:
+    | "expired_15m"
+    | "expired_departure"
+    | "customer_cancel_request"
+    | "customer_request_approved"
+    | "admin_cancel_rejected"
+    | "admin_cancelled"
+    | "staff_cancelled_pending"
+    | "customer_cancelled_pending"
+    | "unknown";
+  title?: string;
+  actor?: "Hệ thống tự động" | "Khách hàng" | "Ban quản trị / Nhân viên" | "Hệ thống";
+  reason?: string;
+  time?: string;
+  cancelledAt?: string;
+  refundAmount?: string;
+  note?: string;
+  cancelRequest?: BookingCancelRequestDetails;
+  adminApproval?: BookingAdminApprovalDetails;
+  adminRejection?: BookingAdminRejectionDetails;
+  adminAction?: BookingAdminActionDetails;
+  reschedule?: BookingRescheduleDetails;
+  [key: string]: unknown;
+}
+
 export interface ManifestTraveler {
   traveler_id: number;
   full_name: string;
@@ -17,6 +86,9 @@ export interface ManifestBookingGroup {
   contact_phone: string;
   contact_email: string;
   note?: string | null;
+  room_selection?: { type?: string; surcharge?: number } | null;
+  contact_id_card?: string | null;
+  cancellation_meta?: BookingCancellationMeta | Record<string, unknown> | null;
   pickup_snapshot?: {
     name?: string;
     address?: string;
@@ -74,6 +146,7 @@ export interface BookingCancellationInfo {
   type:
     | "expired_15m"
     | "expired_departure"
+    | "customer_cancel_request"
     | "customer_request_approved"
     | "admin_cancelled"
     | "staff_cancelled_pending"
@@ -85,6 +158,53 @@ export interface BookingCancellationInfo {
   time?: string;
   refundAmount?: string;
   note?: string;
+}
+
+export type BookingMetadataSource = {
+  note?: string | null;
+  room_selection?: { type?: string; surcharge?: number } | any | null;
+  contact_id_card?: string | null;
+  cancellation_meta?: BookingCancellationMeta | Record<string, unknown> | any | null;
+};
+
+function getCancellationTitle(type?: string): string {
+  switch (type) {
+    case "expired_15m":
+      return "Hủy tự động do hết hạn thanh toán (quá 15 phút)";
+    case "expired_departure":
+      return "Hủy tự động do tour đã đến thời gian khởi hành";
+    case "customer_cancel_request":
+      return "Yêu cầu hủy từ khách hàng";
+    case "customer_request_approved":
+      return "Hủy theo yêu cầu của khách hàng (Ban quản trị đã duyệt)";
+    case "admin_cancelled":
+      return "Hủy bởi Ban quản trị / Bộ phận điều hành";
+    case "staff_cancelled_pending":
+      return "Hủy đơn giữ chỗ bởi Nhân viên điều hành";
+    case "customer_cancelled_pending":
+      return "Khách hàng chủ động hủy giữ chỗ";
+    default:
+      return "Đơn đặt tour đã bị hủy";
+  }
+}
+
+function getCancellationActor(
+  type?: string,
+): "Hệ thống tự động" | "Khách hàng" | "Ban quản trị / Nhân viên" | "Hệ thống" {
+  switch (type) {
+    case "expired_15m":
+    case "expired_departure":
+      return "Hệ thống tự động";
+    case "customer_request_approved":
+    case "customer_cancelled_pending":
+    case "customer_cancel_request":
+      return "Khách hàng";
+    case "admin_cancelled":
+    case "staff_cancelled_pending":
+      return "Ban quản trị / Nhân viên";
+    default:
+      return "Hệ thống";
+  }
 }
 
 export interface ParsedBookingNote {
@@ -133,221 +253,307 @@ export interface ParsedBookingNote {
   };
 }
 
-export function parseBookingNote(rawNote?: string | null): ParsedBookingNote {
-  if (!rawNote || !rawNote.trim()) {
-    return { customerNote: "" };
+export function parseBookingNote(
+  rawNoteOrBooking?: string | null | BookingMetadataSource,
+  metaContainer?: BookingMetadataSource | null,
+): ParsedBookingNote {
+  let rawNote: string | null | undefined;
+  let roomSelection: { type?: string; surcharge?: number } | any | null = null;
+  let contactIdCardInput: string | null | undefined = null;
+  let cancelMeta: BookingCancellationMeta | null = null;
+
+  if (rawNoteOrBooking && typeof rawNoteOrBooking === "object") {
+    rawNote = rawNoteOrBooking.note;
+    roomSelection = rawNoteOrBooking.room_selection ?? null;
+    contactIdCardInput = rawNoteOrBooking.contact_id_card ?? null;
+    cancelMeta = (rawNoteOrBooking.cancellation_meta as BookingCancellationMeta) ?? null;
+  } else {
+    rawNote = rawNoteOrBooking;
   }
 
-  const text = rawNote.trim();
+  if (metaContainer && typeof metaContainer === "object") {
+    if (metaContainer.room_selection !== undefined) roomSelection = metaContainer.room_selection;
+    if (metaContainer.contact_id_card !== undefined) contactIdCardInput = metaContainer.contact_id_card;
+    if (metaContainer.cancellation_meta !== undefined) {
+      cancelMeta = metaContainer.cancellation_meta as BookingCancellationMeta;
+    }
+  }
 
-  // 1. Tách thông tin phòng [ROOM_SELECTION]
   let roomType: string | undefined;
   let roomSurcharge: string | undefined;
-  const roomMatch = text.match(
-    /\[ROOM_SELECTION\]\s*Loại phòng:\s*([^\n\r]+)(?:[\n\r]+\s*Phụ thu phòng đơn:\s*([^\n\r]+))?/i,
-  );
-  if (roomMatch) {
-    roomType = roomMatch[1]?.trim();
-    roomSurcharge = roomMatch[2]?.trim();
-  }
-
-  // 2. Tách CCCD liên hệ nếu có
   let contactIdCard: string | undefined;
-  const cccdMatch = text.match(/\[CCCD_LIEN_HE\]:\s*([^\n\r]+)/i);
-  if (cccdMatch) {
-    contactIdCard = cccdMatch[1]?.trim();
-  }
-
-  // 3. Tách chi tiết yêu cầu hủy [CUSTOMER_CANCEL_REQUEST] nếu có
   let cancelRequest: ParsedBookingNote["cancelRequest"];
-  const cancelReqMatch = text.match(
-    /\[CUSTOMER_CANCEL_REQUEST\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (cancelReqMatch) {
-    const block = cancelReqMatch[1];
-    const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const daysRemaining = block
-      .match(/S[ốo]\s*ng[àa]y\s*tr[ưu][ớo]c\s*kh[ởo]i\s*h[àa]nh:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const tierPenalty = block
-      .match(
-        /M[ứu]c\s*ph[ạa]t\s*h[ủu]y\s*theo\s*quy\s*[đd][ịi]nh:\s*([^\n\r]+)/i,
-      )?.[1]
-      ?.trim();
-    const totalPaid = block
-      .match(/S[ốo]\s*ti[ềe]n\s*[đd][aã]\s*thanh\s*to[áa]n:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const penaltyAmount = block
-      .match(/Ph[íi]\s*ph[ạa]t\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const refundEstimated = block
-      .match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n\s*d[ựu]\s*ki[ếe]n:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const bankName = block
-      .match(/-\s*Ng[âa]n\s*h[àa]ng:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const bankAccountNumber = block
-      .match(/-\s*S[ốo]\s*t[àa]i\s*kho[ảa]n:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const bankAccountName = block
-      .match(/-\s*Ch[ủu]\s*t[àa]i\s*kho[ảa]n:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    const requestedAt = block
-      .match(/Th[ờo]i\s*gian\s*(?:g[ửu]i\s*y[êe]u\s*c[ầa]u|h[ủu]y):\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-
-    let numericRefundAmount: number | undefined;
-    if (refundEstimated) {
-      const digits = refundEstimated.replace(/[^\d]/g, "");
-      if (digits) numericRefundAmount = Number(digits);
-    }
-
-    cancelRequest = {
-      reason,
-      daysRemaining,
-      tierPenalty,
-      totalPaid,
-      penaltyAmount,
-      refundEstimated,
-      bankName,
-      bankAccountNumber,
-      bankAccountName,
-      requestedAt,
-      numericRefundAmount,
-    };
-  }
-
-  // 4. Tách thông tin duyệt hủy [ADMIN_CANCEL_APPROVED] nếu có
   let adminApproval: ParsedBookingNote["adminApproval"];
-  const approvedMatch = text.match(
-    /\[ADMIN_CANCEL_APPROVED\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (approvedMatch) {
-    const block = approvedMatch[1];
-    const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const refundAmount = block
-      .match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n\s*d[ựu]\s*ki[ếe]n:\s*([^\n\r]+)/i)?.[1]
-      ?.trim();
-    adminApproval = { note, refundAmount };
-  }
-
-  // 5. Tách thông tin từ chối [ADMIN_CANCEL_REJECTED] nếu có
   let adminRejection: ParsedBookingNote["adminRejection"];
-  const rejectedMatch = text.match(
-    /\[ADMIN_CANCEL_REJECTED\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (rejectedMatch) {
-    const block = rejectedMatch[1];
-    const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
-    adminRejection = { note };
-  }
-
-  // 6. Tách thông tin Admin chủ động hủy đơn [ADMIN_CANCEL_ACTION] nếu có
   let adminAction: ParsedBookingNote["adminAction"];
-  const adminActionMatch = text.match(
-    /\[ADMIN_CANCEL_ACTION\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (adminActionMatch) {
-    const block = adminActionMatch[1];
-    const reason = block.match(/L[ýy]\s*do\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const refundAmount = block.match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const time = block.match(/Th[ờo]i\s*gian\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]?.trim();
-    adminAction = { reason, note, refundAmount, time };
-  }
-
-  // 6.5. Tách thông tin Nhân viên hủy đơn giữ chỗ [STAFF_CANCELLED_PENDING]
-  let staffCancelledPending: { reason?: string; time?: string } | undefined;
-  const staffPendingMatch = text.match(
-    /\[STAFF_CANCELLED_PENDING\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (staffPendingMatch) {
-    const block = staffPendingMatch[1];
-    const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const time = block.match(/Th[ờo]i\s*gian:\s*([^\n\r]+)/i)?.[1]?.trim();
-    staffCancelledPending = { reason, time };
-  }
-
-  // 6.6. Tách thông tin Khách tự hủy đơn giữ chỗ [CUSTOMER_CANCELLED_PENDING]
-  let customerCancelledPending: { reason?: string; time?: string } | undefined;
-  const customerPendingMatch = text.match(
-    /\[CUSTOMER_CANCELLED_PENDING\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
-  );
-  if (customerPendingMatch) {
-    const block = customerPendingMatch[1];
-    const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
-    const time = block.match(/Th[ờo]i\s*gian(?:\s*h[ủu]y)?:\s*([^\n\r]+)/i)?.[1]?.trim();
-    customerCancelledPending = { reason, time };
-  }
-
-  // 7. Xây dựng đối tượng cancellation có đầy đủ lý do, ai hủy, thời gian và số tiền hoàn
   let cancellation: BookingCancellationInfo | undefined;
 
-  if (text.includes("[AUTO_CANCELLED_EXPIRED_15M]")) {
-    cancellation = {
-      type: "expired_15m",
-      title: "Hủy tự động do hết hạn thanh toán (quá 15 phút)",
-      actor: "Hệ thống tự động",
-      reason: "Đơn đặt tour đã vượt quá thời hạn thanh toán 15 phút. Hệ thống tự động hủy đơn.",
-    };
-  } else if (text.includes("[AUTO_CANCELLED_DEPARTED]")) {
-    cancellation = {
-      type: "expired_departure",
-      title: "Hủy tự động do tour đã đến thời gian khởi hành",
-      actor: "Hệ thống tự động",
-      reason: "Tour đã đến/qua ngày khởi hành mà đơn chưa hoàn tất thanh toán. Hệ thống tự động hủy đơn.",
-    };
-  } else if (approvedMatch) {
-    cancellation = {
-      type: "customer_request_approved",
-      title: "Hủy theo yêu cầu của khách hàng (Ban quản trị đã duyệt)",
-      actor: "Khách hàng",
-      reason: cancelRequest?.reason
-        ? `Khách hàng yêu cầu hủy vì lý do: "${cancelRequest.reason}"`
-        : "Khách hàng gửi yêu cầu hủy và đã được Ban quản trị phê duyệt",
-      time: cancelRequest?.requestedAt,
-      refundAmount: adminApproval?.refundAmount || cancelRequest?.refundEstimated,
-      note: adminApproval?.note,
-    };
-  } else if (adminActionMatch) {
-    cancellation = {
-      type: "admin_cancelled",
-      title: "Hủy bởi Ban quản trị / Bộ phận điều hành",
-      actor: "Ban quản trị / Nhân viên",
-      reason: adminAction?.reason || "Ban quản trị hủy đơn booking theo yêu cầu vận hành",
-      time: adminAction?.time,
-      refundAmount: adminAction?.refundAmount,
-      note: adminAction?.note,
-    };
-  } else if (staffCancelledPending) {
-    cancellation = {
-      type: "staff_cancelled_pending",
-      title: "Hủy đơn giữ chỗ bởi Nhân viên điều hành",
-      actor: "Ban quản trị / Nhân viên",
-      reason: staffCancelledPending.reason || "Nhân viên hủy do khách xác nhận không tham gia / quá hạn giữ chỗ",
-      time: staffCancelledPending.time,
-    };
-  } else if (customerCancelledPending) {
-    cancellation = {
-      type: "customer_cancelled_pending",
-      title: "Khách hàng chủ động hủy giữ chỗ",
-      actor: "Khách hàng",
-      reason: customerCancelledPending.reason || "Khách hàng chủ động hủy đơn giữ chỗ",
-      time: customerCancelledPending.time,
-    };
+  // 1. Nếu có dữ liệu có cấu trúc từ cột riêng, ưu tiên sử dụng trực tiếp (O(1), không regex)
+  if (roomSelection) {
+    if (roomSelection.type === "single") roomType = "PHÒNG ĐƠN";
+    else if (roomSelection.type === "shared") roomType = "GHÉP PHÒNG";
+    else if (roomSelection.type) roomType = String(roomSelection.type).toUpperCase();
+
+    if (roomSelection.surcharge !== undefined && roomSelection.surcharge !== null) {
+      const amt = Number(roomSelection.surcharge);
+      roomSurcharge = Number.isFinite(amt) ? `${amt.toLocaleString("vi-VN")}đ` : String(roomSelection.surcharge);
+    }
+  }
+
+  if (contactIdCardInput) {
+    contactIdCard = String(contactIdCardInput).trim();
+  }
+
+  if (cancelMeta && typeof cancelMeta === "object" && Object.keys(cancelMeta).length > 0) {
+    if (cancelMeta.cancelRequest) {
+      const cr = cancelMeta.cancelRequest;
+      cancelRequest = {
+        reason: cr.reason,
+        daysRemaining: cr.daysRemaining != null ? String(cr.daysRemaining) : undefined,
+        tierPenalty: cr.tierPenalty,
+        totalPaid: cr.totalPaid != null ? String(cr.totalPaid) : undefined,
+        penaltyAmount: cr.penaltyAmount != null ? String(cr.penaltyAmount) : undefined,
+        refundEstimated: cr.refundEstimated != null ? String(cr.refundEstimated) : undefined,
+        bankName: cr.bankName,
+        bankAccountNumber: cr.bankAccountNumber,
+        bankAccountName: cr.bankAccountName,
+        requestedAt: cr.requestedAt,
+        numericRefundAmount: cr.numericRefundAmount != null ? Number(cr.numericRefundAmount) : undefined,
+      };
+    }
+    if (cancelMeta.adminApproval) {
+      adminApproval = {
+        note: cancelMeta.adminApproval.note,
+        refundAmount: cancelMeta.adminApproval.refundAmount != null ? String(cancelMeta.adminApproval.refundAmount) : undefined,
+      };
+    }
+    if (cancelMeta.adminRejection) {
+      adminRejection = {
+        note: cancelMeta.adminRejection.note,
+      };
+    }
+    if (cancelMeta.adminAction) {
+      adminAction = {
+        reason: cancelMeta.adminAction.reason,
+        note: cancelMeta.adminAction.note,
+        refundAmount: cancelMeta.adminAction.refundAmount != null ? String(cancelMeta.adminAction.refundAmount) : undefined,
+        time: cancelMeta.adminAction.time || cancelMeta.adminAction.cancelledAt,
+      };
+    }
+
+    if (cancelMeta.type && cancelMeta.type !== "admin_cancel_rejected") {
+      cancellation = {
+        type: (cancelMeta.type as any) || "unknown",
+        title: cancelMeta.title || getCancellationTitle(cancelMeta.type),
+        actor: cancelMeta.actor || getCancellationActor(cancelMeta.type),
+        reason: cancelMeta.reason || cancelRequest?.reason || adminAction?.reason || "Đơn đặt tour đã bị hủy",
+        time: cancelMeta.time || cancelMeta.cancelledAt || cancelRequest?.requestedAt || adminAction?.time,
+        refundAmount: cancelMeta.refundAmount != null ? String(cancelMeta.refundAmount) : (adminApproval?.refundAmount || cancelRequest?.refundEstimated),
+        note: cancelMeta.note || adminApproval?.note,
+      };
+    }
+  }
+
+  // 2. Fallback cho dữ liệu cũ (chưa backfill): Phân tích chuỗi regex từ rawNote nếu các trường cấu trúc còn trống
+  const text = rawNote?.trim() || "";
+
+  if (text) {
+    if (!roomType && !roomSurcharge) {
+      const roomMatch = text.match(
+        /\[ROOM_SELECTION\]\s*Loại phòng:\s*([^\n\r]+)(?:[\n\r]+\s*Phụ thu phòng đơn:\s*([^\n\r]+))?/i,
+      );
+      if (roomMatch) {
+        roomType = roomMatch[1]?.trim();
+        roomSurcharge = roomMatch[2]?.trim();
+      }
+    }
+
+    if (!contactIdCard) {
+      const cccdMatch = text.match(/\[CCCD_LIEN_HE\]:\s*([^\n\r]+)/i);
+      if (cccdMatch) {
+        contactIdCard = cccdMatch[1]?.trim();
+      }
+    }
+
+    if (!cancelRequest) {
+      const cancelReqMatch = text.match(
+        /\[CUSTOMER_CANCEL_REQUEST\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+      if (cancelReqMatch) {
+        const block = cancelReqMatch[1];
+        const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const daysRemaining = block
+          .match(/S[ốo]\s*ng[àa]y\s*tr[ưu][ớo]c\s*kh[ởo]i\s*h[àa]nh:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const tierPenalty = block
+          .match(
+            /M[ứu]c\s*ph[ạa]t\s*h[ủu]y\s*theo\s*quy\s*[đd][ịi]nh:\s*([^\n\r]+)/i,
+          )?.[1]
+          ?.trim();
+        const totalPaid = block
+          .match(/S[ốo]\s*ti[ềe]n\s*[đd][aã]\s*thanh\s*to[áa]n:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const penaltyAmount = block
+          .match(/Ph[íi]\s*ph[ạa]t\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const refundEstimated = block
+          .match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n\s*d[ựu]\s*ki[ếe]n:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const bankName = block
+          .match(/-\s*Ng[âa]n\s*h[àa]ng:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const bankAccountNumber = block
+          .match(/-\s*S[ốo]\s*t[àa]i\s*kho[ảa]n:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const bankAccountName = block
+          .match(/-\s*Ch[ủu]\s*t[àa]i\s*kho[ảa]n:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        const requestedAt = block
+          .match(/Th[ờo]i\s*gian\s*(?:g[ửu]i\s*y[êe]u\s*c[ầa]u|h[ủu]y):\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+
+        let numericRefundAmount: number | undefined;
+        if (refundEstimated) {
+          const digits = refundEstimated.replace(/[^\d]/g, "");
+          if (digits) numericRefundAmount = Number(digits);
+        }
+
+        cancelRequest = {
+          reason,
+          daysRemaining,
+          tierPenalty,
+          totalPaid,
+          penaltyAmount,
+          refundEstimated,
+          bankName,
+          bankAccountNumber,
+          bankAccountName,
+          requestedAt,
+          numericRefundAmount,
+        };
+      }
+    }
+
+    if (!adminApproval) {
+      const approvedMatch = text.match(
+        /\[ADMIN_CANCEL_APPROVED\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+      if (approvedMatch) {
+        const block = approvedMatch[1];
+        const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const refundAmount = block
+          .match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n\s*d[ựu]\s*ki[ếe]n:\s*([^\n\r]+)/i)?.[1]
+          ?.trim();
+        adminApproval = { note, refundAmount };
+      }
+    }
+
+    if (!adminRejection) {
+      const rejectedMatch = text.match(
+        /\[ADMIN_CANCEL_REJECTED\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+      if (rejectedMatch) {
+        const block = rejectedMatch[1];
+        const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
+        adminRejection = { note };
+      }
+    }
+
+    if (!adminAction) {
+      const adminActionMatch = text.match(
+        /\[ADMIN_CANCEL_ACTION\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+      if (adminActionMatch) {
+        const block = adminActionMatch[1];
+        const reason = block.match(/L[ýy]\s*do\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const note = block.match(/Ghi\s*ch[úu]:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const refundAmount = block.match(/S[ốo]\s*ti[ềe]n\s*ho[àa]n:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const time = block.match(/Th[ờo]i\s*gian\s*h[ủu]y:\s*([^\n\r]+)/i)?.[1]?.trim();
+        adminAction = { reason, note, refundAmount, time };
+      }
+    }
+
+    if (!cancellation) {
+      const staffPendingMatch = text.match(
+        /\[STAFF_CANCELLED_PENDING\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+      const customerPendingMatch = text.match(
+        /\[CUSTOMER_CANCELLED_PENDING\]([\s\S]*?)(?=(?:\r?\n)+\s*\[|$)/i,
+      );
+
+      if (text.includes("[AUTO_CANCELLED_EXPIRED_15M]")) {
+        cancellation = {
+          type: "expired_15m",
+          title: "Hủy tự động do hết hạn thanh toán (quá 15 phút)",
+          actor: "Hệ thống tự động",
+          reason: "Đơn đặt tour đã vượt quá thời hạn thanh toán 15 phút. Hệ thống tự động hủy đơn.",
+        };
+      } else if (text.includes("[AUTO_CANCELLED_DEPARTED]")) {
+        cancellation = {
+          type: "expired_departure",
+          title: "Hủy tự động do tour đã đến thời gian khởi hành",
+          actor: "Hệ thống tự động",
+          reason: "Tour đã đến/qua ngày khởi hành mà đơn chưa hoàn tất thanh toán. Hệ thống tự động hủy đơn.",
+        };
+      } else if (adminApproval) {
+        cancellation = {
+          type: "customer_request_approved",
+          title: "Hủy theo yêu cầu của khách hàng (Ban quản trị đã duyệt)",
+          actor: "Khách hàng",
+          reason: cancelRequest?.reason
+            ? `Khách hàng yêu cầu hủy vì lý do: "${cancelRequest.reason}"`
+            : "Khách hàng gửi yêu cầu hủy và đã được Ban quản trị phê duyệt",
+          time: cancelRequest?.requestedAt,
+          refundAmount: adminApproval?.refundAmount || cancelRequest?.refundEstimated,
+          note: adminApproval?.note,
+        };
+      } else if (adminAction) {
+        cancellation = {
+          type: "admin_cancelled",
+          title: "Hủy bởi Ban quản trị / Bộ phận điều hành",
+          actor: "Ban quản trị / Nhân viên",
+          reason: adminAction?.reason || "Ban quản trị hủy đơn booking theo yêu cầu vận hành",
+          time: adminAction?.time,
+          refundAmount: adminAction?.refundAmount,
+          note: adminAction?.note,
+        };
+      } else if (staffPendingMatch) {
+        const block = staffPendingMatch[1];
+        const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const time = block.match(/Th[ờo]i\s*gian:\s*([^\n\r]+)/i)?.[1]?.trim();
+        cancellation = {
+          type: "staff_cancelled_pending",
+          title: "Hủy đơn giữ chỗ bởi Nhân viên điều hành",
+          actor: "Ban quản trị / Nhân viên",
+          reason: reason || "Nhân viên hủy do khách xác nhận không tham gia / quá hạn giữ chỗ",
+          time,
+        };
+      } else if (customerPendingMatch) {
+        const block = customerPendingMatch[1];
+        const reason = block.match(/L[ýy]\s*do:\s*([^\n\r]+)/i)?.[1]?.trim();
+        const time = block.match(/Th[ờo]i\s*gian(?:\s*h[ủu]y)?:\s*([^\n\r]+)/i)?.[1]?.trim();
+        cancellation = {
+          type: "customer_cancelled_pending",
+          title: "Khách hàng chủ động hủy giữ chỗ",
+          actor: "Khách hàng",
+          reason: reason || "Khách hàng chủ động hủy đơn giữ chỗ",
+          time,
+        };
+      }
+    }
   }
 
   // Fallback lý do & thời gian hủy chung
   let cancellationReason = cancellation?.reason || cancelRequest?.reason || adminAction?.reason;
   let cancellationTime = cancellation?.time || cancelRequest?.requestedAt || adminAction?.time;
 
-  if (!cancellationReason) {
+  if (!cancellationReason && text) {
     const reasonMatch = text.match(/L[ýy]\s*do(?:\s*h[ủu]y)?:\s*([^\n\r]+)/i);
     if (reasonMatch) {
       cancellationReason = reasonMatch[1]?.trim();
     }
   }
-  if (!cancellationTime) {
+  if (!cancellationTime && text) {
     const timeMatch = text.match(
       /Th[ờo]i\s*gian\s*(?:h[ủu]y|g[ửu]i\s*y[êe]u\s*c[ầa]u|duy[eệ]t):\s*([^\n\r]+)/i,
     );
@@ -366,24 +572,26 @@ export function parseBookingNote(rawNote?: string | null): ParsedBookingNote {
     };
   }
 
-  // 8. Loại bỏ hoàn toàn tất cả các khối tag hệ thống kỹ thuật
+  // Loại bỏ các khối tag hệ thống kỹ thuật nếu còn sót lại trong ghi chú cũ
   const customerNote = text
-    .replace(
-      /\[(?:ROOM_SELECTION|CCCD_LIEN_HE|CUSTOMER_CANCELLED_PENDING|CUSTOMER_CANCEL_REQUEST|ADMIN_CANCEL_ACTION|ADMIN_CANCEL_APPROVED|ADMIN_CANCEL_REJECTED|AUTO_CANCELLED_EXPIRED_15M|AUTO_CANCELLED_DEPARTED|STAFF_CANCELLED_PENDING)\][\s\S]*?(?=(?:\r?\n)+\s*\[|$)/gi,
-      "",
-    )
-    .replace(/\[CCCD_LIEN_HE\]:[^\n\r]*/gi, "")
-    // Xóa bất kỳ tag dạng [ABC_XYZ] đơn lập còn sót lại
-    .replace(/\[[A-Z0-9_]+\]/g, "")
-    // Xóa các câu giải thích hệ thống
-    .replace(/Hệ thống tự động hủy[^\n\r]*/gi, "")
-    // Xóa các dòng key-value hệ thống nếu có lọt ra ngoài tag
-    .replace(
-      /(?:^|\n)\s*(?:Lý do|Thời gian hủy|Số ngày trước khởi hành|Mức phạt hủy|Số tiền đã thanh toán|Phí phạt hủy|Số tiền hoàn dự kiến|Số tiền hoàn|Thông tin nhận tiền hoàn|Ngân hàng|Số tài khoản|Chủ tài khoản|Loại phòng|Phụ thu phòng đơn|Ghi chú):[^\n\r]*/gi,
-      "",
-    )
-    .replace(/(?:\r?\n){3,}/g, "\n\n")
-    .trim();
+    ? text
+        .replace(
+          /\[(?:ROOM_SELECTION|CCCD_LIEN_HE|CUSTOMER_CANCELLED_PENDING|CUSTOMER_CANCEL_REQUEST|ADMIN_CANCEL_ACTION|ADMIN_CANCEL_APPROVED|ADMIN_CANCEL_REJECTED|AUTO_CANCELLED_EXPIRED_15M|AUTO_CANCELLED_DEPARTED|STAFF_CANCELLED_PENDING)\][\s\S]*?(?=(?:\r?\n)+\s*\[|$)/gi,
+          "",
+        )
+        .replace(/\[CCCD_LIEN_HE\]:[^\n\r]*/gi, "")
+        // Xóa bất kỳ tag dạng [ABC_XYZ] đơn lập còn sót lại
+        .replace(/\[[A-Z0-9_]+\]/g, "")
+        // Xóa các câu giải thích hệ thống
+        .replace(/Hệ thống tự động hủy[^\n\r]*/gi, "")
+        // Xóa các dòng key-value hệ thống nếu có lọt ra ngoài tag
+        .replace(
+          /(?:^|\n)\s*(?:Lý do|Thời gian hủy|Số ngày trước khởi hành|Mức phạt hủy|Số tiền đã thanh toán|Phí phạt hủy|Số tiền hoàn dự kiến|Số tiền hoàn|Thông tin nhận tiền hoàn|Ngân hàng|Số tài khoản|Chủ tài khoản|Loại phòng|Phụ thu phòng đơn|Ghi chú):[^\n\r]*/gi,
+          "",
+        )
+        .replace(/(?:\r?\n){3,}/g, "\n\n")
+        .trim()
+    : "";
 
   return {
     customerNote,
@@ -398,5 +606,25 @@ export function parseBookingNote(rawNote?: string | null): ParsedBookingNote {
     adminRejection,
     adminAction,
   };
+}
+
+export const CANCELLATION_STATUS_LABELS: Record<string, string> = {
+  expired_15m: "Đã hủy (Hết hạn 15p)",
+  expired_departure: "Đã hủy (Quá giờ đi)",
+  customer_request_approved: "Đã hủy (Theo yêu cầu)",
+  admin_cancelled: "Đã hủy (Admin)",
+  staff_cancelled_pending: "Đã hủy (Admin)",
+  customer_cancelled_pending: "Đã hủy (Khách hủy)",
+};
+
+export function getCancelledBookingLabel(
+  rawNoteOrBooking?: string | null | BookingMetadataSource,
+  metaContainer?: BookingMetadataSource | null,
+): string {
+  const parsed = parseBookingNote(rawNoteOrBooking, metaContainer);
+  if (parsed.cancellation?.type && CANCELLATION_STATUS_LABELS[parsed.cancellation.type]) {
+    return CANCELLATION_STATUS_LABELS[parsed.cancellation.type];
+  }
+  return "Đã hủy";
 }
 

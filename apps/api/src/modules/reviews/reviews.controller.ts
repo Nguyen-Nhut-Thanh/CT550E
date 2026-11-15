@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Param, ParseIntPipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
 import type { CreateReplyPayload, CreateReviewPayload } from "shared";
 import { CloudinaryService } from "../../infrastructure/storage/cloudinary.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
@@ -33,7 +34,16 @@ export class ReviewsController {
     }
     @UseGuards(JwtAuthGuard)
     @Post("reviews/upload-image")
-    @UseInterceptors(FileInterceptor("file"))
+    @UseInterceptors(FileInterceptor("file", {
+        storage: memoryStorage(),
+        limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+        fileFilter: (_req, file, callback) => {
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+                return callback(new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.'), false);
+            }
+            callback(null, true);
+        },
+    }))
     async uploadReviewImage(@UploadedFile() file: Express.Multer.File) {
         if (!file) {
             throw new BadRequestException("Không tìm thấy file để upload");

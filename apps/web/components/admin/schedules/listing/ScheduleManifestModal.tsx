@@ -246,7 +246,7 @@ export function ScheduleManifestModal({
       const pickupText = b.pickup_snapshot
         ? `${b.pickup_snapshot.name || ""} - ${b.pickup_snapshot.address || ""}`.trim()
         : b.departure_name || "Mặc định";
-      const parsed = parseBookingNote(b.note);
+      const parsed = parseBookingNote(b.note, b);
 
       b.travelers.forEach((t) => {
         const normType = (t.traveler_type || "adult").toLowerCase();
@@ -566,7 +566,7 @@ export function ScheduleManifestModal({
                             )}
 
                             {(() => {
-                              const parsed = parseBookingNote(b.note);
+                              const parsed = parseBookingNote(b.note, b);
                               return (
                                 <>
                                   {parsed.contactIdCard && (
@@ -632,7 +632,7 @@ export function ScheduleManifestModal({
 
                           {/* XỬ LÝ YÊU CẦU HỦY TOUR CHO ĐƠN CANCEL_REQUESTED */}
                           {isCancelRequested && (() => {
-                            const parsed = parseBookingNote(b.note);
+                            const parsed = parseBookingNote(b.note, b);
                             return (
                               <div className="rounded-xl border border-rose-200 bg-rose-50/85 p-3.5 text-xs space-y-2.5">
                                 <div className="flex items-center justify-between border-b border-rose-200/70 pb-1.5">
@@ -958,7 +958,7 @@ export function ScheduleManifestModal({
                   </div>
 
                   {(() => {
-                    const parsed = parseBookingNote(actionModalBooking.booking.note);
+                    const parsed = parseBookingNote(actionModalBooking.booking.note, actionModalBooking.booking);
                     return parsed.cancelRequest ? (
                       <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 text-xs space-y-1.5">
                         <p>

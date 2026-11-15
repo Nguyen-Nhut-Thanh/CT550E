@@ -1,6 +1,7 @@
 import { getToken } from "@/lib/auth/session";
 import { API_BASE } from "@/lib/http/config";
 import { requestJson } from "@/lib/http/requestJson";
+import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
 import type { AccountBooking, AccountStats, UploadResponse } from 'shared';
 
 export function updateUserProfile(body: Record<string, unknown>) {
@@ -41,22 +42,14 @@ export function getMyBookings() {
 }
 
 export async function uploadUserAvatar(file: File) {
-  const formData = new FormData();
-  formData.append("file", file);
+  const data = await uploadAuthenticatedFile(
+    `${API_BASE}/auth/upload-avatar`,
+    getToken() || "",
+    file,
+    "Không thể upload ảnh",
+  );
 
-  const response = await fetch(`${API_BASE}/auth/upload-avatar`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken() || ""}`,
-    },
-    body: formData,
-  });
-
-  const data = (await response.json().catch(() => null)) as
-    | { message?: string; url?: string }
-    | null;
-
-  if(!response.ok || !data?.url) {
+  if (!data?.url) {
     throw new Error(data?.message || "Không thể upload ảnh");
   }
 

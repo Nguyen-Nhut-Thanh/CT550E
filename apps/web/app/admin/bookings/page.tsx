@@ -61,7 +61,28 @@ const statusColor: Record<string, string> = {
 
 function extractCancelRequestDetails(
   note?: string | null,
+  cancellationMeta?: any,
 ): CancelRequestDetails | null {
+  if (cancellationMeta && typeof cancellationMeta === "object") {
+    const meta = cancellationMeta as any;
+    if (meta.cancelRequest) {
+      const cr = meta.cancelRequest;
+      return {
+        reason: cr.reason,
+        daysRemaining: cr.daysRemaining != null ? String(cr.daysRemaining) : undefined,
+        tierPenalty: cr.tierPenalty,
+        totalPaid: cr.totalPaid != null ? String(cr.totalPaid) : undefined,
+        penaltyAmount: cr.penaltyAmount != null ? String(cr.penaltyAmount) : undefined,
+        refundEstimated: cr.refundEstimated != null ? String(cr.refundEstimated) : undefined,
+        bankName: cr.bankName,
+        bankAccountNumber: cr.bankAccountNumber,
+        bankAccountName: cr.bankAccountName,
+        requestedAt: cr.requestedAt,
+        numericRefundAmount: cr.numericRefundAmount != null ? Number(cr.numericRefundAmount) : undefined,
+      };
+    }
+  }
+
   if (!note) return null;
   const match = note.match(/\[CUSTOMER_CANCEL_REQUEST\]([\s\S]*?)(?:\n\[|$)/i);
   if (!match) return null;
@@ -115,19 +136,22 @@ function extractCancelRequestDetails(
   };
 }
 
-function extractCancelReason(note?: string | null) {
-  if (!note) return "";
-  const details = extractCancelRequestDetails(note);
+function extractCancelReason(note?: string | null, cancellationMeta?: any) {
+  const details = extractCancelRequestDetails(note, cancellationMeta);
   if (details?.reason) return details.reason;
+  if (cancellationMeta && typeof cancellationMeta === "object" && (cancellationMeta as any).reason) {
+    return (cancellationMeta as any).reason;
+  }
+  if (!note) return "";
   const match = note.match(
     /\[CUSTOMER_CANCEL_REQUEST\]\s*L[ýy]\s*do:\s*([\s\S]*?)(?:\n\[|$)/i,
   );
   return match?.[1]?.trim() || "";
 }
 
-function getDisplayBookingNote(note?: string | null) {
-  if (!note) return "";
-  return parseBookingNote(note).customerNote;
+function getDisplayBookingNote(note?: string | null, meta?: any) {
+  if (!note && !meta) return "";
+  return parseBookingNote(note, meta).customerNote;
 }
 
 export default function AdminBookingsPage() {
@@ -256,7 +280,7 @@ export default function AdminBookingsPage() {
       setModal({ booking, type });
       setActionNote("");
       if (type === "approve") {
-        const details = extractCancelRequestDetails(booking.note);
+        const details = extractCancelRequestDetails(booking.note, booking.cancellation_meta);
         if (
           details?.numericRefundAmount !== undefined &&
           !Number.isNaN(details.numericRefundAmount)
@@ -360,14 +384,16 @@ export default function AdminBookingsPage() {
   const cancelDetails = useMemo(
     () =>
       modal?.type !== "detail"
-        ? extractCancelRequestDetails(modal?.booking.note)
+        ? extractCancelRequestDetails(modal?.booking.note, modal?.booking.cancellation_meta)
         : null,
     [modal],
   );
 
   const reasonPreview = useMemo(
     () =>
-      modal?.type !== "detail" ? extractCancelReason(modal?.booking.note) : "",
+      modal?.type !== "detail"
+        ? extractCancelReason(modal?.booking.note, modal?.booking.cancellation_meta)
+        : "",
     [modal],
   );
 

@@ -102,9 +102,17 @@ export function Dialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-3 sm:p-4 backdrop-blur-sm ${overlayClassName}`}
+      style={{ zIndex: 9999 }}
+      className={`fixed inset-0 z-[9999] overflow-y-auto p-3 sm:p-4 md:p-6 backdrop-blur-sm ${overlayClassName}`}
     >
-      {children}
+      <div
+        className="flex min-h-full w-full items-center justify-center py-2 sm:py-4"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        {children}
+      </div>
     </div>,
     document.body,
   );

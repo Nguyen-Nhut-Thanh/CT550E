@@ -64,7 +64,16 @@ export class LocationsAdminController {
         return this.locationsAdminService.remove(Number(id));
     }
     @Post('admin/locations/upload')
-    @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+        fileFilter: (_req, file, callback) => {
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+                return callback(new BadRequestException('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.'), false);
+            }
+            callback(null, true);
+        },
+    }))
     async uploadLocationImage(
     @UploadedFile()
     file: Express.Multer.File) {

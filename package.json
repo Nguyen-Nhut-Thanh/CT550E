@@ -17,6 +17,7 @@
     "db:push": "npm run prisma:push --workspace=database",
     "db:import:provinces": "tsx scripts/import-data/import-provinces.ts",
     "db:import:seasonal": "tsx scripts/import-data/import-seasonal-showcase.ts",
+    "db:backfill:booking-metadata": "tsx scripts/backfill-booking-metadata.ts",
     "grant-admin": "tsx scripts/grant-admin.ts"
   },
   "devDependencies": {
@@ -28,9 +29,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "dotenv": "^17.2.2",
-    "lucide-react": "^1.52.0",
-    "passport-strategy": "^1.0.0"
+    "dotenv": "^17.2.2"
   },
   "packageManager": "npm@11.5.2"
 }

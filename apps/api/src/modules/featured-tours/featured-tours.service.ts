@@ -4,6 +4,7 @@ import { slugify } from "shared";
 import { startOfToday } from "../../common/utils/dates";
 import { toNumber } from "../../common/utils/numbers";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { queryBestSellerStats } from '../tours/best-seller.helper';
 import type { FeaturedTourItem, } from 'shared';
 @Injectable()
 export class FeaturedToursService {
@@ -22,20 +23,6 @@ export class FeaturedToursService {
             return candidate;
         }
         return current;
-    }
-    private async getBestSellerStats(): Promise<BestSellerStat[]> {
-        return this.prisma.$queryRaw<BestSellerStat[]> `
-      SELECT
-        ts.tour_id,
-        COUNT(b.booking_id)::int AS booking_count,
-        COALESCE(SUM(b.adult_count + b.child_count + b.infant_count), 0)::int AS passenger_count
-      FROM bookings b
-      INNER JOIN tour_schedules ts
-        ON ts.tour_schedule_id = b.tour_schedule_id
-      WHERE b.status <> 'cancelled'
-      GROUP BY ts.tour_id
-      ORDER BY passenger_count DESC, booking_count DESC, ts.tour_id DESC
-    `;
     }
     async getFeaturedTours(limit = 8): Promise<{
         items: FeaturedTourItem[];
@@ -76,7 +63,7 @@ export class FeaturedToursService {
             nextScheduleByTour.set(schedule.tour_id, this.pickBetterSchedule(nextScheduleByTour.get(schedule.tour_id), schedule));
         }
         const availableTourIds = new Set(nextScheduleByTour.keys());
-        const allBestSellerStats = await this.getBestSellerStats();
+        const allBestSellerStats = await queryBestSellerStats(this.prisma);
         const rankedTours: RankedTourCandidate[] = allBestSellerStats
             .filter((stat) => availableTourIds.has(stat.tour_id))
             .slice(0, Math.max(limit * 3, 25))
@@ -225,7 +212,7 @@ export class FeaturedToursService {
                 price,
                 cover_image_url: coverImageUrl,
                 image_url: imageUrl,
-                link: `/tours/${tour.tour_id}-${slug}`,
+                link: `/tours/${tour.tour_id}`,
             };
         })
             .filter((item): item is FeaturedTourItem => item !== null)

@@ -1,4 +1,5 @@
 import type { PublicDestinationRecord, PublicScheduleRecord, PublicTourCardRecord } from 'shared';
+import { applyDiscount } from 'shared';
 import type { Prisma } from '@prisma/client';
 export function fixMojibakeText(value?: string | null) {
     if (!value)
@@ -123,12 +124,7 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
             let schedulePromotion = null;
             if (flashDeal) {
                 const discountValue = Number(flashDeal.discount_value);
-                if (flashDeal.discount_type === 'percentage') {
-                    salePrice = originalPrice * (1 - discountValue / 100);
-                }
-                else {
-                    salePrice = originalPrice - discountValue;
-                }
+                salePrice = applyDiscount(originalPrice, flashDeal.discount_type, discountValue);
             } else if (s.schedule_promotions && s.schedule_promotions.is_active) {
                 const p = s.schedule_promotions;
                 const pStart = new Date(p.start_date);
@@ -136,11 +132,7 @@ export function formatTourCard(t: PublicTourCardRecord, options?: {
                 const hasSlot = p.max_slots === null || p.max_slots === undefined || p.used_slots < p.max_slots;
                 if (pStart <= now && pEnd >= now && hasSlot) {
                     const discountValue = Number(p.discount_value);
-                    if (p.discount_type === 'percentage') {
-                        salePrice = Math.max(0, originalPrice * (1 - discountValue / 100));
-                    } else {
-                        salePrice = Math.max(0, originalPrice - discountValue);
-                    }
+                    salePrice = applyDiscount(originalPrice, p.discount_type, discountValue);
                     schedulePromotion = {
                         has_promotion: true,
                         promotion_title: p.title,

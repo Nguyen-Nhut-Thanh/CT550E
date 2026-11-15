@@ -1,4 +1,5 @@
 import type { BookingExtraService } from "./models";
+
 export const BOOKING_EXTRAS: BookingExtraService[] = [
     {
         id: "private_guide",
@@ -22,3 +23,10 @@ export const BOOKING_EXTRAS: BookingExtraService[] = [
         pricing_unit: "group",
     },
 ];
+
+/**
+ * Hằng số cấu hình đơn hàng
+ */
+export const BOOKING_PENDING_EXPIRY_MINUTES = 15;
+export const BOOKING_PENDING_EXPIRY_MS = BOOKING_PENDING_EXPIRY_MINUTES * 60 * 1000;
+

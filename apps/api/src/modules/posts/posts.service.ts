@@ -110,9 +110,14 @@ export class PostsService {
         await this.resolveTourLinks(payload.content_blocks);
         this.validatePublication({ ...payload, status: payload.status ?? 1 });
         const base = (payload.slug || 'bai-viet').slice(0, 240);
+        const existing = await this.prisma.posts.findMany({
+            where: { slug: { startsWith: base } },
+            select: { slug: true },
+        });
+        const taken = new Set(existing.map((item) => item.slug));
         let slug = base;
         let suffix = 2;
-        while (await this.prisma.posts.findUnique({ where: { slug } })) slug = `${base}-${suffix++}`;
+        while (taken.has(slug)) slug = `${base}-${suffix++}`;
         return this.prisma.posts.create({
             data: {
                 ...payload,

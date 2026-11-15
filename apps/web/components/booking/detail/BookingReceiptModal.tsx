@@ -62,7 +62,7 @@ export function BookingReceiptModal({
   const isCancelled =
     mode === "refund" || (mode === "auto" && b.status === "cancelled");
 
-  const parsedNote = parseBookingNote(b.note);
+  const parsedNote = parseBookingNote(b.note, b);
   const tour = b.tour_schedules?.tours;
   const tourName = tour?.name || `Đơn đặt tour #${b.booking_id}`;
 

@@ -20,3 +20,7 @@ export function formatVND(value?: number | string | null) {
     currency: "VND",
   }).format(num).replace("₫", "đ");
 }
+
+export function cleanVND(val?: number | string | null) {
+  return formatVND(val).replace(/\s*đ/, "đ");
+}

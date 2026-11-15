@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { BestSellerStat, PublicItineraryRecord, PublicListParams, PublicScheduleRecord } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { queryBestSellerStats } from './best-seller.helper';
 import { buildCardSelect, fixMojibakeText, formatTourCard, parseMoney } from "./public-tour.mapper";
 @Injectable()
 export class ToursPublicService {
@@ -50,18 +51,7 @@ export class ToursPublicService {
             return [];
         }
         const availableTourIds = new Set(availableSchedules.map((schedule: any) => schedule.tour_id));
-        const bestSellerStats = await this.prisma.$queryRaw<BestSellerStat[]> `
-      SELECT
-        ts.tour_id,
-        COUNT(b.booking_id)::int AS booking_count,
-        COALESCE(SUM(b.adult_count + b.child_count + b.infant_count), 0)::int AS passenger_count
-      FROM bookings b
-      INNER JOIN tour_schedules ts
-        ON ts.tour_schedule_id = b.tour_schedule_id
-      WHERE b.status <> 'cancelled'
-      GROUP BY ts.tour_id
-      ORDER BY passenger_count DESC, booking_count DESC, ts.tour_id DESC
-    `;
+        const bestSellerStats = await queryBestSellerStats(this.prisma);
         const rankedTourIds = bestSellerStats
             .filter((stat: any) => availableTourIds.has(stat.tour_id))
             .map((stat: any) => stat.tour_id);
@@ -123,8 +113,10 @@ export class ToursPublicService {
         const where: Prisma.toursWhereInput = {
             status: 1,
         };
-        if (params.tour_type === 'domestic' || params.tour_type === 'outbound' || params.tour_type === 'international') {
-            where.tour_type = params.tour_type;
+        if (params.tour_type === 'outbound' || params.tour_type === 'international') {
+            where.tour_type = { in: ['outbound', 'international'] };
+        } else if (params.tour_type === 'domestic') {
+            where.tour_type = 'domestic';
         }
         const search = params.search?.trim();
         if (search) {

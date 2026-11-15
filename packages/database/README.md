@@ -3,7 +3,6 @@
 Database access package shared by the applications.
 
 - PostgreSQL is configured through Prisma in `prisma/schema.prisma`.
-- MongoDB is configured through `MONGODB_URI` and exported from `src/mongodb.ts`.
 
 ## Tour amenities
 
@@ -63,8 +62,10 @@ repeatable. It adds:
 
 Workforce roles use the existing `roles` / `role_users` tables. Legacy staff access
 was unrestricted, so the migration preserves existing staff as administrators.
-The old `staff_profiles` remain for compatibility; new employee management uses
-`employee_profiles`. New employees are **not** automatically administrators.
+`employee_profiles` is the single employee profile table. The
+`202611150002_merge_staff_profiles` migration copies any remaining legacy staff
+records into it and removes the former `staff_profiles` table. New employees are
+**not** automatically administrators.
 Change their roles explicitly in `/admin/workforce`.
 
 Run `npm run db:flexible-crew` after `db:workforce`, regenerate Prisma and rebuild
