@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, } from '@nestjs/common';
 import type { FlashDealPayload } from 'shared';
 import { AdminAuthGuard } from '../auth/admin.guard';
 import { FlashDealsService } from './flash-deals.service';
@@ -18,16 +18,16 @@ export class FlashDealsAdminController {
     }
     @Patch('admin/marketing/flash-deals/:id')
     async update(
-    @Param('id')
-    id: string,
+    @Param('id', ParseIntPipe)
+    id: number,
     @Body()
     data: FlashDealPayload) {
-        return this.flashDealsService.update(Number(id), data);
+        return this.flashDealsService.update(id, data);
     }
     @Delete('admin/marketing/flash-deals/:id')
     async remove(
-    @Param('id')
-    id: string) {
-        return this.flashDealsService.remove(Number(id));
+    @Param('id', ParseIntPipe)
+    id: number) {
+        return this.flashDealsService.remove(id);
     }
 }

@@ -3,7 +3,7 @@
 import FavoriteButton from "@/components/common/tours/FavoriteButton";
 import TransportIcon from "@/components/common/tours/TransportIcon";
 import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
-import { getTourPriceValue, getTransportLabel } from "@/lib/tours/display";
+import { getTransportLabel } from "@/lib/tours/display";
 import { formatVND } from "@/lib/utils/currency";
 import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { Calendar, Clock, Hotel, MapPin, Star } from "lucide-react";
@@ -15,7 +15,7 @@ import TourCardTagStrip from "./TourCardTagStrip";
 export default function TourCard({ tour, onTourClick }: TourCardProps) {
   const { favorite, pending, handleFavoriteClick } = useTourFavorite(tour.tour_id, tour.name);
 
-  const tourPrice = getTourPriceValue(tour.base_price, tour.next_schedule?.price);
+  const tourPrice = Number(tour.next_schedule?.price ?? tour.base_price ?? 0);
   const imageSrc = normalizeImageSrc(tour.cover_image) || PLACEHOLDER_IMAGE;
   const departureDates = new Map<string, Date>();
   for (const schedule of tour.upcoming_schedules ?? []) {

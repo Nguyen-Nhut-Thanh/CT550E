@@ -82,3 +82,12 @@ export const ValidateVoucherQuerySchema = z.object({
   tourId: z.coerce.number().int().positive().optional(),
 });
 export type ValidateVoucherQuery = z.infer<typeof ValidateVoucherQuerySchema>;
+
+export const HomeVoucherCampaignSchema = z.object({
+  enabled: z.boolean().optional(),
+  title: z.string().trim().min(1, 'Tiêu đề không được để trống.').optional(),
+  subtitle: z.string().trim().optional(),
+  badge: z.string().trim().optional(),
+  voucher_ids: z.array(z.number().int().positive()).optional(),
+});
+export type HomeVoucherCampaignInput = z.infer<typeof HomeVoucherCampaignSchema>;

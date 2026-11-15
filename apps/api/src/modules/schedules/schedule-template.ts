@@ -174,24 +174,46 @@ export async function normalizeScheduleTemplate(
     })) !== transportIds.length
   )
     throw new BadRequestException("Phương tiện trong mẫu không còn tồn tại.");
-  for (const day of itinerary) {
-    if (
-      day.hotel_id &&
-      !(await tx.hotels.count({ where: { hotel_id: day.hotel_id } }))
-    )
-      throw new BadRequestException("Khách sạn trong mẫu không tồn tại.");
-    if (
-      day.room_type_id &&
-      !(await tx.hotel_room_types.count({
-        where: {
-          ...(day.hotel_id ? { hotel_id: day.hotel_id } : {}),
-          room_type_id: day.room_type_id,
-        },
-      }))
-    )
-      throw new BadRequestException(
-        "Khách sạn hoặc loại phòng trong mẫu không hợp lệ.",
-      );
+  const hotelIds = [
+    ...new Set(
+      itinerary
+        .map((d) => d.hotel_id)
+        .filter((id): id is number => id != null),
+    ),
+  ];
+  if (hotelIds.length) {
+    const existingHotels = await tx.hotels.findMany({
+      where: { hotel_id: { in: hotelIds } },
+      select: { hotel_id: true },
+    });
+    const existingHotelSet = new Set(existingHotels.map((h) => h.hotel_id));
+    for (const hId of hotelIds) {
+      if (!existingHotelSet.has(hId)) {
+        throw new BadRequestException("Khách sạn trong mẫu không tồn tại.");
+      }
+    }
+  }
+
+  const roomTypeEntries = itinerary.filter(
+    (d): d is typeof d & { room_type_id: number } => d.room_type_id != null,
+  );
+  if (roomTypeEntries.length) {
+    const roomTypeIds = [...new Set(roomTypeEntries.map((e) => e.room_type_id))];
+    const existingRoomTypes = await tx.hotel_room_types.findMany({
+      where: { room_type_id: { in: roomTypeIds } },
+      select: { room_type_id: true, hotel_id: true },
+    });
+    const roomTypeMap = new Map(
+      existingRoomTypes.map((r) => [r.room_type_id, r.hotel_id]),
+    );
+    for (const entry of roomTypeEntries) {
+      const parentHotelId = roomTypeMap.get(entry.room_type_id);
+      if (!parentHotelId || (entry.hotel_id && parentHotelId !== entry.hotel_id)) {
+        throw new BadRequestException(
+          "Khách sạn hoặc loại phòng trong mẫu không hợp lệ.",
+        );
+      }
+    }
   }
   return {
     ...(reference_date ? { reference_date } : {}),

@@ -701,22 +701,8 @@ export class SchedulesAdminService {
         "Không thể xóa lịch trình đã có khách đặt.",
       );
     }
-    return this.prisma.$transaction(async (tx) => {
-      await tx.tour_itineraries.deleteMany({
-        where: { tour_schedule_id: scheduleId },
-      });
-      await tx.tour_schedule_prices.deleteMany({
-        where: { tour_schedule_id: scheduleId },
-      });
-      await tx.tour_schedule_hotels.deleteMany({
-        where: { tour_schedule_id: scheduleId },
-      });
-      await tx.tour_schedule_transports.deleteMany({
-        where: { tour_schedule_id: scheduleId },
-      });
-      return tx.tour_schedules.delete({
-        where: { tour_schedule_id: scheduleId },
-      });
+    return this.prisma.tour_schedules.delete({
+      where: { tour_schedule_id: scheduleId },
     });
   }
 

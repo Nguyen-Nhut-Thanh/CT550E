@@ -98,21 +98,23 @@ export class PostsService {
       throw new NotFoundException(
         "Bài viết không tồn tại hoặc chưa được xuất bản.",
       );
-    const layout = await this.getPublicLayout();
-    const related = await this.prisma.posts.findMany({
-      where: {
-        status: 1,
-        category_id: post.category_id,
-        post_id: { not: post.post_id },
-      },
-      include: this.publicInclude,
-      orderBy: [
-        { published_at: "desc" },
-        { created_at: "desc" },
-        { post_id: "desc" },
-      ],
-      take: 4,
-    });
+    const [layout, related] = await Promise.all([
+      this.getPublicLayout(),
+      this.prisma.posts.findMany({
+        where: {
+          status: 1,
+          category_id: post.category_id,
+          post_id: { not: post.post_id },
+        },
+        include: this.publicInclude,
+        orderBy: [
+          { published_at: "desc" },
+          { created_at: "desc" },
+          { post_id: "desc" },
+        ],
+        take: 4,
+      }),
+    ]);
     const ids = new Set([post.post_id, ...related.map((item) => item.post_id)]);
     for (const item of layout)
       if (item && !ids.has(item.post_id) && related.length < 4) {

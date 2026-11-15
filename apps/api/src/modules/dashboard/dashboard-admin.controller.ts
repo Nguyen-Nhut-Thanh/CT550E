@@ -2,7 +2,7 @@ import { Controller, Get, Header, Query, Res, UseGuards, } from '@nestjs/common'
 import type { Response } from 'express';
 import { AdminAuthGuard } from '../auth/admin.guard';
 import { DashboardService } from './dashboard.service';
-@Controller(['admin/dashboard', 'dashboard'])
+@Controller('admin/dashboard')
 @UseGuards(AdminAuthGuard)
 export class DashboardAdminController {
     constructor(private readonly dashboardService: DashboardService) { }

@@ -1,3 +1,4 @@
+import { formatLocalDate } from "./dateTime";
 import type { CalendarDay } from "shared";
 
 export const WEEKDAY_HEADERS = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
@@ -23,12 +24,7 @@ export function startOfDay(date: Date) {
   return result;
 }
 
-export function toDateValue(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+export const toDateValue = formatLocalDate;
 
 export function fromDateValue(value: string) {
   const [year, month, day] = value.split("-").map(Number);

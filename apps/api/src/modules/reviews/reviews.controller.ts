@@ -18,6 +18,7 @@ import { UseImageUpload } from "../../common/decorators/use-image-upload.decorat
 import { uploadToFolder } from "../../common/decorators/use-folder-upload";
 import { CloudinaryService } from "../../infrastructure/storage/cloudinary.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
+import { OptionalJwtAuthGuard } from "../auth/optional-jwt.guard";
 import { ReviewsService } from "./reviews.service";
 
 @Controller()
@@ -50,6 +51,7 @@ export class ReviewsController {
     return uploadToFolder(this.cloudinaryService, file, "JourniTrip/reviews");
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get("tours/:tourId/reviews")
   async getTourReviews(
     @Param("tourId", ParseIntPipe) tourId: number,

@@ -235,6 +235,12 @@ model membership_program {
   updated_at DateTime @updatedAt @db.Timestamp(6)
 }
 
+model home_voucher_campaign {
+  id         Int      @id @default(1)
+  config     Json
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+}
+
 model membership_notifications {
   booking_id      Int?
   booking         bookings? @relation(fields: [booking_id], references: [booking_id], onDelete: SetNull)
@@ -510,7 +516,7 @@ model tour_itineraries {
   activities        itinerary_activities[]
   created_at        DateTime       @default(now()) @db.Timestamp(6)
   updated_at        DateTime       @updatedAt @db.Timestamp(6)
-  tour_schedules    tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
+  tour_schedules    tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
 }
 
 model itinerary_activities {
@@ -586,7 +592,7 @@ model tour_schedule_hotels {
   updated_at        DateTime         @updatedAt @db.Timestamp(6)
   hotels            hotels           @relation(fields: [hotel_id], references: [hotel_id], onDelete: NoAction, onUpdate: NoAction)
   hotel_room_types  hotel_room_types @relation(fields: [room_type_id], references: [room_type_id], onDelete: NoAction, onUpdate: NoAction)
-  tour_schedules    tour_schedules   @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
+  tour_schedules    tour_schedules   @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -597,7 +603,7 @@ model tour_schedule_prices {
   price             Decimal        @default(0) @db.Decimal(12, 2)
   currency          String         @default("VND") @db.VarChar(10)
   note              String?
-  tour_schedules    tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
+  tour_schedules    tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -611,7 +617,7 @@ model tour_schedule_transports {
   note                  String?
   created_at            DateTime       @default(now()) @db.Timestamp(6)
   updated_at            DateTime       @updatedAt @db.Timestamp(6)
-  tour_schedules        tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: NoAction, onUpdate: NoAction)
+  tour_schedules        tour_schedules @relation(fields: [tour_schedule_id], references: [tour_schedule_id], onDelete: Cascade)
   transports            transports     @relation(fields: [transport_id], references: [transport_id], onDelete: NoAction, onUpdate: NoAction)
 }
 

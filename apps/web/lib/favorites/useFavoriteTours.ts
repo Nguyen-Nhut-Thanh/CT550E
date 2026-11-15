@@ -5,6 +5,34 @@ import { addFavoriteTour, getFavoriteIds, removeFavoriteTour } from "@/lib/favor
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToggleFavoriteResult } from "shared";
 
+const FAVORITES_CHANNEL = "journitrip_favorites_channel";
+const FAVORITES_STORAGE_KEY = "journitrip_favorites_sync";
+
+function notifyFavoritesChange(tourId: number, favorite: boolean) {
+  window.dispatchEvent(
+    new CustomEvent("favorites-change", { detail: { tourId, favorite } }),
+  );
+
+  if (typeof BroadcastChannel !== "undefined") {
+    try {
+      const channel = new BroadcastChannel(FAVORITES_CHANNEL);
+      channel.postMessage({ tourId, favorite });
+      channel.close();
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    localStorage.setItem(
+      FAVORITES_STORAGE_KEY,
+      JSON.stringify({ tourId, favorite, ts: Date.now() }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
 export function useFavoriteTours() {
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
@@ -28,14 +56,61 @@ export function useFavoriteTours() {
   useEffect(() => {
     loadFavoriteIds();
     window.addEventListener("auth-change", loadFavoriteIds);
-    const sync = (event: Event) => {
-      const { tourId, favorite } = (event as CustomEvent<{ tourId: number; favorite: boolean }>).detail;
-      setFavoriteIds((prev) => favorite ? (prev.includes(tourId) ? prev : [...prev, tourId]) : prev.filter(id => id !== tourId));
+
+    const applyChange = (tourId: number, favorite: boolean) => {
+      setFavoriteIds((prev) =>
+        favorite
+          ? prev.includes(tourId)
+            ? prev
+            : [...prev, tourId]
+          : prev.filter((id) => id !== tourId),
+      );
     };
-    window.addEventListener("favorites-change", sync);
+
+    const syncLocal = (event: Event) => {
+      const { tourId, favorite } = (
+        event as CustomEvent<{ tourId: number; favorite: boolean }>
+      ).detail;
+      applyChange(tourId, favorite);
+    };
+    window.addEventListener("favorites-change", syncLocal);
+
+    let channel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        channel = new BroadcastChannel(FAVORITES_CHANNEL);
+        channel.onmessage = (event) => {
+          const { tourId, favorite } = event.data || {};
+          if (typeof tourId === "number") {
+            applyChange(tourId, Boolean(favorite));
+          }
+        };
+      } catch {
+        channel = null;
+      }
+    }
+
+    const syncStorage = (event: StorageEvent) => {
+      if (event.key === FAVORITES_STORAGE_KEY && event.newValue) {
+        try {
+          const data = JSON.parse(event.newValue);
+          if (typeof data?.tourId === "number") {
+            applyChange(data.tourId, Boolean(data.favorite));
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener("storage", syncStorage);
+
     return () => {
       window.removeEventListener("auth-change", loadFavoriteIds);
-      window.removeEventListener("favorites-change", sync);
+      window.removeEventListener("favorites-change", syncLocal);
+      window.removeEventListener("storage", syncStorage);
+      if (channel) {
+        channel.close();
+      }
     };
   }, [loadFavoriteIds]);
 
@@ -84,7 +159,7 @@ export function useFavoriteTours() {
 
           return prev.includes(tourId) ? prev : [...prev, tourId];
         });
-        window.dispatchEvent(new CustomEvent("favorites-change", { detail: { tourId, favorite: !currentlyFavorite } }));
+        notifyFavoritesChange(tourId, !currentlyFavorite);
 
         return {
           ok: true,

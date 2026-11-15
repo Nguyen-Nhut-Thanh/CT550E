@@ -21,7 +21,7 @@ export function useChatSession() {
     try {
       const [user, rows] = await Promise.all([chatApi.me(), chatApi.list()]);
       if(version !== generation.current || sequence !== request.current) return;
-      setActor(previous => previous && JSON.stringify(previous) === JSON.stringify(user) ? previous : user);
+      setActor(previous => previous && previous.userId === user.userId && previous.isStaff === user.isStaff && previous.fullName === user.fullName ? previous : user);
       setConversations(rows); setError('');
     } catch(e) {
       if(version === generation.current && sequence === request.current) setError(e instanceof Error ? e.message : 'Không tải được hội thoại');

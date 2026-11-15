@@ -46,6 +46,34 @@ export function mapReviewResponse(r: any, currentUserId?: number) {
         replies: mapReviewReplies(r.review_replies),
     };
 }
+const ADMIN_REVIEW_INCLUDE = {
+    users: {
+        select: {
+            user_id: true,
+            full_name: true,
+            avatar_url: true,
+        },
+    },
+    tours: {
+        select: {
+            tour_id: true,
+            code: true,
+            name: true,
+        },
+    },
+    review_replies: {
+        include: {
+            users: {
+                select: {
+                    user_id: true,
+                    full_name: true,
+                    avatar_url: true,
+                },
+            },
+        },
+    },
+} as const;
+
 @Injectable()
 export class ReviewsService {
     constructor(private readonly prisma: PrismaService) { }
@@ -409,33 +437,7 @@ export class ReviewsService {
                 take,
                 skip,
                 orderBy: { created_at: "desc" },
-                include: {
-                    users: {
-                        select: {
-                            user_id: true,
-                            full_name: true,
-                            avatar_url: true,
-                        },
-                    },
-                    tours: {
-                        select: {
-                            tour_id: true,
-                            code: true,
-                            name: true,
-                        },
-                    },
-                    review_replies: {
-                        include: {
-                            users: {
-                                select: {
-                                    user_id: true,
-                                    full_name: true,
-                                    avatar_url: true,
-                                },
-                            },
-                        },
-                    },
-                },
+                include: ADMIN_REVIEW_INCLUDE,
             }),
             this.prisma.reviews.count({ where }),
         ]);
@@ -452,33 +454,7 @@ export class ReviewsService {
     async adminGetReviewDetail(reviewId: number) {
         const r = await this.prisma.reviews.findUnique({
             where: { review_id: reviewId },
-            include: {
-                users: {
-                    select: {
-                        user_id: true,
-                        full_name: true,
-                        avatar_url: true,
-                    },
-                },
-                tours: {
-                    select: {
-                        tour_id: true,
-                        code: true,
-                        name: true,
-                    },
-                },
-                review_replies: {
-                    include: {
-                        users: {
-                            select: {
-                                user_id: true,
-                                full_name: true,
-                                avatar_url: true,
-                            },
-                        },
-                    },
-                },
-            },
+            include: ADMIN_REVIEW_INCLUDE,
         });
         if (!r) {
             throw new NotFoundException("Đánh giá không tồn tại.");

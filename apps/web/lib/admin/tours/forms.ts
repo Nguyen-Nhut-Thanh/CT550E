@@ -1,3 +1,4 @@
+import { getScheduleBookedCount } from "@/lib/admin/schedules/status";
 import type { TourDetailForm, TourPolicyContentMap } from "shared";
 import { TOUR_POLICY_DEFINITIONS } from "shared";
 
@@ -24,7 +25,7 @@ export function normalizeTourDetailForm(tourData: TourDetailForm | null | undefi
 export function getTotalTourBookings(tourData: TourDetailForm | null | undefined) {
   return (
     tourData?.tour_schedules?.reduce(
-      (total, schedule) => total + (schedule._count?.bookings || 0),
+      (total, schedule) => total + getScheduleBookedCount(schedule),
       0,
     ) || 0
   );

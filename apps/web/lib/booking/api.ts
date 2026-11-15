@@ -7,10 +7,6 @@ export function getBookingExtraServices() {
   return publicFetch<BookingExtraService[]>("/public/booking-services", { cache: "no-store" });
 }
 
-export function getBookingTourDetail(tourId: string | number) {
-  return publicFetch<PublicTourDetail>(`/tours/public/${tourId}`);
-}
-
 export function validatePublicVoucher(code: string, amount: number, customerId?: number, tourId?: number) {
   const query = new URLSearchParams({
     code,

@@ -16,7 +16,6 @@ import {
 } from "@/lib/admin/posts/api";
 import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { confirmAction } from "@/lib/utils/confirm";
 import { FileText, LayoutGrid, Plus, Settings2 } from "lucide-react";
 import type { PostCategory, PostCategoryDraft, PostItem } from "shared";
 
@@ -130,7 +129,7 @@ function AdminPostsContent() {
   };
 
   const handleDelete = async (postId: number) => {
-    if (!confirmAction("Bạn có chắc chắn muốn xóa bài viết này?")) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
       return;
     }
 

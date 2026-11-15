@@ -11,8 +11,10 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import {
+  HomeVoucherCampaignSchema,
   UpdateVoucherPayloadSchema,
   VoucherPayloadSchema,
+  type HomeVoucherCampaignInput,
   type UpdateVoucherInput,
   type VoucherInput,
 } from 'shared';
@@ -36,7 +38,8 @@ export class VouchersAdminController {
   }
 
   @Post('admin/marketing/vouchers/home-campaign')
-  async updateHomeCampaign(@Body() data: any) {
+  @UsePipes(new ZodValidationPipe(HomeVoucherCampaignSchema))
+  async updateHomeCampaign(@Body() data: HomeVoucherCampaignInput) {
     return this.vouchersService.updateHomeVoucherConfig(data);
   }
 

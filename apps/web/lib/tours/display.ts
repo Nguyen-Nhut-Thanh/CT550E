@@ -1,11 +1,3 @@
-export function getTourPriceValue(basePrice?: number | string | null, schedulePrice?: number | string | null) {
-  if(schedulePrice != null && schedulePrice !== "") {
-    return Number(schedulePrice);
-  }
-
-  return Number(basePrice ?? 0);
-}
-
 export function getTransportCategory(type?: string | null) {
   const value = (type || "").toLowerCase();
 

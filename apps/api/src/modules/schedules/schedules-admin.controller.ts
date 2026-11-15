@@ -12,8 +12,14 @@ import {
   Put,
   UploadedFile,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
-import type { ScheduleAdminPayload } from 'shared';
+import {
+  SchedulePromotionPayloadSchema,
+  type ScheduleAdminPayload,
+  type SchedulePromotionPayloadInput,
+} from 'shared';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { UseImageUpload } from '../../common/decorators/use-image-upload.decorator';
 import { uploadToFolder } from '../../common/decorators/use-folder-upload';
 import { CloudinaryService } from '../../infrastructure/storage/cloudinary.service';
@@ -52,13 +58,8 @@ export class SchedulesAdminController {
     return this.toursAdminService.findOneSchedule(scheduleId);
   }
 
-  @Post('admin/tours/schedules/:scheduleId/delete')
-  deleteSchedule(@Param('scheduleId', ParseIntPipe) scheduleId: number) {
-    return this.toursAdminService.deleteSchedule(scheduleId);
-  }
-
   @Delete('admin/tours/schedules/:scheduleId')
-  deleteScheduleByDelete(
+  deleteSchedule(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
   ) {
     return this.toursAdminService.deleteSchedule(scheduleId);
@@ -98,9 +99,10 @@ export class SchedulesAdminController {
   }
 
   @Put('admin/schedules/:scheduleId/promotion')
+  @UsePipes(new ZodValidationPipe(SchedulePromotionPayloadSchema))
   saveSchedulePromotion(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
-    @Body() body: any,
+    @Body() body: SchedulePromotionPayloadInput,
   ) {
     return this.toursAdminService.saveSchedulePromotion(scheduleId, body);
   }

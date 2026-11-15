@@ -129,27 +129,45 @@ export async function saveItineraryDays(
         : undefined,
     };
   });
-  for (const day of normalized) {
-    const draft = day.draft_data;
-    if (
-      draft?.hotel_id &&
-      !(await tx.hotels.count({ where: { hotel_id: draft.hotel_id } }))
-    )
-      throw new BadRequestException(
-        "Khách sạn trong lịch trình không tồn tại.",
-      );
-    if (
-      draft?.room_type_id &&
-      !(await tx.hotel_room_types.count({
-        where: {
-          ...(draft.hotel_id ? { hotel_id: draft.hotel_id } : {}),
-          room_type_id: draft.room_type_id,
-        },
-      }))
-    )
-      throw new BadRequestException(
-        "Loại phòng trong lịch trình không hợp lệ.",
-      );
+  const hotelIds = [
+    ...new Set(
+      normalized
+        .map((d) => d.draft_data?.hotel_id)
+        .filter((id): id is number => id != null),
+    ),
+  ];
+  if (hotelIds.length) {
+    const existingHotels = await tx.hotels.findMany({
+      where: { hotel_id: { in: hotelIds } },
+      select: { hotel_id: true },
+    });
+    const existingHotelSet = new Set(existingHotels.map((h) => h.hotel_id));
+    for (const hId of hotelIds) {
+      if (!existingHotelSet.has(hId)) {
+        throw new BadRequestException("Khách sạn trong lịch trình không tồn tại.");
+      }
+    }
+  }
+
+  const roomTypeEntries = normalized
+    .map((d) => d.draft_data)
+    .filter((d): d is NonNullable<typeof d> => d?.room_type_id != null);
+
+  if (roomTypeEntries.length) {
+    const roomTypeIds = [...new Set(roomTypeEntries.map((e) => e.room_type_id!))];
+    const existingRoomTypes = await tx.hotel_room_types.findMany({
+      where: { room_type_id: { in: roomTypeIds } },
+      select: { room_type_id: true, hotel_id: true },
+    });
+    const roomTypeMap = new Map(
+      existingRoomTypes.map((r) => [r.room_type_id, r.hotel_id]),
+    );
+    for (const entry of roomTypeEntries) {
+      const parentHotelId = roomTypeMap.get(entry.room_type_id!);
+      if (!parentHotelId || (entry.hotel_id && parentHotelId !== entry.hotel_id)) {
+        throw new BadRequestException("Loại phòng trong lịch trình không hợp lệ.");
+      }
+    }
   }
   const ids = [
     ...new Set(

@@ -3,7 +3,7 @@
 import { AdminPagination } from "@/components/admin/common/AdminPagination";
 import CustomDropdown from "@/components/common/forms/CustomDropdown";
 import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
-import { deleteTourSchedule, getTourSchedules } from "@/lib/admin/schedules/api";
+import { deleteAdminSchedule, getTourSchedules } from "@/lib/admin/schedules/api";
 import { getScheduleBookedCount, getScheduleStatusMeta } from "@/lib/admin/schedules/status";
 import { filterTourSchedules, formatScheduleDate, getSchedulePickupOptions } from "@/lib/admin/schedules/tour-schedules";
 import { useToast } from "@/lib/notifications/useToast";
@@ -68,7 +68,7 @@ export function ScheduleManagement({ tourId }: { tourId?: number }) {
     deleting.current = true;
     setDeletingId(id);
     try {
-      await deleteTourSchedule(id);
+      await deleteAdminSchedule(id);
       setSchedules(current => current.filter(schedule => schedule.tour_schedule_id !== id));
       setPendingDeleteId(null);
       success("Đã xóa lịch khởi hành thành công");

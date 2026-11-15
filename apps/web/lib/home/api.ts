@@ -73,27 +73,17 @@ export async function getFeaturedDestinations(): Promise<FeaturedDestinationsRes
   );
 }
 
-import type { FeaturedTourResponse } from "shared";
+import { requestJson } from "@/lib/http/requestJson";
+import type { FeaturedTourResponse, FlashDealResponse, PublicHomeVouchersData } from "shared";
 
 export async function getFeaturedTours(
   limit = 8,
 ): Promise<FeaturedTourResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/public/featured-tours?limit=${limit}`,
-    {
-      method: "GET",
-      cache: "no-store",
-    },
-  );
-
-  if(!response.ok) {
-    throw new Error(`Không thể tải tour bán chạy: ${response.status}`);
-  }
-
-  return response.json();
+  return requestJson<FeaturedTourResponse>(`/public/featured-tours?limit=${limit}`, {
+    method: "GET",
+    fallbackMessage: "Không thể tải tour bán chạy",
+  });
 }
-
-import type { FlashDealResponse, PublicHomeVouchersData } from "shared";
 
 const DEFAULT_PUBLIC_HOME_VOUCHERS: PublicHomeVouchersData = {
   config: {
@@ -121,17 +111,8 @@ export async function getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
 }
 
 export async function getFlashDeals(limit = 8): Promise<FlashDealResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/public/flash-deals?limit=${limit}`,
-    {
-      method: "GET",
-      cache: "no-store",
-    },
-  );
-
-  if(!response.ok) {
-    throw new Error(`Failed to fetch flash deals: ${response.status}`);
-  }
-
-  return response.json();
+  return requestJson<FlashDealResponse>(`/public/flash-deals?limit=${limit}`, {
+    method: "GET",
+    fallbackMessage: "Failed to fetch flash deals",
+  });
 }

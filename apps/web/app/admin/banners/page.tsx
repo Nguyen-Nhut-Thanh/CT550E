@@ -10,7 +10,6 @@ import { SeasonalThemeManager } from "@/components/admin/banners/SeasonalThemeMa
 import { FeaturedLocationsManager } from "@/components/admin/locations/featured/FeaturedLocationsManager";
 import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/admin/banners/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { confirmAction } from "@/lib/utils/confirm";
 import { Images, MapPin, Sparkles } from "lucide-react";
 import type { Banner } from "shared";
 
@@ -114,7 +113,7 @@ function AdminBannersContent() {
 
   const duplicate = (item: Banner) =>
     void run(item, async () => {
-      const response = await saveAdminBanner({
+      const created = await saveAdminBanner({
         location_name: item.location_name,
         header: `${item.header.slice(0, 240)} (bản sao)`,
         description: item.description,
@@ -122,13 +121,12 @@ function AdminBannersContent() {
         link_to: item.link_to || "",
         status: 0,
       });
-      const created = (await response.json()) as Banner;
       setItems((current) => [...current, created].sort((a, b) => a.banner_id - b.banner_id));
       success("Đã nhân bản banner ở trạng thái ẩn");
     });
 
   const remove = (item: Banner) => {
-    if (!confirmAction(`Xóa banner “${item.header}”?`)) return;
+    if (!window.confirm(`Xóa banner “${item.header}”?`)) return;
     void run(item, async () => {
       await deleteAdminBanner(item.banner_id);
       setItems((current) => current.filter((row) => row.banner_id !== item.banner_id));

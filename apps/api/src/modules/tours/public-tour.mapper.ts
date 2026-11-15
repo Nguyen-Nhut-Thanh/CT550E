@@ -98,37 +98,46 @@ export function buildCardSelect(scheduleFilter: Prisma.tour_schedulesWhereInput 
         },
     };
 }
-export function formatTourCard(t: PublicTourCardRecord, options?: {
-    onlyFlashDeal?: boolean;
-}) {
-    const now = new Date();
-    const cutOffHours = t.cut_off_hours ?? 24;
+export function filterAndPriceSchedules<T extends PublicScheduleRecord>(
+    schedules: T[] | undefined | null,
+    cutOffHours?: number | null,
+    options?: { now?: Date; onlyFlashDeal?: boolean },
+) {
+    const now = options?.now ?? new Date();
+    const minHours = cutOffHours ?? 24;
     const onlyFlashDeal = options?.onlyFlashDeal === true;
-    const schedules = Array.isArray(t.tour_schedules)
-        ? t.tour_schedules
-            .filter((s: PublicScheduleRecord) => {
+    if (!Array.isArray(schedules)) return [];
+
+    return schedules
+        .filter((s: T) => {
             const departureDate = new Date(s.start_date);
-            const diffMs = departureDate.getTime() - now.getTime();
-            const diffHours = diffMs / (1000 * 60 * 60);
-            const isTimeValid = diffHours >= cutOffHours;
+            const diffHours = (departureDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+            const isTimeValid = diffHours >= minHours;
             const hasSpace = (s.quota || 0) > (s.booked_count || 0);
             if (onlyFlashDeal) {
                 return isTimeValid && hasSpace && Boolean(s.flash_deals);
             }
             return isTimeValid && hasSpace;
         })
-            .map((s: PublicScheduleRecord) => {
-                const pricing = calculateSchedulePricing(s, now);
-                return {
-                    ...s,
-                    price: pricing.effectivePrice,
-                    original_price: pricing.originalPrice,
-                    flash_deal: pricing.flashDeal,
-                    schedule_promotions: s.schedule_promotions || null,
-                    schedule_promotion: pricing.schedulePromotion,
-                };
-            })
-        : [];
+        .map((s: T) => {
+            const pricing = calculateSchedulePricing(s, now);
+            return {
+                ...s,
+                price: pricing.effectivePrice,
+                original_price: pricing.originalPrice,
+                flash_deal: pricing.flashDeal,
+                schedule_promotions: s.schedule_promotions || null,
+                schedule_promotion: pricing.schedulePromotion,
+            };
+        });
+}
+
+export function formatTourCard(t: PublicTourCardRecord, options?: {
+    onlyFlashDeal?: boolean;
+}) {
+    const schedules = filterAndPriceSchedules(t.tour_schedules, t.cut_off_hours, {
+        onlyFlashDeal: options?.onlyFlashDeal,
+    });
     if (schedules.length === 0)
         return null;
     const next_schedule = schedules[0] || null;

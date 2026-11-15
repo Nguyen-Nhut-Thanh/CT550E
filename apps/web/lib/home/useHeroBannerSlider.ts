@@ -10,7 +10,7 @@ export function useHeroBannerSlider({
   slideAnimationDuration = 800,
 }: UseHeroBannerSliderParams): UseHeroBannerSliderReturn {
   const normalizedBanners = useMemo<BannerItem[]>(() => {
-    if(!Array.isArray(banners)) return [];
+    if (!Array.isArray(banners)) return [];
 
     return banners
       .filter(
@@ -24,8 +24,7 @@ export function useHeroBannerSlider({
       .map((item) => ({
         ...item,
         image_url: normalizeImageSrc(item.image_url) || "/images/shared/default-tour-beach.jpg",
-        description:
-          typeof item.description === "string" ? item.description : "",
+        description: typeof item.description === "string" ? item.description : "",
         link_to:
           typeof item.link_to === "string" && item.link_to.trim()
             ? item.link_to
@@ -34,67 +33,34 @@ export function useHeroBannerSlider({
   }, [banners]);
 
   const slideContainerRef = useRef<HTMLDivElement | null>(null);
-  const autoSlideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const transitionUnlockTimeoutRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const autoSlideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionUnlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTransitioningRef = useRef(false);
 
-  const [activeBanner, setActiveBanner] = useState<ActiveBannerState | null>(
-    null,
-  );
+  // Quản lý thứ tự slides hoàn toàn bằng React State thay vì DOM manipulation
+  const [slides, setSlides] = useState<BannerItem[]>(normalizedBanners);
   const [animateKey, setAnimateKey] = useState(0);
+
+  // Đồng bộ slides khi prop banners thay đổi
+  useEffect(() => {
+    setSlides(normalizedBanners);
+  }, [normalizedBanners]);
 
   const totalItems = normalizedBanners.length;
 
   const clearAutoSlide = useCallback(() => {
-    if(autoSlideTimeoutRef.current) {
+    if (autoSlideTimeoutRef.current) {
       clearTimeout(autoSlideTimeoutRef.current);
       autoSlideTimeoutRef.current = null;
     }
   }, []);
 
   const clearTransitionUnlock = useCallback(() => {
-    if(transitionUnlockTimeoutRef.current) {
+    if (transitionUnlockTimeoutRef.current) {
       clearTimeout(transitionUnlockTimeoutRef.current);
       transitionUnlockTimeoutRef.current = null;
     }
   }, []);
-
-  const getSlideItems = useCallback(() => {
-    const container = slideContainerRef.current;
-    if(!container) return [];
-    return Array.from(
-      container.querySelectorAll<HTMLDivElement>(".hero-banner-item"),
-    );
-  }, []);
-
-  const updateHeroContent = useCallback(() => {
-    const items = getSlideItems();
-    const activeItem = items[1] ?? items[0];
-
-    if(!activeItem) return;
-
-    const nextActive: ActiveBannerState = {
-      banner_id: Number(activeItem.dataset.bannerId || 0),
-      location_name: activeItem.dataset.location || "",
-      header: activeItem.dataset.title || "",
-      description: activeItem.dataset.description || "",
-      image_url: activeItem.dataset.imageUrl || "",
-      link_to: activeItem.dataset.linkTo || "#",
-    };
-
-    setActiveBanner(nextActive);
-    setAnimateKey((prev) => prev + 1);
-  }, [getSlideItems]);
-
-  const runUpdateHeroSoon = useCallback(() => {
-    requestAnimationFrame(() => {
-      updateHeroContent();
-    });
-  }, [updateHeroContent]);
 
   const unlockTransitionLaterRef = useRef<(() => void) | null>(null);
 
@@ -103,139 +69,83 @@ export function useHeroBannerSlider({
 
     transitionUnlockTimeoutRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-
       clearAutoSlide();
 
-      if(totalItems > 1) {
+      if (totalItems > 1) {
         autoSlideTimeoutRef.current = setTimeout(() => {
-          const container = slideContainerRef.current;
-          if(!container || isTransitioningRef.current) return;
-
-          const items = getSlideItems();
-          if(!items.length) return;
-
+          if (isTransitioningRef.current) return;
           isTransitioningRef.current = true;
-          container.appendChild(items[0]);
-
-          runUpdateHeroSoon();
-
-          requestAnimationFrame(() => {
-            unlockTransitionLaterRef.current?.();
-          });
+          setSlides((prev) => (prev.length > 1 ? [...prev.slice(1), prev[0]] : prev));
+          setAnimateKey((prev) => prev + 1);
+          unlockTransitionLaterRef.current?.();
         }, autoSlideDelay);
       }
     }, slideAnimationDuration);
-  }, [
-    autoSlideDelay,
-    clearAutoSlide,
-    clearTransitionUnlock,
-    getSlideItems,
-    runUpdateHeroSoon,
-    slideAnimationDuration,
-    totalItems,
-  ]);
+  }, [autoSlideDelay, clearAutoSlide, clearTransitionUnlock, slideAnimationDuration, totalItems]);
 
   useEffect(() => {
     unlockTransitionLaterRef.current = unlockTransitionLater;
   }, [unlockTransitionLater]);
 
   const handleNextSlide = useCallback(() => {
-    const container = slideContainerRef.current;
-    if(!container || isTransitioningRef.current) return;
-
-    const items = getSlideItems();
-    if(!items.length) return;
+    if (isTransitioningRef.current || slides.length <= 1) return;
 
     clearAutoSlide();
     isTransitioningRef.current = true;
-    container.appendChild(items[0]);
-
-    runUpdateHeroSoon();
+    setSlides((prev) => (prev.length > 1 ? [...prev.slice(1), prev[0]] : prev));
+    setAnimateKey((prev) => prev + 1);
     unlockTransitionLater();
-  }, [clearAutoSlide, getSlideItems, runUpdateHeroSoon, unlockTransitionLater]);
+  }, [clearAutoSlide, slides.length, unlockTransitionLater]);
 
   const handlePrevSlide = useCallback(() => {
-    const container = slideContainerRef.current;
-    if(!container || isTransitioningRef.current) return;
-
-    const items = getSlideItems();
-    if(!items.length) return;
+    if (isTransitioningRef.current || slides.length <= 1) return;
 
     clearAutoSlide();
     isTransitioningRef.current = true;
-    container.prepend(items[items.length - 1]);
-
-    runUpdateHeroSoon();
+    setSlides((prev) =>
+      prev.length > 1 ? [prev[prev.length - 1], ...prev.slice(0, -1)] : prev,
+    );
+    setAnimateKey((prev) => prev + 1);
     unlockTransitionLater();
-  }, [clearAutoSlide, getSlideItems, runUpdateHeroSoon, unlockTransitionLater]);
-
-  const moveToSlide = useCallback(
-    (clickedElement: HTMLDivElement) => {
-      const container = slideContainerRef.current;
-      if(!container || isTransitioningRef.current) return;
-
-      const items = getSlideItems();
-      const clickedIndex = items.indexOf(clickedElement);
-
-      if(clickedIndex <= 1) return;
-
-      clearAutoSlide();
-      isTransitioningRef.current = true;
-
-      const moves = clickedIndex - 1;
-
-      for(let i = 0;i < moves;i += 1) {
-        const currentItems = Array.from(
-          container.querySelectorAll<HTMLDivElement>(".hero-banner-item"),
-        );
-
-        if(!currentItems.length) break;
-        container.appendChild(currentItems[0]);
-      }
-
-      runUpdateHeroSoon();
-      unlockTransitionLater();
-    },
-    [clearAutoSlide, getSlideItems, runUpdateHeroSoon, unlockTransitionLater],
-  );
+  }, [clearAutoSlide, slides.length, unlockTransitionLater]);
 
   const handleContainerClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement;
-      const clickedItem = target.closest(
-        ".hero-banner-item",
-      ) as HTMLDivElement | null;
-      if(!clickedItem) return;
-      moveToSlide(clickedItem);
+      const clickedItem = target.closest(".hero-banner-item") as HTMLElement | null;
+      if (!clickedItem || isTransitioningRef.current) return;
+
+      const bannerIdStr = clickedItem.dataset.bannerId;
+      if (!bannerIdStr) return;
+      const bannerId = Number(bannerIdStr);
+
+      setSlides((prev) => {
+        const idx = prev.findIndex((item) => item.banner_id === bannerId);
+        // Item 0 (nền) và item 1 (active) không cần dịch chuyển khi click
+        if (idx <= 1) return prev;
+
+        clearAutoSlide();
+        isTransitioningRef.current = true;
+        const moves = idx - 1;
+        const next = [...prev.slice(moves), ...prev.slice(0, moves)];
+        setAnimateKey((k) => k + 1);
+        unlockTransitionLater();
+        return next;
+      });
     },
-    [moveToSlide],
+    [clearAutoSlide, unlockTransitionLater],
   );
 
-  useEffect(() => {
-    const frameId = requestAnimationFrame(() => {
-      updateHeroContent();
-    });
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [updateHeroContent]);
-
+  // Khởi động auto-slide ban đầu
   useEffect(() => {
     clearAutoSlide();
 
-    if(totalItems > 1) {
+    if (totalItems > 1) {
       autoSlideTimeoutRef.current = setTimeout(() => {
-        const container = slideContainerRef.current;
-        if(!container || isTransitioningRef.current) return;
-
-        const items = getSlideItems();
-        if(!items.length) return;
-
+        if (isTransitioningRef.current) return;
         isTransitioningRef.current = true;
-        container.appendChild(items[0]);
-
-        runUpdateHeroSoon();
+        setSlides((prev) => (prev.length > 1 ? [...prev.slice(1), prev[0]] : prev));
+        setAnimateKey((prev) => prev + 1);
         unlockTransitionLater();
       }, autoSlideDelay);
     }
@@ -244,19 +154,25 @@ export function useHeroBannerSlider({
       clearAutoSlide();
       clearTransitionUnlock();
     };
-  }, [
-    autoSlideDelay,
-    clearAutoSlide,
-    clearTransitionUnlock,
-    getSlideItems,
-    runUpdateHeroSoon,
-    totalItems,
-    unlockTransitionLater,
-  ]);
+  }, [autoSlideDelay, clearAutoSlide, clearTransitionUnlock, totalItems, unlockTransitionLater]);
+
+  // Active banner luôn là slide vị trí 1 (slide đang được trình chiếu chính) hoặc slide 0 nếu chỉ có 1 slide
+  const activeItem = slides[1] ?? slides[0] ?? null;
+  const activeBanner = useMemo<ActiveBannerState | null>(() => {
+    if (!activeItem) return null;
+    return {
+      banner_id: activeItem.banner_id,
+      location_name: activeItem.location_name,
+      header: activeItem.header,
+      description: activeItem.description,
+      image_url: activeItem.image_url,
+      link_to: activeItem.link_to,
+    };
+  }, [activeItem]);
 
   const currentIndex = useMemo(() => {
-    if(!activeBanner || !normalizedBanners.length) return 0;
-    const idx = normalizedBanners.findIndex(b => b.banner_id === activeBanner.banner_id);
+    if (!activeBanner || !normalizedBanners.length) return 0;
+    const idx = normalizedBanners.findIndex((b) => b.banner_id === activeBanner.banner_id);
     return idx !== -1 ? idx + 1 : 1;
   }, [activeBanner, normalizedBanners]);
 
@@ -264,7 +180,7 @@ export function useHeroBannerSlider({
     totalItems > 0 ? `${(currentIndex / totalItems) * 100}%` : "0%";
 
   return {
-    normalizedBanners,
+    normalizedBanners: slides,
     slideContainerRef,
     activeBanner,
     animateKey,

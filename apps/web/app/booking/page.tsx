@@ -23,7 +23,8 @@ import InlineNotice from "@/components/common/feedback/InlineNotice";
 
 import { fetchMe, getToken } from "@/lib/auth/session";
 import { useToast } from "@/lib/notifications/useToast";
-import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, getBookingTourDetail, validatePublicVoucher, checkBookingConflicts } from "@/lib/booking/api";
+import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, validatePublicVoucher, checkBookingConflicts } from "@/lib/booking/api";
+import { getPublicTourDetail } from "@/lib/tours/api";
 import { parseBirthday } from "@/lib/booking/birthday";
 import { getSingleRoomSurchargeTotal, getUnitPrice } from "@/lib/booking/pricing";
 import { resolveBookingDeparture, resolvePickupPoint } from '@/lib/booking/departure';
@@ -121,7 +122,7 @@ function BookingContent() {
       try {
         setLoading(true);
         const [tourData, me] = await Promise.all([
-          getBookingTourDetail(tourId),
+          getPublicTourDetail(tourId),
           customerId ? getStaffBookingCustomer(customerId) : fetchMe(),
         ]);
 

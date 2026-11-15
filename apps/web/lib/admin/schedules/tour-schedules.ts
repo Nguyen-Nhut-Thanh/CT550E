@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/utils/dateTime";
 import type { AdminSchedule } from "shared";
 import { matchesScheduleStatusFilter } from "./status";
 
@@ -7,8 +8,7 @@ export function normalizeScheduleSearch(value: string) {
 }
 
 export function formatScheduleDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+  return formatDate(value, undefined, "—");
 }
 
 export function getSchedulePickupOptions(schedules: AdminSchedule[]) {

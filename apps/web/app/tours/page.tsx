@@ -7,13 +7,12 @@ import TourListSkeleton from "@/components/tours/listing/TourListSkeleton";
 import TourSortControl from "@/components/tours/listing/TourSortControl";
 import { trackRecommendationEvent } from "@/lib/recommendations/events";
 import { getPublicTours } from "@/lib/tours/api";
-import { getTourPriceValue } from "@/lib/tours/display";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import type { PublicTourCard, PublicToursResponse } from "shared";
 
 function getTourPrice(tour: PublicTourCard) {
-  return getTourPriceValue(tour.base_price, tour.next_schedule?.price);
+  return Number(tour.next_schedule?.price ?? tour.base_price ?? 0);
 }
 
 function ToursContent() {

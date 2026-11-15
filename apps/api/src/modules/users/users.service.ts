@@ -1,5 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+const USER_MANAGEMENT_INCLUDE = {
+    accounts: {
+        select: {
+            email: true,
+            status: true,
+            last_login_at: true,
+            provider: true,
+        },
+    },
+    employee_profile: true,
+    role_users: {
+        include: {
+            roles: true,
+        },
+    },
+} as const;
+
 @Injectable()
 export class UsersService {
     constructor(private prisma: PrismaService) { }
@@ -15,22 +32,7 @@ export class UsersService {
     }
     async findAll() {
         return this.prisma.users.findMany({
-            include: {
-                accounts: {
-                    select: {
-                        email: true,
-                        status: true,
-                        last_login_at: true,
-                        provider: true,
-                    },
-                },
-                employee_profile: true,
-                role_users: {
-                    include: {
-                        roles: true,
-                    },
-                },
-            },
+            include: USER_MANAGEMENT_INCLUDE,
             orderBy: {
                 created_at: 'desc',
             },
@@ -39,22 +41,7 @@ export class UsersService {
     async findOne(userId: number) {
         const user = await this.prisma.users.findUnique({
             where: { user_id: userId },
-            include: {
-                accounts: {
-                    select: {
-                        email: true,
-                        status: true,
-                        last_login_at: true,
-                        provider: true,
-                    },
-                },
-                employee_profile: true,
-                role_users: {
-                    include: {
-                        roles: true,
-                    },
-                },
-            },
+            include: USER_MANAGEMENT_INCLUDE,
         });
         if (!user) {
             throw new NotFoundException('Không tìm thấy người dùng');

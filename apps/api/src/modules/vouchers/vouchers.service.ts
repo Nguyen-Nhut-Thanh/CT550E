@@ -5,8 +5,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Prisma, vouchers } from "@prisma/client";
-import * as fs from "fs";
-import * as path from "path";
 import {
   MEMBERSHIP_TIERS,
   membershipDiscount,
@@ -521,35 +519,29 @@ export class VouchersService {
     return this.prisma.vouchers.delete({ where: { voucher_id: id } });
   }
 
-  private getHomeConfigFilePath(): string {
-    const cwd = process.cwd();
-    const baseDir =
-      cwd.endsWith(path.join("apps", "api")) || cwd.endsWith("apps/api")
-        ? path.join(cwd, "data")
-        : path.join(cwd, "apps", "api", "data");
-    if (!fs.existsSync(baseDir)) {
-      try {
-        fs.mkdirSync(baseDir, { recursive: true });
-      } catch {
-        /* ignore */
-      }
-    }
-    return path.join(baseDir, "home-vouchers.json");
-  }
-
   async getHomeVoucherConfig(): Promise<HomeVoucherCampaignConfig> {
     try {
-      const filePath = this.getHomeConfigFilePath();
-      if (fs.existsSync(filePath)) {
-        const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      const record = await this.prisma.home_voucher_campaign.findUnique({
+        where: { id: 1 },
+      });
+      if (record?.config) {
+        const parsed = record.config as Record<string, unknown>;
         return {
           enabled:
             parsed.enabled !== undefined ? Boolean(parsed.enabled) : true,
-          title: parsed.title || DEFAULT_HOME_VOUCHER_CONFIG.title,
-          subtitle: parsed.subtitle || DEFAULT_HOME_VOUCHER_CONFIG.subtitle,
-          badge: parsed.badge || DEFAULT_HOME_VOUCHER_CONFIG.badge,
+          title:
+            (typeof parsed.title === "string" && parsed.title.trim()) ||
+            DEFAULT_HOME_VOUCHER_CONFIG.title,
+          subtitle:
+            (typeof parsed.subtitle === "string" && parsed.subtitle.trim()) ||
+            DEFAULT_HOME_VOUCHER_CONFIG.subtitle,
+          badge:
+            (typeof parsed.badge === "string" && parsed.badge.trim()) ||
+            DEFAULT_HOME_VOUCHER_CONFIG.badge,
           voucher_ids: Array.isArray(parsed.voucher_ids)
-            ? parsed.voucher_ids.map(Number)
+            ? parsed.voucher_ids
+                .map(Number)
+                .filter((n) => Number.isSafeInteger(n) && n > 0)
             : [],
         };
       }
@@ -572,17 +564,16 @@ export class VouchersService {
       subtitle: payload.subtitle?.trim() || current.subtitle,
       badge: payload.badge?.trim() || current.badge,
       voucher_ids: Array.isArray(payload.voucher_ids)
-        ? payload.voucher_ids.map(Number)
+        ? payload.voucher_ids
+            .map(Number)
+            .filter((n) => Number.isSafeInteger(n) && n > 0)
         : current.voucher_ids,
     };
-    try {
-      const filePath = this.getHomeConfigFilePath();
-      fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), "utf-8");
-    } catch {
-      throw new BadRequestException(
-        "Không thể ghi file cấu hình voucher trang chủ.",
-      );
-    }
+    await this.prisma.home_voucher_campaign.upsert({
+      where: { id: 1 },
+      create: { id: 1, config: updated as unknown as Prisma.InputJsonValue },
+      update: { config: updated as unknown as Prisma.InputJsonValue },
+    });
     return updated;
   }
 

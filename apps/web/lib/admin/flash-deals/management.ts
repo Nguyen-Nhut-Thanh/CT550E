@@ -23,6 +23,17 @@ export function filterManagedFlashDeals(items: FlashDealSchedule[], filters: Fla
     return filters.destination === 'all' || !!item.tours?.tour_destinations?.some(destination => String(destination.locations.location_id) === filters.destination);
   });
 }
+export function filterFlashDealSchedules(
+  schedules: FlashDealSchedule[],
+  searchTerm: string,
+  now = Date.now(),
+) {
+  return filterManagedFlashDeals(
+    schedules,
+    { ...DEFAULT_FLASH_DEAL_FILTERS, search: searchTerm },
+    now,
+  );
+}
 export function getFlashDealOverview(items: FlashDealSchedule[], now = Date.now()) {
   return items.reduce((totals, item) => {
     const status = getFlashDealStatus(item, now).key;

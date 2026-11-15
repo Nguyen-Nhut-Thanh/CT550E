@@ -1,4 +1,4 @@
-import { formatLocalDate as formatDateString } from "@/lib/utils/dateTime";
+import { formatLocalDate as formatDateString, formatVietnamDateTimeInput, parseVietnamDateTimeParts } from "@/lib/utils/dateTime";
 import { parseCalendarDate } from "@/lib/utils/calendar";
 import { getDayTransport, getSchedulePickupTimeError } from "shared";
 import type { ItineraryFormItem, ScheduleEditorScheduleDetailResponse as ScheduleDetailResponse, ScheduleFormState, SchedulePriceItem } from 'shared';
@@ -84,12 +84,7 @@ export function formatTimeValue(value?: string | Date | null) {
   });
 }
 
-export function pickupDateTimeInput(value: string) {
-  return new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).format(new Date(value)).replace(' ', 'T');
-}
+export const pickupDateTimeInput = formatVietnamDateTimeInput;
 
 /** Chuyển giờ hiển thị của điểm đón sang Date cục bộ cho bộ chọn ngày–giờ. */
 export function pickupInputToDate(value: string): Date | null {
@@ -110,8 +105,8 @@ export function pickupDateToInput(value: Date | null) {
 export function buildScheduleFormFromResponse(
   data: ScheduleDetailResponse,
 ): ScheduleFormState {
-  const startDt = data.start_date ? new Date(data.start_date) : null;
-  const endDt = data.end_date ? new Date(data.end_date) : null;
+  const startParts = parseVietnamDateTimeParts(data.start_date);
+  const endParts = parseVietnamDateTimeParts(data.end_date);
   const hotelByDay = new Map<number, { hotel_id: string | number; room_type_id: string | number }>();
   const draftDays = new Set((data.tour_itineraries || []).filter(item => item.draft_data).map((item, index) => item.day_number ?? index + 1));
 
@@ -144,10 +139,10 @@ export function buildScheduleFormFromResponse(
       name: point.name, address: point.address, note: point.note || "",
       pickup_at: pickupDateTimeInput(point.pickup_at),
     })),
-    start_date: startDt ? formatDateString(startDt) : "",
-    start_time: startDt ? formatTimeValue(startDt) : "08:00",
-    end_date: endDt ? formatDateString(endDt) : "",
-    end_time: endDt ? formatTimeValue(endDt) : "17:00",
+    start_date: startParts?.date || "",
+    start_time: startParts?.time || "08:00",
+    end_date: endParts?.date || "",
+    end_time: endParts?.time || "17:00",
     price: data.price ?? 0,
     quota: data.quota ?? 20,
     status: data.status ?? 1,

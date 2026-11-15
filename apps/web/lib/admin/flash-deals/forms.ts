@@ -29,29 +29,7 @@ export function buildFlashDealForm(schedule: FlashDealSchedule): FlashDealForm {
   };
 }
 
-export function filterFlashDealSchedules(
-  schedules: FlashDealSchedule[],
-  searchTerm: string,
-) {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-
-  return schedules.filter((schedule) => {
-    const isUpcoming = new Date(schedule.start_date).getTime() > Date.now();
-
-    if(!isUpcoming) {
-      return false;
-    }
-
-    if(!normalizedSearch) {
-      return true;
-    }
-
-    return (
-      schedule.tours?.name?.toLowerCase().includes(normalizedSearch) ||
-      schedule.tours?.code?.toLowerCase().includes(normalizedSearch)
-    );
-  });
-}
+export { filterFlashDealSchedules } from "./management";
 
 export function previewFlashDealPrice(
   price: number,

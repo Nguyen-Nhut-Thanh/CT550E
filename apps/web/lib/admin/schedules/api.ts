@@ -16,28 +16,6 @@ export function getTourSchedules<T>(tourId: number) {
   );
 }
 
-export function createTourSchedule(
-  tourId: number,
-  body: Record<string, unknown>,
-) {
-  return requestAdminJson(
-    `/admin/tours/${tourId}/schedules`,
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    },
-    "Không thể tạo lịch trình.",
-  );
-}
-
-export function deleteTourSchedule(scheduleId: number) {
-  return requestAdminJson(
-    `/admin/tours/schedules/${scheduleId}/delete`,
-    { method: "POST" },
-    "Không thể xóa lịch trình.",
-  );
-}
-
 export function getAdminScheduleDetail<T>(scheduleId: string | number) {
   return requestAdminJson<T>(
     `/admin/tours/schedules/${scheduleId}`,
@@ -59,6 +37,10 @@ export function saveAdminSchedule(
     },
     "Không thể lưu lịch khởi hành.",
   );
+}
+
+export function createTourSchedule(tourId: number, body: Record<string, unknown>) {
+  return saveAdminSchedule(`/admin/tours/${tourId}/schedules`, "POST", body);
 }
 
 export function deleteAdminSchedule(scheduleId: number) {

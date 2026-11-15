@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ResourceContext } from "./resource-context";
 
 export function useAccountResource<T>(key: string, loader: () => Promise<T>) {
@@ -9,6 +9,9 @@ export function useAccountResource<T>(key: string, loader: () => Promise<T>) {
   const [loading, setLoading] = useState(() => !cache.get(key)?.loaded);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+
+  const loaderRef = useRef(loader);
+  loaderRef.current = loader;
 
   useEffect(() => {
     let active = true;
@@ -20,7 +23,7 @@ export function useAccountResource<T>(key: string, loader: () => Promise<T>) {
     setError("");
     const current = entry;
     if (!current.pending) {
-      current.pending = loader().then((result) => {
+      current.pending = loaderRef.current().then((result) => {
         current.data = result; current.loaded = true; current.updatedAt = Date.now(); return result;
       }).finally(() => { current.pending = undefined; });
     }
@@ -28,7 +31,7 @@ export function useAccountResource<T>(key: string, loader: () => Promise<T>) {
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [cache, key, loader, revision]);
+  }, [cache, key, revision]);
 
   const refresh = useCallback(() => { const entry = cache.get(key); if (entry) entry.updatedAt = 0; setRevision((value) => value + 1); }, [cache, key]);
   const update = useCallback((updater: (previous: T) => T) => {

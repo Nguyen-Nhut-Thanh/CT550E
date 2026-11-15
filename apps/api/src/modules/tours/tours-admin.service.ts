@@ -365,18 +365,6 @@ export class ToursAdminService {
         }
         return this.prisma.$transaction(async (tx) => {
             if (scheduleIds.length > 0) {
-                await tx.tour_itineraries.deleteMany({
-                    where: { tour_schedule_id: { in: scheduleIds } },
-                });
-                await tx.tour_schedule_prices.deleteMany({
-                    where: { tour_schedule_id: { in: scheduleIds } },
-                });
-                await tx.tour_schedule_hotels.deleteMany({
-                    where: { tour_schedule_id: { in: scheduleIds } },
-                });
-                await tx.tour_schedule_transports.deleteMany({
-                    where: { tour_schedule_id: { in: scheduleIds } },
-                });
                 await tx.tour_schedules.deleteMany({
                     where: { tour_schedule_id: { in: scheduleIds } },
                 });

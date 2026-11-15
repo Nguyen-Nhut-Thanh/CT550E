@@ -1,4 +1,5 @@
 import { adminFetch } from "@/lib/http/adminFetch";
+import { downloadFromResponse } from "@/lib/http/downloadBlob";
 import type { ComprehensiveAnalytics, DashboardStats, DashboardTimeRange } from "shared";
 
 export async function getDashboardStats(
@@ -19,15 +20,8 @@ export async function downloadDashboardCsvReport(): Promise<void> {
   if(!res.ok) {
     throw new Error("Không thể xuất file báo cáo CSV.");
   }
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `bao-cao-thong-ke-${new Date().toISOString().split("T")[0]}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  const filename = `bao-cao-thong-ke-${new Date().toISOString().split("T")[0]}.csv`;
+  await downloadFromResponse(res, filename);
 }
 
 export async function getComprehensiveAnalytics(
@@ -64,15 +58,8 @@ export async function downloadComprehensiveExcel(
   if (!res.ok) {
     throw new Error("Không thể xuất file báo cáo Excel toàn diện.");
   }
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Bao-cao-thong-ke-toan-dien-${new Date().toISOString().split("T")[0]}.xls`;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  const filename = `Bao-cao-thong-ke-toan-dien-${new Date().toISOString().split("T")[0]}.xls`;
+  await downloadFromResponse(res, filename);
 }
 
 export async function downloadSectionCsv(
@@ -91,13 +78,6 @@ export async function downloadSectionCsv(
   if (!res.ok) {
     throw new Error(`Không thể xuất file CSV cho mục ${section}.`);
   }
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Bao-cao-${section}-${new Date().toISOString().split("T")[0]}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  const filename = `Bao-cao-${section}-${new Date().toISOString().split("T")[0]}.csv`;
+  await downloadFromResponse(res, filename);
 }

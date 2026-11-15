@@ -1,3 +1,5 @@
+import { getTodayVietnamString } from "@/lib/utils/dateTime";
+
 export function displayBirthday(value: string): string {
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   return iso ? `${iso[3]}/${iso[2]}/${iso[1]}` : value;
@@ -17,6 +19,6 @@ export function parseBirthday(value: string): string | null {
   const iso = `${year}-${month}-${day}`;
   const date = new Date(`${iso}T00:00:00Z`);
   if (Number(year) < 1900 || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) return null;
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const today = getTodayVietnamString();
   return iso <= today ? iso : null;
 }

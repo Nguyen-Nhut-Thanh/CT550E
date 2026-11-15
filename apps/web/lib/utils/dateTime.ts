@@ -27,17 +27,72 @@ export function formatShortDate(value: string | Date) {
   return `${day}/${month}/${year}`;
 }
 
-export function formatDate(value?: string | Date | null) {
-  if(!value) return "";
+export function formatDate(
+  value?: string | Date | null,
+  options?: Intl.DateTimeFormatOptions,
+  fallback = "",
+) {
+  if (!value) return fallback;
   const date = new Date(value);
-  if(Number.isNaN(date.getTime())) return "";
+  if (Number.isNaN(date.getTime())) return fallback;
 
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
+    ...options,
   }).format(date);
 }
+
+const vietnamDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Lấy chuỗi ngày YYYY-MM-DD theo giờ Việt Nam (UTC+7). Trả về null nếu ngày không hợp lệ. */
+export function getVietnamDateString(value?: string | Date | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return vietnamDateFormatter.format(date);
+}
+
+/** Lấy chuỗi ngày hôm nay YYYY-MM-DD theo giờ Việt Nam (UTC+7). */
+export function getTodayVietnamString(now = new Date()): string {
+  return vietnamDateFormatter.format(now);
+}
+
+/** Format YYYY-MM-DDTHH:mm theo chuẩn Asia/Ho_Chi_Minh (UTC+7) dùng cho input date-time. */
+export function formatVietnamDateTimeInput(value?: string | Date | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .format(date)
+    .replace(" ", "T");
+}
+
+/** Tách chuỗi ngày YYYY-MM-DD và giờ HH:mm theo giờ Việt Nam. */
+export function parseVietnamDateTimeParts(value?: string | Date | null): { date: string; time: string } | null {
+  const formatted = formatVietnamDateTimeInput(value);
+  if (!formatted) return null;
+  const [date, time] = formatted.split("T");
+  return { date: date || "", time: time || "08:00" };
+}
+
+export const vietnamInput = formatVietnamDateTimeInput;
 
 export function formatDateTime(value?: string | Date | null, options?: { withSeconds?: boolean }) {
   if (!value) return "";

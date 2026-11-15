@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/auth/session";
 import { API_BASE } from "@/lib/http/config";
 import { requestJson } from "@/lib/http/requestJson";
-import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
+import { uploadValidatedImage } from "@/lib/http/uploadApi";
 import type { AccountBooking, AccountStats, UploadResponse } from 'shared';
 
 export function updateUserProfile(body: Record<string, unknown>) {
@@ -41,17 +41,11 @@ export function getMyBookings() {
   });
 }
 
-export async function uploadUserAvatar(file: File) {
-  const data = await uploadAuthenticatedFile(
-    `${API_BASE}/auth/upload-avatar`,
-    getToken() || "",
+export async function uploadUserAvatar(file: File): Promise<UploadResponse> {
+  const data = await uploadValidatedImage(
+    "/auth/upload-avatar",
     file,
     "Không thể upload ảnh",
   );
-
-  if (!data?.url) {
-    throw new Error(data?.message || "Không thể upload ảnh");
-  }
-
   return data as UploadResponse;
 }

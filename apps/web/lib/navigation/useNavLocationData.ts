@@ -1,8 +1,9 @@
 "use client";
 
 import { publicFetch } from "@/lib/http/publicFetch";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { NavLocationData } from "shared";
+import { buildNavItems } from "./items";
 
 let cachedNavData: NavLocationData | null = null;
 let pendingNavPromise: Promise<NavLocationData | null> | null = null;
@@ -50,8 +51,11 @@ export function useNavLocationData(enabled = true) {
     };
   }, [enabled]);
 
+  const navItems = useMemo(() => buildNavItems(navLocationData), [navLocationData]);
+
   return {
     navLocationData,
+    navItems,
     isLoadingNav,
   };
 }

@@ -1,95 +1,75 @@
-import { getToken } from "@/lib/auth/session";
-import { adminFetch } from "@/lib/http/adminFetch";
-import { API_BASE } from "@/lib/http/config";
-import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
+import { requestJson } from "@/lib/http/requestJson";
+import { uploadValidatedImage } from "@/lib/http/uploadApi";
 import type { AdminBannerPayload, Banner, SeasonalThemeConfig } from 'shared';
 
-async function parseJsonResponse<T>(response: Response) {
-  return (await response.json()) as T;
+export function fetchAdminBanners() {
+  return requestJson<Banner[]>("/banners/admin", {
+    authMode: "admin",
+    fallbackMessage: "Không thể tải danh sách banner",
+  });
 }
 
-export async function fetchAdminBanners() {
-  const response = await adminFetch("/banners/admin");
-  if(!response.ok) {
-    throw new Error("Không thể tải danh sách banner");
-  }
-
-  return parseJsonResponse<Banner[]>(response);
+export function fetchAdminBannerDetail(bannerId: string | number) {
+  return requestJson<Banner>(`/banners/admin/${bannerId}`, {
+    authMode: "admin",
+    fallbackMessage: "Không thể tải thông tin banner",
+  });
 }
 
-export async function fetchAdminBannerDetail(bannerId: string | number) {
-  const response = await adminFetch(`/banners/admin/${bannerId}`);
-  if(!response.ok) {
-    throw new Error("Không thể tải thông tin banner");
-  }
-
-  return parseJsonResponse<Banner>(response);
-}
-
-export async function saveAdminBanner(
+export function saveAdminBanner(
   payload: AdminBannerPayload,
   bannerId?: string | number,
 ) {
-  const response = await adminFetch(
+  return requestJson<Banner>(
     bannerId ? `/banners/admin/${bannerId}` : "/banners/admin",
     {
+      authMode: "admin",
       method: bannerId ? "PATCH" : "POST",
-      body: JSON.stringify(payload),
+      body: payload,
+      fallbackMessage: "Không thể lưu banner",
     },
   );
-
-  if(!response.ok) {
-    throw new Error("Không thể lưu banner");
-  }
-
-  return response;
 }
 
-export async function updateAdminBannerStatus(bannerId: number, status: number) {
-  const response = await adminFetch(`/banners/admin/${bannerId}`, {method: "PATCH", body: JSON.stringify({status})});
-  if (!response.ok) throw new Error("Không thể cập nhật trạng thái banner");
-}
-
-export async function deleteAdminBanner(bannerId: string | number) {
-  const response = await adminFetch(`/banners/admin/${bannerId}`, {
-    method: "DELETE",
+export function updateAdminBannerStatus(bannerId: number, status: number) {
+  return requestJson<void>(`/banners/admin/${bannerId}`, {
+    authMode: "admin",
+    method: "PATCH",
+    body: { status },
+    fallbackMessage: "Không thể cập nhật trạng thái banner",
   });
+}
 
-  if(!response.ok) {
-    throw new Error("Không thể xóa banner");
-  }
+export function deleteAdminBanner(bannerId: string | number) {
+  return requestJson<void>(`/banners/admin/${bannerId}`, {
+    authMode: "admin",
+    method: "DELETE",
+    fallbackMessage: "Không thể xóa banner",
+  });
 }
 
 export async function uploadAdminBannerImage(file: File) {
-  const data = await uploadAuthenticatedFile(
-    `${API_BASE}/banners/admin/upload`,
-    getToken() || "",
+  return uploadValidatedImage(
+    "/banners/admin/upload",
     file,
     "Không thể upload ảnh banner",
   );
-
-  if (!data?.url) {
-    throw new Error(data?.message || "Không thể upload ảnh banner");
-  }
-
-  return { url: data.url };
 }
 
-export async function fetchAdminSeasonalTheme(): Promise<SeasonalThemeConfig> {
-  const response = await adminFetch("/banners/admin/seasonal-theme");
-  if (!response.ok) {
-    throw new Error("Không thể tải cấu hình hiệu ứng 4 mùa");
-  }
-  return parseJsonResponse<SeasonalThemeConfig>(response);
-}
-
-export async function saveAdminSeasonalTheme(payload: Partial<SeasonalThemeConfig>): Promise<SeasonalThemeConfig> {
-  const response = await adminFetch("/banners/admin/seasonal-theme", {
-    method: "POST",
-    body: JSON.stringify(payload),
+export function fetchAdminSeasonalTheme(): Promise<SeasonalThemeConfig> {
+  return requestJson<SeasonalThemeConfig>("/banners/admin/seasonal-theme", {
+    authMode: "admin",
+    fallbackMessage: "Không thể tải cấu hình hiệu ứng 4 mùa",
   });
-  if (!response.ok) {
-    throw new Error("Không thể lưu cấu hình hiệu ứng 4 mùa");
-  }
-  return parseJsonResponse<SeasonalThemeConfig>(response);
+}
+
+export function saveAdminSeasonalTheme(
+  payload: Partial<SeasonalThemeConfig>,
+): Promise<SeasonalThemeConfig> {
+  return requestJson<SeasonalThemeConfig>("/banners/admin/seasonal-theme", {
+    authMode: "admin",
+    method: "POST",
+    body: payload,
+    fallbackMessage: "Không thể lưu cấu hình hiệu ứng 4 mùa",
+  });
 }

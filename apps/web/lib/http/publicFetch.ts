@@ -1,21 +1,14 @@
-import { API_BASE as API_BASE_URL } from "@/lib/http/config";
+import { requestJson } from "@/lib/http/requestJson";
 
-export async function publicFetch<T>(
+export function publicFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-
-  const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
-    ...options,
-    headers
+  const { mode, ...rest } = options;
+  return requestJson<T>(path, {
+    authMode: "public",
+    mode,
+    ...rest,
+    fallbackMessage: "Không thể tải dữ liệu",
   });
-
-  if(!response.ok) {
-    throw new Error(`Không thể tải dữ liệu: ${response.status}`);
-  }
-
-  return response.json() as Promise<T>;
 }

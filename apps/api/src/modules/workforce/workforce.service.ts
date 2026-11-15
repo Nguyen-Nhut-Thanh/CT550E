@@ -502,11 +502,8 @@ export class WorkforceService {
       });
       if (!shift) throw new NotFoundException("Không tìm thấy ca trực.");
       this.access.region(actor, shift.region_code);
+      if (shift.status === "cancelled") return shift;
       await this.lockPeople(tx, [shift.user_id]);
-      const current = await tx.staff_shifts.findUniqueOrThrow({
-        where: { shift_id: shiftId },
-      });
-      if (current.status === "cancelled") return current;
       const result = await tx.staff_shifts.update({
         where: { shift_id: shiftId },
         data: { status: "cancelled" },

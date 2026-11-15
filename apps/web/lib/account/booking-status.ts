@@ -1,15 +1,5 @@
+import { getVietnamDateString } from "@/lib/utils/dateTime";
 import { BOOKING_PENDING_EXPIRY_MS, getCancelledBookingLabel, type BookingItemUI } from "shared";
-
-const vietnamDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
-});
-function dayKey(value?: string | null) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const parts = vietnamDate.formatToParts(date);
-  return ["year", "month", "day"].map(type => parts.find(part => part.type === type)?.value).join("-");
-}
 
 /** Trip progress uses calendar days in Vietnam, including the full last day. */
 export function getBookingTripStatus(
@@ -33,30 +23,13 @@ export function getBookingTripStatus(
     return { status: "unknown", statusText: "Đang yêu cầu hủy" };
   }
 
-  // 3. Đơn CHỜ THANH TOÁN (pending): Áp dụng giới hạn 15 phút
+  // 3. Đơn CHỜ THANH TOÁN (pending): Áp dụng giới hạn 15 phút hoặc thời điểm khởi hành
   if (status === "pending") {
     const createdAt = booking.created_at ? new Date(booking.created_at) : null;
-    const isDeparted =
-      booking.tour_schedules?.start_date &&
-      new Date(booking.tour_schedules.start_date) <= now;
-
-    if (createdAt) {
-      const diffMs = now.getTime() - createdAt.getTime();
-      const fifteenMinutesMs = BOOKING_PENDING_EXPIRY_MS;
-
-      if (diffMs > fifteenMinutesMs || isDeparted) {
-        return {
-          status: "cancelled",
-          statusText: "Đã hủy (Hết hạn 15p)",
-        };
-      }
-
-      const minsLeft = Math.max(1, Math.ceil((fifteenMinutesMs - diffMs) / 60000));
-      return {
-        status: "upcoming",
-        statusText: `Chờ thanh toán (còn ${minsLeft}p)`,
-      };
-    }
+    const startDate = booking.tour_schedules?.start_date
+      ? new Date(booking.tour_schedules.start_date)
+      : null;
+    const isDeparted = Boolean(startDate && startDate.getTime() <= now.getTime());
 
     if (isDeparted) {
       return {
@@ -65,7 +38,30 @@ export function getBookingTripStatus(
       };
     }
 
-    return { status: "upcoming", statusText: "Chờ thanh toán (15p)" };
+    if (createdAt && !Number.isNaN(createdAt.getTime())) {
+      let expiryTime = createdAt.getTime() + BOOKING_PENDING_EXPIRY_MS;
+      if (startDate && startDate.getTime() < expiryTime) {
+        expiryTime = startDate.getTime();
+      }
+
+      const diffLeftMs = expiryTime - now.getTime();
+      if (diffLeftMs <= 0) {
+        return {
+          status: "cancelled",
+          statusText: startDate && now.getTime() >= startDate.getTime()
+            ? "Đã hủy (Quá giờ đi)"
+            : "Đã hủy (Hết hạn 15p)",
+        };
+      }
+
+      const minsLeft = Math.max(1, Math.ceil(diffLeftMs / 60000));
+      return {
+        status: "upcoming",
+        statusText: `Chờ thanh toán (còn ${minsLeft}p)`,
+      };
+    }
+
+    return { status: "upcoming", statusText: "Chờ thanh toán" };
   }
 
   // 4. Đơn đã hoàn thành
@@ -74,9 +70,9 @@ export function getBookingTripStatus(
   }
 
   // 5. Đơn ĐÃ THANH TOÁN / ĐÃ XÁC NHẬN: Tính tiến trình theo ngày thực tế
-  const today = dayKey(now.toISOString());
-  const start = dayKey(booking.tour_schedules?.start_date);
-  const end = dayKey(booking.tour_schedules?.end_date);
+  const today = getVietnamDateString(now);
+  const start = getVietnamDateString(booking.tour_schedules?.start_date);
+  const end = getVietnamDateString(booking.tour_schedules?.end_date);
   if (!today || !start || (end && end < start)) return { status: "unknown", statusText: "Chưa xác định lịch trình" };
   if (today < start) return { status: "upcoming", statusText: "Sắp diễn ra" };
   if (end && today > end) return { status: "completed", statusText: "Đã hoàn thành" };

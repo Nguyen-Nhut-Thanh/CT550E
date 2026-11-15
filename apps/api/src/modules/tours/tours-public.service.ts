@@ -3,8 +3,8 @@ import { Prisma } from '@prisma/client';
 import type { BestSellerStat, PublicItineraryRecord, PublicListParams, PublicScheduleRecord } from 'shared';
 import { calculateSchedulePricing } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { queryBestSellerStats } from './best-seller.helper';
-import { buildCardSelect, fixMojibakeText, formatTourCard, parseMoney } from "./public-tour.mapper";
+import { getBestSellerTourIds, queryBestSellerStats } from './best-seller.helper';
+import { buildCardSelect, filterAndPriceSchedules, fixMojibakeText, formatTourCard, parseMoney } from "./public-tour.mapper";
 @Injectable()
 export class ToursPublicService {
     constructor(private readonly prisma: PrismaService) { }
@@ -28,36 +28,6 @@ export class ToursPublicService {
             rating_avg: Number((row._avg.rating ?? 0).toFixed(1)),
             rating_count: row._count.rating,
         }]));
-    }
-    private async getBestSellerOrder(today: Date) {
-        const activeSchedules = await this.prisma.tour_schedules.findMany({
-            where: {
-                status: 1,
-                start_date: {
-                    gte: today,
-                },
-                tours: {
-                    status: 1,
-                },
-            },
-            select: {
-                tour_schedule_id: true,
-                tour_id: true,
-                quota: true,
-                booked_count: true,
-            },
-        });
-        const availableSchedules = activeSchedules.filter((schedule: any) => schedule.quota > schedule.booked_count);
-        if (availableSchedules.length === 0) {
-            return [];
-        }
-        const availableTourIds = new Set(availableSchedules.map((schedule: any) => schedule.tour_id));
-        const bestSellerStats = await queryBestSellerStats(this.prisma);
-        const rankedTourIds = bestSellerStats
-            .filter((stat: any) => availableTourIds.has(stat.tour_id))
-            .map((stat: any) => stat.tour_id);
-        const missingAvailableTourIds = Array.from(availableTourIds).filter((tourId) => !rankedTourIds.includes(tourId));
-        return [...rankedTourIds, ...missingAvailableTourIds];
     }
     async homeFeed() {
         const baseSelect = buildCardSelect();
@@ -190,42 +160,54 @@ export class ToursPublicService {
         where.tour_schedules = {
             some: scheduleFilter,
         };
-        const itemsRaw = await this.prisma.tours.findMany({
-            where,
-            orderBy: params.collection === 'bestseller' ? undefined : { updated_at: 'desc' },
-            select: buildCardSelect(scheduleFilter),
-        });
-        const items = itemsRaw
-            .map((t: any) => formatTourCard(t, { onlyFlashDeal: params.deal === 'flash' }))
-            .filter((t): t is NonNullable<typeof t> => t !== null);
-        const resolvedItems = params.collection === 'bestseller'
-            ? await (async () => {
-                const bestSellerOrder = new Map<number, number>();
-                const bestSellerTourIds = await this.getBestSellerOrder(today);
-                bestSellerTourIds.forEach((tourId, index) => {
-                    bestSellerOrder.set(tourId, index);
+        const total = await this.prisma.tours.count({ where });
+        let paginatedItems: any[];
+
+        if (params.collection === 'bestseller') {
+            const bestSellerTourIds = await getBestSellerTourIds(this.prisma, today);
+            const targetIds = bestSellerTourIds.slice(skip, skip + take);
+            if (targetIds.length > 0) {
+                const itemsRaw = await this.prisma.tours.findMany({
+                    where: { ...where, tour_id: { in: targetIds } },
+                    select: buildCardSelect(scheduleFilter),
                 });
-                return [...items].sort((left, right) => {
-                    const leftRank = bestSellerOrder.get(left.tour_id);
-                    const rightRank = bestSellerOrder.get(right.tour_id);
-                    if (leftRank != null && rightRank != null) {
-                        return leftRank - rightRank;
-                    }
-                    if (leftRank != null)
-                        return -1;
-                    if (rightRank != null)
-                        return 1;
-                    return 0;
-                });
-            })()
-            : params.collection === 'nearest'
-                ? [...items].sort((left: any, right: any) => {
+                const cardMap = new Map<number, any>();
+                for (const raw of itemsRaw) {
+                    const card = formatTourCard(raw, { onlyFlashDeal: params.deal === 'flash' });
+                    if (card) cardMap.set(card.tour_id, card);
+                }
+                paginatedItems = targetIds.map((id) => cardMap.get(id)).filter(Boolean);
+            } else {
+                paginatedItems = [];
+            }
+        } else if (params.collection === 'nearest') {
+            const itemsRaw = await this.prisma.tours.findMany({
+                where,
+                take: Math.min(100, skip + take * 3),
+                select: buildCardSelect(scheduleFilter),
+            });
+            const items = itemsRaw
+                .map((t: any) => formatTourCard(t, { onlyFlashDeal: params.deal === 'flash' }))
+                .filter((t): t is NonNullable<typeof t> => t !== null)
+                .sort((left: any, right: any) => {
                     const leftDate = left.next_schedule?.start_date ? new Date(left.next_schedule.start_date).getTime() : Number.MAX_SAFE_INTEGER;
                     const rightDate = right.next_schedule?.start_date ? new Date(right.next_schedule.start_date).getTime() : Number.MAX_SAFE_INTEGER;
                     return leftDate - rightDate;
-                })
-                : items;
-        const paginatedItems = resolvedItems.slice(skip, skip + take);
+                });
+            paginatedItems = items.slice(skip, skip + take);
+        } else {
+            const itemsRaw = await this.prisma.tours.findMany({
+                where,
+                orderBy: { updated_at: 'desc' },
+                skip,
+                take,
+                select: buildCardSelect(scheduleFilter),
+            });
+            paginatedItems = itemsRaw
+                .map((t: any) => formatTourCard(t, { onlyFlashDeal: params.deal === 'flash' }))
+                .filter((t): t is NonNullable<typeof t> => t !== null);
+        }
+
         const ids = paginatedItems.map((item: any) => item.tour_id);
         const ratingMap = await this.getRatingsMap(ids);
         return {
@@ -237,7 +219,7 @@ export class ToursPublicService {
                     rating_count: rating?.rating_count ?? card.rating_count,
                 };
             }),
-            total: resolvedItems.length,
+            total,
             take,
             skip,
             filters: {
@@ -454,46 +436,31 @@ export class ToursPublicService {
         if (!tour) {
             throw new NotFoundException('Tour not found');
         }
-        const now = new Date();
-        const cutOffHours = tour.cut_off_hours ?? 24;
-        const processedSchedules = tour.tour_schedules
-            .filter((s: PublicScheduleRecord) => {
-            const departureDate = new Date(s.start_date);
-            const diffHours = (departureDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-            const isTimeValid = diffHours >= cutOffHours;
-            const hasSpace = (s.quota || 0) > (s.booked_count || 0);
-            return isTimeValid && hasSpace;
-        })
-            .map((s: PublicScheduleRecord) => {
-            const pricing = calculateSchedulePricing(s, now);
-            return {
-                ...s,
-                original_price: pricing.originalPrice,
-                price: pricing.effectivePrice,
-                flash_deal: pricing.flashDeal,
-                schedule_promotions: s.schedule_promotions || null,
-                schedule_promotion: pricing.schedulePromotion,
-                tour_itineraries: s.tour_itineraries?.map((item: PublicItineraryRecord) => ({
-                    ...item,
-                    title: fixMojibakeText(item.title),
-                    content: fixMojibakeText(item.content),
-                    meals: fixMojibakeText(item.meals),
-                })),
-                tour_schedule_hotels: s.tour_schedule_hotels?.map((item) => ({
-                    ...item,
-                    nights: Number(item.nights || 1),
-                    hotel_id: Number(item.hotel_id),
-                    room_type_id: Number(item.room_type_id),
-                    hotel_room_types: item.hotel_room_types
-                        ? {
-                            ...item.hotel_room_types,
-                            base_price: Number(item.hotel_room_types.base_price || 0),
-                            extra_price: Number(item.hotel_room_types.extra_price || 0),
-                        }
-                        : null,
-                })),
-            };
-        });
+        const processedSchedules = filterAndPriceSchedules(
+            tour.tour_schedules as PublicScheduleRecord[],
+            tour.cut_off_hours,
+        ).map((s: any) => ({
+            ...s,
+            tour_itineraries: s.tour_itineraries?.map((item: PublicItineraryRecord) => ({
+                ...item,
+                title: fixMojibakeText(item.title),
+                content: fixMojibakeText(item.content),
+                meals: fixMojibakeText(item.meals),
+            })),
+            tour_schedule_hotels: s.tour_schedule_hotels?.map((item: any) => ({
+                ...item,
+                nights: Number(item.nights || 1),
+                hotel_id: Number(item.hotel_id),
+                room_type_id: Number(item.room_type_id),
+                hotel_room_types: item.hotel_room_types
+                    ? {
+                        ...item.hotel_room_types,
+                        base_price: Number(item.hotel_room_types.base_price || 0),
+                        extra_price: Number(item.hotel_room_types.extra_price || 0),
+                    }
+                    : null,
+            })),
+        }));
 
         const ratingGroups = await this.prisma.reviews.groupBy({
             by: ['rating'],

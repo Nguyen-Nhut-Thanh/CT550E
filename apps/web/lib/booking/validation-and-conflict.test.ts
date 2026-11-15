@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { isValidCitizenId, isValidEmail, isValidVietnamesePhone } from 'shared';
+import { isDateRangeOverlap } from './conflict';
 
 test('Phone validation accepts valid VN phone numbers and rejects invalid', () => {
   assert.equal(isValidVietnamesePhone('0912345678'), true);
@@ -43,20 +44,16 @@ test('Schedule conflict interval overlap math works for user example', () => {
   const s2 = '2026-11-17';
   const e2 = '2026-11-25';
 
-  const isOverlap = (startA: string, endA: string, startB: string, endB: string) => {
-    return startA <= endB && startB <= endA;
-  };
-
   // Trùng nhau từ ngày 17 đến 20
-  assert.equal(isOverlap(s1, e1, s2, e2), true);
+  assert.equal(isDateRangeOverlap(s1, e1, s2, e2), true);
 
   // Không trùng (Tour sau đó: 21 đến 25)
-  assert.equal(isOverlap(s1, e1, '2026-11-21', '2026-11-25'), false);
+  assert.equal(isDateRangeOverlap(s1, e1, '2026-11-21', '2026-11-25'), false);
 
   // Không trùng (Tour trước đó: 10 đến 14)
-  assert.equal(isOverlap(s1, e1, '2026-11-10', '2026-11-14'), false);
+  assert.equal(isDateRangeOverlap(s1, e1, '2026-11-10', '2026-11-14'), false);
 
   // Trùng ngày biên (10 đến 15)
-  assert.equal(isOverlap(s1, e1, '2026-11-10', '2026-11-15'), true);
+  assert.equal(isDateRangeOverlap(s1, e1, '2026-11-10', '2026-11-15'), true);
 });
 

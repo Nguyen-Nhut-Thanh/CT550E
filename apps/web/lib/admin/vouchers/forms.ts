@@ -71,10 +71,24 @@ export function filterVouchers(
 
 export function buildVoucherPayload(form: VoucherForm) {
   if (!form.customer_types.length) throw new Error("Vui lòng chọn ít nhất một đối tượng áp dụng.");
+  if (!form.start_date) throw new Error("Vui lòng chọn ngày bắt đầu hiệu lực.");
+
   const startDate = new Date(form.start_date);
+  if (Number.isNaN(startDate.getTime())) {
+    throw new Error("Ngày bắt đầu hiệu lực không hợp lệ.");
+  }
+
+  const durationHours = Number(form.duration_hours);
+  if (!Number.isFinite(durationHours) || durationHours <= 0) {
+    throw new Error("Thời gian hiệu lực (giờ) phải là số dương lớn hơn 0.");
+  }
+
   const expiryDate = new Date(
-    startDate.getTime() + form.duration_hours * 60 * 60 * 1000,
+    startDate.getTime() + durationHours * 60 * 60 * 1000,
   );
+  if (Number.isNaN(expiryDate.getTime())) {
+    throw new Error("Ngày hết hạn không hợp lệ.");
+  }
 
   return {
     code: form.code,

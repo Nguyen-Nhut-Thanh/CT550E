@@ -1,49 +1,19 @@
-import { adminFetch } from "@/lib/http/adminFetch";
+import { requestJson } from "@/lib/http/requestJson";
 import type { UserItem } from "shared";
 
-async function requestAdminUsers<T>(
-  path: string,
-  init: RequestInit,
-  fallbackMessage: string,
-): Promise<T> {
-  const response = await adminFetch(path, init);
-  const data = (await response.json().catch(() => null)) as
-    | { message?: string | string[] }
-    | T
-    | null;
-
-  if(!response.ok) {
-    const message =
-      data &&
-        typeof data === "object" &&
-        "message" in data &&
-        data.message
-        ? Array.isArray(data.message)
-          ? data.message[0]
-          : data.message
-        : fallbackMessage;
-
-    throw new Error(message);
-  }
-
-  return data as T;
-}
-
 export function getAdminUsers() {
-  return requestAdminUsers<UserItem[]>(
-    "/admin/users",
-    { method: "GET" },
-    "Không thể tải danh sách người dùng.",
-  );
+  return requestJson<UserItem[]>("/admin/users", {
+    authMode: "admin",
+    method: "GET",
+    fallbackMessage: "Không thể tải danh sách người dùng.",
+  });
 }
 
 export function updateAdminUserStatus(userId: number, status: number) {
-  return requestAdminUsers(
-    `/admin/users/${userId}/status`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    },
-    "Không thể cập nhật trạng thái tài khoản.",
-  );
+  return requestJson(`/admin/users/${userId}/status`, {
+    authMode: "admin",
+    method: "PATCH",
+    body: { status },
+    fallbackMessage: "Không thể cập nhật trạng thái tài khoản.",
+  });
 }

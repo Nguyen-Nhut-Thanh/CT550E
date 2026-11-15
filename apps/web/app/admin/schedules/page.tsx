@@ -20,7 +20,6 @@ import {
   matchesTourTypeFilter,
 } from "@/lib/admin/tours/filters";
 import { useToast } from "@/lib/notifications/useToast";
-import { confirmAction } from "@/lib/utils/confirm";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -137,7 +136,7 @@ export default function AdminSchedulesPage() {
   ) => {
     if (mutations.current.has(scheduleId)) return;
     if (currentStatus === 1 && bookedCount > 0) {
-      const confirmHide = confirmAction(
+      const confirmHide = window.confirm(
         `CẢNH BÁO: Đợt khởi hành này đã có ${bookedCount} khách đặt chỗ.
 
 ` +

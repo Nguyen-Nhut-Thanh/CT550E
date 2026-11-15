@@ -15,6 +15,23 @@ import type {
     VoucherAnalytics,
 } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { escapeCsv, escapeXml, getSectionTableData } from './dashboard-export.helper';
+
+const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function toVietnamDate(d: Date): Date {
+    return new Date(d.getTime() + VIETNAM_OFFSET_MS);
+}
+
+function startOfVietnamDay(year: number, month: number, date: number): Date {
+    return new Date(Date.UTC(year, month, date, 0, 0, 0, 0) - VIETNAM_OFFSET_MS);
+}
+
+function getVietnamDateKey(d: Date): string {
+    const vn = new Date(d.getTime() + VIETNAM_OFFSET_MS);
+    return `${vn.getUTCFullYear()}-${String(vn.getUTCMonth() + 1).padStart(2, '0')}-${String(vn.getUTCDate()).padStart(2, '0')}`;
+}
+
 @Injectable()
 export class DashboardService {
     constructor(private readonly prisma: PrismaService) { }
@@ -27,32 +44,37 @@ export class DashboardService {
     }
     private getTimeBounds(range: DashboardTimeRange = 'month') {
         const now = new Date();
+        const vn = toVietnamDate(now);
+        const vnYear = vn.getUTCFullYear();
+        const vnMonth = vn.getUTCMonth();
+        const vnDate = vn.getUTCDate();
+
         let startDate: Date;
         let prevStartDate: Date;
         let prevEndDate: Date;
         switch (range) {
             case '7d': {
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+                startDate = startOfVietnamDay(vnYear, vnMonth, vnDate - 6);
                 prevStartDate = new Date(startDate.getTime() - 7 * 24 * 60 * 60 * 1000);
                 prevEndDate = startDate;
                 break;
             }
             case '30d': {
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+                startDate = startOfVietnamDay(vnYear, vnMonth, vnDate - 29);
                 prevStartDate = new Date(startDate.getTime() - 30 * 24 * 60 * 60 * 1000);
                 prevEndDate = startDate;
                 break;
             }
             case 'year': {
-                startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-                prevStartDate = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
+                startDate = startOfVietnamDay(vnYear, 0, 1);
+                prevStartDate = startOfVietnamDay(vnYear - 1, 0, 1);
                 prevEndDate = startDate;
                 break;
             }
             case 'month':
             default: {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+                startDate = startOfVietnamDay(vnYear, vnMonth, 1);
+                prevStartDate = startOfVietnamDay(vnYear, vnMonth - 1, 1);
                 prevEndDate = startDate;
                 break;
             }
@@ -295,6 +317,8 @@ export class DashboardService {
         status: string;
     }>): DashboardChartPoint[] {
         const points: DashboardChartPoint[] = [];
+        const vnDayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
         if (range === '7d' || range === '30d') {
             const dayCount = range === '7d' ? 7 : 30;
             const dateMap = new Map<string, {
@@ -303,17 +327,15 @@ export class DashboardService {
                 label: string;
             }>();
             for (let i = 0; i < dayCount; i++) {
-                const d = new Date(startDate);
-                d.setDate(d.getDate() + i);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const curVn = new Date(startDate.getTime() + VIETNAM_OFFSET_MS + i * 24 * 60 * 60 * 1000);
+                const key = `${curVn.getUTCFullYear()}-${String(curVn.getUTCMonth() + 1).padStart(2, '0')}-${String(curVn.getUTCDate()).padStart(2, '0')}`;
                 const label = range === '7d'
-                    ? `${['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()]} (${d.getDate()}/${d.getMonth() + 1})`
-                    : `${d.getDate()}/${d.getMonth() + 1}`;
+                    ? `${vnDayNames[curVn.getUTCDay()]} (${curVn.getUTCDate()}/${curVn.getUTCMonth() + 1})`
+                    : `${curVn.getUTCDate()}/${curVn.getUTCMonth() + 1}`;
                 dateMap.set(key, { revenue: 0, bookings: 0, label });
             }
             for (const b of bookings) {
-                const d = new Date(b.created_at);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const key = getVietnamDateKey(new Date(b.created_at));
                 const entry = dateMap.get(key);
                 if (entry) {
                     entry.bookings++;
@@ -332,22 +354,24 @@ export class DashboardService {
             });
         }
         else if (range === 'month') {
-            // Nhóm theo các ngày trong tháng hiện tại
-            const daysInMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
-            const currentDay = Math.min(endDate.getDate(), daysInMonth);
+            const startVn = toVietnamDate(startDate);
+            const endVn = toVietnamDate(endDate);
+            const vnYear = startVn.getUTCFullYear();
+            const vnMonth = startVn.getUTCMonth();
+            const daysInMonth = new Date(Date.UTC(vnYear, vnMonth + 1, 0)).getUTCDate();
+            const currentDay = Math.min(endVn.getUTCDate(), daysInMonth);
             const dateMap = new Map<string, {
                 revenue: number;
                 bookings: number;
                 label: string;
             }>();
             for (let day = 1; day <= currentDay; day++) {
-                const key = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const label = `${day}/${startDate.getMonth() + 1}`;
+                const key = `${vnYear}-${String(vnMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const label = `${day}/${vnMonth + 1}`;
                 dateMap.set(key, { revenue: 0, bookings: 0, label });
             }
             for (const b of bookings) {
-                const d = new Date(b.created_at);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const key = getVietnamDateKey(new Date(b.created_at));
                 const entry = dateMap.get(key);
                 if (entry) {
                     entry.bookings++;
@@ -366,8 +390,8 @@ export class DashboardService {
             });
         }
         else if (range === 'year') {
-            // 12 tháng
-            const currentYear = startDate.getFullYear();
+            const startVn = toVietnamDate(startDate);
+            const currentYear = startVn.getUTCFullYear();
             const monthMap = new Map<number, {
                 revenue: number;
                 bookings: number;
@@ -377,9 +401,9 @@ export class DashboardService {
                 monthMap.set(m, { revenue: 0, bookings: 0, label: `Thg ${m + 1}` });
             }
             for (const b of bookings) {
-                const d = new Date(b.created_at);
-                if (d.getFullYear() === currentYear) {
-                    const m = d.getMonth();
+                const bVn = toVietnamDate(new Date(b.created_at));
+                if (bVn.getUTCFullYear() === currentYear) {
+                    const m = bVn.getUTCMonth();
                     const entry = monthMap.get(m);
                     if (entry) {
                         entry.bookings++;
@@ -454,13 +478,6 @@ export class DashboardService {
             'Tổng Tiền (VNĐ)',
             'Trạng Thái',
         ];
-        const escapeCsv = (val: string | number) => {
-            const str = String(val ?? '');
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
-        };
         const lines = [
             headers.join(','),
             ...rows.map((r) => [
@@ -489,8 +506,10 @@ export class DashboardService {
         let prevEndDate: Date;
 
         if (fromParam && toParam) {
-            startDate = new Date(`${fromParam}T00:00:00`);
-            endDate = new Date(`${toParam}T23:59:59.999`);
+            const [fYear, fMonth, fDate] = fromParam.split('-').map(Number);
+            const [tYear, tMonth, tDate] = toParam.split('-').map(Number);
+            startDate = startOfVietnamDay(fYear, fMonth - 1, fDate);
+            endDate = new Date(Date.UTC(tYear, tMonth - 1, tDate, 23, 59, 59, 999) - VIETNAM_OFFSET_MS);
             const duration = Math.max(1, endDate.getTime() - startDate.getTime());
             prevStartDate = new Date(startDate.getTime() - duration);
             prevEndDate = startDate;
@@ -593,6 +612,11 @@ export class DashboardService {
                     tour_schedules: {
                         select: {
                             tour_id: true,
+                            tours: {
+                                select: {
+                                    tour_type: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -605,7 +629,8 @@ export class DashboardService {
             activeToursCount,
             totalSchedulesCount,
             completedSchedulesCount,
-            toursWithBookings,
+            toursByTypeAgg,
+            topToursRaw,
         ] = await Promise.all([
             this.prisma.tours.count(),
             this.prisma.tours.count({ where: { status: 1 } }),
@@ -615,20 +640,38 @@ export class DashboardService {
             this.prisma.tour_schedules.count({
                 where: { end_date: { lte: now, gte: startDate } },
             }),
-            this.prisma.tours.findMany({
-                select: {
-                    tour_id: true,
-                    name: true,
-                    code: true,
-                    tour_type: true,
-                    base_price: true,
-                    tour_images: {
-                        where: { is_cover: 1 },
-                        take: 1,
-                        select: { image_url: true },
-                    },
-                },
+            this.prisma.tours.groupBy({
+                by: ['tour_type'],
+                where: { status: 1 },
+                _count: { tour_id: true },
             }),
+            this.prisma.$queryRaw<
+                Array<{
+                    tour_id: number;
+                    name: string;
+                    code: string;
+                    featured_image: string | null;
+                    bookings_count: number;
+                    revenue: number;
+                    base_price: number;
+                }>
+            >`
+                SELECT
+                    t.tour_id,
+                    t.name,
+                    t.code,
+                    (SELECT image_url FROM tour_images WHERE tour_id = t.tour_id AND is_cover = 1 LIMIT 1) AS featured_image,
+                    COUNT(b.booking_id)::int AS bookings_count,
+                    COALESCE(SUM(CASE WHEN b.status IN ('completed', 'paid') THEN b.total_amount ELSE 0 END), 0)::float8 AS revenue,
+                    COALESCE(t.base_price, 0)::float8 AS base_price
+                FROM tours t
+                INNER JOIN tour_schedules ts ON ts.tour_id = t.tour_id
+                INNER JOIN bookings b ON b.tour_schedule_id = ts.tour_schedule_id AND b.created_at >= ${startDate} AND b.created_at <= ${endDate}
+                WHERE t.status = 1
+                GROUP BY t.tour_id, t.name, t.code, t.base_price
+                ORDER BY revenue DESC, bookings_count DESC
+                LIMIT 10;
+            `,
         ]);
 
         // Batch 3: Nhân sự & Điều hành
@@ -636,31 +679,42 @@ export class DashboardService {
             totalStaffCount,
             activeStaffCount,
             staffProfiles,
-            crewAssignments,
+            topStaffRaw,
         ] = await Promise.all([
             this.prisma.employee_profiles.count(),
             this.prisma.employee_profiles.count({ where: { status: 'active' } }),
             this.prisma.employee_profiles.findMany({
                 select: { position: true, status: true },
             }),
-            this.prisma.schedule_crew.findMany({
-                include: {
-                    user: {
-                        select: {
-                            user_id: true,
-                            full_name: true,
-                            phone: true,
-                            accounts: { select: { email: true } },
-                        },
-                    },
-                    schedule: {
-                        select: {
-                            start_date: true,
-                            end_date: true,
-                        },
-                    },
-                },
-            }),
+            this.prisma.$queryRaw<
+                Array<{
+                    userId: number;
+                    fullName: string | null;
+                    phone: string | null;
+                    email: string | null;
+                    roles: string[];
+                    status: string;
+                    assignedCount: number;
+                    completedCount: number;
+                }>
+            >`
+                SELECT
+                    u.user_id AS "userId",
+                    COALESCE(u.full_name, 'Chưa đặt tên') AS "fullName",
+                    u.phone,
+                    a.email,
+                    COALESCE(sc.roles, ARRAY[]::varchar[]) AS "roles",
+                    sc.status,
+                    COUNT(sc.assignment_id)::int AS "assignedCount",
+                    COUNT(CASE WHEN sc.status = 'confirmed' OR (ts.end_date IS NOT NULL AND ts.end_date <= ${now}) THEN 1 END)::int AS "completedCount"
+                FROM schedule_crew sc
+                INNER JOIN users u ON u.user_id = sc.user_id
+                LEFT JOIN accounts a ON a.account_id = u.account_id
+                LEFT JOIN tour_schedules ts ON ts.tour_schedule_id = sc.tour_schedule_id
+                GROUP BY u.user_id, u.full_name, u.phone, a.email, sc.roles, sc.status
+                ORDER BY "completedCount" DESC, "assignedCount" DESC
+                LIMIT 15;
+            `,
         ]);
 
         // Batch 4: Khách hàng & Hội viên
@@ -730,16 +784,14 @@ export class DashboardService {
         const bookingsTrend = this.calculateTrend(currentBookingsCount, prevBookingsCount);
         const averageOrderValue = currentBookingsCount > 0 ? Math.round(currentRevenue / currentBookingsCount) : 0;
 
-        // Xây dựng biểu đồ chuỗi thời gian
+        // Xây dựng biểu đồ chuỗi thời gian (múi giờ Việt Nam UTC+7)
         const dateMap = new Map<string, { revenue: number; bookings: number }>();
         const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         const isLongRange = daysDiff > 60;
 
         for (const b of periodBookings) {
-            const date = new Date(b.created_at);
-            const key = isLongRange
-                ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-                : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const vnKey = getVietnamDateKey(new Date(b.created_at));
+            const key = isLongRange ? vnKey.slice(0, 7) : vnKey;
 
             const entry = dateMap.get(key) || { revenue: 0, bookings: 0 };
             entry.bookings += 1;
@@ -759,32 +811,24 @@ export class DashboardService {
             }));
 
         // Thống kê theo loại tour (Trong nước, Ngoài nước, Quốc tế)
-        const tourRevenueMap = new Map<number, { revenue: number; bookings: number }>();
-        for (const b of periodBookings) {
-            const tid = b.tour_schedules?.tour_id;
-            if (!tid) continue;
-            const current = tourRevenueMap.get(tid) || { revenue: 0, bookings: 0 };
-            current.bookings += 1;
-            if (this.revenueStatuses.includes(b.status as any)) {
-                current.revenue += Number(b.total_amount || 0);
-            }
-            tourRevenueMap.set(tid, current);
-        }
-
         const typeMap: Record<string, { label: string; count: number; revenue: number; bookings: number }> = {
             domestic: { label: 'Trong nước', count: 0, revenue: 0, bookings: 0 },
             outbound: { label: 'Ngoài nước', count: 0, revenue: 0, bookings: 0 },
             international: { label: 'Quốc tế', count: 0, revenue: 0, bookings: 0 },
         };
 
-        for (const t of toursWithBookings) {
-            const typeKey = (t.tour_type || 'domestic').toLowerCase();
-            const target = typeMap[typeKey] || typeMap['domestic'];
-            target.count += 1;
-            const stats = tourRevenueMap.get(t.tour_id);
-            if (stats) {
-                target.revenue += stats.revenue;
-                target.bookings += stats.bookings;
+        for (const agg of toursByTypeAgg) {
+            const key = (agg.tour_type || 'domestic').toLowerCase();
+            const target = typeMap[key] || typeMap.domestic;
+            target.count += agg._count.tour_id;
+        }
+
+        for (const b of periodBookings) {
+            const tType = ((b.tour_schedules?.tours as any)?.tour_type || 'domestic').toLowerCase();
+            const target = typeMap[tType] || typeMap.domestic;
+            target.bookings += 1;
+            if (this.revenueStatuses.includes(b.status as any)) {
+                target.revenue += Number(b.total_amount || 0);
             }
         }
 
@@ -796,23 +840,16 @@ export class DashboardService {
             bookingsCount: val.bookings,
         }));
 
-        // Top 10 tour bán chạy
-        const topTours: DashboardTopTour[] = toursWithBookings
-            .map((t) => {
-                const stats = tourRevenueMap.get(t.tour_id) || { revenue: 0, bookings: 0 };
-                return {
-                    tourId: t.tour_id,
-                    name: t.name,
-                    code: t.code,
-                    featuredImage: t.tour_images?.[0]?.image_url || null,
-                    bookingsCount: stats.bookings,
-                    revenue: stats.revenue,
-                    priceFrom: Number(t.base_price || 0),
-                };
-            })
-            .filter((t) => t.bookingsCount > 0 || t.revenue > 0)
-            .sort((a, b) => b.revenue - a.revenue || b.bookingsCount - a.bookingsCount)
-            .slice(0, 10);
+        // Top 10 tour bán chạy (từ SQL aggregation)
+        const topTours: DashboardTopTour[] = topToursRaw.map((t) => ({
+            tourId: t.tour_id,
+            name: t.name,
+            code: t.code,
+            featuredImage: t.featured_image,
+            bookingsCount: Number(t.bookings_count || 0),
+            revenue: Number(t.revenue || 0),
+            priceFrom: Number(t.base_price || 0),
+        }));
 
         // Thống kê nhân sự theo vai trò
         const roleCounts: Record<string, number> = {};
@@ -827,31 +864,17 @@ export class DashboardService {
             count,
         }));
 
-        // Hiệu suất nhân sự (Top Staff)
-        const staffMap = new Map<number, StaffPerformanceItem>();
-        for (const c of crewAssignments) {
-            if (!c.user) continue;
-            const uid = c.user.user_id;
-            const item = staffMap.get(uid) || {
-                userId: uid,
-                fullName: c.user.full_name || 'Chưa đặt tên',
-                phone: c.user.phone,
-                email: c.user.accounts?.email,
-                roles: c.roles || [],
-                assignedCount: 0,
-                completedCount: 0,
-                status: c.status,
-            };
-            item.assignedCount += 1;
-            if (c.status === 'confirmed' || (c.schedule?.end_date && new Date(c.schedule.end_date) <= now)) {
-                item.completedCount += 1;
-            }
-            staffMap.set(uid, item);
-        }
-
-        const topStaff = Array.from(staffMap.values())
-            .sort((a, b) => b.completedCount - a.completedCount || b.assignedCount - a.assignedCount)
-            .slice(0, 15);
+        // Hiệu suất nhân sự (Top Staff từ SQL aggregation)
+        const topStaff: StaffPerformanceItem[] = topStaffRaw.map((s) => ({
+            userId: s.userId,
+            fullName: s.fullName || 'Chưa đặt tên',
+            phone: s.phone,
+            email: s.email,
+            roles: s.roles || [],
+            assignedCount: Number(s.assignedCount || 0),
+            completedCount: Number(s.completedCount || 0),
+            status: s.status,
+        }));
 
         // Khách hàng theo hạng
         const tierLabels: Record<string, string> = {
@@ -969,16 +992,6 @@ export class DashboardService {
     async getComprehensiveExcel(rangeParam?: string, fromParam?: string, toParam?: string): Promise<string> {
         const data = await this.getComprehensiveAnalytics(rangeParam, fromParam, toParam);
 
-        const escapeXml = (val: unknown): string => {
-            if (val === null || val === undefined) return '';
-            return String(val)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
-        };
-
         const buildWorksheet = (sheetName: string, headers: string[], rows: (string | number)[][]): string => {
             const headerCells = headers
                 .map((h) => `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`)
@@ -1006,90 +1019,20 @@ export class DashboardService {
             </Worksheet>`;
         };
 
-        // 1. Sheet Tổng quan KPI
-        const sheet1 = buildWorksheet(
-            'Tong_Quan_KPI',
-            ['Chỉ số thống kê', 'Giá trị', 'Đơn vị / Tăng trưởng', 'Ghi chú'],
-            [
-                ['Thời gian báo cáo', `${data.startDate} đến ${data.endDate}`, 'Khoảng thời gian', 'Bộ lọc dữ liệu'],
-                ['Tổng doanh thu', data.financials.totalRevenue, 'VNĐ', `Tăng trưởng ${data.financials.revenueTrend}% so với kỳ trước`],
-                ['Tổng số đơn đặt tour', data.financials.totalBookings, 'Đơn', `Tăng trưởng ${data.financials.bookingsTrend}% so với kỳ trước`],
-                ['Số đơn hoàn thành', data.financials.completedBookings, 'Đơn', 'Đã kết thúc hành trình'],
-                ['Số đơn đã hủy', data.financials.cancelledBookings, 'Đơn', 'Đã hủy đơn'],
-                ['Giá trị đơn trung bình (AOV)', data.financials.averageOrderValue, 'VNĐ', 'Doanh thu / số đơn'],
-                ['Giao dịch VNPAY thành công', data.financials.vnpayTransactions, 'Giao dịch', 'Thanh toán trực tuyến'],
-                ['Tổng tiền qua VNPAY', data.financials.vnpayVolume, 'VNĐ', 'Cổng thanh toán điện tử'],
-                ['Tổng số tour du lịch', data.tours.totalTours, 'Tour', `Đang mở bán: ${data.tours.activeTours}`],
-                ['Tổng chuyến khởi hành', data.tours.totalSchedules, 'Chuyến', `Đã hoàn thành: ${data.tours.completedSchedules}`],
-                ['Tổng nhân sự vận hành', data.workforce.totalStaff, 'Nhân viên', `Đang làm việc: ${data.workforce.activeStaff}`],
-                ['Tổng số khách hàng', data.customers.totalUsers, 'Người dùng', `Khách mới trong kỳ: ${data.customers.newUsers}`],
-                ['Điểm đánh giá sàn', data.marketing.reviews.averageRating, 'sao / 5.0', `Tỷ lệ hài lòng: ${data.marketing.reviews.satisfactionRate}%`],
-            ],
-        );
-
-        // 2. Sheet Doanh thu theo ngày
-        const sheet2 = buildWorksheet(
-            'Doanh_Thu_Chi_Tiet',
-            ['Ngày / Tháng', 'Nhãn', 'Số đơn đặt', 'Doanh thu (VNĐ)'],
-            data.chart.map((c) => [c.date, c.label, c.bookings, c.revenue]),
-        );
-
-        // 3. Sheet Top Tour
-        const sheet3 = buildWorksheet(
-            'Top_Tour_Ban_Chay',
-            ['Mã Tour', 'Tên Tour Du Lịch', 'Số lượt đặt', 'Doanh thu (VNĐ)', 'Giá từ (VNĐ)'],
-            data.tours.topTours.map((t) => [t.code, t.name, t.bookingsCount, t.revenue, t.priceFrom || 0]),
-        );
-
-        // 4. Sheet Nhân sự điều hành
-        const sheet4 = buildWorksheet(
-            'Nhan_Su_Dieu_Hanh',
-            ['Mã NV', 'Họ và tên', 'Số điện thoại', 'Email', 'Vai trò', 'Số chuyến phụ trách', 'Chuyến hoàn thành'],
-            data.workforce.topStaff.map((s) => [
-                `NV${s.userId.toString().padStart(4, '0')}`,
-                s.fullName,
-                s.phone || 'N/A',
-                s.email || 'N/A',
-                s.roles.join(', ') || 'Điều hành',
-                s.assignedCount,
-                s.completedCount,
-            ]),
-        );
-
-        // 5. Sheet Khách hàng VIP
-        const sheet5 = buildWorksheet(
-            'Khach_Hang_VIP',
-            ['Mã KH', 'Tên khách hàng', 'Email', 'Số điện thoại', 'Hạng thành viên', 'Số đơn', 'Tổng chi tiêu (VNĐ)', 'Lần đặt gần nhất'],
-            data.customers.topVip.map((c) => [
-                `KH${c.userId.toString().padStart(4, '0')}`,
-                c.fullName,
-                c.email,
-                c.phone,
-                c.membershipTier,
-                c.totalBookings,
-                c.totalSpent,
-                c.lastBookingDate || 'N/A',
-            ]),
-        );
-
-        // 6. Sheet Khuyến mãi & Đánh giá
-        const sheet6 = buildWorksheet(
-            'Khuyen_Mai_Danh_Gia',
-            ['Hạng mục', 'Chỉ số', 'Giá trị', 'Ghi chú'],
-            [
-                ['Mã giảm giá', 'Tổng số mã đã phát hành', data.marketing.vouchers.totalIssued, 'Hệ thống voucher'],
-                ['Mã giảm giá', 'Lượt mã đã sử dụng', data.marketing.vouchers.totalUsed, 'Khách hàng áp dụng'],
-                ['Mã giảm giá', 'Mã đang có hiệu lực', data.marketing.vouchers.activeCount, 'Sẵn sàng dùng'],
-                ['Đánh giá khách hàng', 'Tổng số bài đánh giá', data.marketing.reviews.totalReviews, 'Tất cả bài viết'],
-                ['Đánh giá khách hàng', 'Điểm trung bình toàn sàn', data.marketing.reviews.averageRating, 'Thang điểm 5 sao'],
-                ['Đánh giá khách hàng', 'Tỷ lệ đánh giá tốt (4-5★)', `${data.marketing.reviews.satisfactionRate}%`, 'Chỉ số hài lòng CSAT'],
-                ['Đánh giá khách hàng', '5 sao (Tuyệt vời)', data.marketing.reviews.starsCount.star5, 'Đánh giá xuất sắc'],
-                ['Đánh giá khách hàng', '4 sao (Hài lòng)', data.marketing.reviews.starsCount.star4, 'Đánh giá tốt'],
-                ['Đánh giá khách hàng', '3 sao (Bình thường)', data.marketing.reviews.starsCount.star3, 'Cần cải thiện'],
-                ['Đánh giá khách hàng', '2 sao (Chưa hài lòng)', data.marketing.reviews.starsCount.star2, 'Được CSKH hỗ trợ'],
-                ['Đánh giá khách hàng', '1 sao (Thất vọng)', data.marketing.reviews.starsCount.star1, 'Được CSKH hỗ trợ'],
-            ],
-        );
+        const sections: Array<'kpi' | 'revenue' | 'tours' | 'workforce' | 'customers' | 'marketing'> = [
+            'kpi',
+            'revenue',
+            'tours',
+            'workforce',
+            'customers',
+            'marketing',
+        ];
+        const sheetsXml = sections
+            .map((sec) => {
+                const { title, headers, rows } = getSectionTableData(sec, data);
+                return buildWorksheet(title, headers, rows);
+            })
+            .join('\n');
 
         return `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
@@ -1116,12 +1059,7 @@ export class DashboardService {
    <NumberFormat ss:Format="#,##0"/>
   </Style>
  </Styles>
- ${sheet1}
- ${sheet2}
- ${sheet3}
- ${sheet4}
- ${sheet5}
- ${sheet6}
+ ${sheetsXml}
 </Workbook>`;
     }
 
@@ -1132,72 +1070,7 @@ export class DashboardService {
         toParam?: string,
     ): Promise<string> {
         const data = await this.getComprehensiveAnalytics(rangeParam, fromParam, toParam);
-        const escapeCsv = (val: string | number) => {
-            const str = String(val ?? '');
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
-        };
-
-        let headers: string[] = [];
-        let rows: (string | number)[][] = [];
-
-        switch (section) {
-            case 'revenue': {
-                headers = ['Ngày / Tháng', 'Nhãn', 'Số đơn đặt', 'Doanh thu (VNĐ)'];
-                rows = data.chart.map((c) => [c.date, c.label, c.bookings, c.revenue]);
-                break;
-            }
-            case 'tours': {
-                headers = ['Mã Tour', 'Tên Tour Du Lịch', 'Số lượt đặt', 'Doanh thu (VNĐ)', 'Giá từ (VNĐ)'];
-                rows = data.tours.topTours.map((t) => [t.code, t.name, t.bookingsCount, t.revenue, t.priceFrom || 0]);
-                break;
-            }
-            case 'workforce': {
-                headers = ['Mã NV', 'Họ và tên', 'Số điện thoại', 'Email', 'Vai trò', 'Số chuyến phụ trách', 'Chuyến hoàn thành'];
-                rows = data.workforce.topStaff.map((s) => [
-                    `NV${s.userId.toString().padStart(4, '0')}`,
-                    s.fullName,
-                    s.phone || 'N/A',
-                    s.email || 'N/A',
-                    s.roles.join(', ') || 'Điều hành',
-                    s.assignedCount,
-                    s.completedCount,
-                ]);
-                break;
-            }
-            case 'customers': {
-                headers = ['Mã KH', 'Tên khách hàng', 'Email', 'Số điện thoại', 'Hạng thành viên', 'Số đơn', 'Tổng chi tiêu (VNĐ)', 'Lần đặt gần nhất'];
-                rows = data.customers.topVip.map((c) => [
-                    `KH${c.userId.toString().padStart(4, '0')}`,
-                    c.fullName,
-                    c.email,
-                    c.phone,
-                    c.membershipTier,
-                    c.totalBookings,
-                    c.totalSpent,
-                    c.lastBookingDate || 'N/A',
-                ]);
-                break;
-            }
-            default: {
-                headers = ['Chỉ số thống kê', 'Giá trị'];
-                rows = [
-                    ['Tổng doanh thu (VNĐ)', data.financials.totalRevenue],
-                    ['Tổng số đơn đặt tour', data.financials.totalBookings],
-                    ['Đơn hoàn thành', data.financials.completedBookings],
-                    ['Đơn đã hủy', data.financials.cancelledBookings],
-                    ['Giá trị đơn TB (VNĐ)', data.financials.averageOrderValue],
-                    ['Giao dịch VNPAY', data.financials.vnpayTransactions],
-                    ['Tổng tour', data.tours.totalTours],
-                    ['Tổng nhân viên', data.workforce.totalStaff],
-                    ['Tổng khách hàng', data.customers.totalUsers],
-                    ['Điểm đánh giá sàn', data.marketing.reviews.averageRating],
-                ];
-            }
-        }
-
+        const { headers, rows } = getSectionTableData(section, data);
         const lines = [headers.join(','), ...rows.map((r) => r.map(escapeCsv).join(','))];
         return `\uFEFF${lines.join('\r\n')}`;
     }

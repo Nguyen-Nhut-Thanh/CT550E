@@ -1,6 +1,9 @@
 import type { ScheduleLike } from 'shared';
 
-export function getScheduleBookedCount(schedule: ScheduleLike) {
+export function getScheduleBookedCount(schedule: {
+  booked_count?: number | null;
+  _count?: { bookings?: number | null } | null;
+}) {
   return schedule.booked_count ?? schedule._count?.bookings ?? 0;
 }
 

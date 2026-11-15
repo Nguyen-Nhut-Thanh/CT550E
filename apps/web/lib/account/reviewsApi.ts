@@ -2,7 +2,7 @@ import { getToken } from "@/lib/auth/session";
 import type { AccountReviewItem, CreateReviewPayload } from 'shared';
 import { API_BASE } from "@/lib/http/config";
 import { requestWithToken } from "@/lib/http/requestWithToken";
-import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
+import { uploadValidatedImage } from "@/lib/http/uploadApi";
 
 export function getMyReviews(): Promise<AccountReviewItem[]> {
   return requestWithToken("/account/reviews", { cache: "no-store" });
@@ -25,16 +25,10 @@ export function createTourReview(tourId: number, payload: CreateReviewPayload): 
 }
 
 export async function uploadReviewImage(file: File): Promise<{ url: string }> {
-  const token = getToken() || "";
-  const data = await uploadAuthenticatedFile(
-    `${API_BASE}/reviews/upload-image`,
-    token,
+  return uploadValidatedImage(
+    "/reviews/upload-image",
     file,
     "Không thể tải ảnh đánh giá lên.",
   );
-  if (!data?.url) {
-    throw new Error("Không thể tải ảnh đánh giá lên.");
-  }
-  return { url: data.url };
 }
 

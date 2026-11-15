@@ -45,3 +45,16 @@ export const ScheduleAdminPayloadSchema = z.object({
   }
 });
 export type ScheduleAdminInput = z.infer<typeof ScheduleAdminPayloadSchema>;
+
+export const SchedulePromotionPayloadSchema = z.object({
+  title: z.string().trim().min(1, 'Vui lòng nhập tên chương trình ưu đãi.'),
+  discount_type: z.enum(['percentage', 'fixed_amount'], {
+    message: 'Loại ưu đãi không hợp lệ.',
+  }),
+  discount_value: z.coerce.number().positive('Giá trị giảm giá phải lớn hơn 0.'),
+  start_date: z.string().optional().nullable(),
+  end_date: z.string().optional().nullable(),
+  usage_limit: z.coerce.number().int().positive().optional().nullable(),
+  note: z.string().max(500).optional().nullable(),
+});
+export type SchedulePromotionPayloadInput = z.infer<typeof SchedulePromotionPayloadSchema>;
