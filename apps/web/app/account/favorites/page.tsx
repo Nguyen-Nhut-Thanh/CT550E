@@ -1,9 +1,9 @@
 "use client";
 
-import { AccountContent } from "@/components/account/layout/AccountContent";
+import { AccountContent } from "@/components/users/account_layout/UserAccountContent";
 
-import { AccountFavoritesTab } from "@/components/account/favorites/AccountFavoritesTab";
-import { useAccountResource } from "@/lib/account/useAccountResource";
+import { AccountFavoritesTab } from "@/components/users/account_tabs/UserAccountFavoritesTab";
+import { useAccountResource } from "@/lib/users/account/useAccountResource";
 import { getMyFavoriteTours } from "@/lib/favorites/api";
 import { AlertCircle, Loader2 } from "lucide-react";
 

@@ -13,6 +13,10 @@ export type TransportOption = {
     transport_id: number;
     name: string;
     transport_type: string;
+    type?: string | null;
+    capacity?: number | null;
+    provider_name?: string | null;
+    providers?: { name: string } | null;
 };
 export type ToursPageTour = {
     tour_id: number;

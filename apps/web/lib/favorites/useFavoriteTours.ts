@@ -1,6 +1,6 @@
 "use client";
 
-import { getToken } from "@/lib/auth/session";
+import { getToken } from "@/lib/auth/client/session";
 import { addFavoriteTour, getFavoriteIds, removeFavoriteTour } from "@/lib/favorites/api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToggleFavoriteResult } from "shared";

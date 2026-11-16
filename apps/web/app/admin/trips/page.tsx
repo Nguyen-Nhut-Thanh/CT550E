@@ -8,10 +8,11 @@ import {
   CalendarDays,
   RefreshCw,
 } from "lucide-react";
-import { useWorkforceIdentity } from "@/components/admin/layout/AdminGuard";
-import { CrewPanel } from "@/components/admin/workforce/CrewPanel";
-import { TripsFilterBar, TripsPageHeader } from "@/components/admin/trips";
-import { workforceApi } from "@/lib/admin/workforce/api";
+import { useWorkforceIdentity } from "@/components/common/admin_shared/guards/AdminGuard";
+import { CrewPanel } from "@/components/workforce/shifts_and_crew/AdminCrewPanel";
+import { TripsFilterBar } from "@/components/workforce/trips/AdminTripsFilterBar";
+import { TripsPageHeader } from "@/components/workforce/trips/AdminTripsPageHeader";
+import { workforceApi } from "@/lib/workforce/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import {
   WORKFORCE_REGIONS,

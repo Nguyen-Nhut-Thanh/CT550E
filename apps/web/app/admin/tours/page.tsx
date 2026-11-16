@@ -1,13 +1,13 @@
 "use client";
 
-import { TourManagementHeader } from "@/components/admin/tours/management/TourManagementHeader";
-import { TourManagementStats } from "@/components/admin/tours/management/TourManagementStats";
-import { TourManagementFilters } from "@/components/admin/tours/management/TourManagementFilters";
-import { TourManagementTable } from "@/components/admin/tours/management/TourManagementTable";
+import { TourManagementHeader } from "@/components/tours/tour_management/AdminTourManagementHeader";
+import { TourManagementStats } from "@/components/tours/tour_management/AdminTourManagementStats";
+import { TourManagementFilters } from "@/components/tours/tour_management/AdminTourManagementFilters";
+import { TourManagementTable } from "@/components/tours/tour_management/AdminTourManagementTable";
 
-import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
-import { deleteAdminTour, getAdminTours, toggleAdminTourStatus } from "@/lib/admin/tours/api";
-import { DEFAULT_TOUR_FILTERS, filterManagedTours } from "@/lib/admin/tours/management";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
+import { deleteAdminTour, getAdminTours, toggleAdminTourStatus } from "@/lib/tours/admin/api";
+import { DEFAULT_TOUR_FILTERS, filterManagedTours } from "@/lib/tours/admin/management";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

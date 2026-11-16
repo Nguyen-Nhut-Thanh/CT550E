@@ -1,5 +1,5 @@
-import { AccountContent } from "@/components/account/layout/AccountContent";
-import { AccountWalletTab } from "@/components/account/wallet/AccountWalletTab";
+import { AccountContent } from "@/components/users/account_layout/UserAccountContent";
+import { AccountWalletTab } from "@/components/users/account_tabs/UserAccountWalletTab";
 
 export default function WalletAccountPage() {
   return (

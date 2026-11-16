@@ -1,26 +1,26 @@
 "use client";
 
-import { ScheduleBasicInfoCard } from "@/components/admin/schedules/editor/ScheduleBasicInfoCard";
-import { ScheduleDepartureCard } from "@/components/admin/schedules/editor/ScheduleDepartureCard";
-import { ScheduleAmenitiesCard } from "@/components/admin/schedules/editor/ScheduleAmenitiesCard";
-import { ScheduleAttractionsCard } from "@/components/admin/schedules/editor/ScheduleAttractionsCard";
+import { ScheduleBasicInfoCard } from "@/components/schedules/schedule_config/AdminScheduleBasicInfoCard";
+import { ScheduleDepartureCard } from "@/components/schedules/schedule_config/AdminScheduleDepartureCard";
+import { ScheduleAmenitiesCard } from "@/components/schedules/schedule_config/AdminScheduleAmenitiesCard";
+import { ScheduleAttractionsCard } from "@/components/schedules/schedule_config/AdminScheduleAttractionsCard";
 import Link from 'next/link';
-import { getAdminLocations } from "@/lib/admin/locations/api";
-import { ScheduleItinerarySection } from "@/components/admin/schedules/editor/ScheduleItinerarySection";
-import { ScheduleSidebar } from "@/components/admin/schedules/editor/ScheduleSidebar";
-import { TourEditorShell } from "@/components/admin/tours/editor/TourEditorShell";
-import { IncompleteItineraryDialog } from "@/components/admin/schedules/editor/IncompleteItineraryDialog";
-import { getIncompleteItineraryDays } from "@/lib/admin/schedules/itinerary";
+import { getAdminLocations } from "@/lib/locations/admin/api";
+import { ScheduleItinerarySection } from "@/components/schedules/schedule_itinerary/AdminScheduleItinerarySection";
+import { ScheduleSidebar } from "@/components/schedules/tour_selector/AdminScheduleSidebar";
+import { TourEditorShell } from "@/components/tours/tour_editor/AdminTourEditorShell";
+import { IncompleteItineraryDialog } from "@/components/schedules/schedule_itinerary/AdminIncompleteItineraryDialog";
+import { getIncompleteItineraryDays } from "@/lib/schedules/admin/itinerary";
 import {
   getAdminCatalogTransports,
   getAdminHotels,
   getHotelRoomTypes,
-} from "@/lib/admin/catalogs/api";
+} from "@/lib/catalogs/admin/api";
 import {
   getAdminScheduleDetail,
   getTourScheduleTemplate,
   saveAdminSchedule,
-} from "@/lib/admin/schedules/api";
+} from "@/lib/schedules/admin/api";
 import {
   buildScheduleFormFromResponse,
   buildScheduleDateTime,
@@ -29,13 +29,13 @@ import {
   createEmptyPickupPoint,
   ensureItineraryDays,
   getSchedulePickupError,
-} from "@/lib/admin/schedules/forms";
-import { getAdminTourDetail } from "@/lib/admin/tours/api";
-import { applyScheduleTemplate } from "@/lib/admin/schedules/template";
+} from "@/lib/schedules/admin/forms";
+import { getAdminTourDetail } from "@/lib/tours/admin/api";
+import { applyScheduleTemplate } from "@/lib/schedules/admin/template";
 import { useToast } from "@/lib/notifications/useToast";
 import { ChevronRight, Gift, Loader2, UsersRound } from "lucide-react";
-import { ScheduleManifestModal } from "@/components/admin/schedules/listing/ScheduleManifestModal";
-import { SchedulePromotionModal } from "@/components/admin/schedules/listing/SchedulePromotionModal";
+import { ScheduleManifestModal } from "@/components/schedules/schedule_modals/AdminScheduleManifestModal";
+import { SchedulePromotionModal } from "@/components/schedules/schedule_modals/AdminSchedulePromotionModal";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {

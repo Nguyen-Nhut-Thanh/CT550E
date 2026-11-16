@@ -1,17 +1,17 @@
 "use client";
 
-import { AnalyticsCustomersTab } from "@/components/admin/analytics/AnalyticsCustomersTab";
-import { AnalyticsFinancialsTab } from "@/components/admin/analytics/AnalyticsFinancialsTab";
-import { AnalyticsHeader } from "@/components/admin/analytics/AnalyticsHeader";
-import { AnalyticsKpiCards } from "@/components/admin/analytics/AnalyticsKpiCards";
-import { AnalyticsMarketingTab } from "@/components/admin/analytics/AnalyticsMarketingTab";
-import { AnalyticsToursTab } from "@/components/admin/analytics/AnalyticsToursTab";
-import { AnalyticsWorkforceTab } from "@/components/admin/analytics/AnalyticsWorkforceTab";
+import { AnalyticsCustomersTab } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsCustomersTab";
+import { AnalyticsFinancialsTab } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsFinancialsTab";
+import { AnalyticsHeader } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsHeader";
+import { AnalyticsKpiCards } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsKpiCards";
+import { AnalyticsMarketingTab } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsMarketingTab";
+import { AnalyticsToursTab } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsToursTab";
+import { AnalyticsWorkforceTab } from "@/components/dashboard/dashboard_analytics/AdminAnalyticsWorkforceTab";
 import {
   downloadComprehensiveExcel,
   downloadSectionCsv,
   getComprehensiveAnalytics,
-} from "@/lib/admin/dashboard/api";
+} from "@/lib/dashboard/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import {
   AlertCircle,

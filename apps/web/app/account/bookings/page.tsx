@@ -1,10 +1,10 @@
 "use client";
 
-import { AccountContent } from "@/components/account/layout/AccountContent";
+import { AccountContent } from "@/components/users/account_layout/UserAccountContent";
 
-import { AccountBookingsTab } from "@/components/account/bookings/AccountBookingsTab";
-import { getMyBookings } from "@/lib/account/api";
-import { useAccountResource } from "@/lib/account/useAccountResource";
+import { AccountBookingsTab } from "@/components/users/account_tabs/UserAccountBookingsTab";
+import { getMyBookings } from "@/lib/users/account/api";
+import { useAccountResource } from "@/lib/users/account/useAccountResource";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function BookingsHistoryAccountPage() {

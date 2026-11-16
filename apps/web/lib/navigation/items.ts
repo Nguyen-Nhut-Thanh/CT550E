@@ -21,7 +21,7 @@ export const FALLBACK_NAV_DATA: NavItem[] = [
       },
       {
         title: "Ngoài nước",
-        href: "/tours?type=international",
+        href: "/tours?type=outbound",
         subItems: [
           { title: "Thái Lan", href: "/tours?country=Thailand" },
           { title: "Nhật Bản", href: "/tours?country=Japan" },
@@ -85,7 +85,7 @@ export function buildNavItems(locationData?: NavLocationData | null): NavItem[] 
         },
         {
           title: "Ngoài nước",
-          href: "/tours?type=international",
+          href: "/tours?type=outbound",
           subItems: internationalSubItems,
         },
       ],

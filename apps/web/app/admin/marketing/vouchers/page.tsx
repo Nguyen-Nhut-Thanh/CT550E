@@ -2,26 +2,26 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { VoucherModal } from "@/components/admin/vouchers/VoucherModal";
-import { VoucherStatusFilterTabs } from "@/components/admin/vouchers/VoucherStatusFilterTabs";
-import { HomeVoucherCampaignManager } from "@/components/admin/vouchers/HomeVoucherCampaignManager";
-import { VoucherManagementTable } from "@/components/admin/vouchers/VoucherManagementTable";
-import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
-import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
+import { VoucherModal } from "@/components/vouchers/voucher_editor/AdminVoucherModal";
+import { VoucherStatusFilterTabs } from "@/components/vouchers/voucher_management/AdminVoucherStatusFilterTabs";
+import { HomeVoucherCampaignManager } from "@/components/vouchers/voucher_management/AdminHomeVoucherCampaignManager";
+import { VoucherManagementTable } from "@/components/vouchers/voucher_management/AdminVoucherManagementTable";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import {
   createAdminVoucher,
   deleteAdminVoucher,
   getAdminVouchers,
   setAdminVoucherStatus,
-} from "@/lib/admin/vouchers/api";
+} from "@/lib/vouchers/admin/api";
 import {
   buildVoucherForm,
   buildVoucherPayload,
   createDefaultVoucherForm,
   filterVouchers,
   getVoucherDateParts,
-} from "@/lib/admin/vouchers/forms";
+} from "@/lib/vouchers/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlertTriangle, Sparkles, Ticket } from "lucide-react";
 import type { Voucher, VoucherForm, VoucherStatusFilter } from "shared";

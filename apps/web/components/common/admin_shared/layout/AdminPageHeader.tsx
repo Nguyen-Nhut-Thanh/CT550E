@@ -1,0 +1,33 @@
+"use client";
+
+import { Plus } from "lucide-react";
+import type { AdminPageHeaderProps } from 'shared';
+import { ADMIN_CONTENT_DENIED } from 'shared';
+import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards/AdminContentPermission";
+
+/** Hiển thị tiêu đề, mô tả và các nút thao tác của trang quản trị. */
+export function AdminPageHeader({ title, description, actions, primaryAction }: AdminPageHeaderProps) {
+  const readOnly = useAdminContentReadOnly();
+  return (
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div>
+        <h1 className="text-xl font-bold leading-tight text-slate-900">{title}</h1>
+        {description && <p className="text-xs leading-relaxed text-slate-500 mt-0.5">{description}</p>}
+      </div>
+      <div className="flex items-center gap-2">
+        {actions}
+        {primaryAction && (
+          <button 
+            disabled={readOnly}
+            title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
+            onClick={primaryAction.onClick}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {primaryAction.icon || <Plus size={18} />}
+            {primaryAction.label}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/session";
+import { getToken } from "@/lib/auth/client/session";
 import { requestWithToken } from "@/lib/http/requestWithToken";
 import type { ChatContextCard, ChatActor, ChatMessagePage, Conversation, UploadResponse } from 'shared';
 

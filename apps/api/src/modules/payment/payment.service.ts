@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
-import type { PaymentStatusResponse, PaymentUrlResponse } from 'shared';
+import { parseBookingNote, type PaymentStatusResponse, type PaymentUrlResponse } from 'shared';
 import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
@@ -118,6 +118,7 @@ export class PaymentService {
                                 },
                             },
                             vouchers: { select: { code: true } },
+                            booking_travelers: true,
                         },
                     },
                 },
@@ -152,6 +153,8 @@ export class PaymentService {
                         tourName: booking.tour_schedules.tours.name,
                         totalAmount: booking.total_amount.toString(),
                     });
+                    const parsedNote = parseBookingNote(booking.note, booking);
+                    const pickupSnapshot = booking.pickup_snapshot as { name?: string; address?: string } | null;
                     return {
                         result: response('00', 'Confirm Success'),
                         notification: {
@@ -161,9 +164,11 @@ export class PaymentService {
                             bookingId: booking.booking_id,
                             tourName: booking.tour_schedules.tours.name,
                             tourCode: booking.tour_schedules.tours.code,
+                            startDate: booking.tour_schedules.start_date,
                             duration: `${booking.tour_schedules.tours.duration_days} ngày ${booking.tour_schedules.tours.duration_nights} đêm`,
                             departureName: booking.departure_name || booking.tour_schedules.departure_location?.name,
                             totalAmount: booking.total_amount.toString(),
+                            servicesTotal: booking.services_total ? booking.services_total.toString() : undefined,
                             method: 'VNPay',
                             transactionCode: transactionCode || undefined,
                             paidAt: fields.vnp_PayDate ? parseVnpayDate(fields.vnp_PayDate) : new Date(),
@@ -175,6 +180,16 @@ export class PaymentService {
                             infantPrice: booking.infant_unit_price ? booking.infant_unit_price.toString() : undefined,
                             discountAmount: booking.discount_amount ? booking.discount_amount.toString() : undefined,
                             voucherCode: booking.vouchers?.code,
+                            roomType: parsedNote.roomType,
+                            pickupName: pickupSnapshot?.name,
+                            pickupAddress: pickupSnapshot?.address,
+                            travelers: (booking.booking_travelers || []).map(t => ({
+                                fullName: t.full_name,
+                                dob: t.dob,
+                                gender: t.gender,
+                                idNumber: t.id_number,
+                            })),
+                            extraServices: Array.isArray(booking.additional_services) ? (booking.additional_services as any[]) : [],
                         },
                     };
                 }

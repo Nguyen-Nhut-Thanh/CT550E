@@ -4,7 +4,7 @@ import {
   AboutStatsSection,
   AboutStorySection,
   AboutValuesSection,
-} from "@/components/about";
+} from "@/components/about/about_overview";
 
 export const metadata = {
   title: "Về chúng tôi - JourniTrip",

@@ -1,7 +1,7 @@
 "use client";
 
-import InlineNotice from "@/components/common/feedback/InlineNotice";
-import { registerUser } from "@/lib/auth/api";
+import InlineNotice from "@/components/common/dialogs_and_feedback/media/InlineNotice";
+import { registerUser } from "@/lib/auth/client/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

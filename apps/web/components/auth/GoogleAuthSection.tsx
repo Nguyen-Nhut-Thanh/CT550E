@@ -1,6 +1,6 @@
 "use client";
 
-import InlineNotice from "@/components/common/feedback/InlineNotice";
+import InlineNotice from "@/components/common/dialogs_and_feedback/media/InlineNotice";
 import { GoogleLogin } from "@react-oauth/google";
 import type { GoogleAuthSectionProps } from 'shared';
 

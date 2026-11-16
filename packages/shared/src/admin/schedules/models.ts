@@ -26,6 +26,10 @@ export type TransportItem = {
     transport_id: number;
     name: string;
     type?: string | null;
+    transport_type?: string | null;
+    capacity?: number | null;
+    provider_name?: string | null;
+    providers?: { name: string } | null;
 };
 export type RoomTypeItem = {
     room_type_id: number;

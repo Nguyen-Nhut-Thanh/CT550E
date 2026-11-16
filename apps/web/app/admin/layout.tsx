@@ -1,8 +1,8 @@
 "use client";
 
-import { AdminGuard } from "@/components/admin/layout/AdminGuard";
-import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
-import { AdminContentPermission } from "@/components/admin/common/AdminContentPermission";
+import { AdminGuard } from "@/components/common/admin_shared/guards/AdminGuard";
+import { AdminSidebar } from "@/components/common/admin_shared/layout/AdminSidebar";
+import { AdminContentPermission } from "@/components/common/admin_shared/guards/AdminContentPermission";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";

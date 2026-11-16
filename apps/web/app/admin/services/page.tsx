@@ -1,21 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
-import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
-import {
-  HotelModal,
-  HotelsTableTab,
-  ProviderModal,
-  ProvidersTableTab,
-  RoomTypesModal,
-  ServicesTabSwitcher,
-  TransportModal,
-  TransportsTableTab,
-  type LocationItem,
-  type ServicesTab,
-} from "@/components/admin/services";
-import { getAdminLocations } from "@/lib/admin/locations/api";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
+import { HotelModal } from "@/components/services/hotels/AdminHotelModal";
+import { HotelsTableTab, type LocationItem } from "@/components/services/hotels/AdminHotelsTableTab";
+import { RoomTypesModal } from "@/components/services/hotels/AdminRoomTypesModal";
+import { TransportModal } from "@/components/services/transports/AdminTransportModal";
+import { TransportsTableTab } from "@/components/services/transports/AdminTransportsTableTab";
+import { ProviderModal } from "@/components/services/providers/AdminProviderModal";
+import { ProvidersTableTab } from "@/components/services/providers/AdminProvidersTableTab";
+import { ServicesTabSwitcher, type ServicesTab } from "@/components/services/providers/AdminServicesTabSwitcher";
+import { getAdminLocations } from "@/lib/locations/admin/api";
 import {
   createServicesHotel,
   createServicesProvider,
@@ -29,7 +25,7 @@ import {
   updateServicesHotel,
   updateServicesProvider,
   updateServicesTransport,
-} from "@/lib/admin/services/api";
+} from "@/lib/services/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlertTriangle, Loader2, Plus } from "lucide-react";
 import type {

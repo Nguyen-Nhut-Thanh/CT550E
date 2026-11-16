@@ -1,20 +1,20 @@
 "use client";
 
-import { LocationManagementHeader } from "@/components/admin/locations/management/LocationManagementHeader";
-import { LocationManagementStats } from "@/components/admin/locations/management/LocationManagementStats";
-import { LocationManagementFilters } from "@/components/admin/locations/management/LocationManagementFilters";
-import { LocationManagementTable } from "@/components/admin/locations/management/LocationManagementTable";
+import { LocationManagementHeader } from "@/components/locations/location_management/AdminLocationManagementHeader";
+import { LocationManagementStats } from "@/components/locations/location_management/AdminLocationManagementStats";
+import { LocationManagementFilters } from "@/components/locations/location_management/AdminLocationManagementFilters";
+import { LocationManagementTable } from "@/components/locations/location_management/AdminLocationManagementTable";
 
-import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import {
   deleteAdminLocation,
   getAdminLocationLevels,
   getAdminLocations,
-} from "@/lib/admin/locations/api";
+} from "@/lib/locations/admin/api";
 import {
   DEFAULT_LOCATION_FILTERS,
   filterManagedLocations,
-} from "@/lib/admin/locations/management";
+} from "@/lib/locations/admin/management";
 import { useToast } from "@/lib/notifications/useToast";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

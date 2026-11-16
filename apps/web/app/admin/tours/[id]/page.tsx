@@ -1,15 +1,15 @@
 "use client";
 
-import { ScheduleManagement } from "@/components/admin/tours/editor/ScheduleManagement";
-import { TourBasicInfoCard } from "@/components/admin/tours/editor/TourBasicInfoCard";
-import { TourDetailsCard } from "@/components/admin/tours/editor/TourDetailsCard";
-import { TourSidebar } from "@/components/admin/tours/editor/TourSidebar";
-import { TourEditorShell } from "@/components/admin/tours/editor/TourEditorShell";
+import { ScheduleManagement } from "@/components/schedules/schedule_table/AdminScheduleManagement";
+import { TourBasicInfoCard } from "@/components/tours/tour_editor/AdminTourBasicInfoCard";
+import { TourDetailsCard } from "@/components/tours/tour_editor/AdminTourDetailsCard";
+import { TourSidebar } from "@/components/tours/tour_management/AdminTourSidebar";
+import { TourEditorShell } from "@/components/tours/tour_editor/AdminTourEditorShell";
 
-import { getAdminTransports } from "@/lib/admin/catalogs/api";
-import { getAdminLocations } from "@/lib/admin/locations/api";
-import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";
-import { getTotalTourBookings, normalizeTourDetailForm } from "@/lib/admin/tours/forms";
+import { getAdminTransports } from "@/lib/catalogs/admin/api";
+import { getAdminLocations } from "@/lib/locations/admin/api";
+import { getAdminTourDetail, updateAdminTour } from "@/lib/tours/admin/api";
+import { getTotalTourBookings, normalizeTourDetailForm } from "@/lib/tours/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";

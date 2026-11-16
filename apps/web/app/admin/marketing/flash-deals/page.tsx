@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlashDealModal } from '@/components/admin/flash-deals/FlashDealModal';
-import { FlashDealPageHeader } from '@/components/admin/flash-deals/FlashDealPageHeader';
-import { FlashDealFilters } from '@/components/admin/flash-deals/FlashDealFilters';
-import { FlashDealTable } from '@/components/admin/flash-deals/FlashDealTable';
-import { deleteAdminFlashDeal, getAdminFlashDeals, saveAdminFlashDeal } from '@/lib/admin/flash-deals/api';
-import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm } from '@/lib/admin/flash-deals/forms';
-import { DEFAULT_FLASH_DEAL_FILTERS, filterManagedFlashDeals, getFlashDealOverview } from '@/lib/admin/flash-deals/management';
+import { FlashDealModal } from '@/components/flash_deals/AdminFlashDealModal';
+import { FlashDealPageHeader } from '@/components/flash_deals/AdminFlashDealPageHeader';
+import { FlashDealFilters } from '@/components/flash_deals/AdminFlashDealFilters';
+import { FlashDealTable } from '@/components/flash_deals/AdminFlashDealTable';
+import { deleteAdminFlashDeal, getAdminFlashDeals, saveAdminFlashDeal } from '@/lib/flash_deals/admin/api';
+import { buildFlashDealForm, buildFlashDealPayload, createDefaultFlashDealForm } from '@/lib/flash_deals/admin/forms';
+import { DEFAULT_FLASH_DEAL_FILTERS, filterManagedFlashDeals, getFlashDealOverview } from '@/lib/flash_deals/admin/management';
 import { useToast } from '@/lib/notifications/useToast';
-import { ConfirmDialog } from '@/components/common/overlays/ConfirmDialog';
+import { ConfirmDialog } from '@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog';
 import { Trash2 } from 'lucide-react';
 import type { FlashDealForm, FlashDealSchedule } from 'shared';
 

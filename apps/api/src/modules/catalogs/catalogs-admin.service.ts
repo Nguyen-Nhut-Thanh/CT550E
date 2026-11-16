@@ -30,11 +30,24 @@ export class CatalogsAdminService {
   }
 
   async listAllTransports() {
-    return this.prisma.transports.findMany({
+    const list = await this.prisma.transports.findMany({
       where: { status: 1 },
       orderBy: { name: 'asc' },
-      select: { transport_id: true, name: true, transport_type: true },
+      select: {
+        transport_id: true,
+        name: true,
+        transport_type: true,
+        capacity: true,
+        providers: {
+          select: { name: true },
+        },
+      },
     });
+    return list.map((item) => ({
+      ...item,
+      type: item.transport_type,
+      provider_name: item.providers?.name ?? null,
+    }));
   }
 
   // ==========================================

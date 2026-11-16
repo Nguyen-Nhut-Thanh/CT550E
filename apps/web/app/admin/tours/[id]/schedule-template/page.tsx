@@ -1,6 +1,6 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
 
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,19 +8,19 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BookCopy, Info, Loader2, Save } from 'lucide-react';
 import type { HotelItem, LocationOption, RoomTypeItem, ScheduleFormState, TourInfo, TransportItem } from 'shared';
-import { TourEditorShell } from '@/components/admin/tours/editor/TourEditorShell';
-import { TourEditorCard } from '@/components/admin/tours/editor/TourEditorCard';
-import { ScheduleDepartureCard } from '@/components/admin/schedules/editor/ScheduleDepartureCard';
-import { ScheduleAttractionsCard } from '@/components/admin/schedules/editor/ScheduleAttractionsCard';
-import { ScheduleItinerarySection } from '@/components/admin/schedules/editor/ScheduleItinerarySection';
-import { IncompleteItineraryDialog } from '@/components/admin/schedules/editor/IncompleteItineraryDialog';
-import { getIncompleteItineraryDays } from '@/lib/admin/schedules/itinerary';
-import { getAdminTourDetail } from '@/lib/admin/tours/api';
-import { getAdminHotels, getAdminCatalogTransports, getHotelRoomTypes } from '@/lib/admin/catalogs/api';
-import { getAdminLocations } from '@/lib/admin/locations/api';
-import { getTourScheduleTemplate, saveTourScheduleTemplate } from '@/lib/admin/schedules/api';
-import { createDefaultScheduleForm, ensureItineraryDays, updateScheduleStart } from '@/lib/admin/schedules/forms';
-import { applyScheduleTemplate, buildScheduleTemplatePayload } from '@/lib/admin/schedules/template';
+import { TourEditorShell } from '@/components/tours/tour_editor/AdminTourEditorShell';
+import { TourEditorCard } from '@/components/tours/tour_editor/AdminTourEditorCard';
+import { ScheduleDepartureCard } from '@/components/schedules/schedule_config/AdminScheduleDepartureCard';
+import { ScheduleAttractionsCard } from '@/components/schedules/schedule_config/AdminScheduleAttractionsCard';
+import { ScheduleItinerarySection } from '@/components/schedules/schedule_itinerary/AdminScheduleItinerarySection';
+import { IncompleteItineraryDialog } from '@/components/schedules/schedule_itinerary/AdminIncompleteItineraryDialog';
+import { getIncompleteItineraryDays } from '@/lib/schedules/admin/itinerary';
+import { getAdminTourDetail } from '@/lib/tours/admin/api';
+import { getAdminHotels, getAdminCatalogTransports, getHotelRoomTypes } from '@/lib/catalogs/admin/api';
+import { getAdminLocations } from '@/lib/locations/admin/api';
+import { getTourScheduleTemplate, saveTourScheduleTemplate } from '@/lib/schedules/admin/api';
+import { createDefaultScheduleForm, ensureItineraryDays, updateScheduleStart } from '@/lib/schedules/admin/forms';
+import { applyScheduleTemplate, buildScheduleTemplatePayload } from '@/lib/schedules/admin/template';
 import { useToast } from '@/lib/notifications/useToast';
 
 export default function TourScheduleTemplatePage() {

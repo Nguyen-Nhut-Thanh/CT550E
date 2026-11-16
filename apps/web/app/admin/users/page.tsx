@@ -1,9 +1,9 @@
 "use client";
 
-import { UsersTable } from "@/components/admin/users/UsersTable";
-import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
-import { getAdminUsers, updateAdminUserStatus } from "@/lib/admin/users/api";
-import { matchesUserSearch } from "@/lib/admin/users/forms";
+import { UsersTable } from "@/components/users/admin_users/AdminUsersTable";
+import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { getAdminUsers, updateAdminUserStatus } from "@/lib/users/admin/api";
+import { matchesUserSearch } from "@/lib/users/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { UserPlus } from "lucide-react";
 import { useRouter } from 'next/navigation';

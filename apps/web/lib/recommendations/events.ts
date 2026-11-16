@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/session";
+import { getToken } from "@/lib/auth/client/session";
 import type { RecommendationEventPayload } from "shared";
 
 import { API_BASE as API_BASE_URL } from "@/lib/http/config";

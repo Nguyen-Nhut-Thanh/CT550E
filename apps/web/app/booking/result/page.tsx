@@ -12,9 +12,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { PaymentResultStatus, PaymentStatusResponse } from "shared";
-import { BookingPaymentButton } from "@/components/booking/checkout/BookingPaymentButton";
-import { getToken } from "@/lib/auth/session";
-import { getPaymentStatus } from "@/lib/booking/api";
+import { BookingPaymentButton } from "@/components/booking/create_booking/UserBookingPaymentButton";
+import { getToken } from "@/lib/auth/client/session";
+import { getPaymentStatus } from "@/lib/booking/client/api";
 import { formatVND } from "@/lib/utils/currency";
 
 const COPY: Record<

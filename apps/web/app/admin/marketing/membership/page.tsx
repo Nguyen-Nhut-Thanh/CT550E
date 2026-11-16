@@ -1,18 +1,18 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
 
 
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Coins, Crown, Download, Loader2, RefreshCw, Save, SlidersHorizontal, Ticket, Users } from "lucide-react";
-import { getAdminMembership, saveMembershipSettings } from "@/lib/admin/membership/api";
+import { getAdminMembership, saveMembershipSettings } from "@/lib/membership/admin/api";
 import { formatVND } from "@/lib/utils/currency";
 import type { MembershipAdminList, MembershipTier, MembershipTierId } from "shared";
-import { MembershipTierSettings } from "@/components/admin/membership/MembershipTierSettings";
-import { MembershipTierPreview } from "@/components/admin/membership/MembershipTierPreview";
-import { MembershipBenefitsTable } from "@/components/common/membership/MembershipBenefitsTable";
-import { MembershipMembersTable, type MemberRow } from "@/components/admin/membership/MembershipMembersTable";
-import { MembershipMemberDialog } from "@/components/admin/membership/MembershipMemberDialog";
+import { MembershipTierSettings } from "@/components/membership/admin_membership/AdminMembershipTierSettings";
+import { MembershipTierPreview } from "@/components/membership/admin_membership/AdminMembershipTierPreview";
+import { MembershipBenefitsTable } from "@/components/membership/customer_membership/UserMembershipBenefitsTable";
+import { MembershipMembersTable, type MemberRow } from "@/components/membership/admin_membership/AdminMembershipMembersTable";
+import { MembershipMemberDialog } from "@/components/membership/admin_membership/AdminMembershipMemberDialog";
 
 export default function AdminMembershipPage() {
   const readOnly = useAdminContentReadOnly();

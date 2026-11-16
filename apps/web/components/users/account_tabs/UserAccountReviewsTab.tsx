@@ -1,0 +1,429 @@
+"use client";
+
+import { Dialog } from "@/components/common/dialogs_and_feedback/dialogs/Dialog";
+import { StarRating } from "@/components/tour_cards/elements/UserStarRating";
+import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
+import { getMyReviews, updateMyReview } from "@/lib/reviews/client/reviewsApi";
+import { useAccountResource } from "@/lib/users/account/useAccountResource";
+import { AlertTriangle, Eye, Loader2, MessageSquare, Pencil, Star, X } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import type { AccountReviewItem } from "shared";
+import { AdminRowActions } from "@/components/common/admin_shared/tables/AdminRowActions";
+import { AccountPageBanner } from "@/components/banners/account_banner/UserAccountPageBanner";
+
+export function AccountReviewsTab() {
+  const {
+    data: reviews = [],
+    loading,
+    error,
+    refresh: load,
+    update: setReviews,
+  } = useAccountResource("reviews", getMyReviews);
+  const [approvedOnly, setApprovedOnly] = useState(false);
+  const [editing, setEditing] = useState<AccountReviewItem | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [gallery, setGallery] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
+  function edit(review: AccountReviewItem) {
+    setEditing(review);
+    setRating(review.rating);
+    setComment(review.comment ?? "");
+    setEditError("");
+  }
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    if (!editing) return;
+    setSaving(true);
+    setEditError("");
+    try {
+      const result = await updateMyReview(editing.review_id, {
+        rating,
+        comment,
+      });
+      setReviews((items) =>
+        items.map((item) =>
+          item.review_id === editing.review_id
+            ? { ...item, rating, comment: comment.trim(), status: 0 }
+            : item,
+        ),
+      );
+      setNotice(result.message);
+      setEditing(null);
+    } catch (cause) {
+      setEditError(
+        cause instanceof Error ? cause.message : "Không thể lưu đánh giá.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  const approved = reviews.filter((review) => review.status === 1);
+  const visible = approvedOnly ? approved : reviews;
+  return (
+    <div className="w-full min-w-0 space-y-6">
+      <AccountPageBanner
+        title="Bài đánh giá"
+        description="Những đánh giá bạn đã viết về các tour"
+        icon={Star}
+        filterAriaLabel="Lọc bài đánh giá"
+        activeFilter={approvedOnly ? "approved" : "all"}
+        onFilterChange={(value) => setApprovedOnly(value === "approved")}
+        filters={[
+          { value: "all", label: `Tất cả${!loading ? ` (${reviews.length})` : ""}` },
+          { value: "approved", label: `Đã đánh giá${!loading ? ` (${approved.length})` : ""}` },
+        ]}
+      />
+      {notice && (
+        <p
+          role="status"
+          className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700"
+        >
+          {notice}
+        </p>
+      )}
+      {loading ? (
+        <div
+          role="status"
+          className="flex justify-center gap-3 rounded-2xl bg-white py-16 text-sm text-slate-500"
+        >
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Đang tải bài đánh giá...
+        </div>
+      ) : error ? (
+        <div role="alert" className="rounded-2xl bg-white p-10 text-center">
+          <p className="text-sm text-rose-600">{error}</p>
+          <button
+            onClick={() => void load()}
+            className="mt-4 rounded-lg bg-blue-50 px-4 py-2 text-sm text-blue-600"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : !visible.length ? (
+        <div className="rounded-2xl border border-slate-100 bg-white p-12 text-center">
+          <Star className="mx-auto mb-3 h-10 w-10 text-amber-300" />
+          <p className="font-semibold text-slate-700">
+            {approvedOnly
+              ? "Chưa có bài đánh giá được duyệt"
+              : "Bạn chưa có bài đánh giá nào"}
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            {approvedOnly
+              ? "Bài đánh giá sẽ xuất hiện tại đây sau khi được duyệt."
+              : "Chia sẻ cảm nhận của bạn sau mỗi chuyến đi."}
+          </p>
+          <Link
+            href="/account/bookings"
+            className="mt-5 inline-block text-sm font-semibold text-blue-600"
+          >
+            Xem lịch sử đặt tour
+          </Link>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-white px-4 sm:px-5">
+          {visible.map((review) => (
+            <article
+              key={review.review_id}
+              className="flex flex-col gap-4 py-3 sm:flex-row"
+            >
+              <Link
+                href={`/tours/${review.tour_id}`}
+                className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:aspect-[4/3] sm:w-[200px] sm:self-start"
+              >
+                <ImageWithFallback
+                  src={review.tour_image || "/images/shared/travel-cover.png"}
+                  fallback="/images/shared/travel-cover.png"
+                  alt={review.tour_name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/tours/${review.tour_id}`}
+                  className="text-[15px] font-bold text-slate-900 hover:text-blue-600"
+                >
+                  {review.tour_name}
+                </Link>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Đánh giá ngày{" "}
+                  {new Date(review.created_at).toLocaleDateString("vi-VN", {
+                    timeZone: "Asia/Bangkok",
+                  })}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <StarRating rating={review.rating} />
+                  <span className="text-sm font-semibold text-slate-600">
+                    {review.rating.toFixed(1)}
+                  </span>
+                  {review.status !== 1 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] ${review.status === 0 ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-600"}`}
+                    >
+                      {review.status === 0 ? "Chờ duyệt" : "Chưa được duyệt"}
+                    </span>
+                  )}
+                </div>
+                {review.title && (
+                  <p className="mt-2 text-sm font-semibold text-slate-700">
+                    {review.title}
+                  </p>
+                )}
+                <p className="mt-1.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-slate-500">
+                  {review.comment || "Không có nội dung nhận xét."}
+                </p>
+                <div className="mt-2 flex gap-1.5">
+                  {review.images.slice(0, 4).map((image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      onClick={() =>
+                        setGallery({ images: review.images, index })
+                      }
+                      className="relative h-10 w-11 overflow-hidden rounded-md"
+                      aria-label={`Xem ảnh đánh giá ${index + 1}`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Ảnh chuyến đi ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {index === 3 && review.images.length > 4 && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-semibold text-white">
+                          +{review.images.length - 3}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Hộp thông báo khi bị từ chối / chưa được duyệt */}
+                {review.status === 2 && (
+                  <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50/70 p-3 text-xs text-rose-900">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-700">
+                      <AlertTriangle size={14} className="shrink-0" />
+                      <span>Đánh giá chưa được phê duyệt</span>
+                    </div>
+                    <p className="mt-1 text-slate-700">
+                      <strong className="text-slate-900">Lý do từ Ban quản trị:</strong>{" "}
+                      {review.admin_note || "Nội dung chưa phù hợp với tiêu chuẩn cộng đồng hoặc thông tin chưa chính xác."}
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => edit(review)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-rose-700"
+                      >
+                        <Pencil size={12} />
+                        Chỉnh sửa và gửi lại
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Đang chờ duyệt */}
+                {review.status === 0 && (
+                  <div className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-800">
+                    <span className="font-semibold">Đang chờ duyệt:</span> Đánh giá của bạn đang được Ban quản trị kiểm duyệt trước khi hiển thị công khai.
+                  </div>
+                )}
+
+                {/* Phản hồi từ JourniTrip */}
+                {review.replies && review.replies.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {review.replies.map((reply) => (
+                      <div
+                        key={reply.reply_id}
+                        className="relative rounded-xl border border-blue-100 bg-[#f4f9ff] p-3 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                              ✓
+                            </span>
+                            <span>{reply.user?.full_name || "Phản hồi từ JourniTrip"}</span>
+                            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                              CSKH
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(reply.created_at).toLocaleDateString("vi-VN", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap pl-6">
+                          {reply.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center sm:items-start">
+                <AdminRowActions
+                  label={`Thao tác với bài đánh giá tour ${review.tour_name}`}
+                  actions={[
+                    {
+                      label: "Xem chi tiết tour",
+                      icon: <Eye size={16} />,
+                      href: `/tours/${review.tour_id}`,
+                      access: "view",
+                    },
+                    {
+                      label: "Chỉnh sửa đánh giá",
+                      icon: <Pencil size={16} />,
+                      onClick: () => edit(review),
+                      access: "view",
+                    },
+                  ]}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      {editing && (
+        <Dialog
+          onClose={() => {
+            if (!saving) setEditing(null);
+          }}
+          labelledBy="edit-review-title"
+        >
+          <section className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 id="edit-review-title" className="text-lg font-bold">
+                Chỉnh sửa đánh giá
+              </h2>
+              <button
+                disabled={saving}
+                onClick={() => setEditing(null)}
+                aria-label="Đóng"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">{editing.tour_name}</p>
+            <form onSubmit={save} className="mt-5 space-y-4">
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">
+                  Mức độ hài lòng
+                </legend>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={saving}
+                      aria-label={`${value} sao`}
+                      aria-pressed={rating === value}
+                      onClick={() => setRating(value)}
+                    >
+                      <Star
+                        className={`h-7 w-7 ${value <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="block text-sm font-semibold">
+                Nhận xét
+                <textarea
+                  autoFocus
+                  required
+                  maxLength={5000}
+                  disabled={saving}
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  rows={5}
+                  className="mt-2 block w-full rounded-lg border border-slate-200 p-3 font-normal focus:border-blue-400 focus:outline-none"
+                />
+              </label>
+              <p className="text-xs text-slate-500">
+                Sau khi lưu, đánh giá sẽ được gửi lại để duyệt.
+              </p>
+              {editError && (
+                <p role="alert" className="text-sm text-rose-600">
+                  {editError}
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setEditing(null)}
+                  className="rounded-lg px-4 py-2 text-sm text-slate-500"
+                >
+                  Hủy
+                </button>
+                <button
+                  disabled={saving || !comment.trim()}
+                  className="flex items-center gap-2 rounded-lg bg-[#2094d3] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}Lưu
+                  đánh giá
+                </button>
+              </div>
+            </form>
+          </section>
+        </Dialog>
+      )}
+      {gallery && (
+        <Dialog
+          onClose={() => setGallery(null)}
+          labelledBy="review-gallery-title"
+          overlayClassName="bg-slate-950/90"
+        >
+          <div className="flex flex-col items-center gap-4">
+            <h2 id="review-gallery-title" className="sr-only">
+              Ảnh đánh giá
+            </h2>
+            <button
+              autoFocus
+              onClick={() => setGallery(null)}
+              aria-label="Đóng ảnh"
+              className="absolute right-5 top-5 p-2 text-white"
+            >
+              <X />
+            </button>
+            <img
+              src={gallery.images[gallery.index]}
+              alt={`Ảnh đánh giá ${gallery.index + 1}`}
+              className="max-h-[70vh] max-w-full rounded-lg object-contain"
+            />
+            <div className="flex items-center gap-5 text-sm text-white">
+              <button
+                disabled={gallery.index === 0}
+                onClick={() =>
+                  setGallery({ ...gallery, index: gallery.index - 1 })
+                }
+                className="disabled:opacity-30"
+              >
+                Ảnh trước
+              </button>
+              <span>
+                {gallery.index + 1} / {gallery.images.length}
+              </span>
+              <button
+                disabled={gallery.index === gallery.images.length - 1}
+                onClick={() =>
+                  setGallery({ ...gallery, index: gallery.index + 1 })
+                }
+                className="disabled:opacity-30"
+              >
+                Ảnh sau
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+    </div>
+  );
+}

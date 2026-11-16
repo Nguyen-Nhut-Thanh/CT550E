@@ -1,13 +1,13 @@
 "use client";
 
-import { LocationDetailsCard } from "@/components/admin/locations/editor/LocationDetailsCard";
-import { LocationHierarchyCard } from "@/components/admin/locations/editor/LocationHierarchyCard";
-import { LocationImageSidebar } from "@/components/admin/locations/editor/LocationImageSidebar";
-import { LocationLevelSelector } from "@/components/admin/locations/editor/LocationLevelSelector";
-import InlineNotice from "@/components/common/feedback/InlineNotice";
-import { getAdminLocationDetail, saveAdminLocation } from "@/lib/admin/locations/api";
-import { buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/admin/locations/hierarchy";
-import { getToken } from "@/lib/auth/session";
+import { LocationDetailsCard } from "@/components/locations/location_editor/AdminLocationDetailsCard";
+import { LocationHierarchyCard } from "@/components/locations/location_editor/AdminLocationHierarchyCard";
+import { LocationImageSidebar } from "@/components/locations/location_editor/AdminLocationImageSidebar";
+import { LocationLevelSelector } from "@/components/locations/location_editor/AdminLocationLevelSelector";
+import InlineNotice from "@/components/common/dialogs_and_feedback/media/InlineNotice";
+import { getAdminLocationDetail, saveAdminLocation } from "@/lib/locations/admin/api";
+import { buildLocationHierarchyState, createDefaultLocationDetailForm, fetchLocationOptionsByLevel, slugifyLocationName } from "@/lib/locations/admin/hierarchy";
+import { getToken } from "@/lib/auth/client/session";
 import { adminFetch } from "@/lib/http/adminFetch";
 import { API_BASE } from "@/lib/http/config";
 import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";

@@ -2,21 +2,21 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
-import { ReviewDetailModal } from "@/components/admin/reviews/ReviewDetailModal";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
+import { ReviewDetailModal } from "@/components/reviews/admin_reviews/AdminReviewDetailModal";
 import {
   ReviewFilterTabs,
   type ReviewStatusFilter,
-} from "@/components/admin/reviews/ReviewFilterTabs";
-import { ReviewRejectModal } from "@/components/admin/reviews/ReviewRejectModal";
-import { ReviewReplyModal } from "@/components/admin/reviews/ReviewReplyModal";
-import { ReviewStatsCards } from "@/components/admin/reviews/ReviewStatsCards";
-import { ReviewTable } from "@/components/admin/reviews/ReviewTable";
+} from "@/components/reviews/admin_reviews/AdminReviewFilterTabs";
+import { ReviewRejectModal } from "@/components/reviews/admin_reviews/AdminReviewRejectModal";
+import { ReviewReplyModal } from "@/components/reviews/admin_reviews/AdminReviewReplyModal";
+import { ReviewStatsCards } from "@/components/reviews/admin_reviews/AdminReviewStatsCards";
+import { ReviewTable } from "@/components/reviews/admin_reviews/AdminReviewTable";
 import {
   getAdminReviews,
   replyAdminReview,
   updateAdminReviewStatus,
-} from "@/lib/admin/reviews/api";
+} from "@/lib/reviews/admin/api";
 import { chatApi } from "@/lib/chat/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { RefreshCw, Star } from "lucide-react";

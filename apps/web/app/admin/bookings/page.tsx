@@ -1,36 +1,34 @@
 "use client";
 
-import { BookingManagementHeader } from "@/components/admin/bookings/BookingManagementHeader";
-import { BookingManagementStats } from "@/components/admin/bookings/BookingManagementStats";
-import { BookingManagementFilters } from "@/components/admin/bookings/BookingManagementFilters";
-import { BookingManagementTable } from "@/components/admin/bookings/BookingManagementTable";
-import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
-import {
-  AdminApproveModalContent,
-  AdminCancelBookingModal,
-  AdminRejectModalContent,
-  type CancelRequestDetails,
-} from "@/components/booking/cancel";
+import { BookingManagementHeader } from "@/components/booking/manage_booking/AdminBookingManagementHeader";
+import { BookingManagementStats } from "@/components/booking/manage_booking/AdminBookingManagementStats";
+import { BookingManagementFilters } from "@/components/booking/manage_booking/AdminBookingManagementFilters";
+import { BookingManagementTable } from "@/components/booking/manage_booking/AdminBookingManagementTable";
+import { BookingDetailModal } from "@/components/booking/manage_booking/AdminBookingDetailModal";
+import { AdminApproveModalContent } from "@/components/booking/cancel_approval/AdminApproveCancelModal";
+import { AdminCancelBookingModal } from "@/components/booking/cancel_approval/AdminCancelBookingModal";
+import { AdminRejectModalContent } from "@/components/booking/cancel_approval/AdminRejectCancelModal";
+import type { CancelRequestDetails } from "@/components/booking/cancel_request/UserBookingCancelRequestCard";
 
 import {
   DEFAULT_BOOKING_FILTERS,
   parseBookingStats,
-} from "@/lib/admin/bookings/management";
-import { getAdminTours } from "@/lib/admin/tours/api";
-import { getTourSchedules } from "@/lib/admin/schedules/api";
-import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
+} from "@/lib/booking/admin/management";
+import { getAdminTours } from "@/lib/tours/admin/api";
+import { getTourSchedules } from "@/lib/schedules/admin/api";
+import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
 import {
   adminCancelBooking,
   cancelPendingBooking,
   getAdminBookingDetail,
   getAdminBookingList,
   runAdminBookingAction,
-} from "@/lib/admin/bookings/api";
+} from "@/lib/booking/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { CircleDollarSign, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseBookingNote } from "shared";
-import type { BookingActionType } from "@/components/admin/bookings/BookingRowActions";
+import type { BookingActionType } from "@/components/booking/manage_booking/AdminBookingRowActions";
 import type {
   ActionModalState,
   AdminBooking,

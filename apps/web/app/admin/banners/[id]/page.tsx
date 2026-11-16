@@ -1,10 +1,10 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
 
 
-import CustomDropdown from "@/components/common/forms/CustomDropdown";
-import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/admin/banners/api";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X, } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";

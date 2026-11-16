@@ -2,19 +2,19 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import CustomDropdown from "@/components/common/forms/CustomDropdown";
-import { PostCategoriesModal } from "@/components/admin/posts/categories/PostCategoriesModal";
-import { PostLayoutManager } from "@/components/admin/posts/layout/PostLayoutManager";
-import { PostManagementTable } from "@/components/admin/posts/PostManagementTable";
-import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
-import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { PostCategoriesModal } from "@/components/posts/post_management/AdminPostCategoriesModal";
+import { PostLayoutManager } from "@/components/posts/post_editor/AdminPostLayoutManager";
+import { PostManagementTable } from "@/components/posts/post_management/AdminPostManagementTable";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
+import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
 import {
   createAdminPostCategory,
   deleteAdminPost,
   getAdminPostCategories,
   getAdminPosts,
-} from "@/lib/admin/posts/api";
-import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/admin/posts/forms";
+} from "@/lib/posts/admin/api";
+import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/posts/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import { FileText, LayoutGrid, Plus, Settings2 } from "lucide-react";
 import type { PostCategory, PostCategoryDraft, PostItem } from "shared";

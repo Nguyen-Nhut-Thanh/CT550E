@@ -1,5 +1,5 @@
-import { AccountContent } from "@/components/account/layout/AccountContent";
-import { AccountReviewsTab } from "@/components/account/reviews/AccountReviewsTab";
+import { AccountContent } from "@/components/users/account_layout/UserAccountContent";
+import { AccountReviewsTab } from "@/components/users/account_tabs/UserAccountReviewsTab";
 
 export default function ReviewsAccountPage() {
   return (

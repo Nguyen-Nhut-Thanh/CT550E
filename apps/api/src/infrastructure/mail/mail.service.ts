@@ -8,6 +8,8 @@ import {
     renderLayout,
     renderReceiptEmailHtml,
     renderRefundStatementEmailHtml,
+    type ReceiptEmailTraveler,
+    type ReceiptEmailExtraService,
 } from "./mail.templates";
 @Injectable()
 export class MailService {
@@ -92,6 +94,8 @@ export class MailService {
         totalAmount: number | string;
         subtotal?: number | string;
         discountAmount?: number | string;
+        servicesTotal?: number | string;
+        surcharge?: number | string;
         method?: string;
         transactionCode?: string;
         paidAt?: string | Date | null;
@@ -102,7 +106,11 @@ export class MailService {
         infantCount?: number;
         infantPrice?: number | string;
         voucherCode?: string;
+        roomType?: string;
         pickupName?: string;
+        pickupAddress?: string;
+        travelers?: ReceiptEmailTraveler[];
+        extraServices?: ReceiptEmailExtraService[];
     }) {
         await this.sendMail({
             to: params.email,
@@ -120,6 +128,8 @@ export class MailService {
                 totalAmount: params.totalAmount,
                 subtotal: params.subtotal,
                 discountAmount: params.discountAmount,
+                servicesTotal: params.servicesTotal,
+                surcharge: params.surcharge,
                 method: params.method,
                 transactionCode: params.transactionCode,
                 paidAt: params.paidAt,
@@ -130,7 +140,11 @@ export class MailService {
                 infantCount: params.infantCount,
                 infantPrice: params.infantPrice,
                 voucherCode: params.voucherCode,
+                roomType: params.roomType,
                 pickupName: params.pickupName,
+                pickupAddress: params.pickupAddress,
+                travelers: params.travelers,
+                extraServices: params.extraServices,
             }),
         });
     }

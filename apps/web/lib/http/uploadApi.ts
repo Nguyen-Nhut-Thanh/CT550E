@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/session";
+import { getToken } from "@/lib/auth/client/session";
 import { API_BASE } from "@/lib/http/config";
 
 export const DEFAULT_ALLOWED_IMAGE_TYPES = [

@@ -1,24 +1,24 @@
 "use client";
 
-import { ScheduleEmptyState } from "@/components/admin/schedules/listing/ScheduleEmptyState";
-import { SchedulePageHeader } from "@/components/admin/schedules/listing/SchedulePageHeader";
+import { ScheduleEmptyState } from "@/components/schedules/schedule_table/AdminScheduleEmptyState";
+import { SchedulePageHeader } from "@/components/schedules/schedule_table/AdminSchedulePageHeader";
 
-import { ScheduleTablePanel } from "@/components/admin/schedules/listing/ScheduleTablePanel";
-import { ScheduleManifestModal } from "@/components/admin/schedules/listing/ScheduleManifestModal";
-import { SchedulePromotionModal } from "@/components/admin/schedules/listing/SchedulePromotionModal";
-import { TourListPanel } from "@/components/admin/schedules/tour-picker/TourListPanel";
-import { ConfirmDialog } from "@/components/common/overlays/ConfirmDialog";
+import { ScheduleTablePanel } from "@/components/schedules/schedule_table/AdminScheduleTablePanel";
+import { ScheduleManifestModal } from "@/components/schedules/schedule_modals/AdminScheduleManifestModal";
+import { SchedulePromotionModal } from "@/components/schedules/schedule_modals/AdminSchedulePromotionModal";
+import { TourListPanel } from "@/components/schedules/tour_selector/AdminScheduleTourListPanel";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import {
   deleteAdminSchedule,
   getTourSchedules,
   updateAdminScheduleStatus,
-} from "@/lib/admin/schedules/api";
-import { matchesScheduleStatusFilter } from "@/lib/admin/schedules/status";
-import { getAdminTours } from "@/lib/admin/tours/api";
+} from "@/lib/schedules/admin/api";
+import { matchesScheduleStatusFilter } from "@/lib/schedules/admin/status";
+import { getAdminTours } from "@/lib/tours/admin/api";
 import {
   matchesTourSearch,
   matchesTourTypeFilter,
-} from "@/lib/admin/tours/filters";
+} from "@/lib/tours/admin/filters";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";

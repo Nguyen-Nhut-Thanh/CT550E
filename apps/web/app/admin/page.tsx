@@ -1,13 +1,13 @@
 "use client";
 
-import { DashboardAnalyticsChart } from "@/components/admin/dashboard/DashboardAnalyticsChart";
-import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
-import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards";
-import { DashboardRecentBookings } from "@/components/admin/dashboard/DashboardRecentBookings";
-import { AdminModalShell } from "@/components/admin/common/AdminModalShell";
-import { DashboardStatusBreakdown } from "@/components/admin/dashboard/DashboardStatusBreakdown";
-import { DashboardTopTours } from "@/components/admin/dashboard/DashboardTopTours";
-import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/admin/dashboard/api";
+import { DashboardAnalyticsChart } from "@/components/dashboard/dashboard_overview/AdminDashboardAnalyticsChart";
+import { DashboardHeader } from "@/components/dashboard/dashboard_overview/AdminDashboardHeader";
+import { DashboardKpiCards } from "@/components/dashboard/dashboard_overview/AdminDashboardKpiCards";
+import { DashboardRecentBookings } from "@/components/dashboard/dashboard_overview/AdminDashboardRecentBookings";
+import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
+import { DashboardStatusBreakdown } from "@/components/dashboard/dashboard_overview/AdminDashboardStatusBreakdown";
+import { DashboardTopTours } from "@/components/dashboard/dashboard_overview/AdminDashboardTopTours";
+import { downloadDashboardCsvReport, getDashboardStats } from "@/lib/dashboard/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";

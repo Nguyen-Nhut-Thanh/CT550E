@@ -1,11 +1,11 @@
 "use client";
 
-import { AccountContent } from "@/components/account/layout/AccountContent";
+import { AccountContent } from "@/components/users/account_layout/UserAccountContent";
 
-import { AccountOverviewTab } from "@/components/account/profile/AccountOverviewTab";
-import { useAccount } from "@/components/account/layout/AccountShell";
-import { getAccountStats, getMyBookings } from "@/lib/account/api";
-import { useAccountResource } from "@/lib/account/useAccountResource";
+import { AccountOverviewTab } from "@/components/users/account_tabs/UserAccountOverviewTab";
+import { useAccount } from "@/components/users/account_layout/UserAccountShell";
+import { getAccountStats, getMyBookings } from "@/lib/users/account/api";
+import { useAccountResource } from "@/lib/users/account/useAccountResource";
 import { getMyFavoriteTours } from "@/lib/favorites/api";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";

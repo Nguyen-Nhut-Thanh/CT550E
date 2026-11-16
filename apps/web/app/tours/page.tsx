@@ -1,12 +1,12 @@
 "use client";
 
-import TourCard from "@/components/tours/listing/TourCard";
-import TourEmptyState from "@/components/tours/listing/TourEmptyState";
-import TourFilterSidebar from "@/components/tours/listing/TourFilterSidebar";
-import TourListSkeleton from "@/components/tours/listing/TourListSkeleton";
-import TourSortControl from "@/components/tours/listing/TourSortControl";
+import TourCard from "@/components/tour_cards/listing/UserTourCard";
+import TourEmptyState from "@/components/tours/tour_listing/UserTourEmptyState";
+import TourFilterSidebar from "@/components/tours/tour_listing/UserTourFilterSidebar";
+import TourListSkeleton from "@/components/tours/tour_listing/UserTourListSkeleton";
+import TourSortControl from "@/components/tours/tour_listing/UserTourSortControl";
 import { trackRecommendationEvent } from "@/lib/recommendations/events";
-import { getPublicTours } from "@/lib/tours/api";
+import { getPublicTours } from "@/lib/tours/client/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import type { PublicTourCard, PublicToursResponse } from "shared";
@@ -129,7 +129,7 @@ function ToursContent() {
       filtered = filtered.filter(
         (t) => t.tour_type === "domestic" || !t.tour_type,
       );
-    } else if (tourType === "international") {
+    } else if (tourType === "outbound" || tourType === "international") {
       filtered = filtered.filter(
         (t) => t.tour_type === "outbound" || t.tour_type === "international",
       );

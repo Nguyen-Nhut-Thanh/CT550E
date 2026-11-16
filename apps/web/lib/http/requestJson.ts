@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/session";
+import { getToken } from "@/lib/auth/client/session";
 import { API_BASE } from "@/lib/http/config";
 
 export type RequestAuthMode = "public" | "auth" | "admin";

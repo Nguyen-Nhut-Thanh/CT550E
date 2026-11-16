@@ -1,14 +1,14 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/admin/common/AdminContentPermission';
+import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
 
 
-import { TourPoliciesEditor } from "@/components/admin/tours/editor/TourPoliciesEditor";
-import { TourEditorCard } from "@/components/admin/tours/editor/TourEditorCard";
-import { ImageWithFallback } from "@/components/common/media/ImageWithFallback";
-import { TourPolicyContent } from "@/components/tours/detail/TourPolicyContent";
-import { getAdminTourDetail, updateAdminTour } from "@/lib/admin/tours/api";
-import { normalizeTourDetailForm } from "@/lib/admin/tours/forms";
+import { TourPoliciesEditor } from "@/components/tours/tour_policies/AdminTourPoliciesEditor";
+import { TourEditorCard } from "@/components/tours/tour_editor/AdminTourEditorCard";
+import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
+import { TourPolicyContent } from "@/components/tour_detail/policies/UserTourPolicyContent";
+import { getAdminTourDetail, updateAdminTour } from "@/lib/tours/admin/api";
+import { normalizeTourDetailForm } from "@/lib/tours/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
 import {
   ArrowLeft,

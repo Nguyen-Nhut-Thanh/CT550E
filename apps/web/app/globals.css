@@ -342,3 +342,145 @@ h6 {
 .animate-slide-down {
   animation: slideDownNav 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ===== ABOUT US SECTION ANIMATIONS ===== */
+@keyframes aboutFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes aboutFloatSlow {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+  }
+}
+@keyframes aboutFloatDelayed {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes aboutTwinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75) rotate(20deg);
+  }
+}
+@keyframes aboutDash {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+@keyframes aboutOrb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(25px, -20px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
+}
+@keyframes aboutShimmer {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+@keyframes aboutKiteGlide {
+  0%, 100% {
+    offset-distance: 0%;
+    transform: rotate(-18deg) scale(0.95);
+  }
+  50% {
+    offset-distance: 100%;
+    transform: rotate(12deg) scale(1.04);
+  }
+}
+@keyframes aboutPing {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.9;
+  }
+  80%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+@keyframes aboutSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.about-float {
+  animation: aboutFloat 4.5s ease-in-out infinite;
+}
+.about-float-slow {
+  animation: aboutFloatSlow 6s ease-in-out infinite;
+}
+.about-card-float {
+  animation: aboutFloat 5.5s ease-in-out infinite;
+}
+.about-card-float-delayed {
+  animation: aboutFloatDelayed 5.2s ease-in-out 1.4s infinite;
+}
+.about-twinkle {
+  animation: aboutTwinkle 2.8s ease-in-out infinite;
+}
+.about-twinkle-delayed {
+  animation: aboutTwinkle 3.2s ease-in-out 1.2s infinite;
+}
+.about-ping {
+  animation: aboutPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.about-dash {
+  animation: aboutDash 3.5s linear infinite;
+}
+.about-orb {
+  animation: aboutOrb 14s ease-in-out infinite;
+}
+.about-orb-delayed {
+  animation-delay: -5s;
+}
+.about-orb-late {
+  animation-delay: -9s;
+}
+.about-compass {
+  animation: aboutSpin 12s linear infinite;
+}
+.about-kite-runner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  offset-path: path(
+    "M 535 330 C 565 290, 540 245, 515 265 C 495 282, 520 315, 558 295"
+  );
+  offset-rotate: auto 45deg;
+  animation: aboutKiteGlide 12s ease-in-out infinite;
+}
+.about-cta:hover .about-shimmer {
+  animation: aboutShimmer 0.85s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-section * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

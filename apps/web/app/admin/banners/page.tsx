@@ -2,13 +2,13 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AdminPageHeader } from "@/components/admin/common/AdminPageHeader";
-import CustomDropdown from "@/components/common/forms/CustomDropdown";
-import { AdminSearchInput } from "@/components/admin/common/AdminSearchInput";
-import { BannerManagementTable } from "@/components/admin/banners/BannerManagementTable";
-import { SeasonalThemeManager } from "@/components/admin/banners/SeasonalThemeManager";
-import { FeaturedLocationsManager } from "@/components/admin/locations/featured/FeaturedLocationsManager";
-import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/admin/banners/api";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { BannerManagementTable } from "@/components/banners/banner_management/AdminBannerManagementTable";
+import { SeasonalThemeManager } from "@/components/banners/seasonal_theme/AdminSeasonalThemeManager";
+import { FeaturedLocationsManager } from "@/components/locations/featured_locations/AdminFeaturedLocationsManager";
+import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { Images, MapPin, Sparkles } from "lucide-react";
 import type { Banner } from "shared";

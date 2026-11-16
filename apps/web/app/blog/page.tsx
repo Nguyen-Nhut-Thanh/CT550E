@@ -1,6 +1,6 @@
-import { BlogPostLayout } from "@/components/blog/article/BlogPostLayout";
+import { BlogPostLayout } from "@/components/posts/blog_detail/UserBlogPostLayout";
 import { publicFetch } from "@/lib/http/publicFetch";
-import type { BlogPost } from "@/lib/blog/types";
+import type { BlogPost } from "@/lib/posts/client/types";
 
 export const dynamic = "force-dynamic";
 export default async function BlogPage() {
