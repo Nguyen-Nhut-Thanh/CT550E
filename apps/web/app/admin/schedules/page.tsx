@@ -118,6 +118,7 @@ export default function AdminSchedulesPage() {
       );
       setPendingDeleteScheduleId(null);
     } catch (requestError) {
+      setPendingDeleteScheduleId(null);
       showError(
         requestError instanceof Error
           ? requestError.message

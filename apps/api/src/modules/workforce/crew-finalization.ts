@@ -33,9 +33,10 @@ export function crewReadiness(row: {
       item.user.employee_profile?.status === "active" &&
       (item.user.role_users.some((link) => link.roles.name === "admin") ||
         item.user.employee_profile.regions.includes(row.operating_region!)) &&
-      item.roles.every((role) =>
-        item.user.role_users.some((link) => link.roles.name === role),
-      ),
+      (item.user.role_users.some((link) => link.roles.name === "admin") ||
+        item.roles.every((role) =>
+          item.user.role_users.some((link) => link.roles.name === role),
+        )),
   );
   const confirmed = eligible.filter((item) =>
     ["confirmed", "completed"].includes(item.status),
@@ -46,9 +47,19 @@ export function crewReadiness(row: {
     issues.push(
       `Cần thêm ${row.crew_required_count - row.crew.length} nhân sự để đạt mức tối thiểu.`,
     );
-  for (const role of ["tour_leader", "guide"] as const)
-    if (!row.crew.some((item) => item.roles.includes(role)))
-      issues.push(`Chưa phân công vai trò ${CREW_ROLES[role]}.`);
+  if (row.crew_required_count === 1) {
+    if (
+      !row.crew.some(
+        (item) =>
+          item.roles.includes("tour_leader") || item.roles.includes("guide"),
+      )
+    )
+      issues.push("Chưa phân công vai trò Trưởng đoàn hoặc Hướng dẫn viên.");
+  } else {
+    for (const role of ["tour_leader", "guide"] as const)
+      if (!row.crew.some((item) => item.roles.includes(role)))
+        issues.push(`Chưa phân công vai trò ${CREW_ROLES[role]}.`);
+  }
   const pending = eligible.filter((item) => item.status === "pending").length;
   const declined = eligible.filter((item) => item.status === "declined").length;
   if (pending) issues.push(`${pending} nhân sự đang chờ nhận chuyến.`);

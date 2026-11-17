@@ -1,4 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
+type LucideIcon = ComponentType<{ size?: number | string; className?: string; [key: string]: any }>;
 export interface NavLocationData {
     domestic: {
         region: string;

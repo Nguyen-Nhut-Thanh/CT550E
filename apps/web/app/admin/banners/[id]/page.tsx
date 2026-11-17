@@ -6,14 +6,34 @@ import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards
 import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
 import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X, } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 export default function AdminBannerDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
+      }
+    >
+      <AdminBannerDetailContent />
+    </Suspense>
+  );
+}
+
+function AdminBannerDetailContent() {
   const readOnly = useAdminContentReadOnly();
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pageParam = searchParams.get("page");
+  const backUrl =
+    pageParam && Number(pageParam) > 1
+      ? `/admin/banners?page=${pageParam}`
+      : "/admin/banners";
   const { success, error: showError } = useToast();
   const isNew = id === "new";
 
@@ -79,7 +99,8 @@ export default function AdminBannerDetailPage() {
     try {
       await saveAdminBanner(form, isNew ? undefined : String(id));
       success(isNew ? "Đã tạo banner mới thành công" : "Đã cập nhật banner");
-      router.push("/admin/banners");
+      router.push(backUrl);
+      router.refresh();
     } catch {
       showError("Lỗi khi lưu dữ liệu");
     } finally {
@@ -100,7 +121,7 @@ export default function AdminBannerDetailPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push("/admin/banners")}
+            onClick={() => router.push(backUrl)}
             className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
           >
             <ArrowLeft size={18} />

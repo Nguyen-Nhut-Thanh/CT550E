@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
+export type LucideIcon = ComponentType<{ size?: number | string; className?: string; [key: string]: any }>;
 export type AdminBackPageHeaderProps = {
     title: string;
     description?: string;

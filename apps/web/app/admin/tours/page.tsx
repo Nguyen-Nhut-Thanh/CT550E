@@ -40,13 +40,15 @@ export default function AdminToursPage() {
       if (action === "delete") {
         await deleteAdminTour(tour.tour_id);
         setItems(current => current.filter(item => item.tour_id !== tour.tour_id));
-        setPendingDeleteTour(null); success("Đã xóa tour thành công");
+        setPendingDeleteTour(null);
+        success("Đã xóa tour thành công");
       } else {
         await toggleAdminTourStatus(tour.tour_id);
         success(`Đã ${tour.status === 1 ? "tạm ẩn" : "kích hoạt"} tour thành công`);
       }
     } catch (error) {
       if (action === "toggle") setItems(current => current.map(item => item.tour_id === tour.tour_id ? { ...item, status: tour.status } : item));
+      if (action === "delete") setPendingDeleteTour(null);
       showError(error instanceof Error ? error.message : "Không thể cập nhật tour. Vui lòng thử lại.");
     } finally { mutationIds.current.delete(tour.tour_id); setPendingIds([...mutationIds.current]); }
   };

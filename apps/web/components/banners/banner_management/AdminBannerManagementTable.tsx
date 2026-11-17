@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, Eye, EyeOff, ImageIcon } from "lucide-react";
 import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
@@ -11,6 +12,8 @@ export function BannerManagementTable({
   items,
   loading,
   busyIds,
+  page: controlledPage,
+  onPageChange,
   onToggle,
   onDuplicate,
   onDelete,
@@ -19,13 +22,17 @@ export function BannerManagementTable({
   items: Banner[];
   loading: boolean;
   busyIds: Set<number>;
+  page?: number;
+  onPageChange?: (page: number) => void;
   onToggle: (item: Banner) => void;
   onDuplicate: (item: Banner) => void;
   onDelete: (item: Banner) => void;
   onBulkStatus: (ids: number[], status: number) => Promise<void>;
 }) {
   const pageSize = 10;
-  const [page, setPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  const page = controlledPage ?? internalPage;
+  const setPage = onPageChange ?? setInternalPage;
   const [selected, setSelected] = useState<number[]>([]);
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const selectAll = useRef<HTMLInputElement>(null);
@@ -44,9 +51,12 @@ export function BannerManagementTable({
         !allSelected &&
         visible.some((item) => selected.includes(item.banner_id));
   }, [visible, selected, allSelected]);
+
   useEffect(() => {
-    setPage(1);
-  }, [items]);
+    if (page > totalPages && totalPages >= 1) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages, setPage]);
   const bulkBusy = selectedItems.some((item) => busyIds.has(item.banner_id));
   return (
     <section className="overflow-hidden rounded-xl border border-blue-100 bg-white shadow-[0_2px_12px_#dbeafe55]">
@@ -192,12 +202,12 @@ export function BannerManagementTable({
                       />
                     </td>
                     <td className="min-w-60 max-w-80 px-3 py-3">
-                      <a
-                        href={`/admin/banners/${item.banner_id}`}
+                      <Link
+                        href={`/admin/banners/${item.banner_id}${current > 1 ? `?page=${current}` : ""}`}
                         className="line-clamp-1 text-[13px] font-bold text-blue-950 hover:text-blue-600"
                       >
                         {item.header || "Chưa có tiêu đề"}
-                      </a>
+                      </Link>
                       <p className="mt-1 line-clamp-1 text-[11px] text-[#8b9dbb]">
                         {item.description || item.location_name}
                       </p>
@@ -263,6 +273,7 @@ export function BannerManagementTable({
                       <BannerRowActions
                         banner={item}
                         busy={busy}
+                        page={current}
                         onToggle={onToggle}
                         onDuplicate={onDuplicate}
                         onDelete={onDelete}

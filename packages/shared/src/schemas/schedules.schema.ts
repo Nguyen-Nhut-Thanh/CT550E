@@ -54,6 +54,9 @@ export const SchedulePromotionPayloadSchema = z.object({
   discount_value: z.coerce.number().positive('Giá trị giảm giá phải lớn hơn 0.'),
   start_date: z.string().optional().nullable(),
   end_date: z.string().optional().nullable(),
+  max_slots: z.coerce.number().int().positive().optional().nullable(),
+  gift_description: z.string().max(255).optional().nullable(),
+  is_active: z.boolean().optional().default(true),
   usage_limit: z.coerce.number().int().positive().optional().nullable(),
   note: z.string().max(500).optional().nullable(),
 });

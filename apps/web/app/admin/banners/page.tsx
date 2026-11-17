@@ -8,9 +8,10 @@ import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminS
 import { BannerManagementTable } from "@/components/banners/banner_management/AdminBannerManagementTable";
 import { SeasonalThemeManager } from "@/components/banners/seasonal_theme/AdminSeasonalThemeManager";
 import { FeaturedLocationsManager } from "@/components/locations/featured_locations/AdminFeaturedLocationsManager";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { Images, MapPin, Sparkles } from "lucide-react";
+import { Images, MapPin, Sparkles, Trash2 } from "lucide-react";
 import type { Banner } from "shared";
 
 type BannersTab = "list" | "featured" | "seasonal";
@@ -42,13 +43,49 @@ function AdminBannersContent() {
       ? "seasonal"
       : "list";
 
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const initialPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
   const [activeTab, setActiveTab] = useState<BannersTab>(initialTab);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Banner[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+  const [pendingDeleteBanner, setPendingDeleteBanner] = useState<Banner | null>(null);
   const pending = useRef(new Set<number>());
+
+  useEffect(() => {
+    const p = parseInt(searchParams.get("page") || "1", 10);
+    const validPage = isNaN(p) || p < 1 ? 1 : p;
+    setCurrentPage(validPage);
+  }, [searchParams]);
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      setCurrentPage(nextPage);
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextPage <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(nextPage));
+      }
+      const qs = params.toString();
+      router.replace(`/admin/banners${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    handlePageChange(1);
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatus(val);
+    handlePageChange(1);
+  };
 
   useEffect(() => {
     if (tabParam === "featured" || tabParam === "destinations") {
@@ -67,6 +104,7 @@ function AdminBannersContent() {
       params.delete("tab");
     } else {
       params.set("tab", nextTab);
+      params.delete("page");
     }
     const qs = params.toString();
     router.replace(`/admin/banners${qs ? `?${qs}` : ""}`, { scroll: false });
@@ -126,10 +164,16 @@ function AdminBannersContent() {
     });
 
   const remove = (item: Banner) => {
-    if (!window.confirm(`Xóa banner “${item.header}”?`)) return;
-    void run(item, async () => {
-      await deleteAdminBanner(item.banner_id);
-      setItems((current) => current.filter((row) => row.banner_id !== item.banner_id));
+    setPendingDeleteBanner(item);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDeleteBanner) return;
+    const target = pendingDeleteBanner;
+    setPendingDeleteBanner(null);
+    void run(target, async () => {
+      await deleteAdminBanner(target.banner_id);
+      setItems((current) => current.filter((row) => row.banner_id !== target.banner_id));
       success("Đã xóa banner");
     });
   };
@@ -224,7 +268,7 @@ function AdminBannersContent() {
             <div className="min-w-0 flex-1">
               <AdminSearchInput
                 value={search}
-                onChange={setSearch}
+                onChange={handleSearchChange}
                 placeholder="Tìm tiêu đề, mô tả hoặc địa điểm…"
               />
             </div>
@@ -232,7 +276,7 @@ function AdminBannersContent() {
               variant="compact"
               matchTriggerWidth
               selectedValue={status}
-              onSelect={setStatus}
+              onSelect={handleStatusChange}
               options={[
                 { value: "ALL", label: "Tất cả trạng thái" },
                 { value: "1", label: "Đang hiển thị" },
@@ -245,6 +289,8 @@ function AdminBannersContent() {
             items={filtered}
             loading={loading}
             busyIds={busyIds}
+            page={currentPage}
+            onPageChange={handlePageChange}
             onToggle={toggle}
             onDuplicate={duplicate}
             onDelete={remove}
@@ -256,6 +302,21 @@ function AdminBannersContent() {
       {activeTab === "featured" && <FeaturedLocationsManager />}
 
       {activeTab === "seasonal" && <SeasonalThemeManager />}
+
+      <ConfirmDialog
+        open={pendingDeleteBanner !== null}
+        icon={<Trash2 size={28} />}
+        title="Xác nhận xóa banner"
+        description={
+          pendingDeleteBanner
+            ? `Banner "${pendingDeleteBanner.header}" sẽ bị xóa vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.`
+            : ""
+        }
+        confirmLabel="Xóa banner"
+        cancelLabel="Hủy"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDeleteBanner(null)}
+      />
     </div>
   );
 }

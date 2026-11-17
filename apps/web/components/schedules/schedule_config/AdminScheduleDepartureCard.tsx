@@ -4,11 +4,9 @@ import {
   createEmptyPickupPoint,
   pickupDateToInput,
   pickupInputToDate,
-  updateScheduleStart,
 } from "@/lib/schedules/admin/forms";
 import { setTemplatePickupDate } from "@/lib/schedules/admin/template";
 import { DateTimeInput } from "@/components/common/date_time/DateTimeInput";
-import { AdminDatePicker } from "@/components/common/date_time/AdminDatePicker";
 import { parseCalendarDate } from "@/lib/utils/calendar";
 import {
   ArrowDown,
@@ -93,35 +91,6 @@ export function ScheduleDepartureCard({
       }
       icon={MapPin}
     >
-      {templateMode && (
-        <div className="mb-5 space-y-2 rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
-          <p className="text-[13px] font-semibold text-[#26324e]">
-            Ngày khởi hành tham chiếu
-          </p>
-          <fieldset disabled={disabled}>
-            <AdminDatePicker
-              value={form.start_date}
-              onChange={(date) =>
-                onChange((previous) =>
-                  updateScheduleStart(
-                    previous,
-                    date,
-                    previous.start_time,
-                    durationDays,
-                  ),
-                )
-              }
-              disabled={disabled}
-              placeholder="Chọn ngày khởi hành của mẫu"
-            />
-          </fieldset>
-          <p className="text-[12px] leading-6 text-[#7b879d]">
-            Dùng ngày này để chọn ngày và giờ đón bên dưới. Khi tạo chuyến mới,
-            hệ thống tự dịch ngày đón theo ngày khởi hành thực tế và giữ nguyên
-            giờ đón.
-          </p>
-        </div>
-      )}
       {disabled && !templateMode && (
         <p className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[12px] leading-[1.7] text-amber-800">
           <Info size={16} className="mt-0.5 shrink-0" />

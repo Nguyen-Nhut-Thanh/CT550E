@@ -17,6 +17,8 @@ export function TourRowActions({
   onDelete: (tour: ToursPageTour) => void;
 }) {
   const readOnly = useAdminContentReadOnly();
+  const hasBookings = (tour.booked_count ?? 0) > 0;
+
   return (
     <AdminRowActions
       label={`Thao tác với ${tour.name}`}
@@ -46,6 +48,10 @@ export function TourRowActions({
           label: "Xóa tour",
           icon: <Trash2 size={16} />,
           danger: true,
+          disabled: hasBookings,
+          title: hasBookings
+            ? "Tour đã có lịch khởi hành phát sinh booking, không thể xóa"
+            : undefined,
           onClick: () => onDelete(tour),
         },
       ]}

@@ -7,16 +7,23 @@ import type { Banner } from "shared";
 export function BannerRowActions({
   banner,
   busy,
+  page,
   onToggle,
   onDuplicate,
   onDelete,
 }: {
   banner: Banner;
   busy: boolean;
+  page?: number;
   onToggle: (banner: Banner) => void;
   onDuplicate: (banner: Banner) => void;
   onDelete: (banner: Banner) => void;
 }) {
+  const editHref =
+    page && page > 1
+      ? `/admin/banners/${banner.banner_id}?page=${page}`
+      : `/admin/banners/${banner.banner_id}`;
+
   return (
     <AdminRowActions
       label={`Thao tác với ${banner.header}`}
@@ -25,7 +32,7 @@ export function BannerRowActions({
         {
           label: "Chỉnh sửa banner",
           icon: <Pencil size={16} />,
-          href: `/admin/banners/${banner.banner_id}`,
+          href: editHref,
         },
         {
           label: "Nhân bản banner",

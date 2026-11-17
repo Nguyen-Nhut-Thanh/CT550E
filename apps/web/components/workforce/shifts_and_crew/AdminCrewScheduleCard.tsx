@@ -304,8 +304,17 @@ export function CrewScheduleCard({
               const confirmed = assigned.filter((member) =>
                 ["confirmed", "completed"].includes(member.status),
               ).length;
+              const isOptionalForSingleCrew =
+                schedule.crew_required_count === 1 &&
+                schedule.crew.some(
+                  (m) =>
+                    m.roles.includes("tour_leader") ||
+                    m.roles.includes("guide"),
+                );
               const label = !assigned.length
-                ? "Chưa phân công"
+                ? isOptionalForSingleCrew
+                  ? "Không bắt buộc"
+                  : "Chưa phân công"
                 : assigned.some((member) => member.status === "declined")
                   ? "Cần thay người"
                   : confirmed === assigned.length
@@ -321,7 +330,15 @@ export function CrewScheduleCard({
                     {CREW_ROLES[role]}
                   </span>
                   <span
-                    className={`text-[11px] font-semibold ${label === "Đã xác nhận" ? "text-emerald-600" : label === "Chờ xác nhận" ? "text-amber-600" : "text-rose-500"}`}
+                    className={`text-[11px] font-semibold ${
+                      label === "Đã xác nhận"
+                        ? "text-emerald-600"
+                        : label === "Chờ xác nhận"
+                          ? "text-amber-600"
+                          : label === "Không bắt buộc"
+                            ? "text-slate-400"
+                            : "text-rose-500"
+                    }`}
                   >
                     {label}
                   </span>

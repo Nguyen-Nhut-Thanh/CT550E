@@ -3,5 +3,5 @@
   "activeSeason": "winter",
   "enableParticles": true,
   "enableColors": true,
-  "particleDensity": "light"
+  "particleDensity": "normal"
 }

@@ -73,6 +73,7 @@ export function ScheduleManagement({ tourId }: { tourId?: number }) {
       setPendingDeleteId(null);
       success("Đã xóa lịch khởi hành thành công");
     } catch (error) {
+      setPendingDeleteId(null);
       showError(error instanceof Error ? error.message : "Không thể xóa lịch khởi hành.");
     } finally {
       deleting.current = false;

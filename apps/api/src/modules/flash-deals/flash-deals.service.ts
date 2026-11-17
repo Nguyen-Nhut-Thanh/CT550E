@@ -129,6 +129,7 @@ export class FlashDealsService {
                 tour_schedules: {
                     status: 1,
                     start_date: { gte: now },
+                    tours: { status: 1 },
                 },
             },
             include: {

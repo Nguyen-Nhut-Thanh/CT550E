@@ -21,6 +21,7 @@ export type TourHighlightsListProps = {
 export type TourItineraryTimelineProps = {
     itineraries?: TourItinerary[];
     durationDays?: number;
+    durationNights?: number;
 };
 export type TourSmartMapProps = {
     attractions?: TourSchedule['tour_schedule_attractions'];

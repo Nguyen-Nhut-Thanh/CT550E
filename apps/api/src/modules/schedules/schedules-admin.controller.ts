@@ -12,7 +12,6 @@ import {
   Put,
   UploadedFile,
   UseGuards,
-  UsePipes,
 } from '@nestjs/common';
 import {
   SchedulePromotionPayloadSchema,
@@ -99,10 +98,10 @@ export class SchedulesAdminController {
   }
 
   @Put('admin/schedules/:scheduleId/promotion')
-  @UsePipes(new ZodValidationPipe(SchedulePromotionPayloadSchema))
   saveSchedulePromotion(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
-    @Body() body: SchedulePromotionPayloadInput,
+    @Body(new ZodValidationPipe(SchedulePromotionPayloadSchema))
+    body: SchedulePromotionPayloadInput,
   ) {
     return this.toursAdminService.saveSchedulePromotion(scheduleId, body);
   }

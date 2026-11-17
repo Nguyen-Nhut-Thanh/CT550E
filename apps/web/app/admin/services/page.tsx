@@ -159,9 +159,10 @@ export default function AdminServicesPage() {
         success("Đã xóa đối tác thành công.");
         setProviders(await getServicesProviders());
       }
-      setConfirmDelete((prev) => ({ ...prev, open: false }));
     } catch (err) {
       showError(err instanceof Error ? err.message : "Không thể thực hiện xóa.");
+    } finally {
+      setConfirmDelete((prev) => ({ ...prev, open: false }));
     }
   };
 

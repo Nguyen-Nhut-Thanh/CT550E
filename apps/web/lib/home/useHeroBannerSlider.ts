@@ -17,12 +17,12 @@ export function useHeroBannerSlider({
         (item) =>
           item &&
           typeof item.banner_id === "number" &&
-          typeof item.location_name === "string" &&
-          typeof item.header === "string" &&
-          typeof item.image_url === "string",
+          Boolean(item.header) &&
+          Boolean(item.image_url),
       )
       .map((item) => ({
         ...item,
+        location_name: typeof item.location_name === "string" ? item.location_name : "",
         image_url: normalizeImageSrc(item.image_url) || "/images/shared/default-tour-beach.jpg",
         description: typeof item.description === "string" ? item.description : "",
         link_to:

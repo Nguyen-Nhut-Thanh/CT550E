@@ -62,6 +62,7 @@ export default function AdminLocationsPage() {
       setPendingDelete(null);
       success("Đã xóa địa điểm thành công");
     } catch (error) {
+      setPendingDelete(null);
       showError(
         error instanceof Error
           ? error.message

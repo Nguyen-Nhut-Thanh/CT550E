@@ -11,6 +11,9 @@ import { SeasonalHomeContainer } from "@/components/banners/seasonal_theme/UserS
 import { HomeVoucherSection } from "@/components/vouchers/home_vouchers/UserHomeVoucherSection";
 import { getPublicBanners, getPublicHomeVouchers, getPublicSeasonalTheme } from "@/lib/home/api";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage() {
   const [banners, seasonalConfig, homeVouchersData] = await Promise.all([
     getPublicBanners(),

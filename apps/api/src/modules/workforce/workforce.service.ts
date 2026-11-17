@@ -744,14 +744,15 @@ export class WorkforceService {
           );
         const employee = await this.access.actor(item.user_id, undefined, tx);
         if (
+          !employee.isAdmin &&
           item.roles.some((role) => !employee.roles.includes(role as CrewRole))
         )
           throw new BadRequestException(
             "Nhân viên chưa có đủ vai trò được phân công.",
           );
         if (
-          !employee.regions.includes(schedule.operating_region as RegionCode) &&
-          !employee.isAdmin
+          !employee.isAdmin &&
+          !employee.regions.includes(schedule.operating_region as RegionCode)
         )
           throw new BadRequestException(
             "Nhân viên chưa được cấp phạm vi hỗ trợ miền điều hành của chuyến.",

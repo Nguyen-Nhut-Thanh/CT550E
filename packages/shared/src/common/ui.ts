@@ -1,4 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
+type LucideIcon = ComponentType<{ size?: number | string; className?: string; [key: string]: any }>;
 import type { MouseEventHandler, ReactNode } from 'react';
 export type ConfirmDialogProps = {
     open: boolean;

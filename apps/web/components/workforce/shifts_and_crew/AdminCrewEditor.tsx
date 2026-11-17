@@ -29,10 +29,6 @@ type AssignmentForm = {
   note: string;
 };
 const roleKeys = Object.keys(CREW_ROLES) as CrewRole[];
-const roleOptions = roleKeys.map((role) => ({
-  value: role,
-  label: CREW_ROLES[role],
-}));
 const roleRank = (roles: CrewRole[]) =>
   roleKeys.findIndex((role) => roles.includes(role));
 const dropdownClass =
@@ -90,9 +86,9 @@ export function CrewEditor({
   const eligible = (employee: Employee, roles: CrewRole[]) =>
     employee.status === "active" &&
     employee.account_status === 1 &&
-    roles.every((role) => employee.roles.includes(role)) &&
     (employee.roles.includes("admin") ||
-      employee.regions.includes(schedule.operating_region!));
+      (roles.every((role) => employee.roles.includes(role)) &&
+        employee.regions.includes(schedule.operating_region!)));
 
   function update(key: number, changes: Partial<AssignmentForm>) {
     setItems((previous) =>
@@ -110,8 +106,8 @@ export function CrewEditor({
       setError("Vui lòng ghi lý do sửa thông tin đã chốt hoặc quá hạn.");
       return;
     }
-    if (items.some((item) => item.roles.length !== 1)) {
-      setError("Vui lòng chọn một chức vụ cho từng nhân sự trước khi lưu.");
+    if (items.some((item) => item.roles.length === 0)) {
+      setError("Vui lòng chọn ít nhất một chức vụ cho từng nhân sự trước khi lưu.");
       return;
     }
     if (
@@ -125,7 +121,7 @@ export function CrewEditor({
       )
     ) {
       setError(
-        "Vui lòng chọn nhân viên hợp lệ cho từng dòng hoặc gỡ dòng không sử dụng.",
+        "Vui lòng chọn nhân viên hợp lệ và có đủ vai trò cho từng dòng hoặc gỡ dòng không sử dụng.",
       );
       return;
     }
@@ -282,13 +278,21 @@ export function CrewEditor({
             {items.map((item, index) => {
               const candidates = employees.filter(
                 (employee) =>
-                  eligible(employee, item.roles) &&
+                  (String(employee.user_id) === item.user_id ||
+                    eligible(employee, item.roles)) &&
                   !items.some(
                     (other) =>
                       other.key !== item.key &&
                       other.user_id === String(employee.user_id),
                   ),
               );
+              const selectedEmployee = employees.find(
+                (emp) => String(emp.user_id) === item.user_id,
+              );
+              const hasMissingRolesWarning =
+                selectedEmployee &&
+                !selectedEmployee.roles.includes("admin") &&
+                item.roles.some((r) => !selectedEmployee.roles.includes(r));
               return (
                 <fieldset
                   key={item.key}
@@ -314,43 +318,7 @@ export function CrewEditor({
                     </button>
                   </div>
                   <div className="grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2 sm:gap-x-6">
-                    <div className="min-w-0">
-                      <CustomDropdown
-                        label="Vai trò trong chuyến"
-                        ariaLabel={`Vai trò nhân sự ${index + 1}`}
-                        variant="compact"
-                        matchTriggerWidth
-                        className={dropdownClass}
-                        selectedValue={item.roles.join(",")}
-                        placeholder={
-                          item.roles
-                            .map((role) => CREW_ROLES[role])
-                            .join(" kiêm ") || "Chọn chức vụ"
-                        }
-                        options={roleOptions}
-                        onSelect={(value) => {
-                          const roles: CrewRole[] = [value as CrewRole];
-                          const employee = employees.find(
-                            (employee) =>
-                              String(employee.user_id) === item.user_id,
-                          );
-                          update(item.key, {
-                            roles,
-                            user_id:
-                              employee && eligible(employee, roles)
-                                ? item.user_id
-                                : "",
-                          });
-                        }}
-                      />
-                      {item.roles.length > 1 && (
-                        <p className="mt-1.5 text-xs text-amber-700">
-                          Phân công cũ đang kiêm nhiệm. Chọn một trong ba chức
-                          vụ để cập nhật.
-                        </p>
-                      )}
-                    </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 sm:col-span-2">
                       <CustomDropdown
                         label="Nhân viên"
                         ariaLabel={`Nhân viên ${index + 1}`}
@@ -373,6 +341,62 @@ export function CrewEditor({
                         <p className="mt-1.5 text-xs leading-5 text-amber-700">
                           Chưa có nhân viên đang hoạt động đáp ứng vai trò và
                           miền này.
+                        </p>
+                      )}
+                      {hasMissingRolesWarning && (
+                        <p className="mt-1.5 text-xs leading-5 text-rose-600">
+                          * Nhân viên này chưa được cấp quyền{" "}
+                          {item.roles
+                            .filter((r) => !selectedEmployee.roles.includes(r))
+                            .map((r) => CREW_ROLES[r])
+                            .join(", ")}{" "}
+                          trong Hồ sơ nhân sự.
+                        </p>
+                      )}
+                    </div>
+                    <div className="min-w-0 sm:col-span-2">
+                      <label className="mb-2 block text-[13px] font-medium text-slate-700">
+                        Chức vụ trong chuyến{" "}
+                        <span className="font-normal text-slate-500">
+                          (có thể tích chọn nhiều để kiêm nhiệm vai trò)
+                        </span>
+                      </label>
+                      <div className="flex flex-wrap gap-2.5">
+                        {roleKeys.map((role) => {
+                          const checked = item.roles.includes(role);
+                          return (
+                            <label
+                              key={role}
+                              className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold cursor-pointer transition-all ${
+                                checked
+                                  ? "border-blue-500 bg-blue-50/80 text-blue-700 shadow-sm ring-1 ring-blue-500/20"
+                                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const nextRoles = e.target.checked
+                                    ? [...item.roles, role]
+                                    : item.roles.filter((r) => r !== role);
+                                  update(item.key, { roles: nextRoles });
+                                }}
+                              />
+                              <span>{CREW_ROLES[role]}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {item.roles.length > 0 ? (
+                        <p className="mt-2 text-xs font-medium text-blue-600">
+                          Vai trò đảm nhiệm:{" "}
+                          {item.roles.map((r) => CREW_ROLES[r]).join(" kiêm ")}
+                        </p>
+                      ) : (
+                        <p className="mt-1.5 text-xs text-rose-600">
+                          * Vui lòng tích chọn ít nhất một chức vụ cho nhân sự này.
                         </p>
                       )}
                     </div>

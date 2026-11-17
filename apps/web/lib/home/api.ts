@@ -15,7 +15,7 @@ export async function getPublicSeasonalTheme(): Promise<SeasonalThemeConfig> {
     const res = await fetch(`${API_BASE_URL}/banners/seasonal-theme`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
     if (!res.ok) return DEFAULT_SEASONAL_THEME;
     return await res.json();
@@ -48,7 +48,7 @@ export async function getPublicBanners(): Promise<Banner[]> {
       headers: {
         "Content-Type": "application/json",
       },
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
 
     if(!res.ok) {
@@ -101,7 +101,7 @@ export async function getPublicHomeVouchers(): Promise<PublicHomeVouchersData> {
     const res = await fetch(`${API_BASE_URL}/public/vouchers/home-campaign`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
     if (!res.ok) return DEFAULT_PUBLIC_HOME_VOUCHERS;
     return await res.json();

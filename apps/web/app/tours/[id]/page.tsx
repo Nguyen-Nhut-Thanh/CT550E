@@ -184,7 +184,7 @@ export default function TourDetailPage({
             <TourSmartMap tour={tour} attractions={displaySchedule?.tour_schedule_attractions} />
 
             {/* 6. Lịch trình chi tiết (Itinerary Timeline) */}
-            <TourItineraryTimeline key={`itinerary-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} itineraries={displaySchedule?.tour_itineraries} />
+            <TourItineraryTimeline key={`itinerary-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} itineraries={displaySchedule?.tour_itineraries} durationDays={tour.duration_days} durationNights={tour.duration_nights} />
             <TourPoliciesSection policies={tour.tour_policies} />
 
             {/* 7. Đánh giá của khách hàng (Reviews Widget) */}

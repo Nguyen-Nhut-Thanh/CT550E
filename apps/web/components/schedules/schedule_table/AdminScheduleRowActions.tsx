@@ -25,6 +25,8 @@ export function ScheduleRowActions({
 }) {
   const [open, setOpen] = useState(false);
   const readOnly = useAdminContentReadOnly();
+  const bookedCount = getScheduleBookedCount(schedule);
+  const hasBookings = bookedCount > 0;
   const wrapper = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
   useDismiss(wrapper, open, () => setOpen(false));
@@ -108,9 +110,15 @@ export function ScheduleRowActions({
             </button>
             <button
               type="button"
-              disabled={readOnly}
-              title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
-              className="ui-schedule-overview-danger"
+              disabled={readOnly || hasBookings}
+              title={
+                readOnly
+                  ? ADMIN_CONTENT_DENIED
+                  : hasBookings
+                    ? "Lịch khởi hành đã có khách đặt, không thể xóa"
+                    : undefined
+              }
+              className="ui-schedule-overview-danger disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => {
                 setOpen(false);
                 onDelete(schedule.tour_schedule_id);
