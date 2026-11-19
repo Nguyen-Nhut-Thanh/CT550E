@@ -26,26 +26,26 @@ export function PostManagementTable({
     {
       header: "Bài viết",
       render: (post: PostItem) => (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {post.thumbnail ? (
             <img
               src={post.thumbnail}
-              className="h-10 w-16 rounded-lg object-cover shadow-xs"
+              className="h-10 w-16 shrink-0 rounded-lg border border-[#e1edfc] object-cover shadow-2xs"
               alt=""
             />
           ) : (
-            <div className="flex h-10 w-16 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+            <div className="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg border border-[#e1edfc] bg-slate-100 text-slate-400">
               <FileText size={16} />
             </div>
           )}
           <div className="space-y-0.5 min-w-0">
-            <p className="line-clamp-1 font-bold text-slate-900">{post.title}</p>
-            <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">
+            <p className="line-clamp-1 text-[13px] font-bold text-slate-900 hover:text-blue-600">{post.title}</p>
+            <div className="flex items-center gap-2.5 text-[11px] font-medium text-slate-500">
               <span className="flex items-center gap-1">
-                <Tag size={12} /> {post.category?.name || "Chưa phân loại"}
+                <Tag size={12} className="text-slate-400" /> {post.category?.name || "Chưa phân loại"}
               </span>
               <span className="flex items-center gap-1">
-                <Calendar size={12} />
+                <Calendar size={12} className="text-slate-400" />
                 {post.created_at ? new Date(post.created_at).toLocaleDateString("vi-VN") : "---"}
               </span>
             </div>
@@ -58,13 +58,13 @@ export function PostManagementTable({
       align: "center" as const,
       render: (post: PostItem) => (
         <span
-          className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+          className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[10px] font-semibold ${
             post.status === 1
-              ? "border-green-100 bg-green-50 text-green-600"
-              : "border-slate-100 bg-slate-50 text-slate-400"
+              ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+              : "border-slate-200 bg-slate-100 text-slate-600"
           }`}
         >
-          {post.status === 1 ? "Công khai" : "Nháp"}
+          {post.status === 1 ? "Công khai" : "Bản nháp"}
         </span>
       ),
     },

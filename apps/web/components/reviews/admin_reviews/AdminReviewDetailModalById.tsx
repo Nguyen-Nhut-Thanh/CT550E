@@ -107,11 +107,11 @@ export function AdminReviewDetailModalById({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs" onClick={onClose} />
-        <div className="relative flex items-center gap-3 rounded-2xl bg-white px-6 py-5 shadow-2xl">
-          <Loader2 size={20} className="animate-spin text-blue-600" />
-          <span className="text-sm font-semibold text-slate-700">Đang tải chi tiết đánh giá #{reviewId}...</span>
+        <div className="relative flex items-center gap-3 rounded-[14px] border border-[#e1edfc] bg-white px-5 py-4 shadow-xl">
+          <Loader2 size={18} className="animate-spin text-[#075bff]" />
+          <span className="text-xs sm:text-sm font-semibold text-slate-700">Đang tải chi tiết đánh giá #{reviewId}...</span>
         </div>
       </div>
     );
@@ -119,12 +119,12 @@ export function AdminReviewDetailModalById({
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs" onClick={onClose} />
-        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-          <div className="flex items-center justify-between pb-3 border-b">
-            <h3 className="font-bold text-slate-900">Chi tiết đánh giá #{reviewId}</h3>
-            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <div className="relative w-full max-w-md rounded-[14px] border border-[#e1edfc] bg-white p-5 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#edf2fb]">
+            <h3 className="font-bold text-slate-900 text-sm">Chi tiết đánh giá #{reviewId}</h3>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
               <X size={18} />
             </button>
           </div>
@@ -133,7 +133,7 @@ export function AdminReviewDetailModalById({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+              className="rounded-lg bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition cursor-pointer"
             >
               Đóng
             </button>

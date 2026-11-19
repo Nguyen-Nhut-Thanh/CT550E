@@ -394,7 +394,7 @@ export default function AdminBookingsPage() {
   );
 
   return (
-    <main className="ui-booking-management-page flex flex-col gap-[16px] text-[#172c50] min-w-0 [&_:is(a,_button,_input):focus-visible]:[outline:2px_solid_#3b82f6] [&_:is(a,_button,_input):focus-visible]:outline-offset-[2px]">
+    <main className="ui-booking-management-page relative min-w-0 space-y-3 font-sans text-sm leading-normal tracking-normal text-[#0b1747] @container/bookings">
       <BookingManagementHeader />
       <BookingManagementStats
         stats={stats}
@@ -420,10 +420,14 @@ export default function AdminBookingsPage() {
       {error && (
         <div
           role="alert"
-          className="ui-booking-management-error flex items-center justify-between gap-[14px] p-[13px_16px] rounded-[12px] [border:1px_solid_#ffd0d9] [background:#fff2f4] text-[#b93c55] text-[12px] [&_button]:font-bold [&_button]:underline"
+          className="ui-booking-management-error flex items-center justify-between gap-3 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700"
         >
           <span>{error}</span>
-          <button type="button" onClick={() => void loadData(page)}>
+          <button
+            type="button"
+            className="font-bold underline hover:text-rose-900 cursor-pointer"
+            onClick={() => void loadData(page)}
+          >
             Tải lại
           </button>
         </div>
@@ -546,7 +550,7 @@ export default function AdminBookingsPage() {
                 type="button"
                 onClick={closeModal}
                 disabled={Boolean(actingId)}
-                className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-xs font-[650] text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
               >
                 Đóng
               </button>
@@ -554,7 +558,7 @@ export default function AdminBookingsPage() {
                 type="button"
                 onClick={() => void runAction()}
                 disabled={Boolean(actingId)}
-                className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition cursor-pointer ${
+                className={`rounded-[12px] px-6 py-2.5 text-xs font-[650] text-white shadow-xs transition cursor-pointer disabled:opacity-50 ${
                   modal.type === "approve"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : "bg-rose-600 hover:bg-rose-700"

@@ -189,10 +189,10 @@ export function PostLayoutManager() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+      <div className="flex min-h-[300px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-6 shadow-2xs">
         <div className="flex items-center gap-3 text-slate-500">
           <Loader2 size={24} className="animate-spin text-blue-600" />
-          <span>Đang tải bố cục trang bài viết...</span>
+          <span className="text-xs sm:text-sm font-medium">Đang tải bố cục trang bài viết...</span>
         </div>
       </div>
     );
@@ -202,10 +202,10 @@ export function PostLayoutManager() {
     return (
       <div
         role="alert"
-        className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+        className="flex items-center justify-between rounded-[14px] border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700"
       >
         <span>{failure}</span>
-        <button onClick={load} className="font-bold underline hover:text-red-900">
+        <button onClick={load} className="font-bold underline hover:text-rose-900 cursor-pointer">
           Thử lại
         </button>
       </div>
@@ -213,18 +213,18 @@ export function PostLayoutManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {/* Top Banner Action Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/60 p-5">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <LayoutGrid size={24} />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/60 via-sky-50/40 to-indigo-50/50 p-4 sm:p-4.5 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-blue-600 text-white shadow-xs">
+            <LayoutGrid size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
               Thiết lập Bố cục Trang Bài viết
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
+            <p className="mt-0.5 text-xs text-slate-500">
               Chọn bài viết cố định hoặc để hệ thống tự động sắp xếp 9 vị trí nổi bật tại trang bài viết.
             </p>
           </div>
@@ -238,32 +238,32 @@ export function PostLayoutManager() {
             type="button"
             onClick={save}
             disabled={readOnly || saving || !dirty}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             <span>{saving ? "Đang lưu..." : "Lưu bố cục"}</span>
           </button>
         </div>
       </div>
 
       {/* Main Grid */}
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)]">
+      <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)]">
         {/* Left Diagram */}
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="flex items-center gap-2 font-bold text-slate-900">
-            <LayoutGrid size={18} className="text-blue-600" />
+        <section className="space-y-3.5 rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs">
+          <h3 className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+            <LayoutGrid size={16} className="text-blue-600" />
             Sơ đồ trang bài viết (9 vị trí)
           </h3>
 
           {/* Slot 0: Main Highlight */}
           {renderSlot(0)}
 
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(150px,.8fr)] gap-3">
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-              <span className="text-xs font-bold uppercase text-slate-400">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(150px,.8fr)] gap-2.5">
+            <div className="rounded-xl border border-dashed border-[#e1edfc] bg-slate-50/70 p-3.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Nội dung bài 01
               </span>
-              <p className="mt-3 line-clamp-5 text-sm leading-6 text-slate-600">
+              <p className="mt-2 line-clamp-5 text-xs leading-5 text-slate-600">
                 {effective[0]?.summary ||
                   "Nội dung chính luôn đi cùng bài chủ đạo, không cần chọn riêng."}
               </p>
@@ -275,16 +275,16 @@ export function PostLayoutManager() {
             </div>
           </div>
 
-          <h4 className="text-sm font-bold text-slate-700 pt-2">
+          <h4 className="text-xs sm:text-sm font-bold text-slate-700 pt-1">
             Có thể bạn sẽ thích
           </h4>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[5, 6, 7, 8].map((index) => (
               <div key={index}>{renderSlot(index)}</div>
             ))}
           </div>
 
-          <p className="text-xs leading-5 text-slate-500 pt-1">
+          <p className="text-[11px] leading-relaxed text-slate-500 pt-1">
             * Ô để tự động sẽ lấy bài công khai mới nhất chưa xuất hiện ở vị trí
             khác. Nếu không đủ bài, khối hiển thị sẽ tự thu gọn và ưu tiên có bài
             chủ đạo.
@@ -292,10 +292,10 @@ export function PostLayoutManager() {
         </section>
 
         {/* Right Picker */}
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-5">
-          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+        <section className="space-y-3.5 rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs xl:sticky xl:top-4">
+          <div className="flex items-start justify-between gap-2 border-b border-[#e1edfc] pb-3">
             <div>
-              <h3 className="font-bold text-slate-900">
+              <h3 className="font-bold text-slate-900 text-sm">
                 Vị trí {String(active + 1).padStart(2, "0")} · {label(active)}
               </h3>
               <p className="mt-0.5 text-xs text-slate-500">
@@ -306,7 +306,7 @@ export function PostLayoutManager() {
               type="button"
               onClick={() => assign(null)}
               disabled={slots[active] === null || saving}
-              className="shrink-0 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 transition hover:bg-blue-100 disabled:opacity-40"
+              className="shrink-0 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 transition hover:bg-blue-100 disabled:opacity-40 cursor-pointer"
             >
               Để tự động
             </button>
@@ -350,16 +350,16 @@ export function PostLayoutManager() {
                     readOnly || saving || (usedAt !== -1 && usedAt !== active)
                   }
                   onClick={() => assign(post.post_id)}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition disabled:opacity-40 ${
+                  className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition disabled:opacity-40 cursor-pointer ${
                     slots[active] === post.post_id
-                      ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
-                      : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                      ? "border-blue-500 bg-blue-50/70 ring-2 ring-blue-100 shadow-2xs"
+                      : "border-[#e1edfc] bg-white hover:border-blue-200 hover:bg-slate-50/60"
                   }`}
                 >
                   <ImageWithFallback
                     src={post.thumbnail || undefined}
                     alt=""
-                    className="h-14 w-16 shrink-0 rounded-lg object-cover"
+                    className="h-12 w-16 shrink-0 rounded-lg object-cover border border-[#e1edfc]"
                   />
                   <div className="min-w-0 flex-1">
                     <h4 className="line-clamp-2 text-sm font-semibold text-slate-800">

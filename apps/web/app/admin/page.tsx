@@ -95,31 +95,31 @@ export default function AdminDashboardPage() {
   // Loading skeleton screen
   if (loading && !data) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div aria-label="Đang tải tổng quan quản trị" aria-busy="true" className="space-y-3 animate-pulse motion-reduce:animate-none @container/dashboard">
         {/* Header skeleton */}
-        <div className="h-28 rounded-3xl bg-slate-200/70" />
+        <div className="h-28 rounded-[14px] bg-white" />
 
         {/* KPI Cards skeleton */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-4 gap-3 @max-[1180px]/dashboard:grid-cols-2 @max-[650px]/dashboard:grid-cols-1">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-36 rounded-3xl bg-slate-200/70" />
+            <div key={i} className="h-36 rounded-[14px] bg-white" />
           ))}
         </div>
 
         {/* Secondary mini-counters skeleton */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-4 gap-3 @max-[900px]/dashboard:grid-cols-2 @max-[650px]/dashboard:grid-cols-1">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 rounded-2xl bg-slate-200/70" />
+            <div key={i} className="h-16 rounded-[14px] bg-white" />
           ))}
         </div>
 
         {/* Chart skeleton */}
-        <div className="h-80 rounded-3xl bg-slate-200/70" />
+        <div className="h-80 rounded-[14px] bg-white" />
 
         {/* 2-column widgets skeleton */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 h-96 rounded-3xl bg-slate-200/70" />
-          <div className="h-96 rounded-3xl bg-slate-200/70" />
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-96 rounded-[14px] bg-white" />
+          <div className="h-96 rounded-[14px] bg-white" />
         </div>
       </div>
     );
@@ -128,18 +128,18 @@ export default function AdminDashboardPage() {
   // Error screen
   if (error && !data) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-rose-200 bg-white p-12 text-center shadow-sm">
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-500">
-          <AlertCircle size={32} />
+      <div role="alert" className="flex min-h-60 flex-col items-center justify-center gap-3 rounded-[14px] border border-rose-200 bg-rose-50 p-6 text-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-rose-50 text-rose-500">
+          <AlertCircle size={24} />
         </div>
-        <h2 className="mt-4 text-xl font-black text-slate-900">
+        <h2 className="text-[16px] font-[750] text-[#0b1747]">
           Không Thể Tải Bảng Điều Khiển
         </h2>
-        <p className="mt-2 max-w-md text-sm text-slate-500">{error}</p>
+        <p className="max-w-md text-[13px] text-rose-700">{error}</p>
         <button
           type="button"
           onClick={() => loadData(false)}
-          className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-95"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#075bff] px-3 py-2 text-[12px] font-[650] text-white transition-colors duration-180 hover:bg-[#064ddd] motion-reduce:transition-none"
         >
           <RefreshCw size={16} />
           Thử lại
@@ -149,7 +149,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="admin-dashboard space-y-4">
+    <div className="relative min-w-0 space-y-3 font-sans text-sm leading-normal tracking-normal text-[#0b1747] @container/dashboard">
       {/* Dashboard Top Header & Controls */}
       <DashboardHeader
         timeRange={timeRange}
@@ -164,8 +164,8 @@ export default function AdminDashboardPage() {
           {/* Main KPI Cards & Secondary Metric Counters */}
           <DashboardKpiCards kpis={data.kpis} timeRange={timeRange} />
 
-          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
-            <DashboardAnalyticsChart chart={data.chart} />
+          <div className="grid items-stretch gap-3 grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] @max-[900px]/dashboard:grid-cols-1">
+            <DashboardAnalyticsChart chart={data.chart} appearance="workforce" />
             <DashboardTopTours topTours={data.topTours} />
           </div>
           <DashboardRecentBookings bookings={data.recentBookings} onShowStatus={() => setShowStatus(true)} />

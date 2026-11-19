@@ -13,10 +13,16 @@ import Image from "next/image";
 import Link from "next/link";
 import type { AdminReviewItem } from "shared";
 import { AdminRowActions } from "@/components/common/admin_shared/tables/AdminRowActions";
+import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 
 interface ReviewTableProps {
   items: AdminReviewItem[];
   loading: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  totalItems?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
   onApprove: (reviewId: number) => Promise<void>;
   onOpenReject: (review: AdminReviewItem) => void;
   onOpenReply: (review: AdminReviewItem) => void;
@@ -27,6 +33,11 @@ interface ReviewTableProps {
 export function ReviewTable({
   items,
   loading,
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize = 10,
+  onPageChange,
   onApprove,
   onOpenReject,
   onOpenReply,
@@ -35,7 +46,7 @@ export function ReviewTable({
 }: ReviewTableProps) {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-sm">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-12 text-center shadow-2xs">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         <p className="mt-3 text-xs font-semibold text-slate-500">Đang tải danh sách đánh giá...</p>
       </div>
@@ -44,7 +55,7 @@ export function ReviewTable({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-sm">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-12 text-center shadow-2xs">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
           <Star size={26} />
         </div>
@@ -83,10 +94,10 @@ export function ReviewTable({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-[14px] border border-[#e1edfc] bg-white shadow-2xs">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="border-b border-slate-100 bg-slate-50/75 text-slate-500">
+          <thead className="border-b border-[#edf2fb] bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-[#7187a9]">
             <tr>
               <th className="py-3.5 pl-5 pr-3 font-semibold">Khách hàng</th>
               <th className="px-3 py-3.5 font-semibold">Tour & Đơn đặt</th>
@@ -247,6 +258,19 @@ export function ReviewTable({
           </tbody>
         </table>
       </div>
+
+      {totalPages != null && totalPages > 0 && onPageChange && (
+        <AdminPagination
+          variant="numbered"
+          showSinglePage
+          currentPage={currentPage || 1}
+          totalPages={totalPages}
+          totalItems={totalItems || items.length}
+          pageSize={pageSize}
+          itemLabel="đánh giá"
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 }

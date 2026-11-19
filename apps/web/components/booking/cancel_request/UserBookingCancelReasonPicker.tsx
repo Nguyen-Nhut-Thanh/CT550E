@@ -34,17 +34,17 @@ export function BookingCancelReasonPicker({
               key={reason}
               type="button"
               onClick={() => onSelectReason(reason)}
-              className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs text-left transition cursor-pointer ${
+              className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs text-left font-medium transition-colors duration-150 motion-reduce:transition-none cursor-pointer ${
                 isSelected
-                  ? "bg-blue-50 border-blue-500 font-bold text-blue-900 shadow-2xs"
+                  ? "bg-blue-50/80 border-blue-500 font-bold text-blue-900 shadow-2xs"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               }`}
             >
               <span
-                className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 transition-colors duration-150 ${
                   isSelected
                     ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-slate-300"
+                    : "border-slate-300 bg-white"
                 }`}
               >
                 {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}

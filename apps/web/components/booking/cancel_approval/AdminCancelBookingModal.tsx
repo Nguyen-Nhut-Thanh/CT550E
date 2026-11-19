@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertTriangle,
@@ -96,6 +96,10 @@ export function AdminCancelBookingModal({
     booking?.tour_schedules?.tours?.tour_id;
   const currentScheduleId =
     booking?.tour_schedule_id || booking?.tour_schedules?.tour_schedule_id;
+  const cutOffHours =
+    booking?.tour_schedules?.tours?.cut_off_hours ??
+    booking?.cut_off_hours ??
+    24;
 
   const reasonsList = useMemo(() => {
     if (isPendingHold) return ADMIN_PENDING_CANCEL_REASONS;
@@ -107,6 +111,22 @@ export function AdminCancelBookingModal({
   const [customReason, setCustomReason] = useState("");
   const [refundAmount, setRefundAmount] = useState<string>("");
   const [adminNote, setAdminNote] = useState("");
+
+  const prevOpenRef = useRef(false);
+  const prevCancelTypeRef = useRef<AdminCancelSourceType | null>(null);
+
+  const handleSelectSchedule = useCallback((id: number, schedule?: any) => {
+    setNewScheduleId(id);
+    setSelectedSchedule(schedule || null);
+  }, []);
+
+  const handleCancelTypeChange = useCallback((val: AdminCancelSourceType) => {
+    setCancelType(val);
+  }, []);
+
+  const handleAllowedOptionsChange = useCallback((options: AdminCancelResolution[]) => {
+    setAllowedOptions(options);
+  }, []);
 
   useEffect(() => setMounted(true), []);
 
@@ -164,16 +184,19 @@ export function AdminCancelBookingModal({
     return newTotal - currentAmount;
   }, [selectedSchedule, booking]);
 
-  // Cập nhật giá trị mặc định khi đổi loại hủy hoặc mở modal
+  // Cập nhật giá trị mặc định khi mở modal hoặc khi chủ động đổi loại hủy, tránh đè lựa chọn khi đang thao tác
   useEffect(() => {
     if (open && booking) {
-      if (isPendingHold) {
-        setSelectedReason(ADMIN_PENDING_CANCEL_REASONS[0]);
-        setCustomReason("");
-        setRefundAmount("0");
-        setAdminNote("Nhân viên hủy do khách xác nhận không đi / quá hạn giữ chỗ");
-      } else {
-        if (cancelType === "operator_fault") {
+      const isNewlyOpened = !prevOpenRef.current;
+      const isTypeChanged = prevCancelTypeRef.current !== cancelType;
+
+      if (isNewlyOpened || isTypeChanged) {
+        if (isPendingHold) {
+          setSelectedReason(ADMIN_PENDING_CANCEL_REASONS[0]);
+          setCustomReason("");
+          setRefundAmount("0");
+          setAdminNote("Nhân viên hủy do khách xác nhận không đi / quá hạn giữ chỗ");
+        } else if (cancelType === "operator_fault") {
           setSelectedReason(ADMIN_OPERATOR_CANCEL_REASONS[0]);
           setCustomReason("");
           setRefundAmount(String(totalAmount));
@@ -184,9 +207,10 @@ export function AdminCancelBookingModal({
           setRefundAmount(String(isPaid ? estimate.refundAmount : "0"));
           setAdminNote("Hủy đơn booking theo yêu cầu của khách hàng");
         }
+        prevCancelTypeRef.current = cancelType;
       }
-      setCopiedField(null);
     }
+    prevOpenRef.current = open;
   }, [
     open,
     booking,
@@ -292,7 +316,7 @@ export function AdminCancelBookingModal({
       />
 
       {/* Modal Container: Rộng max-w-5xl 2 cột đồng bộ */}
-      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl lg:max-w-5xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl border border-slate-200 text-[#092448] sm:max-h-[calc(100dvh-2.5rem)]">
+      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl lg:max-w-5xl flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl border border-[#e1edfc] text-[#0b1747] sm:max-h-[calc(100dvh-2.5rem)]">
         {/* Nút đóng */}
         <button
           type="button"
@@ -347,14 +371,14 @@ export function AdminCancelBookingModal({
                   ? "ĐỀ XUẤT PHƯƠNG ÁN GIẢI QUYẾT (SỰ CỐ VẬN HÀNH)"
                   : "HỦY ĐƠN TOUR THEO YÊU CẦU KHÁCH"}
             </span>
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-semibold text-[#7387aa]">
               #{booking.booking_id || booking.id}
             </span>
           </div>
 
           <h2
             id="admin-cancel-modal-title"
-            className="text-lg sm:text-xl font-black text-[#092448] truncate"
+            className="text-lg sm:text-xl font-extrabold text-[#07123e] truncate"
           >
             {tourName}
           </h2>
@@ -382,11 +406,11 @@ export function AdminCancelBookingModal({
         {/* Form Body: Chia làm 2 cột chính */}
         <form
           onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-5"
+          className="flex-1 overflow-y-auto p-4.5 sm:p-5 space-y-3.5"
         >
           {/* CẢNH BÁO NẾU TOUR ĐÃ KHỞI HÀNH HOẶC ĐANG TRONG THỜI GIAN KHỞI HÀNH */}
           {isDeparted && (
-            <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-900 flex items-start gap-3 shadow-2xs">
+            <div className="rounded-[14px] border border-rose-300 bg-rose-50 p-4 text-rose-900 flex items-start gap-3 shadow-2xs">
               <AlertTriangle size={20} className="text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-rose-800">
@@ -402,9 +426,9 @@ export function AdminCancelBookingModal({
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
             {/* CỘT TRÁI: Thẻ tóm tắt tour + Đếm ngược hoặc Chính sách tương ứng */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <BookingTourSummaryCard
                 booking={booking}
                 totalAmount={totalAmount}
@@ -414,7 +438,7 @@ export function AdminCancelBookingModal({
               {/* Nếu hủy do công ty / sự cố */}
               {!isPendingHold && cancelType === "operator_fault" ? (
                 allowedOptions.length === 2 ? (
-                  <div className="rounded-2xl border border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4_0%,#eff6ff_100%)] p-4.5 space-y-3 shadow-2xs">
+                  <div className="rounded-[14px] border border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4_0%,#eff6ff_100%)] p-4.5 space-y-3 shadow-2xs">
                     <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
                       <ShieldCheck size={17} className="text-emerald-600" />
                       <span>Đề xuất giải quyết linh hoạt</span>
@@ -433,7 +457,7 @@ export function AdminCancelBookingModal({
                     </ul>
                   </div>
                 ) : allowedOptions.includes("full_refund") ? (
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4.5 space-y-3 shadow-2xs">
+                  <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/70 p-4.5 space-y-3 shadow-2xs">
                     <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
                       <ShieldCheck size={17} className="text-emerald-600" />
                       <span>Chính sách hoàn tiền sự cố / thiên tai</span>
@@ -456,7 +480,7 @@ export function AdminCancelBookingModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4.5 space-y-3 shadow-2xs">
+                  <div className="rounded-[14px] border border-blue-200 bg-blue-50/70 p-4.5 space-y-3 shadow-2xs">
                     <div className="flex items-center gap-2 text-blue-900 font-bold text-xs uppercase tracking-wider">
                       <CalendarSync size={17} className="text-blue-600" />
                       <span>Chính sách dời lịch khởi hành</span>
@@ -493,12 +517,12 @@ export function AdminCancelBookingModal({
             </div>
 
             {/* CỘT PHẢI: Bộ chọn loại nguyên nhân + Phương án + Lý do + Form */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {/* 1. Bộ chọn loại hủy (Do công ty vs Do khách) - Chỉ áp dụng cho đơn đã thanh toán */}
               {!isPendingHold && (
                 <AdminCancelTypeSelector
                   value={cancelType}
-                  onChange={setCancelType}
+                  onChange={handleCancelTypeChange}
                   disabled={disabledOrLoading(loading, isDeparted)}
                 />
               )}
@@ -507,7 +531,7 @@ export function AdminCancelBookingModal({
               {!isPendingHold && cancelType === "operator_fault" && (
                 <AdminCancelResolutionSelector
                   allowedOptions={allowedOptions}
-                  onChange={setAllowedOptions}
+                  onChange={handleAllowedOptionsChange}
                   disabled={disabledOrLoading(loading, isDeparted)}
                 />
               )}
@@ -521,11 +545,9 @@ export function AdminCancelBookingModal({
                     tourId={tourId}
                     currentScheduleId={currentScheduleId}
                     totalGuests={totalGuests}
+                    cutOffHours={cutOffHours}
                     selectedScheduleId={newScheduleId}
-                    onSelectSchedule={(id, s) => {
-                      setNewScheduleId(id);
-                      setSelectedSchedule(s || null);
-                    }}
+                    onSelectSchedule={handleSelectSchedule}
                     disabled={disabledOrLoading(loading, isDeparted)}
                   />
 
@@ -617,7 +639,7 @@ export function AdminCancelBookingModal({
                     icon={null}
                     suffix="đ"
                     placeholder="Ví dụ: 9.325.000"
-                    inputClassName="w-full h-10 rounded-xl border border-slate-200 bg-white px-3.5 pr-9 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-rose-500 focus:outline-none transition shadow-2xs"
+                    inputClassName="w-full h-9.5 rounded-lg border border-slate-200 bg-white px-3.5 pr-9 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-rose-500 focus:outline-none transition shadow-2xs"
                   />
 
                   {/* Nút bấm áp dụng nhanh mức tiền hoàn */}
@@ -710,19 +732,19 @@ export function AdminCancelBookingModal({
                   onChange={(e) => setAdminNote(e.target.value)}
                   rows={2}
                   placeholder="Ghi chú nội bộ cho ban quản trị hoặc thông báo đến khách hàng..."
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-rose-500 focus:outline-none transition shadow-2xs"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-rose-500 focus:outline-none transition shadow-2xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Footer nút hành động */}
-          <footer className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+          <footer className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-[#edf2fb]">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto min-h-10 px-5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
             >
               Đóng
             </button>
@@ -740,7 +762,7 @@ export function AdminCancelBookingModal({
                   allowedOptions.includes("reschedule") &&
                   !newScheduleId)
               }
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white transition shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full sm:w-auto min-h-10 inline-flex items-center justify-center gap-2 px-6 rounded-[12px] text-xs font-[650] text-white transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 isPendingHold
                   ? "bg-sky-600 hover:bg-sky-700"
                   : cancelType === "operator_fault"

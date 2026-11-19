@@ -86,7 +86,7 @@ export default function AdminLocationsPage() {
   );
 
   return (
-    <div className="ui-location-management-page flex flex-col gap-[14px] min-w-0 text-[#15284d] [&_:is(button,input,select,a):focus-visible]:[outline:2px_solid_#3b82f6] [&_:is(button,input,select,a):focus-visible]:outline-offset-[2px]">
+    <div className="ui-location-management-page space-y-3 min-w-0 text-[#15284d]">
       <LocationManagementHeader />
       <LocationManagementStats items={items} loading={loading} />
       <LocationManagementFilters
@@ -98,10 +98,14 @@ export default function AdminLocationsPage() {
       {failed ? (
         <div
           role="alert"
-          className="ui-location-management-error flex justify-between gap-[12px] [border:1px_solid_#fecdd3] text-[#bd3650] [background:#fff1f3] p-[15px] rounded-[12px] text-[13px] [&_button]:font-bold [&_button]:underline"
+          className="ui-location-management-error flex items-center justify-between gap-3 rounded-[14px] border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-700 shadow-2xs"
         >
           <span>Không thể tải danh sách địa điểm.</span>
-          <button type="button" onClick={() => void load()}>
+          <button
+            type="button"
+            className="font-bold underline hover:no-underline cursor-pointer"
+            onClick={() => void load()}
+          >
             Tải lại
           </button>
         </div>

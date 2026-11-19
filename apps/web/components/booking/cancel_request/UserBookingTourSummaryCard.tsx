@@ -80,7 +80,7 @@ export function BookingTourSummaryCard({
 
   return (
     <div
-      className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-3.5 ${className}`}
+      className={`rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs space-y-3.5 ${className}`}
     >
       <div className="flex gap-3.5 items-start">
         <div className="relative h-20 w-24 sm:w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
@@ -92,10 +92,10 @@ export function BookingTourSummaryCard({
         </div>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-[11px] font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/80">
+            <span className="font-mono text-[11px] font-extrabold text-[#075bff] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/80">
               #{booking.booking_id}
             </span>
-            <span className="font-mono text-[11px] font-bold text-slate-500">
+            <span className="font-mono text-[11px] font-bold text-[#7387aa]">
               {tourCode}
             </span>
             <span
@@ -108,11 +108,11 @@ export function BookingTourSummaryCard({
               {isPaid ? "Đã thanh toán" : "Chờ thanh toán"}
             </span>
           </div>
-          <h4 className="text-sm font-extrabold text-slate-900 line-clamp-2 leading-snug">
+          <h4 className="text-sm font-bold text-[#0b1747] line-clamp-2 leading-snug">
             {tourName}
           </h4>
           {durationText ? (
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-[#7387aa] font-medium">
               Thời lượng:{" "}
               <strong className="text-slate-700">{durationText}</strong>
             </p>
@@ -120,13 +120,13 @@ export function BookingTourSummaryCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5 border-t border-slate-100 text-xs text-slate-600">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5 border-t border-[#edf2fb] text-xs text-slate-600">
         {startDateStr ? (
           <div className="flex items-center gap-2">
-            <CalendarDays size={14} className="text-blue-600 shrink-0" />
+            <CalendarDays size={14} className="text-[#075bff] shrink-0" />
             <span className="truncate">
               Khởi hành:{" "}
-              <strong className="text-slate-800">{startDateStr}</strong>
+              <strong className="text-[#0b1747]">{startDateStr}</strong>
               {endDateStr ? ` - ${endDateStr}` : ""}
             </span>
           </div>
@@ -136,7 +136,7 @@ export function BookingTourSummaryCard({
           <MapPin size={14} className="text-emerald-600 shrink-0" />
           <span className="truncate">
             Điểm đón:{" "}
-            <strong className="text-slate-800">{departureLocation}</strong>
+            <strong className="text-[#0b1747]">{departureLocation}</strong>
           </span>
         </div>
 
@@ -144,7 +144,7 @@ export function BookingTourSummaryCard({
           <Users size={14} className="text-indigo-600 shrink-0" />
           <span className="truncate">
             Số khách:{" "}
-            <strong className="text-slate-800">
+            <strong className="text-[#0b1747]">
               {totalGuests > 0
                 ? `${totalGuests} khách (${guestBreakdown})`
                 : "1 khách"}
@@ -156,7 +156,7 @@ export function BookingTourSummaryCard({
           <CreditCard size={14} className="text-purple-600 shrink-0" />
           <span className="truncate">
             Tổng đơn:{" "}
-            <strong className="text-blue-700 font-extrabold">
+            <strong className="text-[#075bff] font-extrabold">
               {formatVND(totalAmount)}
             </strong>
           </span>

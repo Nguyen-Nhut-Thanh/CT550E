@@ -125,7 +125,7 @@ export function ChatTimeline({
                 }} />
               ) : sender?.full_name ? sender.full_name.trim().charAt(0).toUpperCase() : <UserRound size={18} />}
             </span>}
-            <div className={`flex min-w-0 flex-col ${message.context?.kind === "tour" ? "w-full max-w-[600px]" : "max-w-[80%]"} ${own ? "items-end" : "items-start"}`}>
+            <div className={`flex min-w-0 flex-col ${message.context?.kind === "tour" ? "w-full max-w-[420px]" : "max-w-[80%]"} ${own ? "items-end" : "items-start"}`}>
             <div
               className={`${message.context?.kind === "tour" ? "w-full min-w-0" : "w-fit max-w-full"} rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${(message.message_type === "IMAGE" || message.context?.kind === "tour") ? "!border-0 !bg-transparent !p-0 !shadow-none" : own && isStaff ? "bg-blue-500 text-white" : `${own ? "rounded-br-md" : "rounded-bl-md"} border border-[#e8eef4] bg-white text-slate-800 shadow-[0_1px_3px_rgba(50,75,100,0.1)]`}`}
             >

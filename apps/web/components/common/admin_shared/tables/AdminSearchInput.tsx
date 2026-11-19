@@ -13,11 +13,11 @@ export function AdminSearchInput({
 }: AdminSearchInputProps) {
   return (
     <div className={`relative ${className}`}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
       <input
         type="text"
         placeholder={placeholder}
-        className={`w-full border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${roundedClassName}`}
+        className={`w-full border border-[#e1edfc] bg-white py-2 pl-9 pr-4 text-xs sm:text-sm font-medium outline-none transition-all focus:border-[#075bff] focus:ring-2 focus:ring-blue-100 ${roundedClassName}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />

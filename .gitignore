@@ -5,8 +5,8 @@ build/
 /scripts/
 coverage/
 .turbo/
-.env
-.env.local
+.env*
+!.env.example
 *.log
 __pycache__/
 .venv/

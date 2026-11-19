@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatCard } from "@/components/common/admin_shared/cards/AdminStatCard";
+
 import { formatVND } from "@/lib/utils/currency";
 import {
   Calendar,
@@ -44,7 +46,7 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
     },
     silver: {
       label: "Bạc",
-      badge: "bg-slate-200 text-slate-800 border-slate-300",
+      badge: "bg-slate-200 text-[#0b1747] border-slate-300",
       icon: Sparkles,
       border: "border-slate-200",
       glow: "from-slate-400/10 to-slate-200/10",
@@ -61,148 +63,53 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
   const totalVipSpent = customers.topVip.reduce((s, c) => s + c.totalSpent, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Overview KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Users size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Tổng khách hàng
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                {customers.totalUsers.toLocaleString("vi-VN")} TV
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">Toàn bộ tài khoản người dùng đăng ký</p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <UserCheck size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Khách hàng mới
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                +{customers.newUsers} TV
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">Gia nhập hệ thống trong kỳ này</p>
-        </div>
-
-        <div className="rounded-2xl border border-amber-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Crown size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Top 1 VIP Chi Tiêu
-              </p>
-              <h4 className="text-sm font-black text-slate-900 truncate max-w-44">
-                {customers.topVip[0]?.fullName || "Chưa có"}
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            Chi tiêu:{" "}
-            <span className="font-bold text-amber-600">
-              {formatVND(customers.topVip[0]?.totalSpent || 0)}
-            </span>
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-purple-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <Gem size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Dòng tiền từ Top 10 VIP
-              </p>
-              <h4 className="text-lg font-black text-slate-900">
-                {formatVND(totalVipSpent)}
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">Nhóm khách hàng trung thành nhất</p>
-        </div>
+      <div className="grid grid-cols-4 gap-3 @max-[1180px]/analytics:grid-cols-2 @max-[650px]/analytics:grid-cols-1">
+        <AdminStatCard title="Tổng khách hàng" value={`${customers.totalUsers.toLocaleString("vi-VN")} TV`} description="Toàn bộ tài khoản người dùng đăng ký" icon={Users} />
+        <AdminStatCard title="Khách hàng mới" value={`+${customers.newUsers.toLocaleString("vi-VN")} TV`} description="Gia nhập hệ thống trong kỳ này" icon={UserCheck} tone="green" />
+        <AdminStatCard title="Top 1 VIP Chi Tiêu" value={<span className="block truncate" title={customers.topVip[0]?.fullName}>{customers.topVip[0]?.fullName || "Chưa có"}</span>} description={`Chi tiêu: ${formatVND(customers.topVip[0]?.totalSpent || 0)}`} icon={Crown} tone="amber" />
+        <AdminStatCard title="Dòng tiền từ Top 10 VIP" value={formatVND(totalVipSpent)} description="Nhóm khách hàng trung thành nhất" icon={Gem} tone="purple" />
       </div>
 
       {/* Customer Tiers Breakdown */}
       <div>
-        <h4 className="text-sm font-bold text-slate-900 mb-3">
+        <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747] mb-3">
           Phân Bổ Cơ Cấu Theo Hạng Thành Viên
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-3 @max-[1180px]/analytics:grid-cols-2 @max-[650px]/analytics:grid-cols-1">
           {customers.byTier.map((tierItem) => {
             const meta = tierStyles[tierItem.tier] || tierStyles.bronze;
             const Icon = meta.icon;
             const pct = Math.round((tierItem.count / totalUsers) * 100);
             return (
-              <div
-                key={tierItem.tier}
-                className={`rounded-2xl border ${meta.border} bg-white p-4 shadow-xs`}
+              <AdminStatCard key={tierItem.tier} title={tierItem.label} value={`${tierItem.count} TV`} icon={Icon} tone={tierItem.tier === "diamond" ? "cyan" : tierItem.tier === "gold" ? "amber" : tierItem.tier === "silver" ? "slate" : "orange"} description={`Hội viên cấp ${tierItem.tier}`}
+                badge={<span className={`rounded-full border px-1.5 py-0.5 ${meta.badge}`}>{pct}%</span>}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${meta.glow} text-slate-800`}
-                    >
-                      <Icon size={18} />
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-slate-900 text-sm">{tierItem.label}</h5>
-                      <span className="text-[11px] text-slate-400">Hội viên cấp {tierItem.tier}</span>
-                    </div>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-0.5 text-xs font-black ${meta.badge}`}>
-                    {tierItem.count} TV
-                  </span>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-                  <span>Tỷ trọng hội viên:</span>
-                  <span className="font-bold text-slate-800">{pct}%</span>
-                </div>
-
-                <div className="mt-2 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full bg-blue-600 rounded-full"
-                    style={{ width: `${Math.min(pct, 100)}%` }}
-                  />
-                </div>
-              </div>
+                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500"><span>Tỷ trọng hội viên</span><span>{pct}%</span></div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(pct,100)}%` }} /></div>
+              </AdminStatCard>
             );
           })}
         </div>
       </div>
 
       {/* Top 10 VIP Customers Table */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="min-w-0 rounded-[14px] border border-[#e1edfc] bg-white overflow-hidden">
+        <div className="p-4 border-b border-[#edf2fb] flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-slate-900">
+            <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
               Top 10 Khách Hàng VIP Đóng Góp Doanh Thu Cao Nhất
             </h4>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7387aa]">
               Danh sách các khách hàng thân thiết có tổng chi tiêu cao nhất trên toàn hệ thống
             </p>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 border-b border-slate-200/70 font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-[13px]">
+            <thead className="bg-[#f4f8fd] text-[12px] text-[#657b9f] border-b border-[#e1edfc] font-semibold ">
               <tr>
                 <th className="py-3 px-4 text-center w-12">Hạng</th>
                 <th className="py-3 px-4">Khách hàng</th>
@@ -213,10 +120,10 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
                 <th className="py-3 px-4 text-right">Lần đặt gần nhất</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-[#edf2fb] font-medium text-slate-700">
               {customers.topVip.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="h-60 p-6 text-center text-[#7387aa]">
                     Chưa có số liệu khách hàng VIP trong kỳ này
                   </td>
                 </tr>
@@ -231,14 +138,14 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
                     >
                       <td className="py-3 px-4 text-center">
                         <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black ${
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
                             idx === 0
                               ? "bg-amber-100 text-amber-800"
                               : idx === 1
-                              ? "bg-slate-200 text-slate-800"
+                              ? "bg-slate-200 text-[#0b1747]"
                               : idx === 2
                               ? "bg-orange-100 text-orange-800"
-                              : "bg-slate-100 text-slate-500"
+                              : "bg-slate-100 text-[#7387aa]"
                           }`}
                         >
                           #{idx + 1}
@@ -250,8 +157,8 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
                             {vip.fullName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">{vip.fullName}</p>
-                            <span className="font-mono text-[10px] text-slate-400">
+                            <p className="font-bold text-[#0b1747]">{vip.fullName}</p>
+                            <span className="font-mono text-[10px] text-[#7387aa]">
                               UID: #{vip.userId}
                             </span>
                           </div>
@@ -261,12 +168,12 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
                         <div className="space-y-0.5">
                           {vip.email && (
                             <div className="flex items-center gap-1.5 text-slate-600">
-                              <Mail size={11} className="text-slate-400" />
+                              <Mail size={11} className="text-[#7387aa]" />
                               <span className="truncate max-w-44">{vip.email}</span>
                             </div>
                           )}
                           {vip.phone && (
-                            <div className="flex items-center gap-1.5 text-slate-400">
+                            <div className="flex items-center gap-1.5 text-[#7387aa]">
                               <Phone size={11} />
                               <span>{vip.phone}</span>
                             </div>
@@ -282,14 +189,14 @@ export function AnalyticsCustomersTab({ data }: AnalyticsCustomersTabProps) {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className="font-bold text-slate-800">
+                        <span className="font-bold text-[#0b1747]">
                           {vip.totalBookings} tour
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right font-black text-blue-700">
+                      <td className="py-3 px-4 text-right font-bold text-blue-700">
                         {formatVND(vip.totalSpent)}
                       </td>
-                      <td className="py-3 px-4 text-right text-slate-400 text-[11px]">
+                      <td className="py-3 px-4 text-right text-[#7387aa] text-[11px]">
                         {vip.lastBookingDate || "Chưa có"}
                       </td>
                     </tr>

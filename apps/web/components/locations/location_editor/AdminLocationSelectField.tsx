@@ -15,13 +15,13 @@ export function LocationSelectField({ label, value, options, disabled, loading, 
 }) {
   return (
     <fieldset disabled={disabled || loading} className="min-w-0 disabled:opacity-55">
-      <legend className="mb-1.5 flex items-center gap-2 text-[12px] font-semibold text-[#102044]">
-        {label}{loading && <Loader2 size={12} className="animate-spin text-blue-500" />}
+      <legend className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[#07123e]">
+        {label}{loading && <Loader2 size={12} className="animate-spin text-[#075bff]" />}
       </legend>
       <CustomDropdown ariaLabel={label} selectedValue={value} placeholder={loading ? "Đang tải..." : placeholder}
         options={options.map(item => ({ value: String(item.location_id), label: item.name }))}
         onSelect={next => { if (!disabled && !loading) onChange(next); }} variant="compact" matchTriggerWidth
-        className="min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:rounded-[8px] [&_button[aria-haspopup=listbox]]:border-[#dce5f3] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:px-3 [&_button[aria-haspopup=listbox]]:py-2 [&_button[aria-haspopup=listbox]]:text-[12px] [&_button[aria-haspopup=listbox]]:font-medium [&_button[aria-haspopup=listbox]]:shadow-none" />
+        className="min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-[#e1edfc] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:px-3 [&_button[aria-haspopup=listbox]]:py-2 [&_button[aria-haspopup=listbox]]:text-xs [&_button[aria-haspopup=listbox]]:font-medium [&_button[aria-haspopup=listbox]]:shadow-none" />
     </fieldset>
   );
 }

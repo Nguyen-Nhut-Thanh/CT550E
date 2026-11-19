@@ -4,7 +4,6 @@ import { removeToken } from "@/lib/auth/client/session";
 import { NavigationPending } from "@/components/common/navigation_layout/NavigationPending";
 import { useWorkforceIdentity } from "@/components/common/admin_shared/guards/AdminGuard";
 import {
-  ArrowLeft,
   BarChart3,
   Briefcase,
   CalendarDays,
@@ -100,7 +99,13 @@ export const AdminSidebar = ({
       className={`admin-navigation ${open ? "flex" : "hidden"} fixed left-0 top-0 z-40 h-dvh w-64 flex-shrink-0 flex-col overflow-hidden border-r border-slate-800 bg-slate-900 text-slate-300 shadow-xl lg:sticky lg:flex`}
     >
       <div className="flex h-16 items-center border-b border-slate-800 bg-slate-950 px-6">
-        <div className="flex items-center gap-3 text-xl font-black tracking-wide text-white">
+        <Link
+          href="/"
+          onClick={onClose}
+          aria-label="JourniTrip — Về trang chủ website"
+          title="Về trang chủ website"
+          className="flex items-center gap-3 rounded-lg text-xl font-black tracking-wide text-white transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+        >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600">
             <Compass size={23} />
           </span>
@@ -115,18 +120,6 @@ export const AdminSidebar = ({
               Travel Management System
             </p>
           </div>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <Link
-          href="/"
-          className="group flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-sm font-bold text-white transition-all hover:bg-white/10"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 transition-transform group-hover:scale-110">
-            <ArrowLeft size={16} />
-          </div>
-          Quay lại website
         </Link>
       </div>
 

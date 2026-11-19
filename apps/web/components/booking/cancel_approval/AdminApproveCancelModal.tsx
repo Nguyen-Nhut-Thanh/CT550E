@@ -34,9 +34,9 @@ export function AdminApproveModalContent({
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start p-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start p-4.5 sm:p-5">
       {/* CỘT TRÁI: Thẻ tóm tắt tour + Đếm ngược thời gian, 3 ô chi phí, Bảng quy định hoàn hủy tour */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <BookingTourSummaryCard
           booking={booking}
           totalAmount={totalAmount}
@@ -65,7 +65,7 @@ export function AdminApproveModalContent({
       </div>
 
       {/* CỘT PHẢI: Chi tiết khách gửi, Số tiền duyệt hoàn, Ghi chú admin */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <BookingCancelRequestCard
           booking={booking}
           cancelDetails={cancelDetails}
@@ -79,7 +79,7 @@ export function AdminApproveModalContent({
         />
 
         {/* Số tiền duyệt hoàn trả */}
-        <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
+        <div className="space-y-2 rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-800">
               Số tiền duyệt hoàn trả (VNĐ)
@@ -103,7 +103,7 @@ export function AdminApproveModalContent({
             icon={null}
             suffix="đ"
             placeholder="Ví dụ: 2.500.000"
-            inputClassName="w-full h-10 rounded-xl border border-slate-200 bg-white px-3.5 pr-9 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 shadow-2xs"
+            inputClassName="w-full h-9.5 rounded-lg border border-slate-200 bg-white px-3.5 pr-9 text-xs font-semibold text-slate-900 outline-none transition focus:border-emerald-500 shadow-2xs"
           />
           <p className="text-[11px] text-slate-500">
             Số tiền này sẽ được lưu vào ghi chú xử lý booking và gửi email thông báo hoàn tiền đến khách.
@@ -111,7 +111,7 @@ export function AdminApproveModalContent({
         </div>
 
         {/* Ghi chú xử lý */}
-        <div className="space-y-1.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
+        <div className="space-y-1.5 rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs">
           <label className="text-xs font-bold text-slate-800">
             Ghi chú xử lý của ban quản trị
           </label>
@@ -120,7 +120,7 @@ export function AdminApproveModalContent({
             onChange={(event) => setActionNote(event.target.value)}
             rows={3}
             placeholder="Ví dụ: Hoàn tiền theo chính sách chuyển/hủy tour của chương trình."
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-900 outline-none transition focus:border-emerald-500 shadow-2xs"
+            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-900 outline-none transition focus:border-emerald-500 shadow-2xs"
           />
         </div>
       </div>

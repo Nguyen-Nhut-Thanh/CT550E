@@ -1,8 +1,11 @@
 "use client";
 
+import { AdminStatCard } from "@/components/common/admin_shared/cards/AdminStatCard";
+
 import { formatVND } from "@/lib/utils/currency";
 import {
   CheckCircle2,
+  MessageSquare,
   Gift,
   HeartHandshake,
   Percent,
@@ -66,126 +69,59 @@ export function AnalyticsMarketingTab({ data }: AnalyticsMarketingTabProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* SECTION 1: VOUCHERS & PROMOTIONS */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+      <div className="min-w-0 rounded-[14px] border border-[#e1edfc] bg-white p-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-[#edf2fb]">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
             <Gift size={18} />
           </div>
           <div>
-            <h4 className="text-base font-bold text-slate-900">
+            <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
               Hiệu Quả Mã Khuyến Mãi & Voucher Ưu Đãi
             </h4>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7387aa]">
               Thống kê lượt phát hành, mức độ đón nhận và ngân sách giảm giá cho khách
             </p>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-              <Ticket size={14} className="text-purple-500" />
-              <span>Tổng voucher phát hành</span>
-            </div>
-            <p className="mt-2 text-2xl font-black text-slate-900">
-              {vouchers.totalIssued.toLocaleString("vi-VN")}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400">
-              Có <span className="font-bold text-purple-600">{vouchers.activeCount} mã</span> đang hoạt động
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-              <CheckCircle2 size={14} className="text-emerald-500" />
-              <span>Lượt voucher đã áp dụng</span>
-            </div>
-            <p className="mt-2 text-2xl font-black text-slate-900">
-              {vouchers.totalUsed.toLocaleString("vi-VN")} lượt
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400">
-              Tỷ lệ sử dụng đạt <span className="font-bold text-emerald-600">{usageRate}%</span>
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-              <Tag size={14} className="text-rose-500" />
-              <span>Tổng ngân sách giảm giá</span>
-            </div>
-            <p className="mt-2 text-2xl font-black text-rose-600">
-              {formatVND(vouchers.totalDiscountAmount)}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400">Đã trừ trực tiếp vào đơn đặt tour</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-              <Percent size={14} className="text-blue-500" />
-              <span>Chiết khấu TB mỗi đơn</span>
-            </div>
-            <p className="mt-2 text-2xl font-black text-blue-600">
-              {formatVND(avgDiscount)}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400">Mức kích thích nhu cầu mua tour</p>
-          </div>
+        <div className="mt-3 grid grid-cols-4 gap-3 @max-[1180px]/analytics:grid-cols-2 @max-[650px]/analytics:grid-cols-1">
+          <AdminStatCard title="Tổng voucher phát hành" value={vouchers.totalIssued.toLocaleString("vi-VN")} description={`Có ${vouchers.activeCount} mã đang hoạt động`} icon={Ticket} tone="purple" />
+          <AdminStatCard title="Lượt voucher đã áp dụng" value={`${vouchers.totalUsed.toLocaleString("vi-VN")} lượt`} description={`Tỷ lệ sử dụng đạt ${usageRate}%`} icon={CheckCircle2} tone="green" />
+          <AdminStatCard title="Tổng ngân sách giảm giá" value={formatVND(vouchers.totalDiscountAmount)} description="Đã trừ trực tiếp vào đơn đặt tour" icon={Tag} tone="rose" />
+          <AdminStatCard title="Chiết khấu TB mỗi đơn" value={formatVND(avgDiscount)} description="Mức kích thích nhu cầu mua tour" icon={Percent} />
         </div>
       </div>
 
       {/* SECTION 2: REVIEWS & CSAT ANALYSIS */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+      <div className="min-w-0 rounded-[14px] border border-[#e1edfc] bg-white p-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-[#edf2fb]">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
             <Star size={18} className="fill-amber-500" />
           </div>
           <div>
-            <h4 className="text-base font-bold text-slate-900">
+            <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
               Chỉ Số Trải Nghiệm Khách Hàng & Đánh Giá Dịch Vụ (CSAT)
             </h4>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7387aa]">
               Phân tích chất lượng các chuyến đi dựa trên đánh giá trực tiếp từ du khách
             </p>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mt-3 grid grid-cols-3 gap-3 @max-[900px]/analytics:grid-cols-1">
           {/* Big Score Card */}
-          <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/60 to-orange-50/30 p-6 flex flex-col items-center justify-center text-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700">
-              Điểm Đánh Giá Trung Bình
-            </span>
-            <div className="mt-2 text-5xl font-black text-slate-900 tracking-tight">
-              {reviews.averageRating}
-              <span className="text-2xl font-normal text-slate-400"> / 5.0</span>
+          <AdminStatCard title="Điểm đánh giá trung bình" value={`${reviews.averageRating} / 5.0`} description={`Dựa trên tổng cộng ${reviews.totalReviews.toLocaleString("vi-VN")} lượt đánh giá`} icon={MessageSquare} tone="amber"
+            badge={<span className="rounded-full border border-emerald-100 bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{reviews.satisfactionRate}% hài lòng</span>}
+          >
+            <div className="flex items-center justify-center gap-1 text-amber-500" aria-label={`Điểm trung bình ${reviews.averageRating} trên 5 sao`}>
+              {[1,2,3,4,5].map(star => <Star key={star} size={20} className={star <= Math.round(reviews.averageRating) ? "fill-amber-400 text-amber-400" : "text-slate-200"} />)}
             </div>
-            <div className="mt-2 flex items-center gap-1 text-amber-500">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  size={20}
-                  className={
-                    star <= Math.round(reviews.averageRating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-slate-200"
-                  }
-                />
-              ))}
-            </div>
-            <p className="mt-3 text-xs font-semibold text-slate-600">
-              Dựa trên tổng cộng{" "}
-              <span className="font-black text-slate-900">
-                {reviews.totalReviews.toLocaleString("vi-VN")} lượt đánh giá
-              </span>
-            </p>
-            <div className="mt-4 rounded-xl bg-white/90 border border-amber-200/60 px-3.5 py-2 text-xs font-bold text-emerald-700 shadow-2xs">
-              <span className="text-base font-black">{reviews.satisfactionRate}%</span> khách hàng hài lòng (4-5 sao)
-            </div>
-          </div>
+          </AdminStatCard>
 
           {/* Star Breakdown Progress Bars */}
-          <div className="lg:col-span-2 space-y-3 flex flex-col justify-center">
+          <div className="col-span-2 @max-[900px]/analytics:col-span-1 space-y-3 flex flex-col justify-center">
             {starLevels.map((lvl) => {
               const pct = Math.round((lvl.count / totalReviewsCount) * 100);
               return (
@@ -195,7 +131,7 @@ export function AnalyticsMarketingTab({ data }: AnalyticsMarketingTabProps) {
                     <Star size={12} className="fill-amber-400 text-amber-400" />
                   </div>
 
-                  <div className="h-3 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 min-w-0 flex-1 rounded-[20px] bg-[#e1eaf7] overflow-hidden">
                     <div
                       className={`h-full ${lvl.color} rounded-full transition-all duration-300`}
                       style={{ width: `${Math.min(pct, 100)}%` }}
@@ -203,11 +139,11 @@ export function AnalyticsMarketingTab({ data }: AnalyticsMarketingTabProps) {
                   </div>
 
                   <div className="w-24 shrink-0 text-right">
-                    <span className="font-bold text-slate-900">{lvl.count}</span>
-                    <span className="text-slate-400 text-[11px] ml-1">({pct}%)</span>
+                    <span className="font-bold text-[#0b1747]">{lvl.count}</span>
+                    <span className="text-[#7387aa] text-[11px] ml-1">({pct}%)</span>
                   </div>
 
-                  <div className="w-24 shrink-0 text-right text-[11px] font-semibold text-slate-500">
+                  <div className="w-24 shrink-0 text-right text-[11px] font-semibold text-[#7387aa] @max-[650px]/analytics:hidden">
                     {lvl.label}
                   </div>
                 </div>

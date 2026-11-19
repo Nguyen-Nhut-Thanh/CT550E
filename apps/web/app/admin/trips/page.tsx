@@ -148,7 +148,7 @@ function TripsContent() {
   ).length;
 
   return (
-    <div className="space-y-5 pb-12 font-sans">
+    <div className="space-y-3 pb-12 font-sans">
       {/* Page Header with Stats */}
       <TripsPageHeader
         scheduleId={scheduleId}
@@ -174,16 +174,16 @@ function TripsContent() {
 
       {/* Focus schedule alert banner */}
       {scheduleId && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e1edfc] bg-blue-50/60 p-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-600 text-white">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#075bff] text-white shadow-xs">
               <CalendarDays size={18} />
             </span>
             <div>
-              <p className="text-xs font-bold text-blue-900">
+              <p className="text-xs font-bold text-[#075bff]">
                 Đang lọc riêng chuyến #{scheduleId}
               </p>
-              <p className="text-sm font-semibold text-slate-700">
+              <p className="text-sm font-semibold text-[#0b1747]">
                 {selectedSchedule?.tours.name || `Chuyến khởi hành #${scheduleId}`}
               </p>
             </div>
@@ -191,7 +191,7 @@ function TripsContent() {
           <button
             type="button"
             onClick={() => updateNavigation(mode, region, undefined)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-700 shadow-xs hover:bg-blue-50 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3.5 py-1.5 text-xs font-bold text-[#075bff] shadow-xs hover:bg-blue-50 transition cursor-pointer"
           >
             <ArrowLeft size={14} />
             <span>Xem tất cả chuyến</span>

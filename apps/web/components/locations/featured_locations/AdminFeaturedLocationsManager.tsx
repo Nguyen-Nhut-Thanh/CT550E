@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+
 import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards/AdminContentPermission";
 import { FeaturedLocationsLeftPanel } from "@/components/locations/featured_locations/AdminFeaturedLocationsLeftPanel";
 import { FeaturedLocationsRightPanel } from "@/components/locations/featured_locations/AdminFeaturedLocationsRightPanel";
@@ -11,7 +13,7 @@ import {
   getCurrentFeatured,
 } from "@/lib/locations/admin/featured";
 import { useToast } from "@/lib/notifications/useToast";
-import { ArrowLeft, Info, Loader2, MapPin, Save, Tag } from "lucide-react";
+import { ArrowLeft, Info, Loader2, MapPin, Save, Tag, Star, LayoutGrid, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdminLocationItem } from "shared";
@@ -153,60 +155,60 @@ export function FeaturedLocationsManager({ showBackBtn = false }: { showBackBtn?
 
   if (loading && !regions.length) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+      <div className="flex min-h-[300px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-6 shadow-2xs">
         <div className="flex items-center gap-3 text-slate-500">
           <Loader2 size={24} className="animate-spin text-blue-600" />
-          <span>Đang tải danh sách địa điểm yêu thích...</span>
+          <span className="text-xs sm:text-sm font-medium">Đang tải danh sách địa điểm yêu thích...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3.5">
       {/* Top Banner Action Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/60 p-5">
-        <div className="flex items-center gap-3.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/60 via-sky-50/40 to-indigo-50/50 p-4 sm:p-4.5 shadow-2xs">
+        <div className="flex items-center gap-3">
           {showBackBtn && (
             <button
               type="button"
               onClick={() => router.push("/admin/locations")}
               aria-label="Quay lại quản lý địa điểm"
-              className="grid size-9 shrink-0 place-items-center rounded-xl border border-blue-200 bg-white text-slate-600 transition hover:bg-blue-50"
+              className="grid size-9 shrink-0 place-items-center rounded-lg border border-[#e1edfc] bg-white text-slate-600 transition hover:bg-blue-50 cursor-pointer shadow-2xs"
             >
-              <ArrowLeft size={17} />
+              <ArrowLeft size={16} />
             </button>
           )}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <MapPin size={24} />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-blue-600 text-white shadow-xs">
+            <MapPin size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
               Quản lý Địa điểm Yêu thích
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
+            <p className="mt-0.5 text-xs text-slate-500">
               Chọn và sắp xếp các điểm đến nổi bật theo từng vùng miền hiển thị trên trang chủ website.
             </p>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5 self-end sm:self-center">
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
           <button
             type="button"
             disabled={saving}
             onClick={() => router.push("/admin/locations")}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-[#e1edfc] bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
           >
-            <Tag size={15} />
+            <Tag size={14} />
             Thiết lập tag miền
           </button>
           <button
             type="button"
             onClick={() => void handleSave()}
             disabled={readOnly || saving || loading || !activeRegionId}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
+            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50 cursor-pointer"
           >
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             <span>{saving ? "Đang lưu..." : "Lưu thiết lập"}</span>
           </button>
         </div>
@@ -216,28 +218,35 @@ export function FeaturedLocationsManager({ showBackBtn = false }: { showBackBtn?
       {loadError && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700"
+          className="flex items-center justify-between gap-3 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs text-rose-700"
         >
           <span>{loadError}</span>
           <button
             type="button"
             disabled={loading || saving}
             onClick={() => void (activeRegionId ? loadRegionChildren(activeRegionId) : loadInitialData())}
-            className="shrink-0 font-bold underline hover:text-rose-900"
+            className="shrink-0 font-bold underline hover:text-rose-900 cursor-pointer"
           >
             Thử lại
           </button>
         </div>
       )}
 
+      {!loadError && <AdminStatGrid label="Thống kê địa điểm yêu thích trong miền đang chọn" loading={loading} items={[
+        { id: "regions", title: "Vùng miền", value: regions.length, icon: MapPin },
+        { id: "locations", title: "Địa điểm trong miền", value: allChildren.length, description: regions.find(item => item.location_id === activeRegionId)?.name || "Chưa chọn miền", icon: LayoutGrid, tone: "purple" },
+        { id: "selected", title: "Đã chọn hiển thị", value: featured.length, description: "Lựa chọn đang chỉnh sửa của miền", icon: Star, tone: "green" },
+        { id: "remaining", title: "Vị trí còn trống", value: Math.max(0, FEATURED_LIMIT - featured.length), description: `Tối đa ${FEATURED_LIMIT} địa điểm mỗi miền`, icon: CheckCircle2, tone: "amber" },
+      ]} />}
+
       {/* Region Selector Pills */}
       {!!regions.length && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
           <span className="text-xs font-bold text-slate-500 shrink-0 mr-1">Vùng miền:</span>
           <div
             role="group"
             aria-label="Chọn miền hiển thị"
-            className="flex shrink-0 gap-1 rounded-xl border border-slate-200 bg-slate-100/70 p-1"
+            className="flex shrink-0 gap-1 rounded-xl border border-[#e1edfc] bg-slate-100/70 p-1 shadow-2xs"
           >
             {regions.map((region) => (
               <button
@@ -248,9 +257,9 @@ export function FeaturedLocationsManager({ showBackBtn = false }: { showBackBtn?
                 onClick={() => {
                   if (activeRegionId !== region.location_id) void loadRegionChildren(region.location_id);
                 }}
-                className={`min-h-8 min-w-24 rounded-lg px-4 py-1.5 text-xs font-bold transition-all disabled:cursor-wait ${
+                className={`min-h-7.5 min-w-20 rounded-lg px-3.5 py-1 text-xs font-bold transition-all disabled:cursor-wait cursor-pointer ${
                   activeRegionId === region.location_id
-                    ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : "text-slate-600 hover:bg-white hover:text-slate-900"
                 }`}
               >
@@ -263,11 +272,11 @@ export function FeaturedLocationsManager({ showBackBtn = false }: { showBackBtn?
 
       {/* No region warning */}
       {!regions.length && !loading && !loadError && (
-        <div className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-white p-5 text-xs sm:text-sm leading-6 text-slate-600">
-          <Info size={20} className="mt-0.5 shrink-0 text-blue-500" />
+        <div className="flex items-start gap-3 rounded-[14px] border border-[#e1edfc] bg-white p-4 text-xs sm:text-sm leading-relaxed text-slate-600 shadow-2xs">
+          <Info size={18} className="mt-0.5 shrink-0 text-blue-500" />
           <div>
             <h3 className="font-bold text-slate-900">Chưa có miền hiển thị</h3>
-            <p className="mt-1">
+            <p className="mt-0.5 text-xs text-slate-500">
               Thiết lập các vùng miền nổi bật trong Quản lý địa điểm để chọn địa điểm cho trang chủ.
             </p>
           </div>
@@ -277,7 +286,7 @@ export function FeaturedLocationsManager({ showBackBtn = false }: { showBackBtn?
       {/* Dual Panel Grid */}
       {!!regions.length && (
         <div
-          className="grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(280px,1fr)_minmax(0,1.95fr)]"
+          className="grid min-w-0 grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[minmax(280px,1fr)_minmax(0,1.95fr)]"
           aria-busy={loading}
         >
           <FeaturedLocationsLeftPanel

@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatCard } from "@/components/common/admin_shared/cards/AdminStatCard";
+
 import {
   ArrowRight,
   BarChart3,
@@ -216,38 +218,8 @@ export function WorkforceOverviewPanel({
 
   return (
     <div className="[--ink:#0b1747] [--muted:#7387aa] [--line:#e1edfc] grid text-[var(--ink)] @container/workforce-overview gap-3">
-      <div className="grid grid-cols-3 overflow-hidden rounded-[14px] bg-[#fff] shadow-[0_5px_22px_#5a99e006] border border-[var(--line)] border-solid @max-[650px]/workforce-overview:grid-cols-[1fr]">
-        {metrics.map((metric, index) => (
-          <button
-            key={metric.label}
-            type="button"
-            onClick={() => onNavigate(metric.target)}
-            className="relative flex items-center min-w-0 min-h-20.5 text-left [transition:background_.18s] px-4 py-3 gap-3 hover:bg-[#f7fbff] [&+&::before]:content-[''] [&+&::before]:absolute [&+&::before]:left-0 [&+&::before]:top-2 [&+&::before]:bottom-2 [&+&::before]:w-px [&+&::before]:bg-[#e8effa] [&:last-child]:[background:linear-gradient(110deg,_#fff,_#fffbf5)] @max-[1180px]/workforce-overview:p-3 @max-[1180px]/workforce-overview:gap-2.5 @max-[900px]/workforce-overview:gap-2.5 @max-[650px]/workforce-overview:min-h-19 @max-[650px]/workforce-overview:px-4 @max-[650px]/workforce-overview:py-3 @max-[650px]/workforce-overview:[&+&::before]:top-0 @max-[650px]/workforce-overview:[&+&::before]:bottom-auto @max-[650px]/workforce-overview:[&+&::before]:right-4.5 @max-[650px]/workforce-overview:[&+&::before]:left-4.5 @max-[650px]/workforce-overview:[&+&::before]:w-auto @max-[650px]/workforce-overview:[&+&::before]:h-px motion-reduce:[transition:none]"
-          >
-            <span
-              className="grid w-10.5 h-11 shrink-0 place-items-center rounded-[11px] [&_svg]:w-6.5 [&_svg]:h-6.5 @max-[900px]/workforce-overview:w-9.5 @max-[900px]/workforce-overview:h-10.5"
-              style={{ color: metric.color, background: metric.background }}
-            >
-              <metric.icon size={26} strokeWidth={2.2} />
-            </span>
-            <div className="flex min-w-0 flex-col gap-1">
-              <p className="text-[25px] font-extrabold leading-[1.1]">
-                {String(metric.value).padStart(2, "0")}
-              </p>
-              <p
-                className="mt-0 text-[13px] leading-[1.4] text-[#52658d] @max-[900px]/workforce-overview:text-[12px] @max-[650px]/workforce-overview:text-[13px]"
-                style={index === 2 ? { color: metric.color } : undefined}
-              >
-                {metric.label}
-              </p>
-            </div>
-            {index === 2 && (
-              <span className="grid shrink-0 w-7 h-7 place-items-center ml-auto rounded-full bg-[#f5f9ff] text-[#075bff] border border-[#e6effc] border-solid @max-[900px]/workforce-overview:hidden @max-[650px]/workforce-overview:grid">
-                <ChevronRight size={17} />
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="grid grid-cols-3 gap-3 @max-[650px]/workforce-overview:grid-cols-1">
+        {metrics.map((metric, index) => <AdminStatCard key={metric.label} title={metric.label} value={String(metric.value).padStart(2, "0")} icon={metric.icon} tone={index === 0 ? "green" : index === 1 ? "purple" : "amber"} onClick={() => onNavigate(metric.target)} />)}
       </div>
 
       <div className="grid grid-cols-[minmax(0,_2fr)_minmax(280px,_1fr)] items-stretch gap-3 @max-[900px]/workforce-overview:grid-cols-[1fr]">
@@ -564,42 +536,12 @@ export function WorkforceOverviewPanel({
               ).length;
               const appearance = regionStyle[regionCode];
               return (
-                <button
-                  key={code}
-                  type="button"
-                  aria-label={`Xem điều hành ${label}`}
-                  onClick={() => onNavigate("trips", { region: code })}
-                  className="flex flex-wrap items-center min-w-0 rounded-[12px] text-left [transition:filter_.18s] p-3 gap-2.5 hover:[filter:saturate(1.25)] motion-reduce:[transition:none]"
-                  style={{ background: appearance.background }}
-                >
-                  <span
-                    className="grid w-9 h-9 shrink-0 place-items-center rounded-full [&_svg]:w-[23px] [&_svg]:h-[23px]"
-                    style={{
-                      background: appearance.iconBackground,
-                      color: appearance.color,
-                    }}
-                  >
-                    <appearance.icon size={27} strokeWidth={2.1} />
-                  </span>
-                  <div>
-                    <h3 className="text-[13px] font-bold whitespace-nowrap">
-                      {label}
-                    </h3>
-                    <p className="text-[22px] font-extrabold leading-[1.2] mt-0.5">
-                      {people.length}
-                      <span className="ml-[5px] text-[11px] font-normal text-[var(--muted)]">
-                        nhân viên
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex flex-1 flex-wrap justify-evenly gap-y-1 gap-x-2 min-w-0 ml-[5px] pl-3 border-l [border-left-style:solid] border-l-[#dce8f5] text-[#6c83a6] text-[12px] [&_span]:whitespace-nowrap">
-                    <span>{guides} HDV</span>
-                    <span>{operators} Điều hành</span>
-                  </div>
-                  <span className="grid shrink-0 w-[25px] h-[25px] place-items-center rounded-full bg-[#ffffffa8] text-[#075bff]">
-                    <ChevronRight size={15} />
-                  </span>
-                </button>
+                <AdminStatCard key={code} title={label} value={`${people.length} nhân viên`} icon={appearance.icon}
+                  tone={regionCode === "north" ? "blue" : regionCode === "central" ? "green" : "amber"}
+                  description={`${guides} HDV · ${operators} Điều hành`}
+                  ariaLabel={`Xem điều hành ${label}`} onClick={() => onNavigate("trips", { region: code })}
+                  badge={<ChevronRight size={15} className="text-blue-600" />}
+                />
               );
             })}
           </div>

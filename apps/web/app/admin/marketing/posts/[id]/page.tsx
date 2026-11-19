@@ -15,7 +15,7 @@ import {
   createDefaultPostEditorForm,
 } from "@/lib/posts/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import type {
@@ -170,43 +170,52 @@ export default function AdminPostEditorPage({
 
   if (loading) {
     return (
-      <div className="flex justify-center p-20">
-        <Loader2 className="animate-spin text-blue-600" />
+      <div className="flex min-h-[400px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-8 shadow-2xs">
+        <div className="flex items-center gap-3 text-slate-500">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="text-xs sm:text-sm font-medium">Đang tải thông tin bài viết...</span>
+        </div>
       </div>
     );
   }
   if (loadError)
     return (
-      <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">
-        {loadError}
-        <button
-          onClick={() => window.location.reload()}
-          className="ml-4 underline"
-        >
-          Tải lại
-        </button>
-        <button
-          onClick={() => router.push("/admin/marketing/posts")}
-          className="ml-4 underline"
-        >
-          Về danh sách
-        </button>
+      <div role="alert" className="flex items-center justify-between rounded-[14px] border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 shadow-2xs">
+        <span>{loadError}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="font-bold underline cursor-pointer"
+          >
+            Tải lại
+          </button>
+          <button
+            onClick={() => router.push("/admin/marketing/posts")}
+            className="underline cursor-pointer"
+          >
+            Về danh sách
+          </button>
+        </div>
       </div>
     );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      <div className="flex items-center gap-3.5">
         <button
-          onClick={() => router.back()}
-          className="rounded-full p-2 text-slate-400 transition-all hover:bg-slate-100"
+          type="button"
+          aria-label="Quay lại danh sách bài viết"
+          onClick={() => router.push("/admin/marketing/posts")}
+          className="grid size-9 shrink-0 place-items-center rounded-xl border border-[#dce6f4] bg-white text-[#627491] shadow-2xs transition-colors hover:border-[#98bcfb] hover:text-[#1260eb] cursor-pointer"
         >
-          <ChevronLeft size={24} />
+          <ArrowLeft size={18} />
         </button>
-        <AdminPageHeader
-          title={isNew ? "Viết bài mới" : "Chỉnh sửa bài viết"}
-          description="Tạo nội dung thu hút để tiếp cận nhiều khách hàng hơn."
-        />
+        <div className="min-w-0 flex-1">
+          <AdminPageHeader
+            title={isNew ? "Viết bài mới" : "Chỉnh sửa bài viết"}
+            description="Tạo nội dung thu hút để tiếp cận nhiều khách hàng hơn."
+          />
+        </div>
       </div>
 
       <PostCategoriesModal
@@ -218,7 +227,7 @@ export default function AdminPostEditorPage({
         onCreate={addCategory}
         onDraftChange={setNewCategory}
       />
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/50 px-4 py-3 text-xs leading-5 text-blue-800 shadow-2xs">
         <p>
           {isNew
             ? "Đã tạo sẵn mẫu giới thiệu điểm đến. Điền nội dung vào từng khối hoặc thêm, di chuyển và xóa khối theo ý bạn."
@@ -226,15 +235,13 @@ export default function AdminPostEditorPage({
         </p>
         <button
           onClick={() => setShowCategories(true)}
-          className="font-bold underline"
+          className="font-bold text-blue-700 underline hover:text-blue-900 cursor-pointer"
         >
           Thêm / quản lý danh mục
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <PostEditorContent form={form} onFormChange={setForm} />
-        </div>
+      <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.9fr)_minmax(290px,1fr)]">
+        <PostEditorContent form={form} onFormChange={setForm} />
 
         <PostEditorSidebar
           isNew={isNew}

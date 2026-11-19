@@ -63,6 +63,7 @@ export type AdminPaginationProps = {
     variant?: "simple" | "numbered";
     showSinglePage?: boolean;
     onPageChange: (page: number) => void;
+    className?: string;
 };
 export type AdminSearchInputProps = {
     value: string;
@@ -79,7 +80,7 @@ export type AdminStatusBadgeProps = {
     className?: string;
 };
 export interface AdminTableColumn<T> {
-    header: string;
+    header: ReactNode;
     render: (item: T, index: number) => ReactNode;
     className?: string;
     align?: "left" | "center" | "right";
@@ -117,7 +118,7 @@ export interface ImageUploadProps {
 export interface PriceInputProps {
     id?: string;
     inputClassName?: string;
-    label: string;
+    label?: string;
     value: number | string;
     onChange: (value: number) => void;
     placeholder?: string;

@@ -1,5 +1,10 @@
 
 import type { NextConfig } from "next";
+import { config } from "dotenv";
+import { resolve } from "node:path";
+
+// Share the repository-root environment with the API and database workspace.
+config({ path: resolve(__dirname, "../../.env"), quiet: true });
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_BUILD_DIR || ".next",

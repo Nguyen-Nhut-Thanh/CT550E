@@ -11,6 +11,54 @@ export function formatScheduleDate(value: string) {
   return formatDate(value, undefined, "—");
 }
 
+export function formatScheduleDateRange(
+  startDateStr?: string | null,
+  endDateStr?: string | null,
+  durationDays?: number | null,
+) {
+  if (!startDateStr) {
+    return { isSameDay: false, startFormatted: "—", endFormatted: "—", displayFormatted: "—" };
+  }
+  const startFormatted = formatScheduleDate(startDateStr);
+  let endFormatted = endDateStr ? formatScheduleDate(endDateStr) : startFormatted;
+  const startObj = new Date(startDateStr);
+  const endObj = endDateStr ? new Date(endDateStr) : null;
+  const sameDay =
+    !endObj ||
+    isNaN(endObj.getTime()) ||
+    isNaN(startObj.getTime()) ||
+    startObj.toISOString().slice(0, 10) === endObj.toISOString().slice(0, 10) ||
+    startFormatted === endFormatted;
+
+  if (sameDay && durationDays && durationDays > 1 && !isNaN(startObj.getTime())) {
+    const computedEnd = new Date(startObj);
+    computedEnd.setDate(computedEnd.getDate() + (durationDays - 1));
+    endFormatted = formatScheduleDate(computedEnd.toISOString());
+    return {
+      isSameDay: false,
+      startFormatted,
+      endFormatted,
+      displayFormatted: `${startFormatted} -> ${endFormatted}`,
+    };
+  }
+
+  if (sameDay) {
+    return {
+      isSameDay: true,
+      startFormatted,
+      endFormatted,
+      displayFormatted: `${startFormatted} (Trong ngày)`,
+    };
+  }
+
+  return {
+    isSameDay: false,
+    startFormatted,
+    endFormatted,
+    displayFormatted: `${startFormatted} -> ${endFormatted}`,
+  };
+}
+
 export function getSchedulePickupOptions(schedules: AdminSchedule[]) {
   const names = new Map<string, string>();
   for (const schedule of schedules) {

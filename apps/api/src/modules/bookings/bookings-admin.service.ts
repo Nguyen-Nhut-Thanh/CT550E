@@ -423,6 +423,15 @@ export class BookingsAdminService {
                     throw new BadRequestException('Đợt khởi hành mới đã qua ngày khởi hành.');
                 }
 
+                // Kiểm tra cơ chế chốt tour trước giờ khởi hành (cut_off_hours)
+                const cutOffHours = newSchedule.tours?.cut_off_hours ?? 24;
+                const diffHours = (new Date(newSchedule.start_date).getTime() - Date.now()) / (1000 * 60 * 60);
+                if (diffHours < cutOffHours) {
+                    throw new BadRequestException(
+                        `Đợt khởi hành mới đã bước vào thời gian chốt tour (cách giờ khởi hành dưới ${cutOffHours} giờ), không thể chọn đợt này để dời lịch.`
+                    );
+                }
+
                 // Tính toán giá tiền đợt mới để xem có chênh lệch không
                 const adultPrice = Number(newSchedule.price) || 0;
                 const childPrice = Number(newSchedule.tour_schedule_prices?.find((p: any) => p.passenger_type === 'child')?.price ?? adultPrice * 0.7);

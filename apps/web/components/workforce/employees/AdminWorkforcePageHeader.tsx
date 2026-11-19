@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminScenicHeaderBackground } from "@/components/common/admin_shared/layout/AdminScenicHeaderBackground";
+
 import Link from "next/link";
 import { Headset, Plane, RefreshCw, UserRoundPlus } from "lucide-react";
 import type { WorkforceActor } from "shared";
@@ -24,13 +26,7 @@ export function WorkforcePageHeader({
 }) {
   return (
     <header className="relative isolate pt-0 pb-0.5 @container/workforce-header px-0">
-      <img
-        src="/images/about/our-story-ha-long-bay.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute z-[-2] -top-4.5 -right-6 w-[61%] h-28 object-cover [object-position:center_58%] opacity-[.27] [filter:saturate(.9)_brightness(1.12)] [mask-image:linear-gradient(to_left,_black_58%,_transparent)] @max-[760px]/workforce-header:w-[78%] @max-[760px]/workforce-header:opacity-[.2]"
-      />
-      <div className="pointer-events-none absolute z-[-1] -top-4.5 -right-6 bottom-auto -left-6 h-30.5 [background:linear-gradient(180deg,_#edf7ffba,_#eff6ff00_56%,_#eff6ff)]" />
+      <AdminScenicHeaderBackground />
       <div
         className="pointer-events-none absolute z-[-1] w-[30%] h-[65px] left-[43%] -top-[9px] opacity-[.72] @max-[1080px]/workforce-header:hidden"
         aria-hidden="true"
@@ -52,10 +48,7 @@ export function WorkforcePageHeader({
       </div>
       <div className="flex flex-wrap justify-between items-center gap-y-3 gap-x-5 [&>div:first-child]:min-w-0 @max-[760px]/workforce-header:flex-col @max-[760px]/workforce-header:items-start @max-[760px]/workforce-header:gap-2.5">
         <div>
-          <p className="text-[#075bff] text-[12px] font-normal leading-[1.5]">
-            Điều hành tour
-          </p>
-          <h1 className="mt-[5px] text-[#07123e] text-[24px] font-extrabold leading-[1.25] tracking-[-.6px]! @max-[760px]/workforce-header:text-[22px]">
+          <h1 className="text-[#07123e] text-[24px] font-extrabold leading-[1.25] tracking-[-.6px]! @max-[760px]/workforce-header:text-[22px]">
             Nhân sự & điều hành
           </h1>
           <p className="mt-[3px] text-[#637da5] text-[12px] leading-[1.5]">

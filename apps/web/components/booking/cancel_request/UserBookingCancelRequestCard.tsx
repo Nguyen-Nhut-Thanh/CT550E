@@ -57,24 +57,24 @@ export function BookingCancelRequestCard({
 
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-3 shadow-2xs ${className}`}
+      className={`rounded-[14px] border border-[#e1edfc] bg-white p-4 space-y-3 shadow-2xs ${className}`}
     >
       {/* Header chi tiết yêu cầu */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+      <div className="flex items-center justify-between border-b border-[#edf2fb] pb-2.5">
         <span
           className={`font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 ${
-            isReject ? "text-rose-900" : "text-blue-900"
+            isReject ? "text-rose-900" : "text-[#07123e]"
           }`}
         >
           {isReject ? (
             <AlertCircle size={15} className="text-rose-600" />
           ) : (
-            <CircleDollarSign size={15} className="text-blue-600" />
+            <CircleDollarSign size={15} className="text-[#075bff]" />
           )}
           {isReject ? "Yêu cầu hủy từ khách hàng" : "Chi tiết yêu cầu hủy của khách"}
         </span>
         {cancelDetails?.requestedAt ? (
-          <span className="text-[11px] text-slate-400 font-medium">
+          <span className="text-[11px] text-[#7387aa] font-medium">
             {cancelDetails.requestedAt}
           </span>
         ) : null}

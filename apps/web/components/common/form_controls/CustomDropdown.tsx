@@ -36,7 +36,14 @@ export default function CustomDropdown({
   };
 
   return (
-    <div ref={containerRef} className={`relative ${isDefault ? "space-y-1.5" : ""} ${className}`}>
+    <div
+      ref={containerRef}
+      className={`relative ${isDefault ? "space-y-1.5" : ""} ${
+        isCompact && !className.includes("w-") && !className.includes("min-w-")
+          ? "min-w-[200px]"
+          : ""
+      } ${className}`}
+    >
       {label ? (
         <label
           htmlFor={id}
@@ -60,7 +67,7 @@ export default function CustomDropdown({
           onClick={() => setIsOpen((open) => !open)}
           className={`group flex items-center justify-between gap-3 text-left transition-all duration-300 ${
             isCompact
-              ? `w-full min-w-[210px] rounded-xl border px-4 py-2 text-[14px] font-medium ${
+              ? `w-full min-w-0 rounded-xl border px-3.5 py-2 text-[13px] sm:text-[14px] font-medium ${
                   isOpen
                     ? "border-sky-500 bg-white text-sky-800 shadow-md ring-2 ring-sky-100"
                     : "border-slate-200 bg-slate-50/70 text-slate-700 hover:border-sky-400 hover:bg-white hover:shadow-sm"

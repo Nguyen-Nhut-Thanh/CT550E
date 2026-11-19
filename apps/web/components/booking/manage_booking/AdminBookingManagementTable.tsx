@@ -14,6 +14,37 @@ import { formatVND } from "@/lib/utils/currency";
 import type { AdminBooking } from "shared";
 import { BookingRowActions, type BookingActionType } from "@/components/booking/manage_booking/AdminBookingRowActions";
 
+const statusConfig: Record<
+  string,
+  { label: string; badge: string; dot: string }
+> = {
+  paid: {
+    label: "Đã thanh toán",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  completed: {
+    label: "Hoàn tất",
+    badge: "bg-teal-50 text-teal-700 border-teal-200",
+    dot: "bg-teal-500",
+  },
+  pending: {
+    label: "Chờ thanh toán",
+    badge: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-500",
+  },
+  cancelled: {
+    label: "Đã hủy",
+    badge: "bg-slate-50 text-slate-700 border-slate-200",
+    dot: "bg-slate-400",
+  },
+  cancel_requested: {
+    label: "Yêu cầu hủy",
+    badge: "bg-rose-50 text-rose-700 border-rose-200",
+    dot: "bg-rose-500",
+  },
+};
+
 export function BookingManagementTable({
   items,
   total,
@@ -56,19 +87,42 @@ export function BookingManagementTable({
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+
+  const getStatusBadge = (status: string, note?: string | null) => {
+    const normalized = String(status).toLowerCase();
+    const config = statusConfig[normalized] || {
+      label: getBookingStatusLabel(status, note),
+      badge: "bg-slate-50 text-slate-700 border-slate-200",
+      dot: "bg-slate-400",
+    };
+    const label = getBookingStatusLabel(status, note) || config.label;
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-[650] ${config.badge}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+        {label}
+      </span>
+    );
+  };
+
   return (
     <section
-      className="ui-booking-management-tableCard [border:1px_solid_#e1eaf7] rounded-[16px] [background:white] overflow-hidden min-w-0"
+      className="ui-booking-management-tableCard rounded-[14px] border border-[#e1edfc] bg-white shadow-2xs overflow-hidden min-w-0"
       aria-label="Danh sách booking"
       aria-busy={loading}
     >
-      <div className="ui-booking-management-tableHead flex items-center justify-between gap-[15px] p-[16px_18px] [&_h2]:text-[16px] [&_h2]:font-[750] [&_h2]:text-[#15264a] [&>div]:flex [&>div]:items-center [&>div]:gap-[12px] admin-max-750:flex-wrap admin-max-750:p-[14px] admin-max-750:[&_h2]:text-[14px] admin-max-750:[&>div]:ml-[auto]">
-        <h2>
-          Danh sách booking <span>({total.toLocaleString("vi-VN")})</span>
+      <div className="ui-booking-management-tableHead flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-[#edf2fb]">
+        <h2 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
+          Danh sách booking{" "}
+          <span className="text-[14px] font-semibold text-[#7387aa]">
+            ({total.toLocaleString("vi-VN")})
+          </span>
         </h2>
-        <div>
+        <div className="flex items-center gap-2">
           {selected.length > 0 && (
-            <span className="ui-booking-management-selected text-[11px] text-[#6380ac]">
+            <span className="ui-booking-management-selected text-[11px] font-semibold text-[#6380ac]">
               Đã chọn {selected.length}
             </span>
           )}
@@ -76,18 +130,19 @@ export function BookingManagementTable({
             type="button"
             onClick={exportCsv}
             disabled={loading || !items.length}
-            className="ui-booking-management-export flex items-center gap-[8px] [border:1px_solid_#e1e9f6] [background:white] rounded-[9px] p-[8px_11px] text-[12px] text-[#59759d] [&:hover:enabled]:[background:#f0f6ff] [&:hover:enabled]:text-[#075bff] [&:disabled]:opacity-[.4] [&:disabled]:cursor-not-allowed"
+            className="ui-booking-management-export inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#d3e4ff] bg-white px-3 py-2 text-[12px] font-[650] text-[#075bff] transition-colors hover:bg-[#f1f7ff] disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Download size={16} />
+            <Download size={15} />
             {selected.length ? "Xuất mục đã chọn" : "Xuất trang này"}
           </button>
         </div>
       </div>
-      <div className="ui-booking-management-tableScroll overflow-x-auto [&_table]:border-collapse [&_table]:w-full [&_table]:text-left [&_table]:whitespace-nowrap [&_table]:text-[12px] [&_th]:[background:linear-gradient(#f9fbfe,_#f2f6fa)] [&_th]:p-[13px_14px] [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-[.25px]! [&_th]:font-[650] [&_th]:text-[#7d91b0] [&_th]:[border-top:1px_solid_#e7eef8] [&_th]:[border-bottom:1px_solid_#e7eef8] [&_td]:p-[12px_14px] [&_td]:[border-bottom:1px_solid_#edf2f9] [&_td]:[vertical-align:middle] [&_td]:text-[#5b7398] [&_th:first-child]:pr-[0] [&_th:first-child]:pl-[18px] [&_th:first-child]:w-[34px] [&_td:first-child]:pr-[0] [&_td:first-child]:pl-[18px] [&_td:first-child]:w-[34px] [&_input]:w-[15px] [&_input]:h-[15px] [&_input]:[accent-color:#075bff] [&_input]:[vertical-align:middle] [&_tbody_tr:hover]:[background:#f8fbff] [&_tr[data-selected=true]]:[background:#f8fbff] [&_td.ui-booking-management-amount]:font-[750] [&_td.ui-booking-management-amount]:text-[#172747] admin-max-1250:[&_td]:pl-[12px] admin-max-1250:[&_td]:pr-[12px] admin-max-1250:[&_th]:pl-[12px] admin-max-1250:[&_th]:pr-[12px] min-[1400px]:[&_table]:text-[13px]">
-        <table>
+
+      <div className="ui-booking-management-tableScroll overflow-x-auto">
+        <table className="w-full text-left border-collapse whitespace-nowrap text-[13px]">
           <thead>
-            <tr>
-              <th>
+            <tr className="border-b border-[#edf2fb] bg-slate-50/75 text-[12px] font-[650] text-[#7387aa]">
+              <th className="px-3 py-2.5 w-[36px]">
                 <input
                   ref={checkbox}
                   type="checkbox"
@@ -97,32 +152,32 @@ export function BookingManagementTable({
                   onChange={() =>
                     setSelected(all ? [] : items.map((item) => item.booking_id))
                   }
+                  className="rounded border-slate-300 text-[#075bff] focus:ring-blue-500"
                 />
               </th>
               {[
                 "Mã",
                 "Khách hàng",
                 "Tour",
-                "Ngày đi",
+                "Ngày đi / Đặt",
                 "Số người",
                 "Tổng tiền",
                 "Trạng thái",
-                "Ngày đặt",
                 "Thao tác",
               ].map((label) => (
-                <th key={label} scope="col">
+                <th key={label} scope="col" className="px-3 py-2.5">
                   {label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#edf2fb] text-[13px]">
             {loading
               ? Array.from({ length: 6 }, (_, index) => (
                   <tr key={index} aria-hidden="true">
-                    {Array.from({ length: 10 }, (_, col) => (
-                      <td key={col}>
-                        <span className="ui-booking-management-skeleton block h-[42px] min-w-[30px] rounded-[7px] [background:linear-gradient(90deg,_#f0f5fb,_#fafcff,_#f0f5fb)] [background-size:200%_100%] animate-admin-shimmer motion-reduce:animate-none" />
+                    {Array.from({ length: 9 }, (_, col) => (
+                      <td key={col} className="px-3 py-2.5">
+                        <span className="block h-9 min-w-[30px] rounded-lg bg-slate-100 animate-pulse" />
                       </td>
                     ))}
                   </tr>
@@ -131,8 +186,9 @@ export function BookingManagementTable({
                   <tr
                     key={item.booking_id}
                     data-selected={selected.includes(item.booking_id)}
+                    className="hover:bg-slate-50/60 transition-colors"
                   >
-                    <td>
+                    <td className="px-3 py-2.5">
                       <input
                         type="checkbox"
                         aria-label={`Chọn booking ${item.booking_id}`}
@@ -144,75 +200,78 @@ export function BookingManagementTable({
                               : selected.filter((id) => id !== item.booking_id),
                           )
                         }
+                        className="rounded border-slate-300 text-[#075bff] focus:ring-blue-500"
                       />
                     </td>
-                    <td>
+                    <td className="px-3 py-2.5">
                       <button
                         type="button"
-                        className="ui-booking-management-bookingCode text-[#075bff] font-[750] text-[12px] [&:hover]:underline min-[1400px]:text-[13px]"
+                        className="ui-booking-management-bookingCode font-[650] text-[#075bff] text-[13px] hover:underline cursor-pointer"
                         disabled={busy}
                         onClick={() => onAction(item, "detail")}
                       >
                         #BK{String(item.booking_id).padStart(5, "0")}
                       </button>
                     </td>
-                    <td>
-                      <strong className="ui-booking-management-customer block max-w-[160px] overflow-hidden text-ellipsis text-[12px] font-[650] text-[#1c3153] min-[1400px]:text-[13px]">
+                    <td className="px-3 py-2.5">
+                      <strong className="ui-booking-management-customer block max-w-[170px] truncate text-[13px] font-bold text-[#0b1747]">
                         {item.contact_name || "—"}
                       </strong>
-                      {item.membership_snapshot?.priorityReservation && <span className="mt-1 inline-block rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Ưu tiên giữ chỗ · {item.membership_snapshot.name}</span>}
-                      <span className="ui-booking-management-subtext block text-[11px] text-[#93a4bd] mt-[4px] max-w-[170px] overflow-hidden text-ellipsis">
+                      {item.membership_snapshot?.priorityReservation && (
+                        <span className="mt-0.5 inline-block rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200/80">
+                          Ưu tiên giữ chỗ · {item.membership_snapshot.name}
+                        </span>
+                      )}
+                      <span className="ui-booking-management-subtext block text-[11px] text-[#7387aa] mt-0.5 max-w-[170px] truncate">
                         {item.contact_phone || item.contact_email || "—"}
                       </span>
                     </td>
-                    <td>
-                      <div className="ui-booking-management-tour flex items-center gap-[10px] min-w-[200px] max-w-[255px] [&_img]:w-[43px] [&_img]:h-[42px] [&_img]:object-cover [&_img]:rounded-[7px] [&_img]:shrink-0 [&_img]:[background:#edf4fc] [&>div]:min-w-0 [&_strong]:block [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:text-[12px] [&_strong]:font-semibold [&_strong]:text-[#243a5e] [&_span]:block [&_span]:text-[#92a5c0] [&_span]:text-[10px] [&_span]:mt-[4px] min-[1400px]:[&_strong]:text-[13px]">
+                    <td className="px-3 py-2.5">
+                      <div className="ui-booking-management-tour flex items-center gap-2.5 min-w-[200px] max-w-[260px]">
                         <ImageWithFallback
                           src={
                             item.tour_schedules?.tours?.tour_images?.[0]
                               ?.image_url
                           }
                           alt=""
+                          className="h-10 w-14 rounded-lg object-cover bg-blue-50 shrink-0"
                         />
-                        <div>
+                        <div className="min-w-0">
                           <strong
+                            className="block truncate text-[13px] font-bold text-[#0b1747]"
                             title={
                               item.tour_schedules?.tours?.name ?? undefined
                             }
                           >
                             {item.tour_schedules?.tours?.name || "—"}
                           </strong>
-                          <span>{item.tour_schedules?.tours?.code || "—"}</span>
+                          <span className="block text-[11px] text-[#7387aa] mt-0.5">
+                            {item.tour_schedules?.tours?.code || "—"}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td>
-                      {formatBookingDate(item.tour_schedules?.start_date)}
+                    <td className="px-3 py-2.5">
+                      <div className="text-[12.5px] font-bold text-[#0b1747]">
+                        Đi: {formatBookingDate(item.tour_schedules?.start_date)}
+                      </div>
+                      <div className="text-[11px] text-[#7387aa] mt-0.5">
+                        Đặt: {formatBookingDate(item.created_at)} · {formatBookingDate(item.created_at, true)}
+                      </div>
                     </td>
-                    <td>
-                      <span className="ui-booking-management-guests inline-flex items-center gap-[8px] text-[#5e7aa5] [&_svg]:text-[#8da3c1]">
-                        <Users size={15} />
+                    <td className="px-3 py-2.5">
+                      <span className="ui-booking-management-guests inline-flex items-center gap-1.5 text-slate-700 font-medium">
+                        <Users size={14} className="text-[#7387aa]" />
                         {getBookingGuestCount(item)}
                       </span>
                     </td>
-                    <td className="ui-booking-management-amount">
+                    <td className="px-3 py-2.5 ui-booking-management-amount font-bold text-[#0b1747]">
                       {formatVND(item.total_amount ?? 0)}
                     </td>
-                    <td>
-                      <span
-                        className="ui-booking-management-status inline-block p-[5px_8px] rounded-[20px] [border:1px_solid_#e1e8f2] [background:#f1f5f9] text-[#6a7f9e] text-[9px] font-[650] uppercase [&[data-status=pending]]:[background:#fff9e8] [&[data-status=pending]]:[border-color:#ffebbd] [&[data-status=pending]]:text-[#d8880e] [&[data-status=paid]]:[background:#eafbf3] [&[data-status=paid]]:[border-color:#c4efdf] [&[data-status=paid]]:text-[#0aa376] [&[data-status=completed]]:[background:#eff7ff] [&[data-status=completed]]:[border-color:#cee5ff] [&[data-status=completed]]:text-[#0867ee] [&[data-status='cancel\_requested']]:[background:#fff0f3] [&[data-status='cancel\_requested']]:[border-color:#ffd4df] [&[data-status='cancel\_requested']]:text-[#dc4868] [&[data-status=cancelled]]:[background:#f0f3f7] [&[data-status=cancelled]]:text-[#8b9ab0] min-[1400px]:text-[10px]"
-                        data-status={item.status}
-                      >
-                        {getBookingStatusLabel(item.status, item.note)}
-                      </span>
+                    <td className="px-3 py-2.5">
+                      {getStatusBadge(item.status, item.note)}
                     </td>
-                    <td>
-                      <span>{formatBookingDate(item.created_at)}</span>
-                      <span className="ui-booking-management-subtext block text-[11px] text-[#93a4bd] mt-[4px] max-w-[170px] overflow-hidden text-ellipsis">
-                        {formatBookingDate(item.created_at, true)}
-                      </span>
-                    </td>
-                    <td>
+                    <td className="px-3 py-2.5">
                       <BookingRowActions
                         booking={item}
                         disabled={busy}
@@ -225,8 +284,10 @@ export function BookingManagementTable({
         </table>
       </div>
       {!loading && !items.length && (
-        <div className="ui-booking-management-empty text-center p-[50px_20px] text-[#8297b5] text-[13px] [&_strong]:block [&_strong]:text-[#617b9e] [&_strong]:mb-[8px]">
-          <strong>Không tìm thấy booking phù hợp</strong>
+        <div className="ui-booking-management-empty text-center py-12 px-4 text-[#7387aa] text-[13px]">
+          <strong className="block text-[#0b1747] font-bold mb-1">
+            Không tìm thấy booking phù hợp
+          </strong>
           <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
         </div>
       )}

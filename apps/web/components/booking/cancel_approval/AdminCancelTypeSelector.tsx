@@ -30,7 +30,7 @@ export function AdminCancelTypeSelector({
           type="button"
           disabled={disabled}
           onClick={() => onChange("operator_fault")}
-          className={`flex flex-col text-left p-3 rounded-2xl border transition cursor-pointer relative ${
+          className={`flex flex-col text-left p-3 rounded-2xl border transition-colors duration-150 motion-reduce:transition-none cursor-pointer relative ${
             value === "operator_fault"
               ? "border-emerald-500 bg-emerald-50/60 shadow-2xs ring-1 ring-emerald-500/30"
               : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
@@ -68,7 +68,7 @@ export function AdminCancelTypeSelector({
           type="button"
           disabled={disabled}
           onClick={() => onChange("customer_request")}
-          className={`flex flex-col text-left p-3 rounded-2xl border transition cursor-pointer relative ${
+          className={`flex flex-col text-left p-3 rounded-2xl border transition-colors duration-150 motion-reduce:transition-none cursor-pointer relative ${
             value === "customer_request"
               ? "border-amber-500 bg-amber-50/60 shadow-2xs ring-1 ring-amber-500/30"
               : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"

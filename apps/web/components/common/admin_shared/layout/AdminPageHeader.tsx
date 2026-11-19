@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { AdminScenicHeaderBackground } from "./AdminScenicHeaderBackground";
 import type { AdminPageHeaderProps } from 'shared';
 import { ADMIN_CONTENT_DENIED } from 'shared';
 import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards/AdminContentPermission";
@@ -9,7 +10,8 @@ import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards
 export function AdminPageHeader({ title, description, actions, primaryAction }: AdminPageHeaderProps) {
   const readOnly = useAdminContentReadOnly();
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+    <div className="relative isolate flex flex-col md:flex-row md:items-center justify-between gap-2 @container/admin-page-header">
+      <AdminScenicHeaderBackground />
       <div>
         <h1 className="text-xl font-bold leading-tight text-slate-900">{title}</h1>
         {description && <p className="text-xs leading-relaxed text-slate-500 mt-0.5">{description}</p>}

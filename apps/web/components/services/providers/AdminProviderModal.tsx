@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
 import { Building2, Loader2 } from "lucide-react";
 import type { AdminProvider, ProviderPayload } from "shared";
 
@@ -120,18 +121,22 @@ export function ProviderModal({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
             Lĩnh vực cung cấp
           </label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="car">Vận chuyển ô tô / xe khách</option>
-            <option value="airline">Hãng hàng không (Flight)</option>
-            <option value="train">Đường sắt / Tàu hỏa</option>
-            <option value="boat">Tàu du lịch / Du thuyền</option>
-            <option value="hotel">Khách sạn / Lưu trú</option>
-            <option value="other">Dịch vụ khác</option>
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={Building2}
+            placeholder="Chọn lĩnh vực"
+            selectedValue={type}
+            onSelect={setType}
+            options={[
+              { value: "car", label: "Vận chuyển ô tô / xe khách" },
+              { value: "airline", label: "Hãng hàng không (Flight)" },
+              { value: "train", label: "Đường sắt / Tàu hỏa" },
+              { value: "boat", label: "Tàu du lịch / Du thuyền" },
+              { value: "hotel", label: "Khách sạn / Lưu trú" },
+              { value: "other", label: "Dịch vụ khác" },
+            ]}
+          />
         </div>
 
         <div>

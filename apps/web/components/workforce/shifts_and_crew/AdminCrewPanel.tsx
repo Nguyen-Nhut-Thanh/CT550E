@@ -105,76 +105,83 @@ export function CrewPanel({
     { value: "all", label: "Tất cả" },
   ];
   return (
-    <div ref={listRef} className="space-y-4">
+    <div ref={listRef} className="space-y-3">
       {actor.isManager && !onlyMine && overdue.length > 0 && (
         <p
           role="alert"
-          className="rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-3 text-xs leading-5 text-rose-700"
+          className="rounded-[14px] border border-rose-100 bg-rose-50/60 px-4 py-3 text-xs leading-5 text-rose-700"
         >
           Có {overdue.length} chuyến khởi hành trong 24 giờ chưa chốt nhân sự.
           Cần admin xử lý ngoại lệ; hệ thống sẽ thông báo cho khách khi danh
           sách được xác nhận đầy đủ.
         </p>
       )}
-      <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4">
-        <div
-          role="group"
-          aria-label="Lọc chuyến theo thời gian"
-          className="flex flex-wrap gap-2"
-        >
-          {filters.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              aria-pressed={statusFilter === filter.value}
-              onClick={() => {
-                setStatusFilter(filter.value);
-                setPage(1);
-              }}
-              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-[650] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${statusFilter === filter.value ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-700"}`}
-            >
-              {filter.label}
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs ${statusFilter === filter.value ? "bg-white/20" : "bg-white text-slate-500"}`}
-              >
-                {counts[filter.value]}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <input
-            aria-label="Tìm chuyến"
-            className="min-w-0 w-full flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm sm:min-w-48"
-            placeholder="Tìm tour, mã chuyến hoặc nơi xuất phát…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-          {!onlyMine && (
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={missing}
-                onChange={(e) => {
-                  setMissing(e.target.checked);
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-3 sm:px-4 sm:py-3 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="group"
+            aria-label="Lọc chuyến theo thời gian"
+            className="flex items-center gap-1.5 shrink-0 flex-wrap"
+          >
+            {filters.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                aria-pressed={statusFilter === filter.value}
+                onClick={() => {
+                  setStatusFilter(filter.value);
                   setPage(1);
                 }}
-              />
-              Chưa đủ nhân sự xác nhận
-            </label>
-          )}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition cursor-pointer ${
+                  statusFilter === filter.value
+                    ? "bg-[#075bff] text-white shadow-xs"
+                    : "bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-blue-50 hover:text-[#075bff]"
+                }`}
+              >
+                <span>{filter.label}</span>
+                <span
+                  className={`rounded-full px-1.5 py-0.2 text-[10.5px] font-bold ${
+                    statusFilter === filter.value
+                      ? "bg-white/20 text-white"
+                      : "bg-white text-slate-500 border border-slate-200/60"
+                  }`}
+                >
+                  {counts[filter.value]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 flex-1 sm:flex-initial justify-end">
+            <input
+              aria-label="Tìm chuyến"
+              className="min-w-0 w-full sm:w-64 rounded-lg border border-slate-200 bg-white h-8.5 px-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#075bff] focus:ring-1 focus:ring-blue-100 focus:outline-none shadow-2xs"
+              placeholder="Tìm tour, mã chuyến hoặc nơi xuất phát…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+            {!onlyMine && (
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={missing}
+                  onChange={(e) => {
+                    setMissing(e.target.checked);
+                    setPage(1);
+                  }}
+                  className="rounded border-slate-300 text-[#075bff] focus:ring-blue-500 cursor-pointer"
+                />
+                <span>Chưa đủ nhân sự xác nhận</span>
+              </label>
+            )}
+          </div>
         </div>
-        {(statusFilter === "completed" || statusFilter === "all") && (
-          <p className="text-xs text-slate-500">
-            Lịch sử gồm các chuyến kết thúc trong 30 ngày gần nhất.
-          </p>
-        )}
       </div>
-      <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white">
-        <div className="divide-y divide-blue-300">
+      <div className="overflow-hidden rounded-[14px] border border-[#e1edfc] bg-white shadow-xs">
+        <div className="divide-y divide-[#edf2fb]">
           {!rows.length && (
             <div className="p-12 text-center text-sm text-slate-500">
               Không có chuyến phù hợp với bộ lọc hiện tại.
@@ -206,7 +213,7 @@ export function CrewPanel({
             />
           ))}
         </div>
-        <div className="border-t border-blue-100">
+        <div className="border-t border-[#edf2fb]">
           <AdminPagination
             variant="numbered"
             showSinglePage
@@ -250,20 +257,21 @@ export function CrewPanel({
               });
             }}
           >
-            <label className="block text-sm text-slate-600">
-              Lý do
+            <label className="block text-xs font-semibold text-slate-700">
+              Lý do từ chối
               <textarea
                 required
                 maxLength={1000}
                 rows={3}
-                className="mt-2 w-full rounded-xl border p-3"
+                placeholder="Nhập lý do không thể nhận chuyến..."
+                className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#075bff] focus:ring-2 focus:ring-blue-100"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
             </label>
             <button
               disabled={busy}
-              className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-[650] text-white"
+              className="rounded-lg bg-rose-600 hover:bg-rose-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50"
             >
               Gửi phản hồi
             </button>
@@ -275,23 +283,23 @@ export function CrewPanel({
           title="Lịch sử điều hành chuyến"
           onClose={() => setHistory(null)}
         >
-          <div className="space-y-3 p-6">
+          <div className="space-y-3 p-6 max-h-[70vh] overflow-y-auto">
             {historyError && (
-              <p role="alert" className="text-sm text-rose-600">
+              <p role="alert" className="text-xs text-rose-600 font-semibold">
                 {historyError}
               </p>
             )}
             {!history.length && !historyError && (
-              <p className="text-sm text-slate-400">
+              <p className="text-xs text-slate-400">
                 Chưa có thay đổi được ghi nhận.
               </p>
             )}
             {history.map((event) => (
               <div
                 key={event.event_id}
-                className="rounded-xl bg-slate-50 p-3 text-sm"
+                className="rounded-xl border border-[#e1edfc] bg-white p-3.5 shadow-2xs"
               >
-                <p className="font-semibold">
+                <p className="font-bold text-sm text-[#0b1747]">
                   {{
                     crew_assigned: "Cập nhật đội ngũ phụ trách",
                     crew_confirmed: "Nhân viên nhận chuyến",
@@ -302,7 +310,7 @@ export function CrewPanel({
                     schedule_region_updated: "Chỉ định miền điều hành",
                   }[event.action] || "Cập nhật điều hành"}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#7387aa]">
                   {event.actor_user_id === 0
                     ? "Hệ thống"
                     : employees.find(
@@ -315,7 +323,7 @@ export function CrewPanel({
                   "reason" in event.details &&
                   typeof event.details.reason === "string" &&
                   event.details.reason && (
-                    <p className="mt-2 text-xs leading-5 text-slate-600">
+                    <p className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-2 text-xs leading-5 text-slate-600">
                       Lý do: {event.details.reason}
                     </p>
                   )}

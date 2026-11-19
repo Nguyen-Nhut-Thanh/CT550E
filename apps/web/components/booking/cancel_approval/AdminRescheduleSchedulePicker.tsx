@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -21,6 +21,11 @@ export interface ScheduleItem {
   capacity?: number | null;
   booked_count?: number | null;
   price?: number | string | null;
+  price_adult?: number | string | null;
+  price_child?: number | string | null;
+  price_infant?: number | string | null;
+  status?: number | null;
+  cut_off_hours?: number | null;
   departure_location?: {
     name: string;
   } | null;
@@ -33,6 +38,7 @@ export interface AdminRescheduleSchedulePickerProps {
   selectedScheduleId?: number;
   onSelectSchedule: (scheduleId: number, schedule?: ScheduleItem) => void;
   disabled?: boolean;
+  cutOffHours?: number | null;
 }
 
 export function AdminRescheduleSchedulePicker({
@@ -42,10 +48,24 @@ export function AdminRescheduleSchedulePicker({
   selectedScheduleId,
   onSelectSchedule,
   disabled = false,
+  cutOffHours,
 }: AdminRescheduleSchedulePickerProps) {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Dùng ref lưu các giá trị prop để tránh re-trigger fetch API khi cha re-render hoặc khi user chọn item
+  const onSelectScheduleRef = useRef(onSelectSchedule);
+  onSelectScheduleRef.current = onSelectSchedule;
+
+  const totalGuestsRef = useRef(totalGuests);
+  totalGuestsRef.current = totalGuests;
+
+  const cutOffHoursRef = useRef(cutOffHours);
+  cutOffHoursRef.current = cutOffHours;
+
+  const selectedScheduleIdRef = useRef(selectedScheduleId);
+  selectedScheduleIdRef.current = selectedScheduleId;
 
   useEffect(() => {
     if (!tourId) return;
@@ -59,22 +79,39 @@ export function AdminRescheduleSchedulePicker({
         if (!isMounted) return;
 
         const now = Date.now();
-        // Lọc các đợt khác đợt hiện tại và chưa khởi hành
-        const available = (Array.isArray(data) ? data : []).filter(
-          (s) =>
-            s.tour_schedule_id !== currentScheduleId &&
-            new Date(s.start_date).getTime() > now,
-        );
+        const minHours = cutOffHoursRef.current ?? 24;
+
+        // Lọc các đợt: khác đợt hiện tại, đang bán (status === 1), chưa khởi hành và chưa bước vào thời gian chốt tour (cut_off_hours)
+        const available = (Array.isArray(data) ? data : []).filter((s) => {
+          if (s.tour_schedule_id === currentScheduleId) return false;
+          if (s.status !== undefined && s.status !== 1) return false;
+
+          const startMs = new Date(s.start_date).getTime();
+          if (startMs <= now) return false;
+
+          const scheduleMinHours = s.cut_off_hours ?? minHours;
+          const diffHours = (startMs - now) / (1000 * 60 * 60);
+          return diffHours >= scheduleMinHours;
+        });
+
         setSchedules(available);
 
-        // Tự động chọn đợt đầu tiên còn đủ chỗ nếu chưa chọn
-        if (available.length > 0 && !selectedScheduleId) {
+        // Tự động chọn đợt đầu tiên còn đủ chỗ nếu chưa có lựa chọn hoặc lựa chọn hiện tại không còn khả dụng
+        const currentSelectedStillAvailable = available.some(
+          (s) => s.tour_schedule_id === selectedScheduleIdRef.current,
+        );
+
+        if (
+          available.length > 0 &&
+          (!selectedScheduleIdRef.current || !currentSelectedStillAvailable)
+        ) {
           const firstEligible = available.find(
             (s) =>
-              ((s.quota ?? s.capacity ?? 0) - (s.booked_count || 0)) >= totalGuests,
+              ((s.quota ?? s.capacity ?? 0) - (s.booked_count || 0)) >=
+              totalGuestsRef.current,
           );
           if (firstEligible) {
-            onSelectSchedule(firstEligible.tour_schedule_id, firstEligible);
+            onSelectScheduleRef.current(firstEligible.tour_schedule_id, firstEligible);
           }
         }
       } catch (err) {
@@ -94,11 +131,11 @@ export function AdminRescheduleSchedulePicker({
     return () => {
       isMounted = false;
     };
-  }, [tourId, currentScheduleId, totalGuests]);
+  }, [tourId, currentScheduleId]); // CHỈ fetch khi tourId hoặc currentScheduleId thay đổi, KHÔNG phụ thuộc vào state tương tác của form
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-6 rounded-2xl border border-slate-200 bg-slate-50 text-slate-500 text-xs gap-2">
+      <div className="flex min-h-[140px] items-center justify-center p-6 rounded-2xl border border-slate-200 bg-slate-50 text-slate-500 text-xs gap-2">
         <Loader2 size={16} className="animate-spin text-blue-600" />
         <span>Đang tìm các đợt khởi hành còn chỗ...</span>
       </div>
@@ -107,7 +144,7 @@ export function AdminRescheduleSchedulePicker({
 
   if (error) {
     return (
-      <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs">
+      <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs">
         {error}
       </div>
     );
@@ -120,9 +157,7 @@ export function AdminRescheduleSchedulePicker({
           Không tìm thấy đợt khởi hành nào khác còn nhận khách
         </strong>
         <p className="text-[11.5px] text-amber-800 leading-relaxed">
-          Hiện tại tour này không có đợt khởi hành nào khác trong tương lai. Vui
-          lòng chọn phương án <strong>Hoàn tiền 100%</strong> cho khách hoặc tạo
-          thêm đợt khởi hành mới trước khi dời lịch.
+          Hiện tại tour này không có đợt khởi hành nào khác còn nhận khách (đã chốt tour trước {cutOffHours ?? 24}h, đã qua ngày khởi hành hoặc đã hết chỗ). Vui lòng chọn phương án <strong>Hoàn tiền 100%</strong> cho khách hoặc tạo thêm đợt khởi hành mới trước khi dời lịch.
         </p>
       </div>
     );
@@ -135,9 +170,13 @@ export function AdminRescheduleSchedulePicker({
           <span>Chọn ngày khởi hành mới</span>
           <span className="text-rose-500 font-black">*</span>
         </label>
-        <span className="text-[11px] text-slate-500 font-medium">
-          Cần đủ cho <strong>{totalGuests}</strong> khách
-        </span>
+        <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+          <span>Cần đủ cho <strong>{totalGuests}</strong> khách</span>
+          <span className="text-slate-300">•</span>
+          <span className="text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded text-[10.5px]">
+            Chốt trước {cutOffHours ?? 24}h
+          </span>
+        </div>
       </div>
 
       <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -164,7 +203,7 @@ export function AdminRescheduleSchedulePicker({
               type="button"
               disabled={disabled || isFull}
               onClick={() => onSelectSchedule(schedule.tour_schedule_id, schedule)}
-              className={`w-full text-left p-3 rounded-xl border transition cursor-pointer relative ${
+              className={`w-full text-left p-3 rounded-xl border transition-colors duration-150 cursor-pointer relative ${
                 isSelected
                   ? "border-blue-500 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/30"
                   : isFull

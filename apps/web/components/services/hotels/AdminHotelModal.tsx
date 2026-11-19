@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { PriceInput } from "@/components/common/form_controls/PriceInput";
 import { BedDouble, Building, Hotel, Loader2, MapPin, Phone, Plus, Star, Trash2 } from "lucide-react";
 import type { AdminHotel, HotelPayload } from "shared";
 
@@ -178,36 +180,39 @@ export function HotelModal({ open, hotel, locations, onClose, onSubmit }: HotelM
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
               Tỉnh / Thành phố <span className="text-rose-500">*</span>
             </label>
-            <select
-              required
-              value={locationId}
-              onChange={(e) => setLocationId(Number(e.target.value) || "")}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white"
-            >
-              <option value="">Chọn địa điểm</option>
-              {locations.map((loc) => (
-                <option key={loc.location_id} value={loc.location_id}>
-                  {loc.name}
-                </option>
-              ))}
-            </select>
+            <CustomDropdown
+              variant="compact"
+              matchTriggerWidth
+              icon={MapPin}
+              placeholder="Chọn địa điểm"
+              selectedValue={String(locationId)}
+              onSelect={(val) => setLocationId(Number(val) || "")}
+              options={locations.map((loc) => ({
+                value: String(loc.location_id),
+                label: loc.name,
+              }))}
+            />
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
               Hạng sao
             </label>
-            <select
-              value={starRating}
-              onChange={(e) => setStarRating(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white"
-            >
-              <option value={1}>1 sao ★</option>
-              <option value={2}>2 sao ★★</option>
-              <option value={3}>3 sao ★★★</option>
-              <option value={4}>4 sao ★★★★</option>
-              <option value={5}>5 sao ★★★★★</option>
-            </select>
+            <CustomDropdown
+              variant="compact"
+              matchTriggerWidth
+              icon={Star}
+              placeholder="Chọn hạng sao"
+              selectedValue={String(starRating)}
+              onSelect={(val) => setStarRating(Number(val) || 3)}
+              options={[
+                { value: "1", label: "1 sao ★" },
+                { value: "2", label: "2 sao ★★" },
+                { value: "3", label: "3 sao ★★★" },
+                { value: "4", label: "4 sao ★★★★" },
+                { value: "5", label: "5 sao ★★★★★" },
+              ]}
+            />
           </div>
 
           <div className="sm:col-span-2">
@@ -326,16 +331,19 @@ export function HotelModal({ open, hotel, locations, onClose, onSubmit }: HotelM
                     onChange={(e) => handleRoomChange(idx, "name", e.target.value)}
                     className="flex-1 min-w-[140px] rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
                   />
-                  <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-slate-400 font-medium">Giá:</span>
-                    <input
-                      type="number"
-                      placeholder="Giá phòng"
-                      value={room.base_price}
-                      onChange={(e) => handleRoomChange(idx, "base_price", Number(e.target.value) || 0)}
-                      className="w-28 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 text-right"
-                    />
-                    <span className="text-[11px] text-slate-500">đ</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">Giá:</span>
+                    <div className="w-36">
+                      <PriceInput
+                        label=""
+                        value={room.base_price}
+                        onChange={(val) => handleRoomChange(idx, "base_price", val)}
+                        placeholder="Giá phòng"
+                        icon={null}
+                        suffix="đ"
+                        inputClassName="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-2.5 pr-7 text-xs font-semibold text-slate-800 text-left outline-none focus:border-[#075bff] focus:ring-1 focus:ring-blue-100 transition-colors"
+                      />
+                    </div>
                   </div>
                   <label className="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                     <input

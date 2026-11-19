@@ -19,6 +19,7 @@
     "prisma:push": "prisma db push --schema prisma/schema.prisma"
   },
   "dependencies": {
+    "dotenv": "^17.2.2",
     "@prisma/client": "^6.15.0"
   },
   "devDependencies": {

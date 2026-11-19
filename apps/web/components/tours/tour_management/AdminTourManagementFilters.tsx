@@ -30,65 +30,84 @@ export function TourManagementFilters({
   );
   return (
     <section
-      className="ui-tour-management-filters [background:#ffffffdf] [border:1px_solid_#fff] rounded-[16px] p-[12px] [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:min-h-[42px] [&_button[aria-haspopup=listbox]]:[background:white] [&_button[aria-haspopup=listbox]]:[border-color:#e0e9f7] [&_button[aria-haspopup=listbox]]:rounded-[10px] [&_button[aria-haspopup=listbox]]:text-[13px] [&_button[aria-haspopup=listbox]]:p-[9px_12px]"
+      className="ui-tour-management-filters rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs"
       aria-label="Bộ lọc tour"
     >
-      <div className="ui-tour-management-filterRow grid grid-cols-[minmax(220px,_2.2fr)_repeat(3,_minmax(140px,_1fr))_auto] gap-[12px] items-center [&>*]:min-w-0 admin-max-1250:grid-cols-[repeat(3,_minmax(0,_1fr))] admin-max-1250:[&>:first-child]:[grid-column:span_2] admin-max-750:grid-cols-[repeat(2,_minmax(0,_1fr))] admin-max-750:gap-[10px] admin-max-750:[&>:first-child]:[grid-column:1/-1]">
-        <AdminSearchInput
-          value={value.search}
-          onChange={(next) => update("search", next)}
-          placeholder="Tìm theo tên tour, mã tour hoặc từ khóa..."
-        />
-        <CustomDropdown
-          variant="compact"
-          matchTriggerWidth
-          selectedValue={value.type}
-          onSelect={(next) => update("type", next)}
-          options={TOUR_TYPE_OPTIONS.map((option) => ({
-            value: option.id,
-            label: option.id === "all" ? "Tất cả loại tour" : option.label,
-          }))}
-        />
-        <CustomDropdown
-          variant="compact"
-          matchTriggerWidth
-          selectedValue={value.country}
-          onSelect={(next) => update("country", next)}
-          options={[
-            { value: "all", label: "Tất cả quốc gia" },
-            ...countries.map((country) => ({
-              value: String(country.location_id),
-              label: country.name,
-            })),
-          ]}
-        />
-        <CustomDropdown
-          variant="compact"
-          matchTriggerWidth
-          selectedValue={value.status}
-          onSelect={(next) => update("status", next)}
-          options={TOUR_STATUS_OPTIONS.map((option) => ({
-            value: option.id,
-            label: option.label,
-          }))}
-        />
+      <div className="ui-tour-management-filterRow flex flex-wrap items-center gap-3">
+        <div className="min-w-[260px] flex-1">
+          <AdminSearchInput
+            value={value.search}
+            onChange={(next) => update("search", next)}
+            placeholder="Tìm theo tên tour, mã tour hoặc từ khóa..."
+          />
+        </div>
+        <div className="min-w-[150px] w-auto">
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            selectedValue={value.type}
+            onSelect={(next) => update("type", next)}
+            options={TOUR_TYPE_OPTIONS.map((option) => ({
+              value: option.id,
+              label: option.id === "all" ? "Tất cả loại tour" : option.label,
+            }))}
+          />
+        </div>
+        <div className="min-w-[150px] w-auto">
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            selectedValue={value.country}
+            onSelect={(next) => update("country", next)}
+            options={[
+              { value: "all", label: "Tất cả quốc gia" },
+              ...countries.map((country) => ({
+                value: String(country.location_id),
+                label: country.name,
+              })),
+            ]}
+          />
+        </div>
+        <div className="min-w-[140px] w-auto">
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            selectedValue={value.status}
+            onSelect={(next) => update("status", next)}
+            options={TOUR_STATUS_OPTIONS.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+          />
+        </div>
         <button
           type="button"
-          className="ui-tour-management-filterButton flex items-center justify-center gap-[8px] rounded-[10px] p-[12px] text-[#075bff] [background:#eaf3ff] text-[12px] font-semibold whitespace-nowrap [&:hover]:[background:#dceaff] admin-max-1250:[grid-column:3] admin-max-1250:[grid-row:1] admin-max-750:[grid-column:auto] admin-max-750:[grid-row:auto] admin-max-750:text-[11px]"
+          className="ui-tour-management-filterButton inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3.5 py-2.5 text-xs font-[650] text-slate-700 transition cursor-pointer whitespace-nowrap shadow-2xs"
           aria-expanded={expanded}
           aria-controls="tour-advanced-filters"
           onClick={() => setExpanded(!expanded)}
         >
-          <SlidersHorizontal size={18} /> Bộ lọc nâng cao
+          <SlidersHorizontal size={15} className="text-slate-500" />
+          <span>Bộ lọc nâng cao</span>
           {(value.duration !== "all" || value.sort !== "default") && (
-            <span className="ui-tour-management-dot w-[6px] h-[6px] rounded-[50%] [background:#075bff]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#075bff]" />
           )}
         </button>
+        {active && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2.5 text-xs font-[650] text-[#7387aa] hover:text-[#075bff] transition cursor-pointer whitespace-nowrap shadow-2xs"
+            onClick={() => onChange({ ...DEFAULT_TOUR_FILTERS })}
+          >
+            <RotateCcw size={14} />
+            <span>Đặt lại</span>
+          </button>
+        )}
       </div>
       {expanded && (
         <div
           id="tour-advanced-filters"
-          className="ui-tour-management-advanced [&>*]:min-w-0 grid grid-cols-[repeat(2,_minmax(0,_240px))] gap-[16px] p-[16px_0_3px] [border-top:1px_solid_#edf2f9] mt-[12px] [&_label]:block [&_label]:mb-[7px] [&_label]:text-[12px] admin-max-750:grid-cols-[1fr]"
+          className="ui-tour-management-advanced grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#edf2fb] mt-3"
         >
           <CustomDropdown
             label="Thời gian tour"
@@ -117,15 +136,6 @@ export function TourManagementFilters({
             ]}
           />
         </div>
-      )}
-      {active && (
-        <button
-          type="button"
-          className="ui-tour-management-reset flex items-center gap-[6px] text-[#58749b] text-[12px] mt-[12px] p-[3px] [&:hover]:text-[#075bff]"
-          onClick={() => onChange({ ...DEFAULT_TOUR_FILTERS })}
-        >
-          <RotateCcw size={14} /> Đặt lại bộ lọc
-        </button>
       )}
     </section>
   );

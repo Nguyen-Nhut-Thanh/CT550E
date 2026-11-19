@@ -36,25 +36,25 @@ export function ReviewReplyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl transition-all">
-        <div className="flex items-center justify-between border-b border-slate-100 p-5">
+      <div className="relative w-full max-w-lg rounded-[14px] border border-[#e1edfc] bg-white shadow-xl transition-all">
+        <div className="flex items-center justify-between border-b border-[#edf2fb] p-4.5 sm:p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#075bff] shrink-0">
               <MessageSquare size={20} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-sm sm:text-base font-extrabold text-[#07123e]">
                 Phản hồi đánh giá #{review.review_id}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-[#7187a9] mt-0.5">
                 Câu trả lời sẽ hiển thị công khai dưới đánh giá của khách hàng.
               </p>
             </div>
@@ -62,15 +62,15 @@ export function ReviewReplyModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4.5 sm:p-5 space-y-3.5">
           {/* Review tóm tắt */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-xs">
+          <div className="rounded-[14px] border border-[#e1edfc] bg-slate-50/60 p-3.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="font-bold text-slate-800">
                 {review.user?.full_name || "Khách hàng"}
@@ -96,13 +96,13 @@ export function ReviewReplyModal({
 
           {/* Danh sách phản hồi hiện tại nếu có */}
           {review.replies && review.replies.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700">
                 Phản hồi trước đó:
               </label>
-              <div className="max-h-36 overflow-y-auto space-y-2 rounded-xl border border-slate-100 bg-slate-50/50 p-2.5">
+              <div className="max-h-36 overflow-y-auto space-y-2 rounded-lg border border-[#e1edfc] bg-slate-50/50 p-2.5">
                 {review.replies.map((r) => (
-                  <div key={r.reply_id} className="rounded-lg bg-white p-2.5 border border-slate-200/60 text-xs">
+                  <div key={r.reply_id} className="rounded-lg bg-white p-2.5 border border-[#e1edfc] text-xs">
                     <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
                       <span className="font-bold text-blue-700">
                         {r.user?.full_name || "Quản trị viên / CSKH"}
@@ -127,24 +127,24 @@ export function ReviewReplyModal({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Cảm ơn quý khách đã tin tưởng và đồng hành cùng JourniTrip..."
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-[#e1edfc] bg-white p-3 text-xs text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-2.5 pt-1">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={submitting || !content.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#075bff] px-3.5 py-1.5 text-xs font-[650] text-white shadow-2xs transition hover:bg-[#064ed8] active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <Send size={13} />
               {submitting ? "Đang gửi..." : "Gửi phản hồi"}

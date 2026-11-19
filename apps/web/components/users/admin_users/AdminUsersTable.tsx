@@ -1,11 +1,19 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
-
-
+import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards/AdminContentPermission";
 import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
-import { BadgeCheck, Loader2, Lock, Mail, Phone, ShieldAlert, ShieldCheck, Unlock, Users, } from "lucide-react";
-import type { UsersTableProps as Props } from 'shared';
+import {
+  BadgeCheck,
+  Loader2,
+  Lock,
+  Mail,
+  Phone,
+  ShieldAlert,
+  ShieldCheck,
+  Unlock,
+  Users,
+} from "lucide-react";
+import type { UsersTableProps as Props } from "shared";
 
 export function UsersTable({
   users,
@@ -18,136 +26,155 @@ export function UsersTable({
   onPageChange,
 }: Props) {
   const readOnly = useAdminContentReadOnly();
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+    <div className="rounded-[14px] border border-[#e1edfc] bg-white shadow-2xs overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-slate-50/50 text-xs uppercase tracking-wider text-slate-500">
-              <th className="px-6 py-4 font-bold">Người dùng</th>
-              <th className="px-6 py-4 font-bold">Liên hệ</th>
-              <th className="px-6 py-4 font-bold">Vai trò</th>
-              <th className="px-6 py-4 font-bold">Đăng nhập cuối</th>
-              <th className="px-6 py-4 text-center font-bold">Trạng thái</th>
-              <th className="px-6 py-4 text-right font-bold">Thao tác</th>
+            <tr className="bg-slate-50/75 border-b border-[#edf2fb] text-[11px] font-bold uppercase tracking-wider text-[#7187a9]">
+              <th className="px-4.5 py-3.5">Người dùng</th>
+              <th className="px-4.5 py-3.5">Liên hệ</th>
+              <th className="px-4.5 py-3.5">Vai trò</th>
+              <th className="px-4.5 py-3.5">Đăng nhập cuối</th>
+              <th className="px-4.5 py-3.5 text-center">Trạng thái</th>
+              <th className="px-4.5 py-3.5 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
+          <tbody className="divide-y divide-[#edf2fb] text-xs">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-20 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                    <p className="font-medium text-slate-500">Đang tải dữ liệu...</p>
+                <td colSpan={6} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-7 w-7 animate-spin text-[#075bff]" />
+                    <p className="text-xs font-medium text-slate-500">Đang tải danh sách người dùng...</p>
                   </div>
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-20 text-center">
-                  <p className="font-medium italic text-slate-400">
-                    Không tìm thấy người dùng phù hợp
-                  </p>
+                <td colSpan={6} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                    <Users size={32} strokeWidth={1.5} className="text-slate-300" />
+                    <p className="text-xs font-semibold text-slate-600">Không tìm thấy người dùng phù hợp</p>
+                    <p className="text-[11px] text-slate-400">Thử thay đổi từ khóa tìm kiếm hoặc đặt lại bộ lọc</p>
+                  </div>
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr
-                  key={user.user_id}
-                  className="group transition-colors hover:bg-slate-50/50"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-slate-400">
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <Users size={20} />
+              users.map((user) => {
+                const isActive = user.accounts?.status === 1;
+                return (
+                  <tr
+                    key={user.user_id}
+                    className="group transition-colors hover:bg-slate-50/60"
+                  >
+                    <td className="px-4.5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#e1edfc] bg-slate-100 text-slate-400 shadow-2xs">
+                          {user.avatar_url ? (
+                            <img
+                              src={user.avatar_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Users size={18} />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-1.5 font-bold text-[#07123e] truncate">
+                            {user.full_name}
+                            {user.is_staff && (
+                              <span title="Tài khoản nhân viên">
+                                <BadgeCheck size={14} className="text-[#075bff] shrink-0" />
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-[#7187a9]">ID: #{user.user_id}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4.5 py-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-[#334155]">
+                          <Mail size={13} className="text-[#7187a9] shrink-0" />
+                          <span className="truncate max-w-[200px]">{user.accounts?.email || "Chưa có email"}</span>
+                        </div>
+                        {user.phone && (
+                          <div className="flex items-center gap-1.5 text-[#64748b]">
+                            <Phone size={13} className="text-[#94a3b8] shrink-0" />
+                            <span>{user.phone}</span>
+                          </div>
                         )}
                       </div>
-                      <div>
-                        <p className="flex items-center gap-1.5 font-bold text-slate-900">
-                          {user.full_name}
-                          {user.is_staff && <BadgeCheck size={14} className="text-blue-500" />}
-                        </p>
-                        <p className="text-[11px] text-slate-500">ID: #{user.user_id}</p>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-slate-600">
-                        <Mail size={14} className="text-slate-400" />
-                        {user.accounts?.email}
-                      </div>
-                      {user.phone && (
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <Phone size={14} className="text-slate-400" />
-                          {user.phone}
-                        </div>
+                    <td className="px-4.5 py-3">
+                      {user.is_staff ? (
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50/80 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                          Nhân viên
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
+                          Khách hàng
+                        </span>
                       )}
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    {user.is_staff ? (
-                      <span className="whitespace-nowrap rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                        Nhân viên
-                      </span>
-                    ) : (
-                      <span className="whitespace-nowrap rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-                        Người dùng
-                      </span>
-                    )}
-                  </td>
+                    <td className="px-4.5 py-3 text-slate-600">
+                      {user.accounts?.last_login_at
+                        ? new Date(user.accounts.last_login_at).toLocaleDateString("vi-VN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Chưa đăng nhập"}
+                    </td>
 
-                  <td className="px-6 py-4 text-slate-600">
-                    {user.accounts?.last_login_at
-                      ? new Date(user.accounts.last_login_at).toLocaleDateString("vi-VN")
-                      : "---"}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center">
-                      {user.accounts?.status === 1 ? (
-                        <span className="flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                    <td className="px-4.5 py-3 text-center">
+                      {isActive ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
                           <ShieldCheck size={12} /> Hoạt động
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-700">
                           <ShieldAlert size={12} /> Bị khóa
                         </span>
                       )}
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <td className="px-4.5 py-3 text-right">
                       <button
+                        type="button"
                         disabled={readOnly}
                         onClick={() => onToggleStatus(user)}
-                        title={
-                          user.accounts?.status === 1
-                            ? "Khóa tài khoản"
-                            : "Mở khóa tài khoản"
-                        }
-                        className={`rounded-lg p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                          user.accounts?.status === 1
-                            ? "bg-rose-50 text-rose-600 hover:bg-rose-100"
-                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                        title={isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                          isActive
+                            ? "border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100/90 hover:border-rose-300"
+                            : "border-emerald-200 bg-emerald-50/80 text-emerald-600 hover:bg-emerald-100/90 hover:border-emerald-300"
                         }`}
                       >
-                        {user.accounts?.status === 1 ? (
-                          <Lock size={16} />
+                        {isActive ? (
+                          <>
+                            <Lock size={13} />
+                            Khóa
+                          </>
                         ) : (
-                          <Unlock size={16} />
+                          <>
+                            <Unlock size={13} />
+                            Mở khóa
+                          </>
                         )}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -155,6 +182,8 @@ export function UsersTable({
 
       {!loading && users.length > 0 && (
         <AdminPagination
+          variant="numbered"
+          showSinglePage
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={totalItems}

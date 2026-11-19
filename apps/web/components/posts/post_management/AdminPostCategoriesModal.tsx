@@ -24,15 +24,15 @@ export function PostCategoriesModal({
       onClose={onClose}
       maxWidthClassName="max-w-lg"
     >
-      <div className="space-y-6 p-6">
-        <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+      <div className="space-y-4 p-5">
+        <div className="space-y-3 rounded-xl border border-[#e1edfc] bg-slate-50/70 p-3.5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Thêm danh mục mới
           </p>
           <input
             type="text"
             placeholder="Tên danh mục (VD: Kinh nghiệm du lịch)"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-lg border border-[#e1edfc] bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50"
             value={newCategory.name}
             onChange={(event) =>
               onDraftChange({ ...newCategory, name: event.target.value })
@@ -41,7 +41,7 @@ export function PostCategoriesModal({
           <button
             onClick={onCreate}
             disabled={saving || !newCategory.name}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
           >
             {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
             Lưu danh mục
@@ -49,17 +49,17 @@ export function PostCategoriesModal({
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Danh sách hiện có
           </p>
-          <div className="custom-scrollbar max-h-60 space-y-2 overflow-y-auto pr-2">
+          <div className="custom-scrollbar max-h-60 space-y-1.5 overflow-y-auto pr-1">
             {categories.map((category) => (
               <div
                 key={category.category_id}
-                className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3"
+                className="flex items-center justify-between rounded-lg border border-[#e1edfc] bg-white p-2.5 shadow-2xs"
               >
                 <div>
-                  <p className="text-sm font-bold text-slate-700">{category.name}</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-800">{category.name}</p>
                   <p className="text-[10px] text-slate-400">
                     {category._count?.posts || 0} bài viết
                   </p>

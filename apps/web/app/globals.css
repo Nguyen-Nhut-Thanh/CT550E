@@ -33,19 +33,19 @@
 
 /* Keep the same tour header geometry for every staff role and CSS chunk. */
 .crew-schedule-header-content {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  align-items: stretch;
-  column-gap: 12px;
-  flex: 1 1 560px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 0%;
   min-width: 0;
-  max-width: 100%;
 }
 
 .crew-schedule-thumbnail {
   display: block;
   position: relative;
-  min-height: 80px;
+  width: 104px;
+  height: 78px;
+  flex-shrink: 0;
   overflow: hidden;
   border-radius: 12px;
 }
@@ -59,16 +59,25 @@
 }
 
 .crew-schedule-header-text {
-  display: grid;
-  grid-template-rows: repeat(4, minmax(0, 1fr));
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
   min-width: 0;
-  min-height: 80px;
+  flex: 1 1 0%;
 }
 
 @media (min-width: 640px) {
-  .crew-schedule-header-content { grid-template-columns: 128px minmax(0, 1fr); column-gap: 16px; }
-  .crew-schedule-thumbnail, .crew-schedule-header-text { min-height: 96px; }
+  .crew-schedule-header-content {
+    gap: 16px;
+  }
+  .crew-schedule-thumbnail {
+    width: 128px;
+    height: 96px;
+  }
+  .crew-schedule-header-text {
+    gap: 8px;
+  }
 }
 
 

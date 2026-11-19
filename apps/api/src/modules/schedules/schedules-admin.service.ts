@@ -68,6 +68,12 @@ export class SchedulesAdminService {
         pickup_points: { orderBy: { sort_order: "asc" } },
         schedule_promotions: true,
         flash_deals: true,
+        tours: {
+          select: {
+            tour_id: true,
+            cut_off_hours: true,
+          },
+        },
         _count: { select: { bookings: true } },
       },
     });
@@ -78,6 +84,7 @@ export class SchedulesAdminService {
         ...item,
         price: Number(item.price),
         single_room_surcharge: Number(item.single_room_surcharge ?? 0),
+        cut_off_hours: item.tours?.cut_off_hours ?? 24,
         schedule_promotions: promo
           ? {
               ...promo,

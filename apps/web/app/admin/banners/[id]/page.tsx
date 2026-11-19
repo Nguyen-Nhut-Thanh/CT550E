@@ -1,12 +1,11 @@
 "use client";
 
-import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
-
-
-import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { useAdminContentReadOnly } from "@/components/common/admin_shared/guards/AdminContentPermission";
+import { AdminEditorCard } from "@/components/common/admin_shared/cards/AdminEditorCard";
+import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
 import { fetchAdminBannerDetail, saveAdminBanner, uploadAdminBannerImage } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { AlignLeft, ArrowLeft, Camera, Globe, Loader2, Save, ToggleLeft, Type, X } from "lucide-react";
+import { AlignLeft, ArrowLeft, Camera, Globe, Link2, Loader2, Save, ToggleLeft, Type, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -14,7 +13,7 @@ export default function AdminBannerDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex min-h-[400px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-8 shadow-2xs">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
         </div>
       }
@@ -110,175 +109,244 @@ function AdminBannerDetailContent() {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      <div className="flex min-h-[400px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-8 shadow-2xs">
+        <div className="flex items-center gap-3 text-slate-500">
+          <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+          <span className="text-xs sm:text-sm font-medium">Đang tải thông tin banner...</span>
+        </div>
       </div>
     );
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header - Dashboard Standard */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push(backUrl)}
-            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold leading-tight text-slate-900">
-              {isNew ? "Thêm Banner Mới" : "Chỉnh sửa Banner"}
-            </h1>
-            <p className="text-xs leading-relaxed text-slate-500 mt-0.5">
-              Cấu hình nội dung và hình ảnh hiển thị trên trang chủ.
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Top Header */}
+      <div className="flex items-center gap-3.5">
         <button
-          onClick={handleSave}
-          disabled={readOnly || saving || !form.header || !form.image_url}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+          type="button"
+          aria-label="Quay lại danh sách banner"
+          onClick={() => router.push(backUrl)}
+          className="grid size-9 shrink-0 place-items-center rounded-xl border border-[#dce6f4] bg-white text-[#627491] shadow-2xs transition-colors hover:border-[#98bcfb] hover:text-[#1260eb] cursor-pointer"
         >
-          {saving ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Save size={18} />
-          )}
-          {isNew ? "Hoàn tất & Lưu" : "Lưu thay đổi"}
+          <ArrowLeft size={18} />
         </button>
+        <div className="min-w-0 flex-1">
+          <AdminPageHeader
+            title={isNew ? "Thêm Banner Mới" : "Chỉnh sửa Banner"}
+            description="Cấu hình nội dung và hình ảnh hiển thị trên trang chủ website."
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-6">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-50 pb-4">
-              Nội dung hiển thị
-            </h2>
+      {/* Info notice banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/50 px-4 py-3 text-xs leading-5 text-blue-800 shadow-2xs">
+        <p>
+          Banner sẽ hiển thị ở phần đầu trang chủ (Hero Banner). Khuyên dùng ảnh chất lượng cao độ phân giải 1920x1080 (tỷ lệ 16:9).
+        </p>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                  <Globe size={14} className="text-slate-400" /> Tên địa điểm
+      {/* Main Grid with gap-[22px] matching Tour Add/Edit */}
+      <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1fr)]">
+        {/* Left Column: Nội dung hiển thị */}
+        <div className="flex min-w-0 flex-col gap-[22px]">
+          <AdminEditorCard
+            id="banner-content"
+            title="Nội dung hiển thị"
+            description="Tiêu đề, địa điểm và mô tả quảng bá trên banner."
+            icon={Type}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <Globe size={14} className="text-slate-400" /> Tên địa điểm
+                  </label>
+                  <input
+                    className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-2 text-sm font-bold text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff]"
+                    placeholder="VD: Vịnh Hạ Long"
+                    value={form.location_name}
+                    onChange={(e) =>
+                      setForm({ ...form, location_name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <Type size={14} className="text-slate-400" /> Tiêu đề chính <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-2 text-sm font-bold text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff]"
+                    placeholder="VD: Khám phá kỳ quan thế giới"
+                    value={form.header}
+                    onChange={(e) => setForm({ ...form, header: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <Link2 size={14} className="text-slate-400" /> Đường dẫn liên kết khi nhấn banner
                 </label>
                 <input
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                  placeholder="VD: Vịnh Hạ Long"
-                  value={form.location_name}
+                  className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-2 text-xs sm:text-sm text-slate-800 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff]"
+                  placeholder="VD: /tours?destination=ha-long hoặc https://..."
+                  value={form.link_to}
+                  onChange={(e) => setForm({ ...form, link_to: e.target.value })}
+                />
+              </div>
+
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <AlignLeft size={14} className="text-slate-400" /> Mô tả ngắn
+                </label>
+                <textarea
+                  className="min-h-[120px] w-full resize-none rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3.5 py-2 text-xs sm:text-sm text-slate-700 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff]"
+                  placeholder="Nội dung mô tả banner hiển thị bên dưới tiêu đề..."
+                  value={form.description}
                   onChange={(e) =>
-                    setForm({ ...form, location_name: e.target.value })
+                    setForm({ ...form, description: e.target.value })
                   }
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                  <Type size={14} className="text-slate-400" /> Tiêu đề chính
-                </label>
-                <input
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                  placeholder="VD: Khám phá kỳ quan thế giới"
-                  value={form.header}
-                  onChange={(e) => setForm({ ...form, header: e.target.value })}
-                  required
-                />
-              </div>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                <AlignLeft size={14} className="text-slate-400" /> Mô tả ngắn
-              </label>
-              <textarea
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all min-h-[120px] resize-none"
-                placeholder="Nội dung mô tả banner..."
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-              />
-            </div>
-          </div>
+          </AdminEditorCard>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Image Upload */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-50 pb-4">
-              Hình ảnh
-            </h2>
-
-            <div
-              onClick={() => !uploading && fileInputRef.current?.click()}
-              className={`relative aspect-[16/9] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${form.image_url ? "border-transparent" : "border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-blue-300"}`}
-            >
-              {form.image_url ? (
-                <>
-                  <img
-                    src={form.image_url}
-                    alt="Banner"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Camera className="text-white" size={24} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {uploading ? (
-                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="text-slate-400 mb-2" size={32} />
-                      <span className="text-xs font-bold text-slate-500">
-                        Tải ảnh lên
-                      </span>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        Khuyên dùng tỷ lệ 16:9
-                      </p>
-                    </>
-                  )}
-                </>
+        {/* Right Column (Sidebar): Hình ảnh & Cài đặt */}
+        <aside
+          className="flex min-w-0 flex-col gap-[22px] lg:self-stretch"
+          aria-label="Hình ảnh và cài đặt banner"
+        >
+          {/* Card 1: Hình ảnh banner */}
+          <AdminEditorCard
+            id="banner-image"
+            title="Hình ảnh banner"
+            description="Kích thước khuyên dùng tỷ lệ 16:9 chất lượng cao."
+            icon={Camera}
+          >
+            <div className="space-y-3.5">
+              <div
+                onClick={() => !uploading && fileInputRef.current?.click()}
+                className={`relative aspect-[16/9] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${
+                  form.image_url
+                    ? "border-[#e1edfc]"
+                    : "border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-blue-400"
+                }`}
+              >
+                {form.image_url ? (
+                  <>
+                    <img
+                      src={form.image_url}
+                      alt="Banner"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Camera className="text-white" size={24} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {uploading ? (
+                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    ) : (
+                      <>
+                        <Camera className="text-slate-400 mb-2" size={32} />
+                        <span className="text-xs font-bold text-slate-600">
+                          Tải ảnh lên
+                        </span>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Khuyên dùng ảnh tỷ lệ 16:9 (1920x1080)
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              {form.image_url && (
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, image_url: "" })}
+                  className="w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center gap-2 border border-rose-100 cursor-pointer"
+                >
+                  <X size={14} /> Gỡ bỏ ảnh hiện tại
+                </button>
               )}
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept="image/*"
-              className="hidden"
-            />
-            {form.image_url && (
-              <button
-                onClick={() => setForm({ ...form, image_url: "" })}
-                className="w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center gap-2 border border-rose-100"
-              >
-                <X size={14} /> Gỡ bỏ ảnh hiện tại
-              </button>
-            )}
-          </div>
+          </AdminEditorCard>
 
-          {/* Settings */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-50 pb-4">
-              Cài đặt hiển thị
-            </h2>
+          {/* Card 2: Cài đặt hiển thị & Thao tác (Cố định khi cuộn tới) */}
+          <div className="lg:sticky lg:top-4 lg:z-10">
+            <AdminEditorCard
+              id="banner-settings"
+              title="Cài đặt hiển thị"
+              description="Trạng thái hiển thị và thao tác lưu banner."
+              icon={ToggleLeft}
+              className="shadow-[0_4px_16px_#3869a712]"
+            >
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Trạng thái hiển thị
+                  </label>
+                  <div className="flex gap-1.5 rounded-xl border border-[#dfe6f1] bg-[#f8faff] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, status: 1 }))}
+                      className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                        form.status === 1
+                          ? "bg-white text-emerald-700 shadow-2xs border border-emerald-100"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Đang hiển thị
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, status: 0 }))}
+                      className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                        form.status === 0
+                          ? "bg-white text-slate-700 shadow-2xs border border-slate-200"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Đang ẩn
+                    </button>
+                  </div>
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                <ToggleLeft size={14} className="text-slate-400" /> Trạng thái
-              </label>
-              <CustomDropdown
-                variant="compact"
-                matchTriggerWidth
-                selectedValue={String(form.status)}
-                onSelect={(value) => setForm(current => ({ ...current, status: Number(value) }))}
-                options={[{ value: "1", label: "Đang hiển thị" }, { value: "0", label: "Đang ẩn" }]}
-              />
-            </div>
+                <div className="pt-2 flex flex-col gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={readOnly || saving || !form.header || !form.image_url}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                  >
+                    {saving ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <Save size={16} />
+                    )}
+                    {isNew ? "Hoàn tất & Lưu" : "Lưu thay đổi"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push(backUrl)}
+                    className="w-full rounded-xl border border-[#e1edfc] bg-white py-2.5 text-xs font-bold uppercase tracking-wider text-slate-600 transition hover:bg-slate-50 cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                </div>
+              </div>
+            </AdminEditorCard>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

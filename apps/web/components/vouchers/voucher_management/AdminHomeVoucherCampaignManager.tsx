@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+
 import { useEffect, useState } from "react";
 import {
   ArrowDown,
@@ -125,15 +127,22 @@ export function HomeVoucherCampaignManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
+      <AdminStatGrid label="Tóm tắt cấu hình voucher trang chủ đang chỉnh sửa" items={[
+        { id: "total", title: "Tổng mã giảm giá", value: vouchers.length, icon: Ticket },
+        { id: "selected", title: "Đã chọn hiển thị", value: selectedVouchers.length, description: "Danh sách voucher đang chỉnh sửa", icon: Gift, tone: "purple" },
+        { id: "enabled", title: "Khu vực voucher", value: enabled ? "Bật" : "Tắt", description: "Cấu hình đang chỉnh sửa", icon: Eye, tone: "green" },
+        { id: "active", title: "Mã đang kích hoạt", value: vouchers.filter(item => item.status === 1).length, description: "Theo trạng thái kích hoạt của mã", icon: CheckCircle2, tone: "amber" },
+      ]} />
+
       {/* Top Banner Action Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/60 p-5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-indigo-50/60 p-4 sm:p-5 shadow-2xs">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <Gift size={24} />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+            <Gift size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
               Cấu hình Voucher Hiển thị Trang chủ
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
@@ -146,7 +155,7 @@ export function HomeVoucherCampaignManager() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           <span>{saving ? "Đang lưu..." : "Lưu cấu hình"}</span>
@@ -157,7 +166,7 @@ export function HomeVoucherCampaignManager() {
         {/* Left Column: Settings & Selector */}
         <div className="flex h-full flex-col gap-3">
           {/* Card 1: Toggle & Info */}
-          <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3.5">
+          <div className="shrink-0 rounded-[14px] border border-[#e1edfc] bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Trạng thái hiển thị trên Trang chủ</h3>
@@ -219,7 +228,7 @@ export function HomeVoucherCampaignManager() {
           </div>
 
           {/* Card 2: Vouchers Selection */}
-          <div className="flex min-h-0 flex-1 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex min-h-0 flex-1 flex-col justify-between rounded-[14px] border border-[#e1edfc] bg-white p-4 sm:p-5 shadow-2xs space-y-3">
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div>
@@ -309,7 +318,7 @@ export function HomeVoucherCampaignManager() {
         {/* Right Column: Reorder & Live Preview */}
         <div className="flex h-full flex-col gap-3">
           {/* Order List Card */}
-          <div className="flex flex-1 min-h-[280px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+          <div className="flex flex-1 min-h-[280px] flex-col overflow-hidden rounded-[14px] border border-[#e1edfc] bg-white p-4 sm:p-5 shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">

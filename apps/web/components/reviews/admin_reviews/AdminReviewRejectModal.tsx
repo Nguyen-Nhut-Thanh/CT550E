@@ -44,25 +44,25 @@ export function ReviewRejectModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl transition-all">
-        <div className="flex items-center justify-between border-b border-slate-100 p-5">
+      <div className="relative w-full max-w-lg rounded-[14px] border border-[#e1edfc] bg-white shadow-xl transition-all">
+        <div className="flex items-center justify-between border-b border-[#edf2fb] p-4.5 sm:p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-sm sm:text-base font-extrabold text-[#07123e]">
                 Từ chối / Ẩn đánh giá #{review.review_id}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-[#7187a9] mt-0.5">
                 Đánh giá này sẽ không được hiển thị công khai trên website.
               </p>
             </div>
@@ -70,15 +70,15 @@ export function ReviewRejectModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4.5 sm:p-5 space-y-3.5">
           {/* Tóm tắt review */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
+          <div className="rounded-[14px] border border-[#e1edfc] bg-slate-50/60 p-3 text-xs">
             <div className="flex items-center justify-between text-slate-500">
               <span className="font-semibold text-slate-700">
                 {review.user?.full_name || "Khách hàng"}
@@ -99,7 +99,7 @@ export function ReviewRejectModal({
               {PRESET_REASONS.map((preset) => (
                 <label
                   key={preset}
-                  className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-xs transition ${
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-2.5 text-xs transition ${
                     selectedPreset === preset
                       ? "border-rose-300 bg-rose-50/50 text-rose-900"
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -131,24 +131,24 @@ export function ReviewRejectModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Nhập lý do chi tiết hoặc hướng xử lý nội bộ..."
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+              className="w-full rounded-lg border border-[#e1edfc] bg-white p-3 text-xs text-slate-800 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-2.5 pt-1">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-[650] text-white shadow-2xs transition hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? "Đang xử lý..." : "Xác nhận từ chối"}
             </button>

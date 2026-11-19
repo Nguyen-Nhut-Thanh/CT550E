@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
@@ -11,7 +13,7 @@ import { FeaturedLocationsManager } from "@/components/locations/featured_locati
 import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import { deleteAdminBanner, fetchAdminBanners, saveAdminBanner, updateAdminBannerStatus } from "@/lib/banners/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
-import { Images, MapPin, Sparkles, Trash2 } from "lucide-react";
+import { Images, MapPin, Sparkles, Trash2, Eye, EyeOff, Link2 } from "lucide-react";
 import type { Banner } from "shared";
 
 type BannersTab = "list" | "featured" | "seasonal";
@@ -20,7 +22,7 @@ export default function AdminBannersPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+        <div className="flex min-h-[300px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-6 shadow-2xs">
           <div className="text-sm font-medium text-slate-500">Đang tải quản lý banner &amp; giao diện…</div>
         </div>
       }
@@ -205,7 +207,7 @@ function AdminBannersContent() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3.5">
       <AdminPageHeader
         title="Quản lý Banner & Giao diện"
         description="Quản lý hình ảnh banner, địa điểm yêu thích và cấu hình hiệu ứng 4 mùa trên trang chủ."
@@ -220,13 +222,13 @@ function AdminBannersContent() {
       />
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-[#e1edfc]">
         <button
           type="button"
           onClick={() => handleTabChange("list")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "list"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -237,9 +239,9 @@ function AdminBannersContent() {
         <button
           type="button"
           onClick={() => handleTabChange("featured")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "featured"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -250,20 +252,27 @@ function AdminBannersContent() {
         <button
           type="button"
           onClick={() => handleTabChange("seasonal")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "seasonal"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
-          <Sparkles size={16} className={activeTab === "seasonal" ? "text-amber-500" : "text-amber-500"} />
+          <Sparkles size={16} className={activeTab === "seasonal" ? "text-blue-600" : "text-amber-500"} />
           Hiệu ứng & Giao diện 4 Mùa
         </button>
       </div>
 
       {/* Tab Content */}
       {activeTab === "list" && (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
+          <AdminStatGrid label="Thống kê banner" loading={loading} items={[
+            { id: "total", title: "Tổng banner", value: items.length, icon: Images },
+            { id: "visible", title: "Đang hiển thị", value: items.filter(item => item.status === 1).length, icon: Eye, tone: "green" },
+            { id: "hidden", title: "Đang ẩn", value: items.filter(item => item.status === 0).length, icon: EyeOff, tone: "amber" },
+            { id: "links", title: "Có liên kết", value: items.filter(item => item.link_to?.trim()).length, icon: Link2, tone: "purple" },
+          ]} />
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="min-w-0 flex-1">
               <AdminSearchInput

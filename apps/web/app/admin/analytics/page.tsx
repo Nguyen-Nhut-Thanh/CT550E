@@ -149,30 +149,30 @@ export default function AdminAnalyticsPage() {
 
   if (loading && !data) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-28 rounded-3xl bg-slate-200/70" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div aria-label="Đang tải báo cáo thống kê" aria-busy="true" className="space-y-3 animate-pulse motion-reduce:animate-none">
+        <div className="h-28 rounded-[14px] bg-white" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-slate-200/70" />
+            <div key={i} className="h-28 rounded-[14px] bg-white" />
           ))}
         </div>
-        <div className="h-96 rounded-2xl bg-slate-200/70" />
+        <div className="h-96 rounded-[14px] bg-white" />
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/50 p-6 text-center">
-        <AlertCircle className="h-12 w-12 text-rose-500" />
-        <h3 className="mt-3 text-lg font-bold text-rose-900">
+      <div role="alert" className="flex min-h-60 flex-col items-center justify-center rounded-[14px] border border-rose-200 bg-rose-50/50 p-6 text-center">
+        <AlertCircle className="h-9 w-9 text-rose-500" />
+        <h3 className="mt-3 text-[16px] font-[750] text-rose-900">
           Không thể tải dữ liệu thống kê
         </h3>
-        <p className="mt-1 text-sm text-rose-600 max-w-md">{error}</p>
+        <p className="mt-1 text-[13px] text-rose-600 max-w-md">{error}</p>
         <button
           type="button"
           onClick={() => fetchData()}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+          className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#075bff] px-3 py-2 text-[12px] font-[650] text-white transition-colors duration-180 hover:bg-[#064ddd] motion-reduce:transition-none"
         >
           <RefreshCw size={14} />
           Thử lại
@@ -182,7 +182,7 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="relative min-w-0 space-y-3 font-sans text-sm leading-normal tracking-normal text-[#0b1747] @container/analytics">
       {/* Analytics Header with Range Selector & Excel Export */}
       <AnalyticsHeader
         timeRange={timeRange}
@@ -204,7 +204,7 @@ export default function AdminAnalyticsPage() {
             aria-expanded={showKpis}
             aria-controls="analytics-kpi-cards"
             onClick={() => setShowKpis((visible) => !visible)}
-            className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-2xs transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            className="inline-flex min-h-9 items-center gap-2 whitespace-nowrap rounded-lg border border-[#d3e4ff] bg-white px-3 py-2 text-[12px] font-[650] text-[#075bff] transition-colors duration-180 hover:bg-[#f1f7ff] motion-reduce:transition-none"
           >
             {showKpis ? "Ẩn chỉ số tổng quan" : "Hiện chỉ số tổng quan"}
             <ChevronDown className={`h-4 w-4 transition-transform ${showKpis ? "rotate-180" : ""}`} />
@@ -215,8 +215,8 @@ export default function AdminAnalyticsPage() {
       {data && showKpis && <div id="analytics-kpi-cards"><AnalyticsKpiCards data={data} /></div>}
 
       {/* Nav Tabs */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-2 overflow-x-auto pb-1" aria-label="Tabs">
+      <div className="relative min-w-0">
+        <nav className="flex max-w-full gap-1 overflow-x-auto rounded-[14px] border border-blue-100/80 bg-white/95 p-1 shadow-[0_3px_14px_#4d9bff05]" aria-label="Các mục báo cáo" role="tablist">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -224,14 +224,18 @@ export default function AdminAnalyticsPage() {
               <button
                 key={tab.id}
                 type="button"
+                role="tab"
+                id={`analytics-tab-${tab.id}`}
+                aria-selected={isActive}
+                aria-controls="analytics-tab-panel"
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-bold transition-colors ${
+                className={`inline-flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-[650] transition-colors duration-180 motion-reduce:transition-none ${
                   isActive
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-[0_4px_10px_#075bff20]"
+                    : "text-[#5d7299] hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <Icon size={15} />
+                <Icon size={18} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -241,7 +245,7 @@ export default function AdminAnalyticsPage() {
 
       {/* Active Tab View */}
       {data && (
-        <div>
+        <div role="tabpanel" id="analytics-tab-panel" aria-labelledby={`analytics-tab-${activeTab}`}>
           {activeTab === "financials" && <AnalyticsFinancialsTab data={data} />}
           {activeTab === "tours" && <AnalyticsToursTab data={data} />}
           {activeTab === "workforce" && <AnalyticsWorkforceTab data={data} />}

@@ -2,6 +2,7 @@
 
 import { Download, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { AdminScenicHeaderBackground } from "@/components/common/admin_shared/layout/AdminScenicHeaderBackground";
 import type { DashboardHeaderProps, DashboardTimeRange } from "shared";
 
 export function DashboardHeader({
@@ -37,55 +38,27 @@ export function DashboardHeader({
   ];
 
   return (
-    <div className="dashboard-welcome relative isolate flex flex-col gap-3 overflow-hidden rounded-2xl border border-blue-100 px-4 py-3 shadow-sm 2xl:flex-row 2xl:items-center 2xl:justify-between">
-      <div>
-        <div className="hidden">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-            Hệ thống ổn định
-          </span>
-          <span className="text-xs font-medium text-slate-400">
-            Cập nhật lúc: {new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-          </span>
-        </div>
-
-        <h1 className="text-xl font-black tracking-tight text-slate-900 md:text-2xl">
-          {getGreeting()}, <span className="text-blue-600">Quản trị viên</span> <span className="inline-block text-2xl">👋</span>
+    <header className="relative isolate @container/dashboard-header">
+      <AdminScenicHeaderBackground />
+      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 @max-[760px]/dashboard-header:flex-col @max-[760px]/dashboard-header:items-start @max-[760px]/dashboard-header:gap-2.5">
+      <div className="min-w-0">
+        <h1 className="text-[24px] font-extrabold leading-[1.25] tracking-[-.6px]! text-[#07123e] @max-[760px]/dashboard-header:text-[22px]">
+          {getGreeting()}, Quản trị viên
         </h1>
-        <p className="mt-0.5 text-xs leading-relaxed font-medium text-slate-500">
+        <p className="mt-[3px] text-[12px] leading-[1.5] text-[#637da5]">
           Theo dõi tổng quan doanh thu, lịch trình tour và đơn đặt tour trong thời gian thực.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Time range selector pills */}
-        <div className="inline-flex items-center rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-          {rangeOptions.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onTimeRangeChange(opt.value)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                timeRange === opt.value
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
+      <div className="flex flex-wrap items-center gap-2">
         {/* Refresh button */}
         <button
           type="button"
           onClick={onRefresh}
           disabled={isRefreshing}
           title="Làm mới dữ liệu"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 disabled:opacity-50"
+          aria-label="Làm mới dữ liệu dashboard"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#d6e7fb] bg-[#ffffffd9] text-[#5e84b7] hover:bg-[#f3f8ff] disabled:opacity-45"
         >
           <RefreshCw size={17} className={isRefreshing ? "animate-spin text-blue-600" : ""} />
         </button>
@@ -95,12 +68,20 @@ export function DashboardHeader({
           type="button"
           onClick={handleExport}
           disabled={isExporting}
-          className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-100 hover:text-blue-800 active:scale-95 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-[12px] border border-[#075bff] bg-[#075bff] px-4 py-[9px] text-[14px] font-[650] text-white shadow-[0_5px_13px_#075bff12] transition-colors duration-180 hover:bg-[#064ddd] disabled:opacity-45 motion-reduce:transition-none @max-[760px]/dashboard-header:px-3 @max-[760px]/dashboard-header:text-[12px]"
         >
-          <Download size={15} className={isExporting ? "animate-bounce" : ""} />
+          <Download size={18} />
           {isExporting ? "Đang xuất..." : "Xuất báo cáo CSV"}
         </button>
       </div>
-    </div>
+      </div>
+      <div className="relative z-10 mt-3 flex w-fit max-w-full gap-1 overflow-x-auto rounded-[14px] border border-blue-100/80 bg-white/95 p-1 shadow-[0_3px_14px_#4d9bff05]" role="group" aria-label="Khoảng thời gian thống kê">
+        {rangeOptions.map((opt) => (
+          <button key={opt.value} type="button" aria-pressed={timeRange === opt.value} onClick={() => onTimeRangeChange(opt.value)} className={`inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-[650] transition-colors duration-180 motion-reduce:transition-none ${timeRange === opt.value ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-[0_4px_10px_#075bff20]" : "text-[#5d7299] hover:bg-blue-50 hover:text-blue-600"}`}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </header>
   );
 }

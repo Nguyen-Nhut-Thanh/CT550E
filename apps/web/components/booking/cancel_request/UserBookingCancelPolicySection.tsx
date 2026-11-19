@@ -29,7 +29,7 @@ export function BookingCancelPolicySection({
     <div className={`space-y-4 ${className}`}>
       {/* Thẻ đếm ngược thời gian & 3 ô phân tích chi phí */}
       <div
-        className={`rounded-2xl border ${theme.cardBorder} ${theme.cardBg} p-4.5 shadow-2xs space-y-3.5`}
+        className={`rounded-[14px] border ${theme.cardBorder} ${theme.cardBg} p-4.5 shadow-2xs space-y-3.5`}
       >
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className={`flex items-center gap-1.5 font-bold ${theme.timeColor}`}>
@@ -46,7 +46,7 @@ export function BookingCancelPolicySection({
         {/* Bảng phân tích chi phí 3 ô */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
           {/* Ô 1: Đã thanh toán / Giá trị đơn */}
-          <div className="rounded-xl bg-white/95 p-3 border border-slate-200/80 shadow-2xs">
+          <div className="rounded-lg bg-white/95 p-3 border border-slate-200/80 shadow-2xs">
             <span className="block text-[11px] text-slate-500 font-medium truncate">
               {isPaid ? "Đã thanh toán" : "Giá trị đơn"}
             </span>
@@ -57,7 +57,7 @@ export function BookingCancelPolicySection({
 
           {/* Ô 2: Phí hủy */}
           <div
-            className={`rounded-xl p-3 border shadow-2xs ${
+            className={`rounded-lg p-3 border shadow-2xs ${
               isPaid && estimate.penaltyAmount > 0
                 ? "bg-rose-50/90 border-rose-200 text-rose-700"
                 : "bg-white/95 border-slate-200/80 text-slate-700"
@@ -82,7 +82,7 @@ export function BookingCancelPolicySection({
           </div>
 
           {/* Ô 3: Số tiền thực nhận / Hoàn theo quy định / Cần thanh toán */}
-          <div className="rounded-xl bg-emerald-50/95 p-3 border border-emerald-300 shadow-2xs text-emerald-800">
+          <div className="rounded-lg bg-emerald-50/95 p-3 border border-emerald-300 shadow-2xs text-emerald-800">
             <span className="block text-[11px] font-bold truncate">
               {isPaid ? refundLabel : "Cần thanh toán"}
             </span>
@@ -93,7 +93,7 @@ export function BookingCancelPolicySection({
         </div>
 
         {/* Diễn giải lưu ý / chính sách áp dụng */}
-        <p className={`text-[11px] leading-relaxed p-2.5 rounded-xl border ${theme.ruleBg}`}>
+        <p className={`text-[11px] leading-relaxed p-2.5 rounded-lg border ${theme.ruleBg}`}>
           <strong>Lưu ý:</strong>{" "}
           {isPaid
             ? `${estimate.tier.description}.`
@@ -102,7 +102,7 @@ export function BookingCancelPolicySection({
       </div>
 
       {/* BẢNG QUY ĐỊNH HOÀN HỦY TOUR (Dô loại nào thì active loại đó) */}
-      <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-2">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-slate-50/60 p-3.5 space-y-2">
         <div className="flex items-center justify-between">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Bảng quy định hoàn hủy tour
@@ -120,7 +120,7 @@ export function BookingCancelPolicySection({
             return (
               <div
                 key={tier.id}
-                className={`rounded-xl p-2 border transition ${
+                className={`rounded-lg p-2 border transition ${
                   isCurrent
                     ? theme.activeTierClass
                     : "bg-white border-slate-200 text-slate-600 opacity-75"

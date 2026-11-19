@@ -1,12 +1,19 @@
 "use client";
 
+import { AdminScenicHeaderBackground } from "@/components/common/admin_shared/layout/AdminScenicHeaderBackground";
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+import { AdminUsersFilters } from "@/components/users/admin_users/AdminUsersFilters";
 import { UsersTable } from "@/components/users/admin_users/AdminUsersTable";
-import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
 import { getAdminUsers, updateAdminUserStatus } from "@/lib/users/admin/api";
-import { matchesUserSearch } from "@/lib/users/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { UserPlus } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import {
+  BriefcaseBusiness,
+  LockKeyhole,
+  UserCheck,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { UserItem } from "shared";
 
@@ -16,6 +23,8 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const { success, error: showError } = useToast();
 
@@ -64,7 +73,38 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter((user) => matchesUserSearch(user, search));
+  const handleResetFilters = () => {
+    setSearch("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setCurrentPage(1);
+  };
+
+  const isFiltered =
+    Boolean(search.trim()) || roleFilter !== "all" || statusFilter !== "all";
+
+  const filteredUsers = users.filter((user) => {
+    // 1. Tìm kiếm theo tên, email, sđt hoặc id
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      const matchName = user.full_name?.toLowerCase().includes(term);
+      const matchEmail = (user.accounts?.email || "").toLowerCase().includes(term);
+      const matchPhone = (user.phone || "").toLowerCase().includes(term);
+      const matchId = String(user.user_id).includes(term);
+      if (!matchName && !matchEmail && !matchPhone && !matchId) return false;
+    }
+
+    // 2. Lọc theo vai trò
+    if (roleFilter === "staff" && !user.is_staff) return false;
+    if (roleFilter === "customer" && user.is_staff) return false;
+
+    // 3. Lọc theo trạng thái
+    if (statusFilter === "active" && user.accounts?.status !== 1) return false;
+    if (statusFilter === "locked" && user.accounts?.status !== 0) return false;
+
+    return true;
+  });
+
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * pageSize,
@@ -73,7 +113,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, roleFilter, statusFilter]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -82,31 +122,95 @@ export default function AdminUsersPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-xl font-bold leading-tight text-slate-900">Quản lý Người dùng</h1>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-            Quản lý tài khoản khách hàng và nhân viên hệ thống.
-          </p>
+    <div className="space-y-3 font-sans text-sm">
+      {/* Header */}
+      <header className="relative isolate flex flex-col justify-between gap-3 sm:flex-row sm:items-center @container/users-header">
+        <AdminScenicHeaderBackground />
+        <div className="flex items-center gap-3">
+          <span className="grid place-items-center w-10 h-10 rounded-xl text-[#075bff] bg-blue-50 shrink-0 shadow-xs">
+            <Users size={22} />
+          </span>
+          <div>
+            <h1 className="text-[24px] font-extrabold leading-[1.25] tracking-[-.6px] text-[#07123e]">
+              Quản lý người dùng
+            </h1>
+            <p className="text-xs text-[#7187a9] mt-0.5">
+              Quản lý tài khoản khách hàng và nhân viên hệ thống.
+            </p>
+          </div>
         </div>
 
-        <button
-          onClick={() => router.push('/admin/workforce')}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-        >
-          <UserPlus size={18} />
-          Thêm nhân viên
-        </button>
-      </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => router.push("/admin/workforce?tab=employees&action=create")}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#075bff] hover:bg-[#064ddd] px-4 py-2 text-xs font-[650] whitespace-nowrap text-white transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
+          >
+            <UserPlus size={16} />
+            Thêm nhân viên
+          </button>
+        </div>
+      </header>
 
-      <AdminSearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Tìm theo tên hoặc email..."
-        roundedClassName="rounded-lg"
+      {/* Stats Cards */}
+      <AdminStatGrid
+        label="Thống kê người dùng"
+        loading={loading}
+        items={[
+          {
+            id: "total",
+            title: "Tổng người dùng",
+            value: users.length,
+            description: "Toàn bộ tài khoản trong hệ thống",
+            icon: Users,
+            onClick: () => {
+              setRoleFilter("all");
+              setStatusFilter("all");
+            },
+          },
+          {
+            id: "active",
+            title: "Đang hoạt động",
+            value: users.filter((u) => u.accounts?.status === 1).length,
+            description: "Tài khoản có quyền đăng nhập",
+            icon: UserCheck,
+            tone: "green",
+            onClick: () => setStatusFilter("active"),
+          },
+          {
+            id: "locked",
+            title: "Tài khoản bị khóa",
+            value: users.filter((u) => u.accounts?.status === 0).length,
+            description: "Tài khoản tạm ngưng truy cập",
+            icon: LockKeyhole,
+            tone: "rose",
+            onClick: () => setStatusFilter("locked"),
+          },
+          {
+            id: "staff",
+            title: "Tài khoản nhân viên",
+            value: users.filter((u) => u.is_staff).length,
+            description: "Nhân sự nội bộ và điều hành",
+            icon: BriefcaseBusiness,
+            tone: "purple",
+            onClick: () => setRoleFilter("staff"),
+          },
+        ]}
       />
 
+      {/* Filter Bar */}
+      <AdminUsersFilters
+        search={search}
+        onSearchChange={setSearch}
+        roleFilter={roleFilter}
+        onRoleFilterChange={setRoleFilter}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onReset={handleResetFilters}
+        isFiltered={isFiltered}
+      />
+
+      {/* Users Table */}
       <UsersTable
         users={paginatedUsers}
         loading={loading}

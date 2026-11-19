@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatCard } from "@/components/common/admin_shared/cards/AdminStatCard";
+
 import { formatVND } from "@/lib/utils/currency";
 import {
   ArrowDownRight,
@@ -34,9 +36,6 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
       isUp: kpis.revenueTrend >= 0,
       icon: DollarSign,
       gradient: "from-blue-600 to-indigo-600",
-      bgGlow: "bg-blue-500/10",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-100",
     },
     {
       title: "Lượt Đặt Tour",
@@ -46,9 +45,6 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
       isUp: kpis.bookingsTrend >= 0,
       icon: Briefcase,
       gradient: "from-emerald-600 to-teal-600",
-      bgGlow: "bg-emerald-500/10",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-100",
     },
     {
       title: "Khách Hàng Mới",
@@ -58,9 +54,6 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
       isUp: kpis.usersTrend >= 0,
       icon: Users,
       gradient: "from-purple-600 to-violet-600",
-      bgGlow: "bg-purple-500/10",
-      textColor: "text-purple-600",
-      borderColor: "border-purple-100",
     },
     {
       title: "Tour Hoạt Động",
@@ -70,93 +63,26 @@ export function DashboardKpiCards({ kpis, timeRange }: DashboardKpiCardsProps) {
       isUp: true,
       icon: Compass,
       gradient: "from-amber-600 to-orange-600",
-      bgGlow: "bg-amber-500/10",
-      textColor: "text-amber-600",
-      borderColor: "border-amber-100",
     },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 4 Primary KPI Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div key={card.title} className={`min-w-0 rounded-xl border ${card.borderColor} bg-white px-3.5 py-3 shadow-sm`}>
-              <div className="flex items-start gap-3">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}><Icon size={21}/></div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{card.title}</p>
-                    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${card.isUp ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-rose-100 bg-rose-50 text-rose-700"}`}>{card.isUp ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>} {card.trend}</span>
-                  </div>
-                  <h3 className="mt-1 text-xl font-extrabold leading-6 tracking-tight text-slate-950">{card.value}</h3>
-                  <p className="mt-1 text-[11px] leading-4 text-slate-500">{card.subtitle}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-4 gap-3 @max-[1180px]/dashboard:grid-cols-2 @max-[650px]/dashboard:grid-cols-1">
+        {cards.map((card) => (
+          <AdminStatCard key={card.title} title={card.title} value={card.value} icon={card.icon} gradient={card.gradient} description={card.subtitle}
+            badge={<span className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${card.isUp ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-rose-100 bg-rose-50 text-rose-700"}`}>{card.isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{card.trend}</span>}
+          />
+        ))}
       </div>
 
       {/* Secondary mini-counters strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <Clock size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-400">
-              Chờ thanh toán
-            </p>
-            <p className="text-base font-bold text-slate-900">
-              {kpis.pendingBookings} đơn
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-            <CreditCard size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-400">
-              Đã thanh toán
-            </p>
-            <p className="text-base font-bold text-slate-900">
-              {kpis.paidBookings} đơn
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
-            <XCircle size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-400">
-              Đã hủy
-            </p>
-            <p className="text-base font-bold text-slate-900">
-              {kpis.cancelledBookings} đơn
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-xs">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-            <Percent size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-400">
-              Tỷ lệ thành công
-            </p>
-            <p className="text-base font-bold text-emerald-600">
-              {kpis.conversionRate}%
-            </p>
-          </div>
-        </div>
+      <div className="grid grid-cols-4 gap-3 @max-[900px]/dashboard:grid-cols-2 @max-[650px]/dashboard:grid-cols-1">
+        <AdminStatCard title="Chờ thanh toán" value={`${kpis.pendingBookings} đơn`} icon={Clock} tone="amber" />
+        <AdminStatCard title="Đã thanh toán" value={`${kpis.paidBookings} đơn`} icon={CreditCard} tone="green" />
+        <AdminStatCard title="Đã hủy" value={`${kpis.cancelledBookings} đơn`} icon={XCircle} tone="rose" />
+        <AdminStatCard title="Tỷ lệ thành công" value={`${kpis.conversionRate}%`} icon={Percent} tone="indigo" />
       </div>
     </div>
   );

@@ -1037,6 +1037,15 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
             });
             if (!newSchedule) throw new BadRequestException('Đợt khởi hành mới không tồn tại.');
 
+            // Kiểm tra cơ chế chốt tour trước giờ khởi hành (cut_off_hours)
+            const cutOffHours = newSchedule.tours?.cut_off_hours ?? 24;
+            const diffHours = (new Date(newSchedule.start_date).getTime() - Date.now()) / (1000 * 60 * 60);
+            if (diffHours < cutOffHours) {
+                throw new BadRequestException(
+                    `Đợt khởi hành mới đã bước vào thời gian chốt tour (dưới ${cutOffHours} giờ trước giờ khởi hành). Vui lòng chọn phương án hoàn tiền hoặc liên hệ quản trị viên.`
+                );
+            }
+
             const remainingSlots = (newSchedule.quota || 0) - (newSchedule.booked_count || 0);
             if (totalGuests > remainingSlots) {
                 throw new BadRequestException(`Đợt khởi hành mới chỉ còn ${remainingSlots} chỗ, không đủ cho ${totalGuests} khách.`);

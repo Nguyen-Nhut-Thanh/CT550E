@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock3, Map, Users } from "lucide-react";
+import { Clock3, Map, Users } from "lucide-react";
+import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
 import { getTourTypeLabel } from "@/lib/tours/admin/filters";
-import { getTourPageNumbers } from "@/lib/tours/admin/management";
 import { formatVND } from "@/lib/utils/currency";
 import type { ToursPageTour } from "shared";
 import { TourRowActions } from "@/components/tours/tour_management/AdminTourRowActions";
@@ -13,17 +13,20 @@ import { TourRowActions } from "@/components/tours/tour_management/AdminTourRowA
 export function TourManagementTable({
   items,
   loading,
+  page,
+  onPageChange,
   pendingIds,
   onToggle,
   onDelete,
 }: {
   items: ToursPageTour[];
   loading: boolean;
+  page: number;
+  onPageChange: (page: number) => void;
   pendingIds: number[];
   onToggle: (tour: ToursPageTour) => void;
   onDelete: (tour: ToursPageTour) => void;
 }) {
-  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<number[]>([]);
   const checkbox = useRef<HTMLInputElement>(null);
   const pageSize = 6;
@@ -34,11 +37,13 @@ export function TourManagementTable({
     visible.length > 0 &&
     visible.every((tour) => selected.includes(tour.tour_id));
   useEffect(() => {
-    setPage((current) => Math.min(current, totalPages));
+    // Do not reset a restored page while the initial list is still empty/loading.
+    if (loading) return;
+    if (page > totalPages) onPageChange(totalPages);
     setSelected((current) =>
       current.filter((id) => items.some((tour) => tour.tour_id === id)),
     );
-  }, [items, totalPages]);
+  }, [items, totalPages, loading, page, onPageChange]);
   useEffect(() => {
     if (checkbox.current)
       checkbox.current.indeterminate =
@@ -73,35 +78,35 @@ export function TourManagementTable({
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const numbers = getTourPageNumbers(current, totalPages);
   return (
     <section
-      className="ui-tour-management-tableCard [border:1px_solid_#ffffff] rounded-[16px] [background:#fff] overflow-hidden [box-shadow:0_8px_32px_#5075aa05]"
+      className="ui-tour-management-tableCard rounded-[14px] border border-[#e1edfc] bg-white overflow-hidden shadow-2xs"
       aria-label="Danh sách tour"
       aria-busy={loading}
     >
       {selected.length > 0 && (
-        <div className="ui-tour-management-selection flex items-center gap-[18px] p-[12px_20px] text-[12px] [background:#edf5ff] text-[#315c94] [&_button]:font-[650] [&_button]:text-[#075bff]">
+        <div className="ui-tour-management-selection flex items-center gap-4 px-4 py-2.5 text-xs bg-blue-50/80 border-b border-blue-100 text-[#075bff] font-semibold">
           <span>Đã chọn {selected.length} tour</span>
-          <button type="button" onClick={exportSelected}>
+          <button type="button" onClick={exportSelected} className="hover:underline cursor-pointer">
             Xuất CSV
           </button>
-          <button type="button" onClick={() => setSelected([])}>
+          <button type="button" onClick={() => setSelected([])} className="hover:underline text-slate-500 cursor-pointer">
             Bỏ chọn
           </button>
         </div>
       )}
       <div className="ui-tour-management-tableScroll overflow-x-auto">
-        <table className="ui-tour-management-table w-full border-collapse text-left whitespace-nowrap text-[13px] [&_thead]:[background:linear-gradient(#fafcff,_#f4f7fb)] [&_th]:text-[11px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.35px]! [&_th]:text-[#5873a2] [&_th]:p-[15px_16px] [&_th]:[border-bottom:1px_solid_#e6eef9] [&_td]:p-[12px_16px] [&_td]:[border-bottom:1px_solid_#eaf0f9] [&_td]:[vertical-align:middle] [&_th:first-child]:pr-[8px] [&_th:first-child]:w-[44px] [&_th:first-child]:pl-[24px] [&_td:first-child]:pr-[8px] [&_td:first-child]:w-[44px] [&_td:first-child]:pl-[24px] [&_th:last-child]:text-center [&_th:last-child]:w-[76px] [&_td:last-child]:text-center [&_td:last-child]:w-[76px] [&_input]:w-[16px] [&_input]:h-[16px] [&_input]:[accent-color:#075bff] [&_input]:[vertical-align:middle] [&_input]:cursor-pointer [&_tbody_tr:hover]:[background:#f7faff] [&_tr[data-selected=true]]:[background:#f7faff] min-[1600px]:[&_td]:pt-[10px] min-[1600px]:[&_td]:pb-[10px]">
-          <thead>
+        <table className="ui-tour-management-table w-full border-collapse text-left whitespace-nowrap text-[13px]">
+          <thead className="bg-slate-50/75 border-b border-[#edf2fb] text-[12px] font-[650] text-[#7387aa]">
             <tr>
-              <th>
+              <th className="px-3.5 py-3 w-10 text-center">
                 <input
                   ref={checkbox}
                   type="checkbox"
                   aria-label="Chọn tất cả tour trong trang"
                   checked={allSelected}
                   disabled={loading || !visible.length}
+                  className="rounded border-slate-300 text-[#075bff] focus:ring-[#075bff] cursor-pointer"
                   onChange={() =>
                     setSelected(
                       allSelected
@@ -128,19 +133,19 @@ export function TourManagementTable({
                 "Đã đặt",
                 "Thao tác",
               ].map((label) => (
-                <th key={label} scope="col">
+                <th key={label} scope="col" className={`px-3.5 py-3 ${label === "Thao tác" ? "text-center w-20" : ""}`}>
                   {label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#edf2fb]">
             {loading
               ? Array.from({ length: 6 }, (_, index) => (
                   <tr key={index} aria-hidden="true">
                     {Array.from({ length: 8 }, (_, column) => (
-                      <td key={column}>
-                        <div className="ui-tour-management-skeleton min-h-[40px] rounded-[8px] [background:linear-gradient(90deg,_#eff4fa,_#f8faff,_#eff4fa)] [background-size:200%_100%] animate-admin-shimmer motion-reduce:animate-none" />
+                      <td key={column} className="px-3.5 py-2.5">
+                        <div className="min-h-[38px] rounded-lg bg-slate-100/80 animate-pulse" />
                       </td>
                     ))}
                   </tr>
@@ -149,12 +154,14 @@ export function TourManagementTable({
                   <tr
                     key={tour.tour_id}
                     data-selected={selected.includes(tour.tour_id)}
+                    className="hover:bg-slate-50/60 transition-colors"
                   >
-                    <td>
+                    <td className="px-3.5 py-2.5 text-center">
                       <input
                         type="checkbox"
                         aria-label={`Chọn tour ${tour.name}`}
                         checked={selected.includes(tour.tour_id)}
+                        className="rounded border-slate-300 text-[#075bff] focus:ring-[#075bff] cursor-pointer"
                         onChange={(event) =>
                           setSelected(
                             event.target.checked
@@ -164,57 +171,71 @@ export function TourManagementTable({
                         }
                       />
                     </td>
-                    <td>
+                    <td className="px-3.5 py-2.5">
                       <Link
                         href={`/admin/tours/${tour.tour_id}`}
-                        className="ui-tour-management-tourInfo flex items-center gap-[12px] min-w-[260px] max-w-[380px] [&>div]:min-w-0 [&_strong]:block [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:text-[#101e49] [&_strong]:font-bold [&_strong]:text-[13px] [&_strong]:mb-[3px] [&:hover_strong]:text-[#075bff] [&_span]:block [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:text-[12px] [&_span]:text-[#7489b0] [&_span]:max-w-[290px] [&_span]:leading-[1.5] min-[1600px]:max-w-[430px] min-[1600px]:[&_strong]:text-[14px]"
+                        className="ui-tour-management-tourInfo flex items-center gap-3 min-w-[260px] max-w-[380px] group"
                       >
                         <ImageWithFallback
                           src={tour.tour_images?.[0]?.image_url}
                           alt={tour.name}
-                          className="ui-tour-management-thumbnail w-[66px] h-[52px] object-cover rounded-[9px] shrink-0 [background:#e8f1fc]"
+                          className="w-14 h-11 object-cover rounded-lg border border-slate-100 shrink-0 bg-slate-100"
                         />
-                        <div>
-                          <strong title={tour.name}>{tour.name}</strong>
-                          <span>Mã: {tour.code}</span>
+                        <div className="min-w-0">
+                          <strong title={tour.name} className="block overflow-hidden text-ellipsis font-bold text-[13px] text-[#0b1747] group-hover:text-[#075bff] transition-colors mb-0.5">
+                            {tour.name}
+                          </strong>
+                          <span className="block text-xs font-mono text-[#7387aa]">
+                            Mã: {tour.code}
+                          </span>
                           {tour.summary && (
-                            <span title={tour.summary}>{tour.summary}</span>
+                            <span title={tour.summary} className="block overflow-hidden text-ellipsis text-xs text-[#7387aa] max-w-[280px]">
+                              {tour.summary}
+                            </span>
                           )}
                         </div>
                       </Link>
                     </td>
-                    <td>
-                      <span className="ui-tour-management-typeBadge inline-block [background:#e8f2ff] text-[#075bff] p-[5px_9px] rounded-[7px] text-[11px]">
+                    <td className="px-3.5 py-2.5">
+                      <span className="inline-block rounded-lg border border-blue-100 bg-blue-50 text-[#075bff] px-2 py-0.5 text-[11px] font-[650]">
                         {getTourTypeLabel(tour.tour_type)}
                       </span>
                     </td>
-                    <td>
-                      <span className="ui-tour-management-inline inline-flex items-center gap-[9px] text-[#647eaf]">
-                        <Clock3 size={16} />
-                        {tour.duration_days}N {tour.duration_nights}Đ
+                    <td className="px-3.5 py-2.5">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                        <Clock3 size={14} className="text-slate-400" />
+                        <span>{tour.duration_days}N {tour.duration_nights}Đ</span>
                       </span>
                     </td>
-                    <td className="ui-tour-management-price text-[#075bff] font-[750]">
+                    <td className="px-3.5 py-2.5 font-[750] text-[#075bff]">
                       {formatVND(tour.base_price)}
                     </td>
-                    <td>
+                    <td className="px-3.5 py-2.5">
                       <span
-                        className="ui-tour-management-status inline-block min-w-[76px] text-center rounded-[7px] p-[6px_10px] text-[#e28c12] [background:#fff2df] text-[12px] [&[data-active=true]]:text-[#008563] [&[data-active=true]]:[background:#e2f8ef]"
-                        data-active={tour.status === 1}
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-[650] whitespace-nowrap ${
+                          tour.status === 1
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
                       >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            tour.status === 1 ? "bg-emerald-500" : "bg-amber-500"
+                          }`}
+                        />
                         {tour.status === 1 ? "Hoạt động" : "Tạm ẩn"}
                       </span>
                     </td>
-                    <td>
+                    <td className="px-3.5 py-2.5">
                       <span
-                        className="ui-tour-management-inline inline-flex items-center gap-[9px] text-[#647eaf]"
+                        className="inline-flex items-center gap-1.5 text-xs text-slate-600"
                         title="Số đơn đặt tour chưa bị hủy"
                       >
-                        <Users size={17} />
-                        {(tour.booked_count ?? 0).toLocaleString("vi-VN")}
+                        <Users size={14} className="text-slate-400" />
+                        <span>{(tour.booked_count ?? 0).toLocaleString("vi-VN")}</span>
                       </span>
                     </td>
-                    <td>
+                    <td className="px-3.5 py-2.5 text-center">
                       <TourRowActions
                         tour={tour}
                         busy={pendingIds.includes(tour.tour_id)}
@@ -234,47 +255,15 @@ export function TourManagementTable({
           <p>Thử thay đổi từ khóa hoặc bộ lọc để xem các tour khác.</p>
         </div>
       )}
-      <footer className="ui-tour-management-pagination flex items-center justify-between gap-[16px] p-[14px_20px] [&_p]:text-[12px] [&_p]:text-[#6d85b2] [&_nav]:flex [&_nav]:items-center [&_nav]:gap-[5px] [&_button]:grid [&_button]:place-items-center [&_button]:min-w-[30px] [&_button]:h-[30px] [&_button]:p-[0_6px] [&_button]:[border:1px_solid_#e3ebf8] [&_button]:rounded-[7px] [&_button]:text-[12px] [&_button]:text-[#5675a8] [&_button:hover:enabled]:[background:#eff5ff] [&_button:hover:enabled]:text-[#075bff] [&_button:hover:enabled]:[border-color:#b6d0ff] [&_button[aria-current=page]]:[background:#075bff] [&_button[aria-current=page]]:text-[white] [&_button[aria-current=page]]:[border-color:#075bff] [&_button[aria-current=page]]:[box-shadow:0_3px_6px_#075bff26] [&_button[aria-current=page]:hover:enabled]:[background:#0646ce] [&_button[aria-current=page]:hover:enabled]:text-[#fff] [&_button[aria-current=page]:hover:enabled]:[border-color:#0646ce] [&_button:disabled]:opacity-[.35] admin-max-750:items-start admin-max-750:flex-col admin-max-750:p-[14px] admin-max-750:[&_nav]:max-w-full admin-max-750:[&_nav]:flex-wrap">
-        <p role="status">
-          {loading
-            ? "Đang tải danh sách tour..."
-            : `Hiển thị ${items.length ? (current - 1) * pageSize + 1 : 0}–${Math.min(current * pageSize, items.length)} trên tổng ${items.length} tour`}
-        </p>
-        <nav aria-label="Phân trang tour">
-          <button
-            type="button"
-            aria-label="Trang trước"
-            disabled={loading || current === 1}
-            onClick={() => setPage(current - 1)}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          {numbers.map((number, index) => (
-            <span key={number} className="ui-tour-management-pageGroup flex items-center gap-[5px]">
-              {index > 0 && number - numbers[index - 1] > 1 && (
-                <span className="ui-tour-management-ellipsis p-[0_5px] text-[#93a6c4]">…</span>
-              )}
-              <button
-                type="button"
-                aria-label={`Trang ${number}`}
-                aria-current={current === number ? "page" : undefined}
-                disabled={loading}
-                onClick={() => setPage(number)}
-              >
-                {number}
-              </button>
-            </span>
-          ))}
-          <button
-            type="button"
-            aria-label="Trang sau"
-            disabled={loading || current === totalPages}
-            onClick={() => setPage(current + 1)}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </nav>
-      </footer>
+      <AdminPagination
+        currentPage={current}
+        totalPages={totalPages}
+        totalItems={items.length}
+        pageSize={pageSize}
+        itemLabel="tour"
+        showSinglePage
+        onPageChange={onPageChange}
+      />
     </section>
   );
 }

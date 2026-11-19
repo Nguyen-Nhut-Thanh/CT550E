@@ -167,13 +167,13 @@ export default function AdminServicesPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 lg:p-8">
+    <div className="space-y-3 min-w-0 text-[#102044]">
       {/* Header */}
       <AdminPageHeader
-        title="Quản lý Dịch vụ &amp; Đối tác"
+        title="Quản lý Dịch vụ & Đối tác"
         description="Quản lý danh mục khách sạn, hạng phòng, phương tiện di chuyển và đơn vị cung cấp phục vụ lịch trình tour."
         actions={
-          <div className="flex gap-2.5">
+          <div className="flex gap-2">
             {activeTab === "hotels" && (
               <button
                 type="button"
@@ -181,9 +181,9 @@ export default function AdminServicesPage() {
                   setSelectedHotel(null);
                   setHotelModalOpen(true);
                 }}
-                className="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#075bff] px-4 py-2 text-xs font-[650] text-white shadow-xs hover:bg-[#064ddd] transition-colors cursor-pointer"
               >
-                <Plus size={18} /> Thêm khách sạn
+                <Plus size={16} /> Thêm khách sạn
               </button>
             )}
             {activeTab === "transports" && (
@@ -197,9 +197,9 @@ export default function AdminServicesPage() {
                   setSelectedTransport(null);
                   setTransportModalOpen(true);
                 }}
-                className="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#075bff] px-4 py-2 text-xs font-[650] text-white shadow-xs hover:bg-[#064ddd] transition-colors cursor-pointer"
               >
-                <Plus size={18} /> Thêm phương tiện
+                <Plus size={16} /> Thêm phương tiện
               </button>
             )}
             {activeTab === "providers" && (
@@ -209,9 +209,9 @@ export default function AdminServicesPage() {
                   setSelectedProvider(null);
                   setProviderModalOpen(true);
                 }}
-                className="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#075bff] px-4 py-2 text-xs font-[650] text-white shadow-xs hover:bg-[#064ddd] transition-colors cursor-pointer"
               >
-                <Plus size={18} /> Thêm đối tác
+                <Plus size={16} /> Thêm đối tác
               </button>
             )}
           </div>
@@ -231,12 +231,12 @@ export default function AdminServicesPage() {
 
       {/* Content Area */}
       {loading ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-3xl border border-slate-100 bg-white p-8">
-          <Loader2 size={36} className="animate-spin text-blue-600" />
-          <p className="text-sm font-semibold text-slate-600">Đang tải danh mục dịch vụ...</p>
+        <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-[14px] border border-[#e1edfc] bg-white p-8">
+          <Loader2 size={36} className="animate-spin text-[#075bff]" />
+          <p className="text-xs font-semibold text-[#7187a9]">Đang tải danh mục dịch vụ...</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {activeTab === "hotels" && (
             <HotelsTableTab
               hotels={hotels}

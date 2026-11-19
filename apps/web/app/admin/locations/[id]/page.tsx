@@ -12,7 +12,8 @@ import { adminFetch } from "@/lib/http/adminFetch";
 import { API_BASE } from "@/lib/http/config";
 import { uploadAuthenticatedFile } from "@/lib/http/uploadApi";
 import { useToast } from "@/lib/notifications/useToast";
-import { ChevronRight, Home, Loader2 } from "lucide-react";
+import { AdminScenicHeaderBackground } from "@/components/common/admin_shared/layout/AdminScenicHeaderBackground";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -261,20 +262,32 @@ export default function AdminLocationDetailPage() {
   const parentLabel = [form.level_id > 5 ? provinceName : form.level_id > 4 ? regionName : null, countryName].filter(Boolean).join(", ");
 
   return (
-    <div className="relative isolate space-y-5 pb-6 text-[#102044] before:absolute before:inset-x-[-24px] before:inset-y-0 before:-z-[1] before:bg-[radial-gradient(ellipse_at_15%_0%,#f6fbff_0%,#edf6ff_65%,#e8f3ff_100%)] before:content-['']">
-      <header className="space-y-4">
-        <nav aria-label="Đường dẫn điều hướng" className="flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[#7186a8]">
-          <Link href="/admin" aria-label="Tổng quan" className="rounded hover:text-blue-600"><Home size={13} /></Link>
-          <ChevronRight size={12} aria-hidden="true" />
-          <Link href="/admin/locations" className="hover:text-blue-600">Địa điểm</Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="font-medium text-[#0766ff]">{isNew ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"}</span>
-        </nav>
-        <div><h1 className="text-[24px] leading-tight font-extrabold tracking-[-.6px]">{isNew ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"}</h1><p className="mt-1.5 text-[13px] leading-5 text-[#7d8eac]">{isNew ? "Xây dựng hệ thống điểm đến cho hành trình du lịch." : "Cập nhật thông tin điểm đến trong hệ thống du lịch."}</p></div>
+    <div className="relative isolate space-y-3 pb-6 text-[#102044]">
+      <header className="relative isolate flex items-center justify-between gap-4 p-[2px_0] @container/location-editor-header">
+        <AdminScenicHeaderBackground />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/locations"
+            className="inline-flex size-9 items-center justify-center rounded-xl border border-[#e1edfc] bg-white text-[#526b92] shadow-2xs hover:bg-slate-50 hover:text-[#075bff] transition-colors"
+            title="Quay lại danh sách địa điểm"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-[24px] font-extrabold leading-[1.25] tracking-[-.6px] text-[#07123e]">
+              {isNew ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"}
+            </h1>
+            <p className="text-xs text-[#7187a9] mt-0.5">
+              {isNew
+                ? "Xây dựng hệ thống điểm đến cho hành trình du lịch."
+                : "Cập nhật thông tin điểm đến trong hệ thống du lịch."}
+            </p>
+          </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-4">
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-3">
           {!isNew && usageSummary && !usageSummary.can_change_structure && (
             <InlineNotice tone="error">
               Địa điểm này đang được ràng buộc dữ liệu nên không thể đổi cấp,
@@ -283,16 +296,30 @@ export default function AdminLocationDetailPage() {
             </InlineNotice>
           )}
 
-          <section className="rounded-[14px] border border-[#e0ebf9] bg-white/95 p-4 shadow-[0_3px_14px_#3869a705] sm:p-5">
+          <section className="rounded-[14px] border border-[#e1edfc] bg-white p-4.5 sm:p-5 shadow-2xs">
             <div className="mb-4 flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#eaf3ff] text-[14px] font-bold text-[#0766ff]">01</span>
-              <div><h2 className="text-[16px] font-bold text-[#102044]">Phân loại địa điểm</h2><p className="mt-0.5 text-[12px] leading-5 text-[#7d8eac]">Chọn cấp độ phân loại phù hợp cho địa điểm này trong hệ thống.</p></div>
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-[13px] font-bold text-[#075bff]">
+                01
+              </span>
+              <div>
+                <h2 className="text-[15px] font-bold text-[#07123e]">
+                  Phân loại địa điểm
+                </h2>
+                <p className="text-xs text-[#7187a9] mt-0.5">
+                  Chọn cấp độ phân loại phù hợp cho địa điểm này trong hệ thống.
+                </p>
+              </div>
             </div>
             <LocationLevelSelector
               form={form}
               disabled={structureLocked || saving}
               onLevelChange={(level) => {
-                setForm((prev) => ({ ...prev, level_id: level, location_type: LOCATION_TYPE_BY_LEVEL[level], parent_id: "" }));
+                setForm((prev) => ({
+                  ...prev,
+                  level_id: level,
+                  location_type: LOCATION_TYPE_BY_LEVEL[level],
+                  parent_id: "",
+                }));
                 setLevel3Id("");
                 setLevel4Id("");
                 setLevel5Id("");
@@ -312,8 +339,18 @@ export default function AdminLocationDetailPage() {
                 loadingL3={loadingL3}
                 loadingL4={loadingL4}
                 loadingL5={loadingL5}
-                onLevel3Change={value => { setLevel3Id(value); setLevel4Id(""); setLevel5Id(""); setLevel4List([]); setLevel5List([]); }}
-                onLevel4Change={value => { setLevel4Id(value); setLevel5Id(""); setLevel5List([]); }}
+                onLevel3Change={(value) => {
+                  setLevel3Id(value);
+                  setLevel4Id("");
+                  setLevel5Id("");
+                  setLevel4List([]);
+                  setLevel5List([]);
+                }}
+                onLevel4Change={(value) => {
+                  setLevel4Id(value);
+                  setLevel5Id("");
+                  setLevel5List([]);
+                }}
                 onLevel5Change={setLevel5Id}
               />
             )}

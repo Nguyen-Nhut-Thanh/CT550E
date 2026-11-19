@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { AdminStatusBadge } from "@/components/common/admin_shared/controls/AdminStatusBadge";
-import { Building2, Edit2, Trash2 } from "lucide-react";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { Building2, CheckCircle2, Edit2, Trash2 } from "lucide-react";
 import type { AdminProvider } from "shared";
 
 export interface ProvidersTableTabProps {
@@ -19,6 +21,12 @@ export function ProvidersTableTab({
 }: ProvidersTableTabProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
 
   const filteredProviders = useMemo(() => {
     return providers.filter((p) => {
@@ -33,99 +41,105 @@ export function ProvidersTableTab({
     });
   }, [providers, search, statusFilter]);
 
-  return (
-    <>
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-1 flex-wrap items-center gap-3 min-w-[280px]">
-          <div className="w-full sm:w-72">
-            <AdminSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Tìm theo tên đối tác, hotline..."
-            />
-          </div>
+  const totalPages = Math.max(1, Math.ceil(filteredProviders.length / pageSize));
+  const current = Math.min(page, totalPages);
+  const visibleProviders = filteredProviders.slice((current - 1) * pageSize, current * pageSize);
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Đang hợp tác</option>
-            <option value="0">Tạm dừng</option>
-          </select>
+  return (
+    <div className="space-y-3">
+      {/* Filter Bar */}
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-3.5 shadow-2xs">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,2fr)_minmax(180px,1fr)] [&_input]:rounded-lg [&_input]:border-[#e1edfc] [&_input]:text-xs [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-[#e1edfc] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:text-xs [&_button[aria-haspopup=listbox]]:min-h-[38px]">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo tên đối tác, hotline..."
+          />
+
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={CheckCircle2}
+            placeholder="Tất cả trạng thái"
+            selectedValue={statusFilter}
+            onSelect={setStatusFilter}
+            options={[
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "1", label: "Đang hợp tác" },
+              { value: "0", label: "Tạm dừng" },
+            ]}
+          />
         </div>
       </div>
 
       {/* Providers Table */}
-      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <table className="w-full border-collapse text-left whitespace-nowrap text-xs">
+            <thead className="bg-slate-50/75 border-b border-[#edf2fb] text-[11px] font-bold uppercase tracking-wider text-[#7187a9]">
               <tr>
-                <th className="px-6 py-4">Tên đối tác / Nhà cung cấp</th>
-                <th className="px-4 py-4">Lĩnh vực</th>
-                <th className="px-4 py-4">Thông tin liên hệ</th>
-                <th className="px-4 py-4 text-center">Phương tiện liên kết</th>
-                <th className="px-4 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-4.5 py-3">Tên đối tác / Nhà cung cấp</th>
+                <th className="px-4.5 py-3">Lĩnh vực</th>
+                <th className="px-4.5 py-3">Thông tin liên hệ</th>
+                <th className="px-4.5 py-3 text-center">Phương tiện liên kết</th>
+                <th className="px-4.5 py-3">Trạng thái</th>
+                <th className="px-4.5 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#edf2fb]">
               {filteredProviders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-[#7187a9]">
                     Không tìm thấy đối tác nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredProviders.map((p) => (
-                  <tr key={p.provider_id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4">
+                visibleProviders.map((p) => (
+                  <tr key={p.provider_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4.5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                          <Building2 size={22} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#075bff] shadow-xs">
+                          <Building2 size={20} />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 leading-snug">{p.name}</p>
-                          <p className="text-[11px] text-slate-400">Mã: #{p.provider_id}</p>
+                          <p className="font-bold text-[13px] text-[#07123e] leading-snug">{p.name}</p>
+                          <p className="text-[11px] text-[#8fa2be]">Mã: #{p.provider_id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 capitalize">
+                    <td className="px-4.5 py-3">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 capitalize">
                         {p.type}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-xs font-medium text-slate-700 whitespace-pre-line max-w-xs">
+                    <td className="px-4.5 py-3 text-xs font-medium text-[#192e52] whitespace-pre-line max-w-xs">
                       {p.contact_info || "—"}
                     </td>
-                    <td className="px-4 py-4 text-center font-bold text-slate-800">
+                    <td className="px-4.5 py-3 text-center font-bold text-[#192e52]">
                       {p._count?.transports ?? 0} xe/tàu
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4.5 py-3">
                       <AdminStatusBadge tone={p.status === 1 ? "success" : "muted"}>
                         {p.status === 1 ? "Đang hợp tác" : "Tạm dừng"}
                       </AdminStatusBadge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                    <td className="px-4.5 py-3 text-right">
+                      <div className="inline-flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => onEdit(p)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#075bff] transition cursor-pointer"
                           title="Chỉnh sửa"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={15} />
                         </button>
                         <button
                           type="button"
                           onClick={() => onDelete(p)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
                           title="Xóa đối tác"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -135,8 +149,20 @@ export function ProvidersTableTab({
             </tbody>
           </table>
         </div>
+        {filteredProviders.length > 0 && (
+          <AdminPagination
+            variant="numbered"
+            showSinglePage
+            currentPage={current}
+            totalPages={totalPages}
+            totalItems={filteredProviders.length}
+            pageSize={pageSize}
+            itemLabel="đối tác"
+            onPageChange={setPage}
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

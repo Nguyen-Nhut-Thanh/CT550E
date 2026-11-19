@@ -40,7 +40,8 @@ export function VoucherDateCell({
   muted?: boolean;
 }) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return <span className="text-slate-400">—</span>;
+  if (Number.isNaN(date.getTime()))
+    return <span className="text-slate-400">—</span>;
   return (
     <time
       dateTime={date.toISOString()}
@@ -53,6 +54,33 @@ export function VoucherDateCell({
       {voucherTimeFormatter.format(date)} <span aria-hidden="true">–</span>{" "}
       {voucherDateFormatter.format(date)}
     </time>
+  );
+}
+
+export function VoucherValidityCell({
+  startDate,
+  expiryDate,
+}: {
+  startDate: string;
+  expiryDate: string;
+}) {
+  const formatDateTime = (val: string) => {
+    const d = new Date(val);
+    if (Number.isNaN(d.getTime())) return null;
+    return `${voucherTimeFormatter.format(d)} – ${voucherDateFormatter.format(d)}`;
+  };
+
+  const start = formatDateTime(startDate);
+  const end = formatDateTime(expiryDate);
+
+  if (!start && !end) return <span className="text-slate-400">—</span>;
+
+  return (
+    <div className="text-xs tabular-nums text-slate-700 flex flex-wrap items-center gap-x-1.5 leading-snug">
+      <span className="font-medium whitespace-nowrap">{start || "—"}</span>
+      <span className="text-slate-400 text-[11px] font-normal">đến</span>
+      <span className="font-medium whitespace-nowrap">{end || "—"}</span>
+    </div>
   );
 }
 
@@ -141,15 +169,12 @@ export function VoucherManagementTable({
       ),
     },
     {
-      header: "Hiệu lực từ",
+      header: "Thời gian hiệu lực",
       render: (voucher: Voucher) => (
-        <VoucherDateCell value={voucher.start_date} label="Thời gian bắt đầu" />
-      ),
-    },
-    {
-      header: "Hết hạn",
-      render: (voucher: Voucher) => (
-        <VoucherDateCell value={voucher.expiry_date} label="Thời gian hết hạn" />
+        <VoucherValidityCell
+          startDate={voucher.start_date}
+          expiryDate={voucher.expiry_date}
+        />
       ),
     },
     {

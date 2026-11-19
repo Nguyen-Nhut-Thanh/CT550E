@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
+import { PriceInput } from "@/components/common/form_controls/PriceInput";
 import {
   createServicesRoomType,
   deleteServicesRoomType,
@@ -32,6 +34,8 @@ export function RoomTypesModal({ open, hotel, onClose, onRefreshHotel }: RoomTyp
   const [rooms, setRooms] = useState<AdminHotelRoomType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteRoomId, setPendingDeleteRoomId] = useState<number | null>(null);
+  const [deletingRoom, setDeletingRoom] = useState(false);
 
   // Form thêm / sửa loại phòng
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -131,15 +135,19 @@ export function RoomTypesModal({ open, hotel, onClose, onRefreshHotel }: RoomTyp
     }
   };
 
-  const handleDeleteRoom = async (roomTypeId: number) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa loại phòng này?")) return;
+  const executeDeleteRoom = async () => {
+    if (!pendingDeleteRoomId || !hotel) return;
+    setDeletingRoom(true);
     setError(null);
     try {
-      await deleteServicesRoomType(roomTypeId);
+      await deleteServicesRoomType(pendingDeleteRoomId);
       await fetchRooms(hotel.hotel_id);
       if (onRefreshHotel) onRefreshHotel();
+      setPendingDeleteRoomId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể xóa loại phòng.");
+    } finally {
+      setDeletingRoom(false);
     }
   };
 
@@ -220,14 +228,16 @@ export function RoomTypesModal({ open, hotel, onClose, onRefreshHotel }: RoomTyp
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                  Giá niêm yết / phụ thu (VNĐ)
+                  Giá niêm yết / phụ thu
                 </label>
-                <input
-                  type="number"
-                  placeholder="Giá phòng"
+                <PriceInput
+                  label=""
                   value={basePrice}
-                  onChange={(e) => setBasePrice(Number(e.target.value) || 0)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-800 bg-white"
+                  onChange={(val) => setBasePrice(val)}
+                  placeholder="Ví dụ: 500.000"
+                  icon={null}
+                  suffix="đ"
+                  inputClassName="w-full rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 text-left outline-none focus:border-[#075bff] focus:ring-2 focus:ring-blue-100 transition-colors"
                 />
               </div>
 
@@ -350,7 +360,7 @@ export function RoomTypesModal({ open, hotel, onClose, onRefreshHotel }: RoomTyp
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDeleteRoom(room.room_type_id)}
+                    onClick={() => setPendingDeleteRoomId(room.room_type_id)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
                     title="Xóa loại phòng"
                   >
@@ -362,6 +372,17 @@ export function RoomTypesModal({ open, hotel, onClose, onRefreshHotel }: RoomTyp
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingDeleteRoomId !== null}
+        icon={<Trash2 size={32} className="text-rose-600" />}
+        title="Xóa loại phòng?"
+        description="Bạn có chắc chắn muốn xóa loại phòng này khỏi khách sạn? Hành động này không thể hoàn tác."
+        confirmLabel={deletingRoom ? "Đang xóa..." : "Xác nhận xóa"}
+        cancelLabel="Hủy bỏ"
+        onConfirm={() => void executeDeleteRoom()}
+        onCancel={() => !deletingRoom && setPendingDeleteRoomId(null)}
+      />
     </AdminModalShell>
   );
 }

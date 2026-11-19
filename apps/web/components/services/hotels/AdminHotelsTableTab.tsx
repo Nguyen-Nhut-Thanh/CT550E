@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { AdminStatusBadge } from "@/components/common/admin_shared/controls/AdminStatusBadge";
-import { BedDouble, Edit2, Hotel, MapPin, Phone, Star, Trash2 } from "lucide-react";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { BedDouble, CheckCircle2, Edit2, Hotel, MapPin, Phone, Star, Trash2 } from "lucide-react";
 import type { AdminHotel } from "shared";
 
 export interface LocationItem {
@@ -30,6 +32,12 @@ export function HotelsTableTab({
   const [locationFilter, setLocationFilter] = useState("");
   const [starFilter, setStarFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, locationFilter, starFilter, statusFilter]);
 
   const filteredHotels = useMemo(() => {
     return hotels.filter((h) => {
@@ -47,149 +55,162 @@ export function HotelsTableTab({
     });
   }, [hotels, search, locationFilter, starFilter, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredHotels.length / pageSize));
+  const current = Math.min(page, totalPages);
+  const visibleHotels = filteredHotels.slice((current - 1) * pageSize, current * pageSize);
+
   return (
-    <>
+    <div className="space-y-3">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-1 flex-wrap items-center gap-3 min-w-[280px]">
-          <div className="w-full sm:w-72">
-            <AdminSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Tìm theo tên khách sạn, địa chỉ..."
-            />
-          </div>
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-3.5 shadow-2xs">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,2fr)_repeat(3,minmax(160px,1fr))] [&_input]:rounded-lg [&_input]:border-[#e1edfc] [&_input]:text-xs [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-[#e1edfc] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:text-xs [&_button[aria-haspopup=listbox]]:min-h-[38px]">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo tên khách sạn, địa chỉ..."
+          />
 
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả địa điểm</option>
-            {locations.map((loc) => (
-              <option key={loc.location_id} value={loc.location_id}>
-                {loc.name}
-              </option>
-            ))}
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={MapPin}
+            placeholder="Tất cả địa điểm"
+            selectedValue={locationFilter}
+            onSelect={setLocationFilter}
+            options={[
+              { value: "", label: "Tất cả địa điểm" },
+              ...locations.map((loc) => ({
+                value: String(loc.location_id),
+                label: loc.name,
+              })),
+            ]}
+          />
 
-          <select
-            value={starFilter}
-            onChange={(e) => setStarFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả hạng sao</option>
-            <option value="5">5 sao ★★★★★</option>
-            <option value="4">4 sao ★★★★</option>
-            <option value="3">3 sao ★★★</option>
-            <option value="2">2 sao ★★</option>
-            <option value="1">1 sao ★</option>
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={Star}
+            placeholder="Tất cả hạng sao"
+            selectedValue={starFilter}
+            onSelect={setStarFilter}
+            options={[
+              { value: "", label: "Tất cả hạng sao" },
+              { value: "5", label: "5 sao ★★★★★" },
+              { value: "4", label: "4 sao ★★★★" },
+              { value: "3", label: "3 sao ★★★" },
+              { value: "2", label: "2 sao ★★" },
+              { value: "1", label: "1 sao ★" },
+            ]}
+          />
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Đang hoạt động</option>
-            <option value="0">Tạm dừng</option>
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={CheckCircle2}
+            placeholder="Tất cả trạng thái"
+            selectedValue={statusFilter}
+            onSelect={setStatusFilter}
+            options={[
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "1", label: "Đang hoạt động" },
+              { value: "0", label: "Tạm dừng" },
+            ]}
+          />
         </div>
       </div>
 
       {/* Hotels Table */}
-      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <table className="w-full border-collapse text-left whitespace-nowrap text-xs">
+            <thead className="bg-slate-50/75 border-b border-[#edf2fb] text-[11px] font-bold uppercase tracking-wider text-[#7187a9]">
               <tr>
-                <th className="px-6 py-4">Khách sạn / Resort</th>
-                <th className="px-4 py-4">Địa điểm</th>
-                <th className="px-4 py-4">Địa chỉ &amp; Liên hệ</th>
-                <th className="px-4 py-4 text-center">Hạng phòng</th>
-                <th className="px-4 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-4.5 py-3">Khách sạn / Resort</th>
+                <th className="px-4.5 py-3">Địa điểm</th>
+                <th className="px-4.5 py-3">Địa chỉ &amp; Liên hệ</th>
+                <th className="px-4.5 py-3 text-center">Hạng phòng</th>
+                <th className="px-4.5 py-3">Trạng thái</th>
+                <th className="px-4.5 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#edf2fb]">
               {filteredHotels.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-[#7187a9]">
                     Không tìm thấy khách sạn nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredHotels.map((h) => (
-                  <tr key={h.hotel_id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4">
+                visibleHotels.map((h) => (
+                  <tr key={h.hotel_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4.5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                          <Hotel size={22} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#075bff] shadow-xs">
+                          <Hotel size={20} />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 leading-snug">{h.name}</p>
+                          <p className="font-bold text-[13px] text-[#07123e] leading-snug">{h.name}</p>
                           <div className="flex items-center gap-1 mt-0.5">
                             {Array.from({ length: h.star_rating || 3 }).map((_, i) => (
                               <Star
                                 key={i}
-                                size={12}
+                                size={11}
                                 className="fill-amber-400 text-amber-400"
                               />
                             ))}
-                            <span className="text-[11px] font-semibold text-slate-400 ml-1">
+                            <span className="text-[11px] font-semibold text-[#8da1bd] ml-0.5">
                               ({h.star_rating} sao)
                             </span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                        <MapPin size={12} className="text-slate-500" />
+                    <td className="px-4.5 py-3">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                        <MapPin size={11} className="text-slate-500" />
                         {h.locations?.name || "Chưa gán"}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-xs">
-                      <p className="text-slate-800 font-medium line-clamp-1">{h.address}</p>
+                    <td className="px-4.5 py-3 text-xs">
+                      <p className="text-[#192e52] font-medium line-clamp-1">{h.address}</p>
                       {h.phone && (
-                        <p className="text-slate-500 mt-0.5 flex items-center gap-1">
+                        <p className="text-[#7187a9] mt-0.5 flex items-center gap-1 text-[11px]">
                           <Phone size={11} /> {h.phone}
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-4.5 py-3 text-center">
                       <button
                         type="button"
                         onClick={() => onManageRooms(h)}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition shadow-xs cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-bold text-[#075bff] hover:bg-blue-100 transition shadow-2xs cursor-pointer"
                       >
                         <BedDouble size={14} />
                         <span>{h._count?.hotel_room_types ?? h.hotel_room_types?.length ?? 0} loại phòng</span>
                       </button>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4.5 py-3">
                       <AdminStatusBadge tone={h.status === 1 ? "success" : "muted"}>
                         {h.status === 1 ? "Hoạt động" : "Tạm dừng"}
                       </AdminStatusBadge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                    <td className="px-4.5 py-3 text-right">
+                      <div className="inline-flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => onEdit(h)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#075bff] transition cursor-pointer"
                           title="Chỉnh sửa thông tin"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={15} />
                         </button>
                         <button
                           type="button"
                           onClick={() => onDelete(h)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
                           title="Xóa khách sạn"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -199,8 +220,20 @@ export function HotelsTableTab({
             </tbody>
           </table>
         </div>
+        {filteredHotels.length > 0 && (
+          <AdminPagination
+            variant="numbered"
+            showSinglePage
+            currentPage={current}
+            totalPages={totalPages}
+            totalItems={filteredHotels.length}
+            pageSize={pageSize}
+            itemLabel="khách sạn"
+            onPageChange={setPage}
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

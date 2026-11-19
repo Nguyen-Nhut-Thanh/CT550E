@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, MapPin, Plane } from 'lucide-react';
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 const SECTIONS = [
   { id: 'tour-info', label: 'Thông tin cơ bản' },
@@ -14,13 +14,32 @@ export function TourEditorShell({ title, description, onBack, children, sections
   sections?: ReadonlyArray<{ id: string; label: string }>;
 }) {
   const [active, setActive] = useState(sections[0]?.id || '');
+  const heroRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const hero = heroRef.current;
+    const page = hero?.closest<HTMLElement>('[data-admin-page]');
+    if (!hero || !page) return;
+    const updatePosition = () => {
+      const offset = Math.max(0, hero.getBoundingClientRect().top - page.getBoundingClientRect().top);
+      hero.style.setProperty('--tour-editor-background-top', `${-offset}px`);
+    };
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(hero);
+    observer.observe(page);
+    const breadcrumb = page.querySelector('[aria-label="Đường dẫn"]');
+    if (breadcrumb) observer.observe(breadcrumb);
+    return () => observer.disconnect();
+  }, []);
   return <div className="relative isolate mx-auto max-w-[1240px] px-2 pt-4 pb-20 text-[#101e41] before:absolute before:-z-[2] before:inset-x-[-28px] before:top-[-16px] before:bottom-0 before:content-[''] before:bg-[radial-gradient(ellipse_at_25%_8%,#fff_0%,#f2f7ff_44%,#eaf3ff_100%)] max-sm:px-0 max-sm:pt-3 max-sm:pb-[60px] min-[1440px]:px-5 min-[1440px]:pt-[22px] min-[1440px]:pb-[95px] motion-reduce:[&_*]:transition-none! motion-reduce:[&_*]:scroll-auto! motion-reduce:[&_*::before]:transition-none! motion-reduce:[&_*::before]:scroll-auto!">
-    <div className="relative isolate -mx-2 -mt-2 mb-5 min-h-[158px] overflow-hidden rounded-b-[20px] bg-[linear-gradient(110deg,#f8fbff,#edf6ff)] px-2 pt-2 pb-4">
+    <div ref={heroRef} className="relative isolate -mx-2 -mt-2 mb-5 min-h-[158px] px-2 pt-2 pb-4">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-[1] overflow-hidden rounded-b-[20px] bg-[linear-gradient(110deg,#f8fbff,#edf6ff)]" style={{ top: 'var(--tour-editor-background-top, 0px)' }} aria-hidden="true">
     <div className="absolute inset-y-0 right-0 -z-[1] w-[56%] bg-no-repeat [background-image:linear-gradient(90deg,#f5faff_0%,#f5faffcc_18%,#f5faff00_55%),linear-gradient(0deg,#eff6ff_0%,#eff6ff00_38%),url('/images/about/hero-bay-traveler.png')] [background-size:auto,auto,200%_auto] [background-position:center,center,left_49%] max-sm:w-[66%] max-sm:opacity-50" aria-hidden="true" />
     <div className="pointer-events-none absolute top-0 right-[28%] h-[66px] w-[180px] text-[#5592b8] max-sm:hidden [&>svg:first-child]:h-full [&>svg:first-child]:w-full" aria-hidden="true">
       <svg viewBox="0 0 200 70" fill="none"><path d="M10 52C38 1 100-2 151 26" stroke="#a7cffc" strokeWidth="1.5" strokeDasharray="5 5" /></svg>
       <MapPin className="absolute top-[37px] left-0" size={18} fill="#5a9bfa" stroke="white" />
       <Plane className="absolute top-0 right-2 rotate-[17deg]" size={42} strokeWidth={1.4} fill="#dcefff" />
+    </div>
     </div>
     <header className="relative min-h-[88px] px-2 pt-[6px] pb-3 max-sm:px-0">
       <div className="flex max-w-[76%] items-start gap-[14px] max-sm:max-w-full">

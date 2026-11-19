@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
+import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { AdminStatusBadge } from "@/components/common/admin_shared/controls/AdminStatusBadge";
-import { Bus, Car, Edit2, Plane, Ship, Train, Trash2 } from "lucide-react";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { Building2, Bus, Car, CheckCircle2, Edit2, Plane, Ship, Train, Trash2 } from "lucide-react";
 import type { AdminProvider, AdminTransport } from "shared";
 
 export interface TransportsTableTabProps {
@@ -53,6 +55,12 @@ export function TransportsTableTab({
   const [transportTypeFilter, setTransportTypeFilter] = useState("");
   const [providerFilter, setProviderFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, transportTypeFilter, providerFilter, statusFilter]);
 
   const filteredTransports = useMemo(() => {
     return transports.filter((t) => {
@@ -70,131 +78,144 @@ export function TransportsTableTab({
     });
   }, [transports, search, transportTypeFilter, providerFilter, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredTransports.length / pageSize));
+  const current = Math.min(page, totalPages);
+  const visibleTransports = filteredTransports.slice((current - 1) * pageSize, current * pageSize);
+
   return (
-    <>
+    <div className="space-y-3">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-1 flex-wrap items-center gap-3 min-w-[280px]">
-          <div className="w-full sm:w-72">
-            <AdminSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Tìm theo tên xe, máy bay, đối tác..."
-            />
-          </div>
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-3.5 shadow-2xs">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,2fr)_repeat(3,minmax(160px,1fr))] [&_input]:rounded-lg [&_input]:border-[#e1edfc] [&_input]:text-xs [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-[#e1edfc] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:text-xs [&_button[aria-haspopup=listbox]]:min-h-[38px]">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo tên xe, máy bay, đối tác..."
+          />
 
-          <select
-            value={transportTypeFilter}
-            onChange={(e) => setTransportTypeFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả loại hình</option>
-            <option value="car">Xe ô tô / Xe khách</option>
-            <option value="flight">Máy bay</option>
-            <option value="train">Tàu hỏa</option>
-            <option value="boat">Tàu thủy / Du thuyền</option>
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={Car}
+            placeholder="Tất cả loại hình"
+            selectedValue={transportTypeFilter}
+            onSelect={setTransportTypeFilter}
+            options={[
+              { value: "", label: "Tất cả loại hình" },
+              { value: "car", label: "Xe ô tô / Xe khách" },
+              { value: "flight", label: "Máy bay" },
+              { value: "train", label: "Tàu hỏa" },
+              { value: "boat", label: "Tàu thủy / Du thuyền" },
+            ]}
+          />
 
-          <select
-            value={providerFilter}
-            onChange={(e) => setProviderFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả đối tác cung cấp</option>
-            {providers.map((p) => (
-              <option key={p.provider_id} value={p.provider_id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={Building2}
+            placeholder="Tất cả đối tác"
+            selectedValue={providerFilter}
+            onSelect={setProviderFilter}
+            options={[
+              { value: "", label: "Tất cả đối tác cung cấp" },
+              ...providers.map((p) => ({
+                value: String(p.provider_id),
+                label: p.name,
+              })),
+            ]}
+          />
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Đang hoạt động</option>
-            <option value="0">Tạm dừng</option>
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={CheckCircle2}
+            placeholder="Tất cả trạng thái"
+            selectedValue={statusFilter}
+            onSelect={setStatusFilter}
+            options={[
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "1", label: "Đang hoạt động" },
+              { value: "0", label: "Tạm dừng" },
+            ]}
+          />
         </div>
       </div>
 
       {/* Transports Table */}
-      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <table className="w-full border-collapse text-left whitespace-nowrap text-xs">
+            <thead className="bg-slate-50/75 border-b border-[#edf2fb] text-[11px] font-bold uppercase tracking-wider text-[#7187a9]">
               <tr>
-                <th className="px-6 py-4">Tên phương tiện</th>
-                <th className="px-4 py-4">Loại hình</th>
-                <th className="px-4 py-4 text-center">Sức chứa (chỗ)</th>
-                <th className="px-4 py-4">Đơn vị cung cấp</th>
-                <th className="px-4 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-4.5 py-3">Tên phương tiện</th>
+                <th className="px-4.5 py-3">Loại hình</th>
+                <th className="px-4.5 py-3 text-center">Sức chứa (chỗ)</th>
+                <th className="px-4.5 py-3">Đơn vị cung cấp</th>
+                <th className="px-4.5 py-3">Trạng thái</th>
+                <th className="px-4.5 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#edf2fb]">
               {filteredTransports.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-[#7187a9]">
                     Không tìm thấy phương tiện nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredTransports.map((t) => (
-                  <tr key={t.transport_id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4">
+                visibleTransports.map((t) => (
+                  <tr key={t.transport_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4.5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#075bff] shadow-xs">
                           {getTransportIcon(t.transport_type)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 leading-snug">{t.name}</p>
+                          <p className="font-bold text-[13px] text-[#07123e] leading-snug">{t.name}</p>
                           {t.description && (
-                            <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                            <p className="text-[11px] text-[#7187a9] line-clamp-1 mt-0.5">
                               {t.description}
                             </p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    <td className="px-4.5 py-3">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
                         {getTransportIcon(t.transport_type)}
                         {getTransportTypeName(t.transport_type)}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-center font-bold text-slate-800">
+                    <td className="px-4.5 py-3 text-center font-bold text-[#192e52]">
                       {t.capacity > 0 ? `${t.capacity} chỗ` : "—"}
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="font-semibold text-slate-800">
+                    <td className="px-4.5 py-3">
+                      <span className="font-semibold text-[#192e52]">
                         {t.providers?.name || "Chưa gán"}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4.5 py-3">
                       <AdminStatusBadge tone={t.status === 1 ? "success" : "muted"}>
                         {t.status === 1 ? "Hoạt động" : "Tạm dừng"}
                       </AdminStatusBadge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                    <td className="px-4.5 py-3 text-right">
+                      <div className="inline-flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => onEdit(t)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#075bff] transition cursor-pointer"
                           title="Chỉnh sửa"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={15} />
                         </button>
                         <button
                           type="button"
                           onClick={() => onDelete(t)}
-                          className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
                           title="Xóa phương tiện"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -204,8 +225,20 @@ export function TransportsTableTab({
             </tbody>
           </table>
         </div>
+        {filteredTransports.length > 0 && (
+          <AdminPagination
+            variant="numbered"
+            showSinglePage
+            currentPage={current}
+            totalPages={totalPages}
+            totalItems={filteredTransports.length}
+            pageSize={pageSize}
+            itemLabel="phương tiện"
+            onPageChange={setPage}
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

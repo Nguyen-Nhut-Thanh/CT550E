@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChatWorkspace } from "@/components/chat/admin_chat/AdminChatWorkspace";
 import { ConversationSidebar } from "@/components/chat/admin_chat/AdminConversationSidebar";
@@ -45,8 +45,6 @@ function AdminChatsContent() {
     urlConversationId && selectedId === Number(urlConversationId),
   );
 
-  const sentReviewCardRef = useRef<number | null>(null);
-
   useEffect(() => {
     return () => {
       disconnectSocket();
@@ -59,28 +57,6 @@ function AdminChatsContent() {
       setSelectedId(convId);
     }
   }, [urlConversationId]);
-
-  // Auto-send review context card once connected if opening from review management and not already in chat
-  useEffect(() => {
-    if (
-      isTargetReviewConv &&
-      urlReviewId &&
-      chat.connected &&
-      !chat.loading &&
-      sentReviewCardRef.current !== Number(urlReviewId)
-    ) {
-      const reviewId = Number(urlReviewId);
-      const alreadyPresent = chat.messages.some(
-        (m) => m.context?.kind === "review" && m.context.id === reviewId,
-      );
-      if (!alreadyPresent) {
-        sentReviewCardRef.current = reviewId;
-        void chat.send("Xử lý đánh giá tour", "CONTEXT", { review_id: reviewId });
-      } else {
-        sentReviewCardRef.current = reviewId;
-      }
-    }
-  }, [isTargetReviewConv, urlReviewId, chat.connected, chat.loading, chat.messages, chat.send]);
 
   const handleSelectConversation = (id: number) => {
     setSelectedId(id);
@@ -114,12 +90,14 @@ function AdminChatsContent() {
               chat.reload();
               void session.refresh();
             }}
-            className="font-semibold underline"
+            className="font-semibold underline cursor-pointer"
           >
             Làm mới
           </button>
         </div>
       )}
+
+      {/* Chat Space */}
       <div className="flex min-h-0 flex-1 gap-1.5 bg-blue-50/70 p-1.5">
         <ConversationSidebar
           conversations={visible}

@@ -1,5 +1,8 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+import { getVoucherStatus } from "@/lib/vouchers/client/status";
+
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { VoucherModal } from "@/components/vouchers/voucher_editor/AdminVoucherModal";
@@ -23,7 +26,7 @@ import {
   getVoucherDateParts,
 } from "@/lib/vouchers/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { AlertTriangle, Sparkles, Ticket } from "lucide-react";
+import { AlertTriangle, Sparkles, Ticket, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import type { Voucher, VoucherForm, VoucherStatusFilter } from "shared";
 
 type VouchersTab = "list" | "campaign";
@@ -194,7 +197,7 @@ function AdminVouchersContent() {
   };
 
   return (
-    <div className="relative space-y-5">
+    <div className="relative space-y-3.5">
       <AdminPageHeader
         title="Mã giảm giá &amp; Ưu đãi"
         description="Quản lý các chương trình ưu đãi mã khuyến mãi và chiến dịch voucher sự kiện trang chủ."
@@ -209,13 +212,13 @@ function AdminVouchersContent() {
       />
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-[#e1edfc]">
         <button
           type="button"
           onClick={() => handleTabChange("list")}
           className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "list"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -228,7 +231,7 @@ function AdminVouchersContent() {
           onClick={() => handleTabChange("campaign")}
           className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "campaign"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -239,17 +242,28 @@ function AdminVouchersContent() {
 
       {/* Tab Content */}
       {activeTab === "list" && (
-        <div className="space-y-4">
-          <AdminSearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Tìm theo mã voucher..."
-          />
+        <div className="space-y-3.5">
+          <AdminStatGrid label="Thống kê mã giảm giá" loading={loading} items={[
+            { id: "total", title: "Tổng mã giảm giá", value: vouchers.length, icon: Ticket },
+            { id: "active", title: "Có thể sử dụng", value: vouchers.filter(item => getVoucherStatus(item) === "active").length, icon: CheckCircle2, tone: "green" },
+            { id: "upcoming", title: "Sắp có hiệu lực", value: vouchers.filter(item => getVoucherStatus(item) === "upcoming").length, icon: Clock3, tone: "purple" },
+            { id: "expired", title: "Đã hết hạn", value: vouchers.filter(item => getVoucherStatus(item) === "expired").length, icon: XCircle, tone: "amber" },
+          ]} />
 
-          <VoucherStatusFilterTabs
-            value={statusFilter}
-            onChange={setStatusFilter}
-          />
+          {/* Hàng bộ lọc: Tìm kiếm bên trái, Lọc trạng thái bên phải */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <AdminSearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Tìm theo mã voucher..."
+              className="w-full sm:w-80 shrink-0"
+            />
+
+            <VoucherStatusFilterTabs
+              value={statusFilter}
+              onChange={setStatusFilter}
+            />
+          </div>
 
           <VoucherManagementTable
             vouchers={filteredVouchers}

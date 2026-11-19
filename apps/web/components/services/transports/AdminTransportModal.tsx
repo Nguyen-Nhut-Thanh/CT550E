@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AdminModalShell } from "@/components/common/admin_shared/layout/AdminModalShell";
-import { Bus, Car, Loader2, Plane, Ship, Train } from "lucide-react";
+import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { Building2, Bus, Car, Loader2, Plane, Ship, Train } from "lucide-react";
 import type { AdminProvider, AdminTransport, TransportPayload } from "shared";
 
 interface TransportModalProps {
@@ -135,16 +136,20 @@ export function TransportModal({
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
               Loại phương tiện
             </label>
-            <select
-              value={transportType}
-              onChange={(e) => setTransportType(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="car">Xe ô tô / Xe khách</option>
-              <option value="flight">Máy bay (Hàng không)</option>
-              <option value="train">Tàu hỏa (Đường sắt)</option>
-              <option value="boat">Tàu thủy / Du thuyền</option>
-            </select>
+            <CustomDropdown
+              variant="compact"
+              matchTriggerWidth
+              icon={Car}
+              placeholder="Chọn loại phương tiện"
+              selectedValue={transportType}
+              onSelect={setTransportType}
+              options={[
+                { value: "car", label: "Xe ô tô / Xe khách" },
+                { value: "flight", label: "Máy bay (Hàng không)" },
+                { value: "train", label: "Tàu hỏa (Đường sắt)" },
+                { value: "boat", label: "Tàu thủy / Du thuyền" },
+              ]}
+            />
           </div>
 
           <div>
@@ -165,19 +170,18 @@ export function TransportModal({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
             Đơn vị / Đối tác cung cấp <span className="text-rose-500">*</span>
           </label>
-          <select
-            required
-            value={providerId}
-            onChange={(e) => setProviderId(Number(e.target.value) || "")}
-            className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">Chọn đối tác cung cấp</option>
-            {providers.map((p) => (
-              <option key={p.provider_id} value={p.provider_id}>
-                {p.name} ({p.type})
-              </option>
-            ))}
-          </select>
+          <CustomDropdown
+            variant="compact"
+            matchTriggerWidth
+            icon={Building2}
+            placeholder="Chọn đối tác cung cấp"
+            selectedValue={String(providerId)}
+            onSelect={(val) => setProviderId(Number(val) || "")}
+            options={providers.map((p) => ({
+              value: String(p.provider_id),
+              label: `${p.name} (${p.type})`,
+            }))}
+          />
         </div>
 
         <div>

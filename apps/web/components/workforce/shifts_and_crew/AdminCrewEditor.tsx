@@ -173,60 +173,64 @@ export function CrewEditor({
       labelledBy={titleId}
       describedBy={summaryId}
     >
-      <div className="my-auto flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-        <header className="flex shrink-0 items-start gap-3 border-b border-slate-200 px-5 py-5 sm:gap-4 sm:px-7 sm:py-6">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600 sm:size-12">
-            <UsersRound size={25} />
-          </span>
-          <div className="min-w-0 flex-1">
+      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl border border-[#e1edfc] text-[#092448]">
+        {/* Nút đóng tròn nổi */}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onClose}
+          aria-label="Đóng phân công nhân sự"
+          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-slate-500 shadow-sm backdrop-blur-md transition hover:bg-white hover:text-slate-900 cursor-pointer disabled:opacity-40"
+        >
+          <X size={18} />
+        </button>
+
+        {/* Header gradient banner chuẩn */}
+        <header className="relative isolate shrink-0 pt-5 pb-4 px-6 overflow-hidden border-b border-[#e1edfc] bg-gradient-to-r from-blue-50/90 to-sky-50/50">
+          <div className="space-y-1.5 pr-10">
+            <div className="flex items-center gap-2">
+              <span className="uppercase text-[10px] tracking-wider text-blue-800 font-extrabold bg-white/90 px-2.5 py-0.5 rounded-full border border-blue-200 shadow-2xs">
+                Phân công nhân sự
+              </span>
+              <span className="text-[12px] font-bold text-[#075bff]">
+                {schedule.code || `#${schedule.tour_schedule_id}`}
+              </span>
+            </div>
             <h2
               id={titleId}
-              className="text-lg font-bold tracking-tight text-[#152641] sm:text-xl"
+              className="text-lg sm:text-xl font-black text-[#092448]"
             >
-              Phân công nhân sự chuyến đi
+              {schedule.tours.name}
             </h2>
             <div
               id={summaryId}
-              className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs leading-5 text-slate-500 sm:text-[13px]"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 font-medium"
             >
-              <span className="font-semibold text-slate-700">
-                {schedule.tours.name}
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays size={14} className="shrink-0 text-[#075bff]" />
+                {workforceDate(schedule.start_date)} → {workforceDate(schedule.end_date)}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <CalendarDays size={14} className="shrink-0 text-blue-500" />
-                Ngày đi: {workforceDate(schedule.start_date)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays size={14} className="shrink-0 text-blue-500" />
-                Ngày kết thúc: {workforceDate(schedule.end_date)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin size={14} className="shrink-0 text-blue-500" />
+                <MapPin size={14} className="shrink-0 text-[#075bff]" />
                 {schedule.departure_location.name}
               </span>
-              <span>
+              <span className="inline-flex items-center gap-1.5 font-semibold text-[#075bff]">
+                <UsersRound size={14} />
                 {schedule.operating_region
                   ? WORKFORCE_REGIONS[schedule.operating_region]
                   : "Chưa chọn miền điều hành"}
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            disabled={busy}
-            aria-label="Đóng phân công nhân sự"
-            onClick={onClose}
-            className="-mr-1 -mt-1 shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-blue-500 disabled:opacity-40"
-          >
-            <X size={22} />
-          </button>
         </header>
+
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-7">
-            <section className="space-y-2.5 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5">
+            {/* Card số lượng nhân sự tối thiểu */}
+            <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <label className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-700">
-                  Số nhân sự tối thiểu
+                <label className="flex items-center gap-3 text-xs font-bold text-[#0b1747]">
+                  <span>Số nhân sự tối thiểu</span>
                   <input
                     required
                     type="number"
@@ -234,7 +238,7 @@ export function CrewEditor({
                     max={2147483647}
                     step={1}
                     disabled={busy}
-                    className="h-10 w-24 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+                    className="h-8.5 w-20 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-[#075bff] focus:ring-1 focus:ring-blue-100 shadow-2xs disabled:opacity-50"
                     value={requiredCount}
                     onChange={(event) => {
                       setRequiredCount(event.target.value);
@@ -242,23 +246,23 @@ export function CrewEditor({
                     }}
                   />
                 </label>
-                <p className="text-[13px] text-slate-500">
-                  Đã phân công{" "}
-                  <span className="font-semibold text-slate-700">
-                    {items.filter((item) => item.user_id).length}/
-                    {requiredCount || "…"}
-                  </span>{" "}
-                  người
+                <p className="text-xs text-slate-500">
+                  Đã phân công:{" "}
+                  <strong className="font-bold text-[#075bff]">
+                    {items.filter((item) => item.user_id).length}
+                  </strong>{" "}
+                  / <strong>{requiredCount || "…"}</strong> người
                 </p>
               </div>
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="text-[11.5px] leading-5 text-slate-500">
                 Chuyến cần có cả Trưởng đoàn và Hướng dẫn viên. Mỗi nhân sự chọn
                 một chức vụ; có thể thêm Phó đoàn tùy quy mô chuyến.
               </p>
-            </section>
+            </div>
+
             {requireOverride && (
-              <label className="mb-5 block rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
-                Lý do sửa ngoại lệ (bắt buộc)
+              <div className="rounded-[14px] border border-amber-200 bg-amber-50/70 p-4 text-xs font-semibold text-amber-800 space-y-2">
+                <p className="font-bold">Lý do sửa ngoại lệ (bắt buộc)</p>
                 <textarea
                   required
                   maxLength={1000}
@@ -267,182 +271,187 @@ export function CrewEditor({
                   value={overrideReason}
                   onChange={(event) => setOverrideReason(event.target.value)}
                   placeholder="Ví dụ: hướng dẫn viên có việc đột xuất, cần thay người..."
-                  className="mt-2 block w-full rounded-lg border border-amber-200 bg-white p-3 text-sm font-normal text-slate-700"
+                  className="w-full rounded-lg border border-amber-200 bg-white p-2.5 text-xs font-normal text-slate-700 outline-none focus:border-amber-400"
                 />
-                <span className="mt-2 block font-normal leading-5">
+                <p className="text-[11px] font-normal leading-4 text-amber-700">
                   Thay đổi được lưu lịch sử. Hệ thống công bố lại khi nhân sự
                   xác nhận đầy đủ.
-                </span>
-              </label>
+                </p>
+              </div>
             )}
-            {items.map((item, index) => {
-              const candidates = employees.filter(
-                (employee) =>
-                  (String(employee.user_id) === item.user_id ||
-                    eligible(employee, item.roles)) &&
-                  !items.some(
-                    (other) =>
-                      other.key !== item.key &&
-                      other.user_id === String(employee.user_id),
-                  ),
-              );
-              const selectedEmployee = employees.find(
-                (emp) => String(emp.user_id) === item.user_id,
-              );
-              const hasMissingRolesWarning =
-                selectedEmployee &&
-                !selectedEmployee.roles.includes("admin") &&
-                item.roles.some((r) => !selectedEmployee.roles.includes(r));
-              return (
-                <fieldset
-                  key={item.key}
-                  disabled={busy}
-                  className="min-w-0 border-t border-slate-200 py-5 sm:py-6"
-                >
-                  <legend className="sr-only">Nhân sự {index + 1}</legend>
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h3 className="text-base font-bold text-[#152641]">
-                      Nhân sự {String(index + 1).padStart(2, "0")}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setItems((previous) =>
-                          previous.filter((row) => row.key !== item.key),
-                        );
-                        setError("");
-                      }}
-                      className="rounded px-1 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40"
-                    >
-                      Gỡ nhân sự
-                    </button>
-                  </div>
-                  <div className="grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2 sm:gap-x-6">
-                    <div className="min-w-0 sm:col-span-2">
-                      <CustomDropdown
-                        label="Nhân viên"
-                        ariaLabel={`Nhân viên ${index + 1}`}
-                        variant="compact"
-                        matchTriggerWidth
-                        className={dropdownClass}
-                        selectedValue={item.user_id}
-                        onSelect={(value) =>
-                          update(item.key, { user_id: value })
-                        }
-                        options={[
-                          { value: "", label: "Chọn nhân viên" },
-                          ...candidates.map((employee) => ({
-                            value: String(employee.user_id),
-                            label: `${employee.full_name} · ${employee.employee_code}`,
-                          })),
-                        ]}
-                      />
-                      {!candidates.length && (
-                        <p className="mt-1.5 text-xs leading-5 text-amber-700">
-                          Chưa có nhân viên đang hoạt động đáp ứng vai trò và
-                          miền này.
-                        </p>
-                      )}
-                      {hasMissingRolesWarning && (
-                        <p className="mt-1.5 text-xs leading-5 text-rose-600">
-                          * Nhân viên này chưa được cấp quyền{" "}
-                          {item.roles
-                            .filter((r) => !selectedEmployee.roles.includes(r))
-                            .map((r) => CREW_ROLES[r])
-                            .join(", ")}{" "}
-                          trong Hồ sơ nhân sự.
-                        </p>
-                      )}
-                    </div>
-                    <div className="min-w-0 sm:col-span-2">
-                      <label className="mb-2 block text-[13px] font-medium text-slate-700">
-                        Chức vụ trong chuyến{" "}
-                        <span className="font-normal text-slate-500">
-                          (có thể tích chọn nhiều để kiêm nhiệm vai trò)
-                        </span>
-                      </label>
-                      <div className="flex flex-wrap gap-2.5">
-                        {roleKeys.map((role) => {
-                          const checked = item.roles.includes(role);
-                          return (
-                            <label
-                              key={role}
-                              className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold cursor-pointer transition-all ${
-                                checked
-                                  ? "border-blue-500 bg-blue-50/80 text-blue-700 shadow-sm ring-1 ring-blue-500/20"
-                                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                checked={checked}
-                                onChange={(e) => {
-                                  const nextRoles = e.target.checked
-                                    ? [...item.roles, role]
-                                    : item.roles.filter((r) => r !== role);
-                                  update(item.key, { roles: nextRoles });
-                                }}
-                              />
-                              <span>{CREW_ROLES[role]}</span>
-                            </label>
+
+            {/* Danh sách từng nhân sự */}
+            <div className="space-y-3">
+              {items.map((item, index) => {
+                const candidates = employees.filter(
+                  (employee) =>
+                    (String(employee.user_id) === item.user_id ||
+                      eligible(employee, item.roles)) &&
+                    !items.some(
+                      (other) =>
+                        other.key !== item.key &&
+                        other.user_id === String(employee.user_id),
+                    ),
+                );
+                const selectedEmployee = employees.find(
+                  (emp) => String(emp.user_id) === item.user_id,
+                );
+                const hasMissingRolesWarning =
+                  selectedEmployee &&
+                  !selectedEmployee.roles.includes("admin") &&
+                  item.roles.some((r) => !selectedEmployee.roles.includes(r));
+                return (
+                  <fieldset
+                    key={item.key}
+                    disabled={busy}
+                    className="min-w-0 rounded-[14px] border border-[#e1edfc] bg-white p-4.5 shadow-2xs space-y-3"
+                  >
+                    <legend className="sr-only">Nhân sự {index + 1}</legend>
+                    <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-[#edf2fb]">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#0b1747]">
+                        Nhân sự {String(index + 1).padStart(2, "0")}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setItems((previous) =>
+                            previous.filter((row) => row.key !== item.key),
                           );
-                        })}
-                      </div>
-                      {item.roles.length > 0 ? (
-                        <p className="mt-2 text-xs font-medium text-blue-600">
-                          Vai trò đảm nhiệm:{" "}
-                          {item.roles.map((r) => CREW_ROLES[r]).join(" kiêm ")}
-                        </p>
-                      ) : (
-                        <p className="mt-1.5 text-xs text-rose-600">
-                          * Vui lòng tích chọn ít nhất một chức vụ cho nhân sự này.
-                        </p>
-                      )}
+                          setError("");
+                        }}
+                        className="rounded-lg px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 border border-rose-100 transition cursor-pointer disabled:opacity-40"
+                      >
+                        Gỡ nhân sự
+                      </button>
                     </div>
-                    <DateTimeInput
-                      label="Bắt đầu điều động"
-                      ariaLabel={`Bắt đầu điều động nhân sự ${index + 1}`}
-                      className={dateTimeClass}
-                      value={item.report_at ? new Date(item.report_at) : null}
-                      maxDate={tourStart}
-                      disabled={busy}
-                      onChange={(date) =>
-                        update(item.key, {
-                          report_at: date ? formatLocalDateTime(date) : "",
-                        })
-                      }
-                    />
-                    <DateTimeInput
-                      label="Kết thúc điều động"
-                      ariaLabel={`Kết thúc điều động nhân sự ${index + 1}`}
-                      className={dateTimeClass}
-                      value={item.release_at ? new Date(item.release_at) : null}
-                      minDate={tourEnd}
-                      disabled={busy}
-                      onChange={(date) =>
-                        update(item.key, {
-                          release_at: date ? formatLocalDateTime(date) : "",
-                        })
-                      }
-                    />
-                    <label className="block min-w-0 text-[13px] font-medium text-slate-700 sm:col-span-2">
-                      Ghi chú điều động
-                      <input
-                        maxLength={1000}
-                        className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
-                        value={item.note}
-                        placeholder="Ví dụ: Phụ trách xe số 2..."
-                        onChange={(event) =>
-                          update(item.key, { note: event.target.value })
+                    <div className="grid min-w-0 gap-x-4 gap-y-3 sm:grid-cols-2">
+                      <div className="min-w-0 sm:col-span-2">
+                        <CustomDropdown
+                          label="Nhân viên"
+                          ariaLabel={`Nhân viên ${index + 1}`}
+                          variant="compact"
+                          matchTriggerWidth
+                          className={dropdownClass}
+                          selectedValue={item.user_id}
+                          onSelect={(value) =>
+                            update(item.key, { user_id: value })
+                          }
+                          options={[
+                            { value: "", label: "Chọn nhân viên" },
+                            ...candidates.map((employee) => ({
+                              value: String(employee.user_id),
+                              label: `${employee.full_name} · ${employee.employee_code}`,
+                            })),
+                          ]}
+                        />
+                        {!candidates.length && (
+                          <p className="mt-1 text-xs leading-5 text-amber-700">
+                            Chưa có nhân viên đang hoạt động đáp ứng vai trò và
+                            miền này.
+                          </p>
+                        )}
+                        {hasMissingRolesWarning && (
+                          <p className="mt-1 text-xs leading-5 text-rose-600">
+                            * Nhân viên này chưa được cấp quyền{" "}
+                            {item.roles
+                              .filter((r) => !selectedEmployee.roles.includes(r))
+                              .map((r) => CREW_ROLES[r])
+                              .join(", ")}{" "}
+                            trong Hồ sơ nhân sự.
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 sm:col-span-2">
+                        <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                          Chức vụ trong chuyến{" "}
+                          <span className="font-normal text-slate-500">
+                            (có thể tích chọn nhiều để kiêm nhiệm vai trò)
+                          </span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {roleKeys.map((role) => {
+                            const checked = item.roles.includes(role);
+                            return (
+                              <label
+                                key={role}
+                                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all ${
+                                  checked
+                                    ? "border-[#075bff] bg-blue-50 text-[#075bff] shadow-2xs ring-1 ring-blue-500/20"
+                                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="size-3.5 rounded border-slate-300 text-[#075bff] focus:ring-blue-500"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    const nextRoles = e.target.checked
+                                      ? [...item.roles, role]
+                                      : item.roles.filter((r) => r !== role);
+                                    update(item.key, { roles: nextRoles });
+                                  }}
+                                />
+                                <span>{CREW_ROLES[role]}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {item.roles.length > 0 ? (
+                          <p className="mt-1.5 text-xs font-medium text-[#075bff]">
+                            Vai trò đảm nhiệm:{" "}
+                            {item.roles.map((r) => CREW_ROLES[r]).join(" kiêm ")}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs text-rose-600">
+                            * Vui lòng tích chọn ít nhất một chức vụ cho nhân sự này.
+                          </p>
+                        )}
+                      </div>
+                      <DateTimeInput
+                        label="Bắt đầu điều động"
+                        ariaLabel={`Bắt đầu điều động nhân sự ${index + 1}`}
+                        className={dateTimeClass}
+                        value={item.report_at ? new Date(item.report_at) : null}
+                        maxDate={tourStart}
+                        disabled={busy}
+                        onChange={(date) =>
+                          update(item.key, {
+                            report_at: date ? formatLocalDateTime(date) : "",
+                          })
                         }
                       />
-                    </label>
-                  </div>
-                </fieldset>
-              );
-            })}
-            <div className="space-y-3 pb-5">
+                      <DateTimeInput
+                        label="Kết thúc điều động"
+                        ariaLabel={`Kết thúc điều động nhân sự ${index + 1}`}
+                        className={dateTimeClass}
+                        value={item.release_at ? new Date(item.release_at) : null}
+                        minDate={tourEnd}
+                        disabled={busy}
+                        onChange={(date) =>
+                          update(item.key, {
+                            release_at: date ? formatLocalDateTime(date) : "",
+                          })
+                        }
+                      />
+                      <label className="block min-w-0 text-xs font-bold text-slate-700 sm:col-span-2">
+                        Ghi chú điều động
+                        <input
+                          maxLength={1000}
+                          className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-normal text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#075bff] focus:ring-1 focus:ring-blue-100 shadow-2xs disabled:opacity-50"
+                          value={item.note}
+                          placeholder="Ví dụ: Phụ trách xe số 2..."
+                          onChange={(event) =>
+                            update(item.key, { note: event.target.value })
+                          }
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 disabled={busy}
@@ -459,12 +468,12 @@ export function CrewEditor({
                   ]);
                   setError("");
                 }}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-blue-400 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-500 disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-[#075bff] hover:bg-blue-100 transition shadow-xs cursor-pointer focus-visible:outline-2 focus-visible:outline-[#075bff] disabled:opacity-40"
               >
-                <Plus size={18} />
+                <Plus size={16} />
                 Thêm nhân sự
               </button>
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="text-[11.5px] leading-5 text-slate-500">
                 Thời gian điều động phải bao trọn chuyến. Có thể lưu phân công
                 chưa đủ người để bổ sung sau; hệ thống kiểm tra trùng lịch khi
                 lưu.
@@ -472,28 +481,29 @@ export function CrewEditor({
               {error && (
                 <p
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm leading-5 text-red-600"
+                  className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600"
                 >
                   {error}
                 </p>
               )}
             </div>
           </div>
-          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
-            <p className="text-xs text-slate-500">Giờ Việt Nam (GMT+7)</p>
-            <div className="ml-auto flex gap-3">
+
+          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#e1edfc] bg-slate-50/50 px-6 py-3.5">
+            <p className="text-xs text-slate-500 font-medium">Giờ Việt Nam (GMT+7)</p>
+            <div className="ml-auto flex items-center gap-2.5">
               <button
                 type="button"
                 disabled={busy}
                 onClick={onClose}
-                className="min-h-10 rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer disabled:opacity-50"
               >
-                Hủy
+                Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={busy}
-                className="min-h-10 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-[12px] bg-[#075bff] px-5 py-2 text-xs font-bold text-white hover:bg-blue-600 transition shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {busy ? "Đang lưu..." : "Lưu phân công"}
               </button>

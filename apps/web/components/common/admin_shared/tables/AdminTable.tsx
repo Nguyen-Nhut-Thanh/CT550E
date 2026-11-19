@@ -48,49 +48,49 @@ export function AdminTable<T>({
 
   if (!items.length) {
     return (
-      <div className="rounded-2xl border border-slate-100 bg-white p-20 text-center font-medium italic text-slate-400 shadow-sm">
+      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-12 text-center font-medium italic text-slate-400 shadow-2xs">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-[14px] border border-[#e1edfc] bg-white shadow-2xs">
       <div className="overflow-x-auto">
-        <table className="min-w-full table-fixed border-collapse text-left">
+        <table className="min-w-full border-collapse text-left">
           <thead>
-            <tr className="bg-slate-50/50 text-xs uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-[#edf2fb] bg-slate-50/75 text-[12px] font-[650] text-[#7387aa] uppercase tracking-wider">
               {columns.map((column, index) => (
                 <th
                   key={index}
-                  className={`px-6 py-4 font-bold ${getAlignmentClass(column.align)} ${column.className || ""}`}
+                  className={`px-3.5 py-2.5 font-bold ${getAlignmentClass(column.align)} ${column.className || ""}`}
                 >
                   {column.header}
                 </th>
               ))}
               {hasActions ? (
-                <th className="w-[140px] whitespace-nowrap px-6 py-4 text-right font-bold">
+                <th className="w-[110px] whitespace-nowrap px-3.5 py-2.5 text-right font-bold">
                   Thao tác
                 </th>
               ) : null}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
+          <tbody className="divide-y divide-[#edf2fb] text-[13px]">
             {paginatedItems.map((item, index) => (
               <tr
                 key={rowKey(item)}
-                className="group transition-colors hover:bg-slate-50/50"
+                className="group transition-colors hover:bg-slate-50/60"
               >
                 {columns.map((column, columnIndex) => (
                   <td
                     key={columnIndex}
-                    className={`px-6 py-4 ${getAlignmentClass(column.align)} ${column.className || ""}`}
+                    className={`px-3.5 py-2.5 ${getAlignmentClass(column.align)} ${column.className || ""}`}
                   >
                     {column.render(item, (page - 1) * pageSize + index)}
                   </td>
                 ))}
                 {hasActions ? (
-                  <td className="w-[140px] whitespace-nowrap px-6 py-4 text-right">
+                  <td className="w-[110px] whitespace-nowrap px-3.5 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100">
                       {onEdit ? (
                         <AdminIconActionButton

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BarChart3,
   Calendar,
   ChevronDown,
   Download,
@@ -11,8 +10,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AdminDatePicker } from "@/components/common/date_time/AdminDatePicker";
 import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
+import { AdminDatePicker } from "@/components/common/date_time/AdminDatePicker";
+import { AdminScenicHeaderBackground } from "@/components/common/admin_shared/layout/AdminScenicHeaderBackground";
 import type { ReactNode } from "react";
 
 interface AnalyticsHeaderProps {
@@ -78,40 +78,30 @@ export function AnalyticsHeader({
   ];
 
   return (
-    <div className="space-y-4">
+    <header className="relative isolate @container/analytics-header">
+      <AdminScenicHeaderBackground />
       {/* Top Header Row */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                Báo Cáo & Thống Kê Toàn Diện
-              </h1>
-              <p className="mt-0.5 text-xs font-medium text-slate-500">
-                Toàn bộ dữ liệu doanh thu, tour, lịch trình, nhân sự điều hành, hội viên VIP và marketing
-              </p>
-            </div>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 @max-[760px]/analytics-header:flex-col @max-[760px]/analytics-header:items-start @max-[760px]/analytics-header:gap-2.5">
+        <div className="min-w-0">
+          <h1 className="text-[24px] font-extrabold leading-[1.25] tracking-[-.6px]! text-[#07123e] @max-[760px]/analytics-header:text-[22px]">Báo cáo & Thống kê toàn diện</h1>
+          <p className="mt-[3px] text-[12px] leading-[1.5] text-[#637da5]">Theo dõi doanh thu, tour, nhân sự điều hành, khách hàng và hiệu quả marketing.</p>
         </div>
 
         {/* Action Buttons: Refresh, Excel Export, CSV Dropdown */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex max-w-full flex-wrap items-center gap-2" ref={csvMenuRef}>
           {/* Refresh Button */}
           <button
             type="button"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-60 transition-colors"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#d6e7fb] bg-[#ffffffd9] text-[#5e84b7] hover:bg-[#f3f8ff] disabled:opacity-45"
             title="Làm mới dữ liệu"
+            aria-label="Làm mới dữ liệu báo cáo"
           >
             <RefreshCw
-              size={14}
-              className={isRefreshing ? "animate-spin text-blue-600" : "text-slate-500"}
+              size={17}
+              className={isRefreshing ? "animate-spin text-blue-600" : "text-[#7387aa]"}
             />
-            <span className="hidden sm:inline">Làm mới</span>
           </button>
 
           {/* Export Excel (Primary) */}
@@ -119,31 +109,33 @@ export function AnalyticsHeader({
             type="button"
             onClick={onExportExcel}
             disabled={exportingExcel}
-            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs shadow-emerald-600/25 hover:bg-emerald-700 disabled:opacity-60 transition-all"
+            className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-[12px] border border-[#075bff] bg-[#075bff] px-4 py-[9px] text-[14px] font-[650] text-white shadow-[0_5px_13px_#075bff12] transition-colors duration-180 hover:bg-[#064ddd] disabled:opacity-45 motion-reduce:transition-none @max-[760px]/analytics-header:px-3 @max-[760px]/analytics-header:text-[12px]"
           >
             {exportingExcel ? (
               <Loader2 size={15} className="animate-spin" />
             ) : (
-              <FileSpreadsheet size={15} />
+              <FileSpreadsheet size={18} />
             )}
-            <span>Xuất Excel Đa Trang Tính (.xls)</span>
+            <span>{exportingExcel ? "Đang xuất…" : "Xuất Excel (.xls)"}</span>
           </button>
 
           {/* CSV Export Dropdown */}
-          <div className="relative" ref={csvMenuRef}>
+          <div>
             <button
               type="button"
               onClick={() => setShowCsvMenu((prev) => !prev)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+              aria-expanded={showCsvMenu}
+              aria-controls="analytics-csv-options"
+              className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-[12px] border border-[#c4ddff] bg-[#ffffffed] px-4 py-[9px] text-[14px] font-[650] text-[#075bff] transition-colors duration-180 hover:bg-[#f3f8ff] motion-reduce:transition-none @max-[760px]/analytics-header:px-3 @max-[760px]/analytics-header:text-[12px]"
             >
-              <Download size={14} className="text-slate-500" />
+              <Download size={18} className="text-[#7387aa]" />
               <span>Xuất CSV</span>
-              <ChevronDown size={13} className="text-slate-400" />
+              <ChevronDown size={13} className="text-[#7387aa]" />
             </button>
 
             {showCsvMenu && (
-              <div className="absolute right-0 top-full mt-1.5 z-30 w-56 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xl">
-                <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div id="analytics-csv-options" className="absolute right-0 top-full mt-1.5 z-30 w-64 max-w-full rounded-[12px] border border-[#e1edfc] bg-white p-1.5 shadow-lg">
+                <div className="px-2.5 py-1 text-[11px] font-[650] text-[#7387aa]">
                   Chọn phân mục CSV
                 </div>
                 {csvSections.map((sec) => (
@@ -155,7 +147,7 @@ export function AnalyticsHeader({
                       onExportCsv(sec.key);
                     }}
                     disabled={exportingCsv === sec.key}
-                    className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[12px] font-[650] text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <FileText size={14} className="text-blue-500" />
@@ -173,7 +165,7 @@ export function AnalyticsHeader({
       </div>
 
       {/* Date Range Selector Pill Bar */}
-      <div className={rightSlot ? "flex min-w-0 flex-col gap-2 lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(190px,1fr)] lg:items-stretch lg:gap-3" : ""}>
+      <div className={rightSlot ? "mt-4 flex min-w-0 flex-col gap-2 lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(190px,1fr)] lg:items-stretch lg:gap-3" : "mt-4"}>
       <div className="min-h-[52px] rounded-2xl border border-slate-200/80 bg-slate-50/70 p-1.5 sm:px-3 lg:flex lg:min-w-0 lg:items-center lg:justify-between">
         <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
@@ -245,7 +237,7 @@ export function AnalyticsHeader({
       </div>
       {rightSlot && <div className="flex justify-end lg:items-center lg:justify-end">{rightSlot}</div>}
       </div>
-    </div>
+    </header>
   );
 }
 

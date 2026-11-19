@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/utils/currency";
+import { formatScheduleDateRange } from "@/lib/schedules/admin/tour-schedules";
 import {
   deleteSchedulePromotion,
   getSchedulePromotion,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/schedules/admin/api";
 import { useToast } from "@/lib/notifications/useToast";
 import { DateTimeInput } from "@/components/common/date_time/DateTimeInput";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import {
   AlertCircle,
   Calendar,
@@ -46,6 +48,8 @@ export function SchedulePromotionModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmFlashDealSaveOpen, setConfirmFlashDealSaveOpen] = useState(false);
   const [existingPromotion, setExistingPromotion] = useState<SchedulePromotion | null>(null);
   const [activeFlashDeal, setActiveFlashDeal] = useState<any>(schedule?.flash_deals ?? null);
 
@@ -171,21 +175,22 @@ export function SchedulePromotionModal({
     }
 
     if (activeFlashDeal) {
-      const confirmSave = window.confirm(
-        "THÔNG BÁO FLASH DEAL ĐANG ÁP DỤNG:\n\n" +
-        "Đợt khởi hành này hiện đang áp dụng Flash Deal nên ưu đãi đợt khởi hành sẽ không được áp dụng trong cùng thời gian Flash Deal đang diễn ra (hệ thống luôn ưu tiên Flash Deal trước).\n\n" +
-        "Bạn có xác nhận tiếp tục lưu ưu đãi đợt khởi hành này không?"
-      );
-      if (!confirmSave) return;
+      setConfirmFlashDealSaveOpen(true);
+      return;
     }
 
+    await executeSave();
+  };
+
+  const executeSave = async () => {
+    if (!schedule) return;
     const payload: SaveSchedulePromotionPayload = {
       title: title.trim(),
       discount_type: discountType,
       discount_value: numDiscountValue,
       max_slots: maxSlots.trim() ? parseInt(maxSlots.trim(), 10) : null,
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString(),
+      start_date: startDate ? startDate.toISOString() : new Date().toISOString(),
+      end_date: endDate ? endDate.toISOString() : new Date().toISOString(),
       gift_description: giftDescription.trim() || null,
       is_active: isActive,
     };
@@ -194,6 +199,7 @@ export function SchedulePromotionModal({
     try {
       await saveSchedulePromotion(schedule.tour_schedule_id, payload);
       success("Đã lưu thiết lập ưu đãi cho đợt khởi hành!");
+      setConfirmFlashDealSaveOpen(false);
       onSaved?.();
       onClose();
     } catch (err) {
@@ -203,15 +209,13 @@ export function SchedulePromotionModal({
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Bạn có chắc chắn muốn xóa ưu đãi riêng của đợt khởi hành này?")) {
-      return;
-    }
-
+  const executeDelete = async () => {
+    if (!schedule) return;
     setDeleting(true);
     try {
       await deleteSchedulePromotion(schedule.tour_schedule_id);
       success("Đã xóa ưu đãi của đợt khởi hành thành công!");
+      setConfirmDeleteOpen(false);
       onSaved?.();
       onClose();
     } catch (err) {
@@ -235,25 +239,25 @@ export function SchedulePromotionModal({
       />
 
       {/* Modal Card */}
-      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl border border-[#dcecff] text-[#092448]">
+      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl border border-[#e1edfc] text-[#092448]">
         {/* Nút đóng */}
         <button
           type="button"
           onClick={onClose}
           disabled={saving || deleting}
           aria-label="Đóng popup"
-          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-slate-500 shadow-sm backdrop-blur-md transition hover:bg-white hover:text-slate-900 disabled:opacity-50"
+          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-slate-500 shadow-sm backdrop-blur-md transition hover:bg-white hover:text-slate-900 disabled:opacity-50 cursor-pointer"
         >
           <X size={18} />
         </button>
 
         {/* Header */}
-        <header className="relative isolate shrink-0 pt-6 pb-5 px-6 overflow-hidden border-b border-[#dcecff] bg-[linear-gradient(135deg,#eaf5ff_0%,#f0f8ff_60%,#e1f3ff_100%)]">
+        <header className="relative isolate shrink-0 pt-5 pb-4 px-6 overflow-hidden border-b border-[#e1edfc] bg-gradient-to-r from-blue-50/90 to-sky-50/50">
           <div className="flex items-center gap-2.5 mb-1.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
               <Gift size={18} />
             </span>
-            <span className="uppercase text-[11px] tracking-wider text-blue-800 font-extrabold bg-white/90 px-3 py-1 rounded-full border border-blue-200 shadow-2xs">
+            <span className="uppercase text-[11px] tracking-wider text-blue-800 font-extrabold bg-white/90 px-2.5 py-0.5 rounded-full border border-blue-200 shadow-2xs">
               Ưu đãi đợt khởi hành
             </span>
             <span className="text-xs font-semibold text-slate-500">
@@ -266,17 +270,32 @@ export function SchedulePromotionModal({
           </h2>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
-            <span>
-              Khởi hành: <strong className="text-slate-800">{startStr}</strong>
-            </span>
-            {endStr && (
-              <>
-                <span className="text-slate-400">→</span>
-                <span>
-                  Kết thúc: <strong className="text-slate-800">{endStr}</strong>
-                </span>
-              </>
-            )}
+            {(() => {
+              const { isSameDay, startFormatted, endFormatted } = formatScheduleDateRange(
+                schedule.start_date,
+                schedule.end_date,
+              );
+              return isSameDay ? (
+                <>
+                  <span>
+                    Khởi hành: <strong className="text-slate-800">{startFormatted}</strong>
+                  </span>
+                  <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+                    Trong ngày
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    Khởi hành: <strong className="text-slate-800">{startFormatted}</strong>
+                  </span>
+                  <span className="text-slate-400">→</span>
+                  <span>
+                    Kết thúc: <strong className="text-slate-800">{endFormatted}</strong>
+                  </span>
+                </>
+              );
+            })()}
             <span className="text-slate-400">·</span>
             <span>({schedule.quota} chỗ)</span>
             <span className="text-slate-400">·</span>
@@ -503,13 +522,13 @@ export function SchedulePromotionModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+            <div className="pt-3 border-t border-[#edf2fb] flex items-center justify-between gap-3">
               {existingPromotion ? (
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => setConfirmDeleteOpen(true)}
                   disabled={saving || deleting}
-                  className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition cursor-pointer disabled:opacity-50"
                 >
                   {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                   <span>Xóa ưu đãi</span>
@@ -523,14 +542,14 @@ export function SchedulePromotionModal({
                   type="button"
                   onClick={onClose}
                   disabled={saving || deleting}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={saving || deleting}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-xl bg-[#075bff] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#064ecc] transition cursor-pointer disabled:opacity-50"
                 >
                   {saving ? (
                     <>
@@ -549,6 +568,29 @@ export function SchedulePromotionModal({
           </form>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        icon={<Trash2 size={32} className="text-rose-600" />}
+        title="Xóa ưu đãi đợt khởi hành?"
+        description="Bạn có chắc chắn muốn xóa ưu đãi riêng của đợt khởi hành này? Sau khi xóa, giá tour sẽ quay về mức ban đầu."
+        confirmLabel={deleting ? "Đang xóa..." : "Xác nhận xóa"}
+        cancelLabel="Hủy bỏ"
+        onConfirm={() => void executeDelete()}
+        onCancel={() => !deleting && setConfirmDeleteOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmFlashDealSaveOpen}
+        icon={<AlertCircle size={32} className="text-amber-500" />}
+        title="Ưu tiên Flash Deal"
+        description={"Đợt khởi hành này hiện đang áp dụng Flash Deal nên ưu đãi đợt khởi hành sẽ không được áp dụng trong cùng thời gian Flash Deal đang diễn ra (hệ thống luôn ưu tiên Flash Deal trước).\n\nBạn có xác nhận tiếp tục lưu ưu đãi đợt khởi hành này không?"}
+        confirmLabel={saving ? "Đang lưu..." : "Xác nhận lưu"}
+        cancelLabel="Quay lại"
+        confirmClassName="bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+        onConfirm={() => void executeSave()}
+        onCancel={() => setConfirmFlashDealSaveOpen(false)}
+      />
     </div>
   );
 }

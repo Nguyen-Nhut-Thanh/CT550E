@@ -56,7 +56,7 @@ export function AdminCancelResolutionSelector({
           type="button"
           disabled={disabled}
           onClick={() => toggleOption("full_refund")}
-          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer relative ${
+          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-colors duration-150 motion-reduce:transition-none cursor-pointer relative ${
             isRefundSelected
               ? "border-emerald-500 bg-white shadow-2xs ring-1 ring-emerald-500/25"
               : "border-slate-200/80 bg-white/70 hover:bg-white text-slate-700 opacity-70"
@@ -64,7 +64,7 @@ export function AdminCancelResolutionSelector({
         >
           <div className="pt-0.5">
             <span
-              className={`flex h-4.5 w-4.5 items-center justify-center rounded-md border transition ${
+              className={`flex h-4.5 w-4.5 items-center justify-center rounded-md border transition-colors duration-150 ${
                 isRefundSelected
                   ? "border-emerald-600 bg-emerald-600 text-white"
                   : "border-slate-300 bg-white text-transparent"
@@ -75,7 +75,7 @@ export function AdminCancelResolutionSelector({
           </div>
 
           <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ${
               isRefundSelected
                 ? "bg-emerald-600 text-white"
                 : "bg-slate-100 text-slate-500"
@@ -101,7 +101,7 @@ export function AdminCancelResolutionSelector({
           type="button"
           disabled={disabled}
           onClick={() => toggleOption("reschedule")}
-          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer relative ${
+          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-colors duration-150 motion-reduce:transition-none cursor-pointer relative ${
             isRescheduleSelected
               ? "border-blue-500 bg-white shadow-2xs ring-1 ring-blue-500/25"
               : "border-slate-200/80 bg-white/70 hover:bg-white text-slate-700 opacity-70"
@@ -109,7 +109,7 @@ export function AdminCancelResolutionSelector({
         >
           <div className="pt-0.5">
             <span
-              className={`flex h-4.5 w-4.5 items-center justify-center rounded-md border transition ${
+              className={`flex h-4.5 w-4.5 items-center justify-center rounded-md border transition-colors duration-150 ${
                 isRescheduleSelected
                   ? "border-blue-600 bg-blue-600 text-white"
                   : "border-slate-300 bg-white text-transparent"
@@ -120,7 +120,7 @@ export function AdminCancelResolutionSelector({
           </div>
 
           <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ${
               isRescheduleSelected
                 ? "bg-blue-600 text-white"
                 : "bg-slate-100 text-slate-500"

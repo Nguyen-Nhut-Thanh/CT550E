@@ -60,17 +60,17 @@ export function DashboardStatusBreakdown({
   ];
 
   return (
-    <div className="rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+    <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4">
+      <div className="flex items-center justify-between border-b border-[#edf2fb] pb-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-            <PieChart size={18} />
+          <div className="flex h-5.5 w-5.5 items-center justify-center text-[#075bff]">
+            <PieChart size={22} />
           </div>
           <div>
-            <h2 className="text-base font-black tracking-tight text-slate-900">
+            <h2 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
               Trạng Thái Đơn Hàng
             </h2>
-            <p className="text-xs font-medium text-slate-400">
+            <p className="text-xs font-medium text-[#7387aa]">
               Tổng số {total} đơn đặt trong kỳ
             </p>
           </div>
@@ -78,8 +78,8 @@ export function DashboardStatusBreakdown({
       </div>
 
       {/* Segmented multi-color progress bar */}
-      <div className="mt-5">
-        <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100 p-0.5">
+      <div className="mt-3">
+        <div className="flex h-2 w-full overflow-hidden rounded-[20px] bg-[#e1eaf7]">
           {total === 0 ? (
             <div className="h-full w-full rounded-full bg-slate-200" />
           ) : (
@@ -114,11 +114,11 @@ export function DashboardStatusBreakdown({
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-900">
+                <span className="text-xs font-bold text-[#0b1747]">
                   {item.count} đơn
                 </span>
                 <span
-                  className={`rounded-lg border px-1.5 py-0.5 text-[10px] font-bold ${item.badgeColor}`}
+                  className={`rounded-lg border px-1.5 py-0.5 text-[11px] font-[650] ${item.badgeColor}`}
                 >
                   {item.percent}%
                 </span>

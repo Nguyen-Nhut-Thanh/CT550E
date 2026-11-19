@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+
 import { useEffect, useState } from "react";
 import {
   Calendar,
@@ -155,28 +157,28 @@ export function SeasonalThemeManager() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+      <div className="flex min-h-[300px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-6 shadow-2xs">
         <div className="flex items-center gap-3 text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-          <span>Đang tải cấu hình hiệu ứng 4 mùa...</span>
+          <span className="text-xs sm:text-sm font-medium">Đang tải cấu hình hiệu ứng 4 mùa...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {/* Title & Save Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 p-5">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <Sparkles size={24} />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 rounded-[14px] border border-[#e1edfc] bg-gradient-to-r from-blue-50/60 via-sky-50/40 to-indigo-50/50 p-4 sm:p-4.5 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-blue-600 text-white shadow-xs">
+            <Sparkles size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
               Giao diện &amp; Hiệu ứng 4 Mùa Trang Chủ
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
+            <p className="mt-0.5 text-xs text-slate-500">
               Tùy chỉnh hiệu ứng hạt Canvas (hoa đào, đom đóm, lá vàng, tuyết
               rơi) và màu sắc theo mùa cho toàn bộ trang chủ.
             </p>
@@ -187,28 +189,35 @@ export function SeasonalThemeManager() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 size={14} className="animate-spin" />
           ) : (
-            <Save size={16} />
+            <Save size={14} />
           )}
           <span>{saving ? "Đang lưu..." : "Lưu cấu hình"}</span>
         </button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      <AdminStatGrid label="Tóm tắt cấu hình giao diện đang chỉnh sửa" items={[
+        { id: "mode", title: "Chế độ giao diện", value: SEASON_OPTIONS.find(option => option.id === mode)?.name || mode, description: "Cấu hình đang chỉnh sửa", icon: Calendar },
+        { id: "particles", title: "Hiệu ứng hạt", value: mode !== "disabled" && enableParticles ? "Bật" : "Tắt", icon: Sparkles, tone: "purple" },
+        { id: "colors", title: "Màu theo mùa", value: mode !== "disabled" && enableColors ? "Bật" : "Tắt", icon: Sun, tone: "green" },
+        { id: "density", title: "Mật độ hiệu ứng", value: density === "light" ? "Nhẹ" : density === "dense" ? "Dày" : "Vừa", description: "Mật độ hiệu ứng đã chọn", icon: Sliders, tone: "amber" },
+      ]} />
+
+      <div className="grid gap-3.5 lg:grid-cols-[1.3fr_1fr]">
         {/* Left Column: Mode & Options */}
-        <div className="space-y-6">
+        <div className="space-y-3.5">
           {/* Season Cards Grid */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900 mb-3.5 flex items-center gap-2">
+          <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs">
+            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
               <Sliders size={16} className="text-blue-600" />
               Chọn chế độ hiển thị mùa
             </h3>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2">
               {SEASON_OPTIONS.map((opt) => {
                 const isSelected = mode === opt.id;
                 const IconComponent = opt.icon;
@@ -218,33 +227,33 @@ export function SeasonalThemeManager() {
                     key={opt.id}
                     type="button"
                     onClick={() => handleSelectMode(opt.id)}
-                    className={`relative flex flex-col items-start rounded-xl border p-4 text-left transition-all ${
+                    className={`relative flex flex-col items-start rounded-xl border p-3 text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "border-blue-500 bg-blue-50/50 shadow-sm ring-2 ring-blue-500/20"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                        ? "border-blue-500 bg-blue-50/50 shadow-2xs ring-1 ring-blue-500"
+                        : "border-[#e1edfc] bg-white hover:border-slate-300 hover:bg-slate-50/50"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-2">
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                           isSelected
                             ? "bg-blue-600 text-white"
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
-                        <IconComponent size={18} />
+                        <IconComponent size={16} />
                       </div>
                       {isSelected && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
-                          <Check size={12} strokeWidth={3} />
+                        <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <Check size={11} strokeWidth={3} />
                         </span>
                       )}
                     </div>
 
-                    <span className="font-bold text-sm text-slate-900 mb-1">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 mb-0.5">
                       {opt.name}
                     </span>
-                    <span className="text-xs text-slate-500 leading-relaxed">
+                    <span className="text-[11px] text-slate-500 leading-relaxed">
                       {opt.desc}
                     </span>
                   </button>
@@ -254,26 +263,26 @@ export function SeasonalThemeManager() {
           </div>
 
           {/* Details Options: Toggles & Density */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs space-y-3.5">
             <h3 className="text-sm font-bold text-slate-900">
               Tùy chọn hiển thị chi tiết
             </h3>
 
             <div className="space-y-3">
               {/* Toggle Particles */}
-              <label className="flex items-start gap-3 cursor-pointer select-none">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={enableParticles && mode !== "disabled"}
                   disabled={mode === "disabled"}
                   onChange={(e) => setEnableParticles(e.target.checked)}
-                  className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 h-4 w-4 rounded border-[#e1edfc] text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-800">
                     Bật hiệu ứng hạt bay toàn trang chủ (Falling Particles)
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-500 mt-0.5">
                     Hiển thị cánh hoa đào, đom đóm, lá phong hoặc bông tuyết rơi
                     lơ lửng khắp trang chủ.
                   </p>
@@ -281,20 +290,20 @@ export function SeasonalThemeManager() {
               </label>
 
               {/* Toggle Colors */}
-              <label className="flex items-start gap-3 cursor-pointer select-none">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={enableColors && mode !== "disabled"}
                   disabled={mode === "disabled"}
                   onChange={(e) => setEnableColors(e.target.checked)}
-                  className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 h-4 w-4 rounded border-[#e1edfc] text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-800">
                     Bật dải màu nền 4 mùa cho các section (Seasonal Background
                     Palette)
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-500 mt-0.5">
                     Tự động đồng bộ tông màu nền dịu mắt và vệt sáng cho các
                     phần Về chúng tôi, Flash Deals, Tour nổi bật...
                   </p>
@@ -303,11 +312,11 @@ export function SeasonalThemeManager() {
             </div>
 
             {/* Particle Density */}
-            <div className="pt-3 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <div className="pt-3 border-t border-[#e1edfc]">
+              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
                 Mật độ hạt hiệu ứng
               </label>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: "light", label: "Nhẹ nhàng" },
                   { value: "normal", label: "Tiêu chuẩn" },
@@ -318,10 +327,10 @@ export function SeasonalThemeManager() {
                     type="button"
                     disabled={mode === "disabled" || !enableParticles}
                     onClick={() => setDensity(item.value as any)}
-                    className={`rounded-xl border py-2 text-xs font-semibold transition ${
+                    className={`rounded-lg border py-1.5 text-xs font-semibold transition cursor-pointer ${
                       density === item.value
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "border-blue-600 bg-blue-50 text-blue-700 font-bold shadow-2xs"
+                        : "border-[#e1edfc] bg-white text-slate-600 hover:bg-slate-50"
                     } disabled:opacity-50`}
                   >
                     {item.label}
@@ -334,13 +343,13 @@ export function SeasonalThemeManager() {
 
         {/* Right Column: Live Interactive Preview Card */}
         <div>
-          <div className="sticky top-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3.5">
+          <div className="sticky top-4 rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <CheckCircle2 size={16} className="text-emerald-600" />
                 Khung xem trước trực tiếp (Live Preview)
               </h3>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 uppercase">
+              <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase">
                 {currentSeasonData.name}
               </span>
             </div>
@@ -352,7 +361,7 @@ export function SeasonalThemeManager() {
 
             {/* Preview Box with simulated Hero Banner & Particles */}
             <div
-              className={`relative h-[340px] w-full overflow-hidden rounded-2xl border border-slate-200 transition-colors duration-700 shadow-inner flex flex-col justify-between p-5 ${
+              className={`relative h-[320px] w-full overflow-hidden rounded-xl border border-[#e1edfc] transition-colors duration-700 shadow-inner flex flex-col justify-between p-4 ${
                 enableColors && mode !== "disabled"
                   ? currentSeasonData.theme.bgPage
                   : "bg-slate-900"
@@ -379,7 +388,7 @@ export function SeasonalThemeManager() {
               </div>
 
               {/* Mini Hero card mockup */}
-              <div className="relative z-10 rounded-xl bg-white/80 p-4 backdrop-blur-md border border-white/60 shadow-lg space-y-2">
+              <div className="relative z-10 rounded-xl bg-white/80 p-3.5 backdrop-blur-md border border-white/60 shadow-lg space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${currentSeasonData.theme.badgeBg} ${currentSeasonData.theme.badgeText}`}
@@ -387,7 +396,7 @@ export function SeasonalThemeManager() {
                     Khám phá {currentSeasonData.name}
                   </span>
                 </div>
-                <h4 className="text-sm font-extrabold text-slate-900 leading-snug">
+                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
                   Hành trình du lịch &amp; Ưu đãi đặc quyền
                 </h4>
                 <p className="text-[11px] text-slate-600 line-clamp-2">
@@ -396,7 +405,7 @@ export function SeasonalThemeManager() {
                 </p>
                 <div className="pt-1 flex items-center justify-between text-[11px]">
                   <span className="font-bold text-blue-600">Từ 2.890.000đ</span>
-                  <span className="rounded-lg bg-blue-600 px-3 py-1 font-bold text-white text-[10px]">
+                  <span className="rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white text-[10px]">
                     Đặt ngay
                   </span>
                 </div>
@@ -407,7 +416,7 @@ export function SeasonalThemeManager() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-sky-50/70 p-3 text-xs leading-relaxed text-sky-800">
+            <div className="rounded-lg border border-sky-100 bg-sky-50/70 p-3 text-xs leading-relaxed text-sky-800">
               💡 <strong>Mẹo:</strong> Sau khi nhấp chọn mùa mong muốn, hãy bấm
               nút <strong>Lưu cấu hình</strong> ở phía trên để cập nhật ra trang
               chủ website.

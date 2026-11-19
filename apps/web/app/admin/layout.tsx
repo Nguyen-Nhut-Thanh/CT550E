@@ -2,6 +2,7 @@
 
 import { AdminGuard } from "@/components/common/admin_shared/guards/AdminGuard";
 import { AdminSidebar } from "@/components/common/admin_shared/layout/AdminSidebar";
+import { AdminBreadcrumbs } from "@/components/common/admin_shared/layout/AdminBreadcrumbs";
 import { AdminContentPermission } from "@/components/common/admin_shared/guards/AdminContentPermission";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -15,7 +16,6 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isChatWorkspace = pathname.startsWith("/admin/chats");
-  const isScheduleOverview = pathname === "/admin/schedules";
   const isTourPolicies = /^\/admin\/tours\/[^/]+\/policies$/.test(pathname);
 
   if (pathname === "/admin/login") {
@@ -37,10 +37,11 @@ export default function AdminLayout({
             </button>
           </div>
 
-          <main className="admin-content-scroll flex-1 min-h-0">
-            <div className={isChatWorkspace ? "h-full w-full" : isScheduleOverview ? "mx-auto h-full min-h-0 w-full max-w-[1520px] px-4 py-3 md:px-6" : isTourPolicies ? "mx-auto w-full max-w-[1520px] px-4 py-3 md:px-6 lg:h-full lg:min-h-0" : pathname === "/admin" ? "mx-auto w-full max-w-[1720px] px-4 pb-4 pt-3 lg:px-6 lg:pb-6" : "mx-auto w-full max-w-[1520px] px-4 pb-6 pt-3 md:px-6 md:pb-8"}>
+          <main className={isChatWorkspace ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "admin-content-scroll flex-1 min-h-0"}>
+            <div data-admin-page="" className={isChatWorkspace ? "h-full w-full" : isTourPolicies ? "mx-auto w-full max-w-[1520px] px-4 py-3 md:px-6 lg:flex lg:h-full lg:min-h-0 lg:flex-col" : "mx-auto w-full max-w-[1520px] px-4 pb-6 pt-3 md:px-6 md:pb-8"}>
+              {!isChatWorkspace && pathname !== "/admin/schedules" && <AdminBreadcrumbs pathname={pathname} />}
               <AdminContentPermission />
-              {children}
+              {isChatWorkspace ? children : <div className={isTourPolicies ? "lg:min-h-0 lg:flex-1" : undefined}>{children}</div>}
             </div>
           </main>
         </div>

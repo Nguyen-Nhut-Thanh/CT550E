@@ -47,6 +47,9 @@ function WorkforceContent() {
       setTab(nextTab);
       setRegion(nextTab === 'overview' || !allowedRegion ? '' : requestedRegion);
       setScheduleId(['trips', 'mine'].includes(nextTab) && Number.isSafeInteger(requestedSchedule) && requestedSchedule > 0 ? requestedSchedule : undefined);
+      if (nextTab === 'employees' && (params.get('action') === 'create' || params.get('new') === '1')) {
+        setEditing(null);
+      }
     };
     readNavigation();
   }, [actor, searchParams]);

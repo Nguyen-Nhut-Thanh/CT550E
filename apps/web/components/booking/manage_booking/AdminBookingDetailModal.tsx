@@ -75,23 +75,20 @@ function StatusBadge({
   schedule?: { start_date?: string | null; end_date?: string | null } | null;
 }) {
   const status = bookingStatus(value, schedule);
+  const toneStyles: Record<string, { badge: string; dot: string }> = {
+    cancelled: { badge: "bg-slate-50 text-slate-700 border-slate-200", dot: "bg-slate-400" },
+    cancel_requested: { badge: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" },
+    cancel_proposed: { badge: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500" },
+    refund_pending: { badge: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
+    success: { badge: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+    pending: { badge: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
+  };
+  const style = toneStyles[status.tone] || { badge: "bg-slate-50 text-slate-700 border-slate-200", dot: "bg-slate-400" };
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-[30px] text-[12px] font-[750] whitespace-nowrap px-[13px] py-[6px] gap-[6px] ${
-        status.tone === "cancelled"
-          ? "bg-[#ffe6ec] text-[#f32750]"
-          : status.tone === "cancel_requested"
-            ? "bg-[#fff1cf] text-[#97600b] border border-amber-300"
-            : status.tone === "cancel_proposed"
-              ? "bg-purple-50 text-purple-800 border border-purple-300"
-              : status.tone === "refund_pending"
-                ? "bg-amber-50 text-amber-900 border border-amber-300"
-                : status.tone === "success"
-                  ? "bg-[#def8ec] text-[#087e57]"
-                  : "bg-[#fff1cf] text-[#97600b]"
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-[650] whitespace-nowrap ${style.badge}`}
     >
-      <CalendarDays size={14} />
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
       {status.label}
     </span>
   );
@@ -99,15 +96,15 @@ function StatusBadge({
 
 function SectionTitle({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
   return (
-    <div className="flex items-center mb-4 gap-[14px]">
-      <span className="grid place-items-center [background:linear-gradient(135deg,_#eaf5ff,_#e2f0ff)] text-[#0064ff] rounded-full w-11 h-11 shrink-0">
+    <div className="flex items-center mb-3.5 gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#075bff] shadow-xs">
         {icon}
       </span>
       <div>
-        <h3 className="text-[15px] font-extrabold tracking-[-.02em] text-[#092448] leading-[1.35]">
+        <h3 className="text-[15px] font-[750] text-[#0b1747] leading-[1.35]">
           {title}
         </h3>
-        <p className="text-[11px] leading-[1.6] text-[#627fa3] mt-0.5">{description}</p>
+        <p className="text-[11px] leading-[1.5] text-[#7387aa] mt-0.5">{description}</p>
       </div>
     </div>
   );
@@ -116,12 +113,12 @@ function SectionTitle({ icon, title, description }: { icon: ReactNode; title: st
 function Field({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
   return (
     <div
-      className={`[background:linear-gradient(125deg,_#f3f8fd,_#f6faff)] rounded-[14px] min-w-0 px-4 py-[13px] ${
+      className={`rounded-lg border border-slate-100 bg-slate-50/75 min-w-0 px-3.5 py-2.5 ${
         wide ? "col-span-full" : ""
       }`}
     >
-      <dt className="text-[10px] uppercase tracking-[.075em] text-[#6283af] mb-1 font-semibold">{label}</dt>
-      <dd className="text-[13px] leading-[1.6] font-[650] text-[#092448] break-words">{children || "Chưa cập nhật"}</dd>
+      <dt className="text-[10px] uppercase tracking-wider text-[#7387aa] mb-0.5 font-semibold">{label}</dt>
+      <dd className="text-[13px] leading-[1.5] font-bold text-[#0b1747] break-words">{children || "Chưa cập nhật"}</dd>
     </div>
   );
 }
@@ -245,17 +242,42 @@ export function BookingDetailModal({
   const tourName = tour?.name || (b ? `Đơn đặt tour #${b.booking_id}` : "");
   const tourSummary = tour?.summary?.trim() || (tour?.description ? tour.description.replace(/<[^>]*>/g, "").trim() : "");
 
+  const origAdultPrice = Number(b?.membership_snapshot?.originalAdultPrice) || Number(b?.adult_unit_price) || 0;
+  const origChildPrice = Number(b?.membership_snapshot?.originalChildPrice) || Number(b?.child_unit_price) || 0;
+  const promoDiscount = Number(b?.membership_snapshot?.promoDiscount) || 0;
+  const promoTitle = b?.membership_snapshot?.promoTitle || (b?.membership_snapshot?.promoType === "flash_deal" ? "Flash Deal" : (b?.membership_snapshot?.promoType === "schedule_promotion" ? "Ưu đãi đợt" : null));
+  const promoGift = b?.membership_snapshot?.promoGift || null;
+  const memberDiscount = (Number(b?.membership_snapshot?.tourDiscount) || 0) + (Number(b?.membership_snapshot?.serviceDiscount) || 0);
+  const voucherDiscount = Number(b?.membership_snapshot?.voucherDiscount) || 0;
+
   const rows = b
     ? [
-        { label: "Người lớn", quantity: b.adult_count || 0, price: Number(b.adult_unit_price) || 0 },
-        { label: "Trẻ em", quantity: b.child_count || 0, price: Number(b.child_unit_price) || 0 },
-        { label: "Em bé", quantity: b.infant_count || 0, price: Number(b.infant_unit_price) || 0 },
+        {
+          label: "Người lớn",
+          quantity: b.adult_count || 0,
+          price: Number(b.adult_unit_price) || 0,
+          origPrice: origAdultPrice > Number(b.adult_unit_price) ? origAdultPrice : null,
+        },
+        {
+          label: "Trẻ em",
+          quantity: b.child_count || 0,
+          price: Number(b.child_unit_price) || 0,
+          origPrice: origChildPrice > Number(b.child_unit_price) ? origChildPrice : null,
+        },
+        {
+          label: "Em bé",
+          quantity: b.infant_count || 0,
+          price: Number(b.infant_unit_price) || 0,
+          origPrice: null,
+        },
       ]
     : [];
   const tickets = rows.reduce((sum, row) => sum + row.quantity * row.price, 0);
   const discount = b ? Number(b.discount_amount) || 0 : 0;
+  const totalDiscount = promoDiscount + discount;
   const services = b ? Number(b.services_total) || 0 : 0;
   const surcharge = b ? Math.max(0, Math.round((Number(b.total_amount) + discount - tickets - services) * 100) / 100) : 0;
+  const subtotalOriginal = tickets + promoDiscount + services + surcharge;
   const extras = Array.isArray(b?.additional_services) ? b.additional_services : [];
   const payments = [...(b?.payments || [])].sort((a, z) => new Date(z.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const payment = payments.find((item) => ["success", "paid", "completed"].includes((item.status || "").toLowerCase())) || payments[0];
@@ -285,7 +307,7 @@ export function BookingDetailModal({
       <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
 
       {/* Modal Card */}
-      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] w-full max-w-6xl xl:max-w-7xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl border border-[#dcecff] text-[#092448]">
+      <div className="relative z-10 my-auto flex max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] w-full max-w-6xl xl:max-w-7xl flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl border border-[#e1edfc] text-[#0b1747]">
         {/* Nút đóng nhanh ở góc trên */}
         <button
           type="button"
@@ -325,7 +347,7 @@ export function BookingDetailModal({
         ) : b ? (
           <>
             {/* Header Banner - Giống hệt phong cách trang Booking bên User */}
-            <header className="relative isolate shrink-0 pt-5 pb-3 px-6 overflow-hidden border-b border-[#dcecff] bg-[linear-gradient(135deg,#eaf5ff_0%,#f0f8ff_60%,#e1f3ff_100%)]">
+            <header className="relative isolate shrink-0 pt-5 pb-3.5 px-6 overflow-hidden border-b border-[#e1edfc] bg-[linear-gradient(135deg,#eaf5ff_0%,#f0f8ff_60%,#e1f3ff_100%)]">
               <div
                 className="absolute inset-0 z-[-2] bg-[url('/images/about/travel-dreams-banner.png')] bg-cover bg-center opacity-25"
                 aria-hidden="true"
@@ -341,12 +363,12 @@ export function BookingDetailModal({
                     <span className="uppercase text-[10px] tracking-wider text-[#4e709b] font-extrabold bg-white/70 px-2.5 py-0.5 rounded-full border border-blue-100">
                       Chi tiết booking
                     </span>
-                    <span className="text-[12px] font-bold text-[#0064ff]">
+                    <span className="text-[12px] font-bold text-[#075bff]">
                       #{String(b.booking_id).padStart(6, "0")}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <h2 className="text-xl sm:text-2xl font-black tracking-[-.025em] text-[#092448] leading-[1.3]">
+                    <h2 className="text-xl sm:text-2xl font-extrabold tracking-[-.025em] text-[#07123e] leading-[1.3]">
                       {tourName}
                     </h2>
                     <StatusBadge value={b.status} schedule={b.tour_schedules} />
@@ -354,9 +376,9 @@ export function BookingDetailModal({
                       <button
                         type="button"
                         onClick={() => setReceiptModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-blue-700 bg-white/95 border border-blue-200 hover:bg-blue-50 transition shadow-2xs cursor-pointer ml-auto sm:ml-2"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-[650] text-[#075bff] bg-white/95 border border-[#d3e4ff] hover:bg-[#f1f7ff] transition-colors shadow-2xs cursor-pointer ml-auto sm:ml-2"
                       >
-                        <FileText size={13} className="text-blue-600" />
+                        <FileText size={13} className="text-[#075bff]" />
                         <span>Xem / In biên lai</span>
                       </button>
                     )}
@@ -364,7 +386,7 @@ export function BookingDetailModal({
                       <button
                         type="button"
                         onClick={() => setReceiptModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-rose-700 bg-white/95 border border-rose-200 hover:bg-rose-50 transition shadow-2xs cursor-pointer ml-auto sm:ml-2"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-[650] text-rose-700 bg-white/95 border border-rose-200 hover:bg-rose-50 transition-colors shadow-2xs cursor-pointer ml-auto sm:ml-2"
                       >
                         <FileText size={13} className="text-rose-600" />
                         <span>Xem biên nhận hoàn tiền</span>
@@ -372,7 +394,7 @@ export function BookingDetailModal({
                     )}
                   </div>
                   {tourSummary && (
-                    <p className="text-[12px] leading-relaxed text-[#4e709b] max-w-4xl line-clamp-2 font-normal">
+                    <p className="text-[12px] leading-relaxed text-[#637da5] max-w-4xl line-clamp-2 font-normal">
                       {tourSummary}
                     </p>
                   )}
@@ -382,12 +404,12 @@ export function BookingDetailModal({
             </header>
 
             {/* Nội dung chi tiết - 2 cột cân xứng giống bên user */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6 bg-[radial-gradient(ellipse_at_25%_40%,#f6fdff,transparent_65%),#eefaff]">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+            <div className="flex-1 overflow-y-auto p-4.5 sm:p-5 bg-[#f8fbfe]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
                 {/* CỘT TRÁI: Thông tin Tour + Thông tin người đặt */}
-                <div className="space-y-5">
+                <div className="space-y-3.5">
                   {/* Card Thông tin tour */}
-                  <section className="bg-white/95 rounded-[19px] shadow-sm border border-[#dcecff] p-5" aria-label="Thông tin tour">
+                  <section className="bg-white rounded-[14px] shadow-2xs border border-[#e1edfc] p-4.5" aria-label="Thông tin tour">
                     <div className="flex mb-3.5 gap-4">
                       <ImageWithFallback
                         src={tour?.tour_images?.[0]?.image_url || ""}
@@ -468,13 +490,13 @@ export function BookingDetailModal({
                   </section>
 
                   {/* Card Thông tin người đặt tour */}
-                  <section className="bg-white/95 rounded-[19px] shadow-sm border border-[#dcecff] p-5" aria-label="Thông tin người đặt">
+                  <section className="bg-white rounded-[14px] shadow-2xs border border-[#e1edfc] p-4.5" aria-label="Thông tin người đặt">
                     <SectionTitle
-                      icon={<UserRound size={22} />}
+                      icon={<UserRound size={20} />}
                       title="Thông tin người đặt"
                       description="Thông tin liên hệ của khách hàng."
                     />
-                    <dl className="grid grid-cols-2 gap-3">
+                    <dl className="grid grid-cols-2 gap-2.5">
                       <Field label="Họ và tên">{b.contact_name}</Field>
                       <Field label="Số điện thoại">{b.contact_phone}</Field>
                       <Field label="Email" wide>{b.contact_email}</Field>
@@ -490,39 +512,39 @@ export function BookingDetailModal({
                 </div>
 
                 {/* CỘT PHẢI: Danh sách hành khách + Chi tiết hóa đơn */}
-                <div className="space-y-5">
+                <div className="space-y-3.5">
                   {/* Card Danh sách hành khách */}
-                  <section className="bg-white/95 rounded-[19px] shadow-sm border border-[#dcecff] p-5" aria-label="Danh sách hành khách">
+                  <section className="bg-white rounded-[14px] shadow-2xs border border-[#e1edfc] p-4.5" aria-label="Danh sách hành khách">
                     <SectionTitle
-                      icon={<UsersRound size={22} />}
+                      icon={<UsersRound size={20} />}
                       title="Danh sách hành khách"
                       description="Các hành khách đi cùng trong booking này."
                     />
-                    <div className="rounded-[15px] overflow-hidden border border-[#e0edff]">
+                    <div className="rounded-lg overflow-hidden border border-[#edf2fb]">
                       <table className="w-full border-collapse text-left text-[11px]">
-                        <thead className="bg-[#f3f8fe]">
+                        <thead className="bg-slate-50/75 border-b border-[#edf2fb]">
                           <tr>
-                            <th className="px-3.5 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Họ tên</th>
-                            <th className="px-3.5 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Ngày sinh</th>
-                            <th className="px-3.5 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Giới tính</th>
-                            <th className="px-3.5 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Giấy tờ</th>
+                            <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Họ tên</th>
+                            <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Ngày sinh</th>
+                            <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Giới tính</th>
+                            <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Giấy tờ</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#edf4fc]">
                           {b.booking_travelers?.length ? (
                             b.booking_travelers.map((traveler) => (
                               <tr key={traveler.traveler_id}>
-                                <td className="px-3.5 py-2.5">
+                                <td className="px-3 py-2.5">
                                   <strong className="font-[650] text-[#092448]">{traveler.full_name}</strong>
                                   <small className="block text-[#8295ad] text-[10px] mt-0.5">
                                     {{ adult: "Người lớn", child: "Trẻ em", infant: "Em bé" }[(traveler.traveler_type || "").toLowerCase()] || traveler.traveler_type}
                                   </small>
                                 </td>
-                                <td className="px-3.5 py-2.5 text-slate-600">{date(traveler.dob)}</td>
-                                <td className="px-3.5 py-2.5 text-slate-600">
+                                <td className="px-3 py-2.5 text-slate-600">{date(traveler.dob)}</td>
+                                <td className="px-3 py-2.5 text-slate-600">
                                   {{ male: "Nam", female: "Nữ", other: "Khác" }[(traveler.gender || "").toLowerCase()] || traveler.gender || "—"}
                                 </td>
-                                <td className="px-3.5 py-2.5 text-slate-600 font-mono text-[10px]">{traveler.id_number || "—"}</td>
+                                <td className="px-3 py-2.5 text-slate-600 font-mono text-[10px]">{traveler.id_number || "—"}</td>
                               </tr>
                             ))
                           ) : (
@@ -538,15 +560,15 @@ export function BookingDetailModal({
                   </section>
 
                   {/* Card Chi tiết hóa đơn */}
-                  <section className="bg-white/95 rounded-[19px] shadow-sm border border-[#dcecff] p-5" aria-label="Chi tiết hóa đơn">
+                  <section className="bg-white rounded-[14px] shadow-2xs border border-[#e1edfc] p-4.5" aria-label="Chi tiết hóa đơn">
                     <SectionTitle
-                      icon={<ReceiptText size={22} />}
+                      icon={<ReceiptText size={20} />}
                       title="Chi tiết hóa đơn"
                       description="Bảng kê chi phí vé, phụ thu và dịch vụ kèm theo."
                     />
-                    <div className="rounded-[15px] overflow-hidden border border-[#e0edff]">
+                    <div className="rounded-lg overflow-hidden border border-[#edf2fb]">
                       <table className="w-full border-collapse text-left text-[11px]">
-                        <thead className="bg-[#f3f8fe]">
+                        <thead className="bg-slate-50/75 border-b border-[#edf2fb]">
                           <tr>
                             <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase">Hạng mục</th>
                             <th className="px-3 py-2.5 text-[9px] font-bold tracking-[.07em] text-[#6687b0] uppercase text-center">SL</th>
@@ -561,7 +583,14 @@ export function BookingDetailModal({
                               <tr key={row.label}>
                                 <td className="px-3 py-2 text-slate-800 font-medium">{row.label}</td>
                                 <td className="px-3 py-2 text-slate-600 text-center">{row.quantity}</td>
-                                <td className="px-3 py-2 text-slate-600 text-right">{money(row.price)}</td>
+                                <td className="px-3 py-2 text-slate-600 text-right">
+                                  {row.origPrice && (
+                                    <span className="block text-[10px] text-slate-400 line-through font-normal">
+                                      {money(row.origPrice)}
+                                    </span>
+                                  )}
+                                  <span>{money(row.price)}</span>
+                                </td>
                                 <td className="px-3 py-2 text-slate-900 font-semibold text-right">{money(row.quantity * row.price)}</td>
                               </tr>
                             ))}
@@ -594,19 +623,62 @@ export function BookingDetailModal({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.1fr] mt-3.5 gap-3.5">
-                      {/* Thẻ Voucher & Lời chúc */}
-                      <div className="relative isolate overflow-hidden rounded-[15px] [background:linear-gradient(145deg,#f0f8fe,#f6fbff)] p-4 flex flex-col justify-between border border-[#e0edff]">
-                        <dl className="space-y-2 relative z-[1]">
+                      {/* Thẻ Voucher & Giảm giá chi tiết (giống bên user) */}
+                      <div className="relative isolate overflow-hidden rounded-[14px] border border-[#e1edfc] bg-gradient-to-br from-blue-50/50 to-slate-50/50 p-4 flex flex-col justify-between">
+                        <dl className="space-y-3 relative z-[1]">
                           <div>
-                            <dt className="text-[10px] uppercase tracking-[.075em] text-[#6283af] font-bold">Giảm giá</dt>
-                            <dd className="text-[12px] font-semibold text-slate-800">
-                              {discount > 0 ? `Giảm ${money(discount)}` : "Không áp dụng"}
+                            <dt className="text-[10px] uppercase tracking-[.075em] text-[#6283af] font-bold mb-1">
+                              Giá gốc / giảm giá
+                            </dt>
+                            <dd className="text-[12px] leading-relaxed">
+                              {totalDiscount > 0 ? (
+                                <div className="space-y-1.5">
+                                  <div className="font-extrabold text-emerald-600 text-[13px]">
+                                    Tiết kiệm {money(totalDiscount)}
+                                  </div>
+                                  <div className="space-y-1 text-[11px] text-[#466286]">
+                                    {promoDiscount > 0 && (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="inline-block rounded-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 text-[9.5px] font-bold">
+                                          {promoTitle || "Ưu đãi"}
+                                        </span>
+                                        <span className="font-semibold text-rose-600">−{money(promoDiscount)}</span>
+                                      </div>
+                                    )}
+                                    {memberDiscount > 0 && (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="inline-block rounded-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 text-[9.5px] font-bold">
+                                          Hạng {b.membership_snapshot?.name || "thành viên"}
+                                        </span>
+                                        <span className="font-semibold text-amber-700">−{money(memberDiscount)}</span>
+                                      </div>
+                                    )}
+                                    {voucherDiscount > 0 && (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="inline-block rounded-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[9.5px] font-bold">
+                                          Voucher
+                                        </span>
+                                        <span className="font-semibold text-blue-600">−{money(voucherDiscount)}</span>
+                                      </div>
+                                    )}
+                                    {promoGift && (
+                                      <div className="text-[10.5px] text-amber-800 font-semibold bg-amber-50/90 rounded px-1.5 py-0.5 inline-block border border-amber-200/60 mt-0.5">
+                                        🎁 Quà tặng: {promoGift}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-slate-500 font-medium">Không áp dụng giảm giá</span>
+                              )}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-[10px] uppercase tracking-[.075em] text-[#6283af] font-bold">Mã Voucher</dt>
-                            <dd className="text-[12px] font-bold text-blue-600">
-                              {b.vouchers?.code || "Không sử dụng"}
+                            <dt className="text-[10px] uppercase tracking-[.075em] text-[#6283af] font-bold mb-0.5">
+                              Voucher
+                            </dt>
+                            <dd className="text-[12px] font-semibold text-slate-800">
+                              {b.vouchers?.code ? `Mã: ${b.vouchers.code}` : "Không sử dụng"}
                             </dd>
                           </div>
                         </dl>
@@ -616,16 +688,34 @@ export function BookingDetailModal({
                       </div>
 
                       {/* Khối Tổng tiền thanh toán */}
-                      <div className="rounded-[16px] border border-[#dfebfc] bg-white p-4">
+                      <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs">
                         <dl className="space-y-1.5 text-[11px]">
                           <div className="flex justify-between">
-                            <dt className="text-slate-500">Tạm tính:</dt>
-                            <dd className="font-semibold text-slate-800">{money(tickets + services + surcharge)}</dd>
+                            <dt className="text-slate-500">Tạm tính (giá gốc):</dt>
+                            <dd className="font-semibold text-slate-800">{money(subtotalOriginal)}</dd>
                           </div>
-                          {discount > 0 && (
+                          {promoDiscount > 0 && (
+                            <div className="flex justify-between text-rose-600">
+                              <dt className="font-medium">{promoTitle || "Ưu đãi / Flash Deal"}:</dt>
+                              <dd className="font-semibold">− {money(promoDiscount)}</dd>
+                            </div>
+                          )}
+                          {memberDiscount > 0 && (
+                            <div className="flex justify-between text-amber-700">
+                              <dt className="font-medium">Ưu đãi hạng {b.membership_snapshot?.name || "thành viên"}:</dt>
+                              <dd className="font-semibold">− {money(memberDiscount)}</dd>
+                            </div>
+                          )}
+                          {voucherDiscount > 0 && (
+                            <div className="flex justify-between text-blue-600">
+                              <dt className="font-medium">Voucher ({b.vouchers?.code || "giảm giá"}):</dt>
+                              <dd className="font-semibold">− {money(voucherDiscount)}</dd>
+                            </div>
+                          )}
+                          {totalDiscount > 0 && !promoDiscount && !memberDiscount && !voucherDiscount && (
                             <div className="flex justify-between text-rose-600">
                               <dt>Giảm giá:</dt>
-                              <dd className="font-semibold">− {money(discount)}</dd>
+                              <dd className="font-semibold">− {money(totalDiscount)}</dd>
                             </div>
                           )}
                         </dl>
@@ -676,7 +766,7 @@ export function BookingDetailModal({
                 if (!parsed.customerNote && !parsed.roomType && !hasCancellation) return null;
 
                 return (
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-3.5 space-y-3.5">
                     {/* Loại phòng & phụ thu */}
                     {parsed.roomType && (
                       <div className="rounded-[16px] bg-slate-50 border border-slate-200/90 px-4 py-3 flex items-center justify-between gap-3 text-xs">
@@ -1117,7 +1207,7 @@ export function BookingDetailModal({
 
                     {/* Ghi chú thực tế từ khách hàng */}
                     {parsed.customerNote && (
-                      <div className="rounded-[19px] bg-amber-50/80 border border-amber-200/80 p-4.5">
+                      <div className="rounded-[14px] bg-amber-50/60 border border-amber-200 p-4">
                         <h4 className="text-[12px] font-black uppercase tracking-wider text-amber-900 mb-2">
                           Ghi chú từ khách hàng
                         </h4>
@@ -1132,7 +1222,7 @@ export function BookingDetailModal({
             </div>
 
             {/* Footer với các nút hành động xác nhận duyệt hủy hoặc hủy đơn */}
-            <footer className="flex flex-wrap items-center justify-between border-t border-[#dcecff] bg-white px-6 py-3.5 gap-2.5">
+            <footer className="flex flex-wrap items-center justify-between border-t border-[#e1edfc] bg-white px-6 py-3.5 gap-2.5">
               <span className="text-xs text-slate-400">
                 Mã booking: <strong className="text-slate-700">#{b.booking_id}</strong>
               </span>
@@ -1143,7 +1233,7 @@ export function BookingDetailModal({
                     <button
                       type="button"
                       onClick={() => onAction(b, "reject")}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-[650] text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
                     >
                       <XCircle size={14} className="text-rose-500" />
                       <span>Từ chối yêu cầu</span>
@@ -1151,7 +1241,7 @@ export function BookingDetailModal({
                     <button
                       type="button"
                       onClick={() => onAction(b, "approve")}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer"
+                      className="inline-flex items-center gap-1.5 rounded-[12px] bg-emerald-600 px-4 py-2 text-xs font-[650] text-white shadow-2xs hover:bg-emerald-700 transition cursor-pointer"
                     >
                       <CheckCircle2 size={14} />
                       <span>Duyệt yêu cầu hủy & Hoàn tiền</span>
@@ -1163,7 +1253,7 @@ export function BookingDetailModal({
                   <button
                     type="button"
                     onClick={() => onAction(b, "cancel-pending")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-4 py-2 text-xs font-bold text-rose-700 shadow-2xs hover:bg-rose-50 transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 py-2 text-xs font-[650] text-rose-700 shadow-2xs hover:bg-rose-50 transition cursor-pointer"
                   >
                     <Trash2 size={14} />
                     <span>Hủy đơn giữ chỗ & Nhả chỗ</span>
@@ -1174,7 +1264,7 @@ export function BookingDetailModal({
                   <button
                     type="button"
                     onClick={() => onAction(b, "cancel-booking")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-4 py-2 text-xs font-bold text-rose-700 shadow-2xs hover:bg-rose-50 transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 py-2 text-xs font-[650] text-rose-700 shadow-2xs hover:bg-rose-50 transition cursor-pointer"
                   >
                     <AlertTriangle size={14} />
                     <span>Hủy đơn tour (Admin)</span>
@@ -1185,7 +1275,7 @@ export function BookingDetailModal({
                   <button
                     type="button"
                     onClick={() => setTransferModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-[12px] bg-emerald-600 px-4 py-2 text-xs font-[650] text-white shadow-2xs hover:bg-emerald-700 transition cursor-pointer"
                   >
                     <CircleDollarSign size={14} />
                     <span>Xác nhận đã chuyển tiền hoàn</span>
@@ -1195,7 +1285,7 @@ export function BookingDetailModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl bg-slate-900 px-6 py-2 text-xs font-bold text-white shadow-md transition hover:bg-slate-800 cursor-pointer"
+                  className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-[650] text-slate-700 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
                 >
                   Đóng
                 </button>

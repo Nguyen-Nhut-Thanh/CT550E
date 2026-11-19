@@ -1,5 +1,6 @@
 "use client";
 
+
 import { ScheduleEmptyState } from "@/components/schedules/schedule_table/AdminScheduleEmptyState";
 import { SchedulePageHeader } from "@/components/schedules/schedule_table/AdminSchedulePageHeader";
 
@@ -24,13 +25,14 @@ import {
   createDefaultFlashDealForm,
 } from "@/lib/flash_deals/admin/forms";
 import { matchesScheduleStatusFilter } from "@/lib/schedules/admin/status";
+import { reconcileScheduleListPage, restoreScheduleListView, SCHEDULE_LIST_STATE_KEY } from "@/lib/schedules/admin/view-state";
 import { getAdminTours } from "@/lib/tours/admin/api";
 import {
   matchesTourSearch,
   matchesTourTypeFilter,
 } from "@/lib/tours/admin/filters";
 import { useToast } from "@/lib/notifications/useToast";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type {
@@ -61,6 +63,8 @@ export default function AdminSchedulesPage() {
     useState<string>("upcoming");
   const [tourPage, setTourPage] = useState(1);
   const [schedulePage, setSchedulePage] = useState(1);
+  const [viewReady, setViewReady] = useState(false);
+  const [loadedSchedulesTourId, setLoadedSchedulesTourId] = useState<number | null>(null);
   const [pendingDeleteScheduleId, setPendingDeleteScheduleId] = useState<
     number | null
   >(null);
@@ -70,10 +74,43 @@ export default function AdminSchedulesPage() {
   const [flashDealForm, setFlashDealForm] = useState<FlashDealForm>(createDefaultFlashDealForm);
   const [savingFlashDeal, setSavingFlashDeal] = useState(false);
   const [deletingFlashDeal, setDeletingFlashDeal] = useState(false);
+  const [confirmDeleteFlashDealOpen, setConfirmDeleteFlashDealOpen] = useState(false);
+  const [pendingToggleStatus, setPendingToggleStatus] = useState<{
+    scheduleId: number;
+    currentStatus: number;
+    bookedCount: number;
+  } | null>(null);
 
   const selectedTour = tours.find((tour) => tour.tour_id === selectedTourId);
 
   useEffect(() => {
+    try {
+      const saved = restoreScheduleListView(window.sessionStorage.getItem(SCHEDULE_LIST_STATE_KEY));
+      setSelectedTourId(saved.selectedTourId);
+      setTourPage(saved.tourPage);
+      setSchedulePage(saved.schedulePage);
+      setSearchTerm(saved.searchTerm);
+      setTourTypeFilter(saved.tourTypeFilter);
+      setScheduleStatusFilter(saved.scheduleStatusFilter);
+    } catch {
+      // Browser storage can be disabled; keep the list usable with defaults.
+    }
+    setViewReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!viewReady) return;
+    try {
+      window.sessionStorage.setItem(SCHEDULE_LIST_STATE_KEY, JSON.stringify({
+        selectedTourId, tourPage, schedulePage, searchTerm, tourTypeFilter, scheduleStatusFilter,
+      }));
+    } catch {
+      // Storage restrictions must not interrupt list operations.
+    }
+  }, [viewReady, selectedTourId, tourPage, schedulePage, searchTerm, tourTypeFilter, scheduleStatusFilter]);
+
+  useEffect(() => {
+    if (!viewReady) return;
     let active = true;
     async function loadTours() {
       setLoadingTours(true);
@@ -82,9 +119,6 @@ export default function AdminSchedulesPage() {
         const data = await getAdminTours<Tour>();
         if (!active) return;
         setTours(data.items || []);
-        setSelectedTourId(
-          (current) => current ?? data.items?.[0]?.tour_id ?? null,
-        );
       } catch {
         if (active) setTourError(true);
       } finally {
@@ -96,19 +130,29 @@ export default function AdminSchedulesPage() {
     return () => {
       active = false;
     };
-  }, [tourRetry]);
+  }, [tourRetry, viewReady]);
 
   useEffect(() => {
-    if (!selectedTourId) return;
+    if (!viewReady || loadingTours || tourError || selectedTour) return;
+    setSelectedTourId(tours[0]?.tour_id ?? null);
+    setSchedulePage(1);
+  }, [viewReady, loadingTours, tourError, selectedTour, tours]);
+
+  useEffect(() => {
+    if (!viewReady || loadingTours || !selectedTour) return;
     let active = true;
 
     async function loadSchedules() {
       setLoadingSchedules(true);
       setScheduleError(false);
       setSchedules([]);
+      setLoadedSchedulesTourId(null);
       try {
         const items = await getTourSchedules<Schedule>(selectedTourId!);
-        if (active) setSchedules(items);
+        if (active) {
+          setSchedules(items);
+          setLoadedSchedulesTourId(selectedTourId);
+        }
       } catch {
         if (active) setScheduleError(true);
       } finally {
@@ -120,7 +164,7 @@ export default function AdminSchedulesPage() {
     return () => {
       active = false;
     };
-  }, [selectedTourId, scheduleRetry]);
+  }, [selectedTourId, selectedTour, loadingTours, viewReady, scheduleRetry]);
 
   const handleDeleteSchedule = async (scheduleId: number) => {
     if (mutations.current.has(scheduleId)) return;
@@ -205,14 +249,20 @@ export default function AdminSchedulesPage() {
     }
   };
 
-  const handleDeleteFlashDeal = async () => {
+  const handleDeleteFlashDeal = () => {
     const deal = flashDealSchedule?.flash_deals;
     if (!deal || deletingFlashDeal) return;
-    if (!window.confirm("Bạn có chắc chắn muốn xóa Flash Deal của đợt khởi hành này?")) return;
+    setConfirmDeleteFlashDealOpen(true);
+  };
+
+  const executeDeleteFlashDeal = async () => {
+    const deal = flashDealSchedule?.flash_deals;
+    if (!deal || deletingFlashDeal) return;
     setDeletingFlashDeal(true);
     try {
       await deleteAdminFlashDeal(deal.deal_id);
       success("Đã xóa flash deal thành công");
+      setConfirmDeleteFlashDealOpen(false);
       setFlashDealSchedule(null);
       setScheduleRetry((c) => c + 1);
     } catch (cause) {
@@ -222,23 +272,23 @@ export default function AdminSchedulesPage() {
     }
   };
 
-  const handleToggleStatus = async (
+  const handleToggleStatus = (
     scheduleId: number,
     currentStatus: number,
     bookedCount: number,
   ) => {
     if (mutations.current.has(scheduleId)) return;
     if (currentStatus === 1 && bookedCount > 0) {
-      const confirmHide = window.confirm(
-        `CẢNH BÁO: Đợt khởi hành này đã có ${bookedCount} khách đặt chỗ.
-
-` +
-          "Việc ẩn sẽ khiến tour không còn hiển thị trên website cho người mới.\n\n" +
-          "Bạn có chắc chắn muốn ngừng nhận khách cho đợt này không?",
-      );
-      if (!confirmHide) return;
+      setPendingToggleStatus({ scheduleId, currentStatus, bookedCount });
+      return;
     }
+    void executeToggleStatus(scheduleId, currentStatus);
+  };
 
+  const executeToggleStatus = async (
+    scheduleId: number,
+    currentStatus: number,
+  ) => {
     const nextStatus = currentStatus === 1 ? 0 : 1;
     mutations.current.add(scheduleId);
     setPendingIds([...mutations.current]);
@@ -291,38 +341,30 @@ export default function AdminSchedulesPage() {
   );
 
   useEffect(() => {
-    setTourPage(1);
-  }, [searchTerm, tourTypeFilter]);
+    const next = reconcileScheduleListPage(tourPage, tourTotalPages, viewReady && !loadingTours && !tourError);
+    if (next !== tourPage) setTourPage(next);
+  }, [tourPage, tourTotalPages, viewReady, loadingTours, tourError]);
 
   useEffect(() => {
-    setSchedulePage(1);
-  }, [selectedTourId, scheduleStatusFilter]);
-
-  useEffect(() => {
-    if (tourPage > tourTotalPages) {
-      setTourPage(tourTotalPages);
-    }
-  }, [tourPage, tourTotalPages]);
-
-  useEffect(() => {
-    if (schedulePage > scheduleTotalPages) {
-      setSchedulePage(scheduleTotalPages);
-    }
-  }, [schedulePage, scheduleTotalPages]);
+    const next = reconcileScheduleListPage(schedulePage, scheduleTotalPages,
+      viewReady && !loadingSchedules && !scheduleError && loadedSchedulesTourId !== null && loadedSchedulesTourId === selectedTourId);
+    if (next !== schedulePage) setSchedulePage(next);
+  }, [schedulePage, scheduleTotalPages, viewReady, loadingSchedules, scheduleError, loadedSchedulesTourId, selectedTourId]);
 
   return (
-    <div className="ui-schedule-overview-page flex flex-col gap-[12px] min-w-0 text-[#112246] [&_:is(a,_button,_input):focus-visible]:[outline:2px_solid_#3b82f6] [&_:is(a,_button,_input):focus-visible]:outline-offset-[3px] min-[901px]:h-full min-[901px]:min-h-0 admin-max-600:gap-[14px]">
+    <div className="flex flex-col gap-3 min-w-0 text-[#112246]">
       <SchedulePageHeader />
 
-      <div className="ui-schedule-overview-columns grid grid-cols-[minmax(320px,_.9fr)_minmax(0,_1.65fr)] gap-[16px] [align-items:start] min-[901px]:[flex:1] min-[901px]:min-h-0 min-[901px]:items-stretch min-[1600px]:grid-cols-[minmax(400px,_.95fr)_minmax(0,_1.55fr)] admin-max-1100:grid-cols-[minmax(280px,_.85fr)_minmax(0,_1.3fr)] admin-max-900:grid-cols-[1fr]">
+      <div className="grid grid-cols-[minmax(340px,_.9fr)_minmax(0,_1.65fr)] gap-3 items-stretch min-[1600px]:grid-cols-[minmax(400px,_.95fr)_minmax(0,_1.55fr)] admin-max-1100:grid-cols-[minmax(280px,_.85fr)_minmax(0,_1.3fr)] admin-max-900:grid-cols-1">
         {tourError ? (
           <div
             role="alert"
-            className="ui-schedule-overview-error flex items-center justify-between gap-[12px] [background:#fff3f4] text-[#bd3751] p-[16px] rounded-[12px] text-[13px] [&_button]:font-bold [&_button]:underline"
+            className="flex items-center justify-between gap-3 bg-rose-50 text-rose-700 p-4 rounded-xl border border-rose-200 text-[13px] font-medium"
           >
-            Không thể tải danh sách tour.
+            <span>Không thể tải danh sách tour.</span>
             <button
               type="button"
+              className="font-bold underline underline-offset-2"
               onClick={() => setTourRetry((current) => current + 1)}
             >
               Tải lại
@@ -330,7 +372,7 @@ export default function AdminSchedulesPage() {
           </div>
         ) : (
           <TourListPanel
-            loading={loadingTours}
+            loading={loadingTours || !viewReady}
             tours={paginatedTours}
             selectedTourId={selectedTourId}
             searchTerm={searchTerm}
@@ -339,31 +381,33 @@ export default function AdminSchedulesPage() {
             totalPages={tourTotalPages}
             totalItems={filteredTours.length}
             pageSize={pageSize}
-            onSearchChange={setSearchTerm}
-            onFilterChange={setTourTypeFilter}
+            onSearchChange={(value) => { setSearchTerm(value); setTourPage(1); }}
+            onFilterChange={(value) => { setTourTypeFilter(value); setTourPage(1); }}
             onSelectTour={(id) => {
               if (id !== selectedTourId) {
                 setSchedules([]);
                 setScheduleError(false);
                 setLoadingSchedules(true);
                 setSelectedTourId(id);
+                setSchedulePage(1);
               }
             }}
             onPageChange={setTourPage}
           />
         )}
 
-        <div className="ui-schedule-overview-scheduleColumn min-w-0 min-[901px]:flex min-[901px]:min-h-0">
+        <div className="min-w-0 flex flex-col h-full">
           {!selectedTourId ? (
             <ScheduleEmptyState />
           ) : scheduleError ? (
             <div
               role="alert"
-              className="ui-schedule-overview-error flex items-center justify-between gap-[12px] [background:#fff3f4] text-[#bd3751] p-[16px] rounded-[12px] text-[13px] [&_button]:font-bold [&_button]:underline"
+              className="flex items-center justify-between gap-3 bg-rose-50 text-rose-700 p-4 rounded-xl border border-rose-200 text-[13px] font-medium"
             >
-              Không thể tải lịch khởi hành.
+              <span>Không thể tải lịch khởi hành.</span>
               <button
                 type="button"
+                className="font-bold underline underline-offset-2"
                 onClick={() => setScheduleRetry((current) => current + 1)}
               >
                 Tải lại
@@ -374,13 +418,13 @@ export default function AdminSchedulesPage() {
               selectedTourId={selectedTourId}
               selectedTour={selectedTour}
               schedules={paginatedSchedules}
-              loading={loadingSchedules}
+              loading={loadingSchedules || loadedSchedulesTourId !== selectedTourId}
               scheduleStatusFilter={scheduleStatusFilter}
               currentPage={schedulePage}
               totalPages={scheduleTotalPages}
               totalItems={filteredSchedules.length}
               pageSize={pageSize}
-              onFilterChange={setScheduleStatusFilter}
+              onFilterChange={(value) => { setScheduleStatusFilter(value); setSchedulePage(1); }}
               onCreate={() =>
                 router.push(`/admin/schedules/new?tourId=${selectedTourId}`)
               }
@@ -465,6 +509,35 @@ export default function AdminSchedulesPage() {
           )
             setPendingDeleteScheduleId(null);
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteFlashDealOpen}
+        icon={<Trash2 size={32} className="text-rose-600" />}
+        title="Xóa Flash Deal?"
+        description="Bạn có chắc chắn muốn xóa Flash Deal của đợt khởi hành này? Đợt khởi hành sẽ trở về mức giá thông thường."
+        confirmLabel={deletingFlashDeal ? "Đang xóa..." : "Xác nhận xóa"}
+        cancelLabel="Hủy bỏ"
+        onConfirm={() => void executeDeleteFlashDeal()}
+        onCancel={() => !deletingFlashDeal && setConfirmDeleteFlashDealOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={pendingToggleStatus !== null}
+        icon={<AlertTriangle size={32} className="text-amber-500" />}
+        title="Tạm ngừng nhận khách?"
+        description={`CẢNH BÁO: Đợt khởi hành này đã có ${pendingToggleStatus?.bookedCount} khách đặt chỗ.\n\nViệc ẩn sẽ khiến tour không còn hiển thị trên website cho người mới. Bạn có chắc chắn muốn ngừng nhận khách cho đợt này không?`}
+        confirmLabel="Xác nhận ẩn"
+        cancelLabel="Hủy bỏ"
+        confirmClassName="bg-amber-600 hover:bg-amber-700 shadow-amber-200"
+        onConfirm={() => {
+          if (pendingToggleStatus) {
+            const { scheduleId, currentStatus } = pendingToggleStatus;
+            setPendingToggleStatus(null);
+            void executeToggleStatus(scheduleId, currentStatus);
+          }
+        }}
+        onCancel={() => setPendingToggleStatus(null)}
       />
     </div>
   );

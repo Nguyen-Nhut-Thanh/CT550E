@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Layers, MapPin, Pencil, Star, Trash2 } from "lucide-react";
 import { AdminPagination } from "@/components/common/admin_shared/tables/AdminPagination";
 import { AdminRowActions } from "@/components/common/admin_shared/tables/AdminRowActions";
-import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
 import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
 import { getLocationLevelLabel } from "@/lib/locations/admin/hierarchy";
 import type { LocationItem } from "shared";
@@ -22,20 +21,57 @@ export function LocationManagementTable({
   onDelete: (item: LocationItem) => void;
 }) {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
   const current = Math.min(page, totalPages);
   const visible = items.slice((current - 1) * pageSize, current * pageSize);
+
+  const getLevelBadge = (levelId: number, levelName: string) => {
+    const label = getLocationLevelLabel(levelId, levelName);
+    switch (levelId) {
+      case 3:
+        return (
+          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-blue-700">
+            {label}
+          </span>
+        );
+      case 4:
+        return (
+          <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-sky-700">
+            {label}
+          </span>
+        );
+      case 5:
+        return (
+          <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-emerald-700">
+            {label}
+          </span>
+        );
+      case 6:
+        return (
+          <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-purple-700">
+            {label}
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-slate-600">
+            {label}
+          </span>
+        );
+    }
+  };
+
   return (
     <section
-      className="ui-location-management-tableCard overflow-hidden min-w-0 rounded-[14px] [background:white] [border:1px_solid_#e4edf9] [box-shadow:0_8px_25px_#497bac04]"
+      className="ui-location-management-tableCard overflow-hidden min-w-0 rounded-[14px] border border-[#e1edfc] bg-white shadow-xs"
       aria-label="Danh sách địa điểm"
       aria-busy={loading}
     >
       <div className="ui-location-management-tableScroll overflow-x-auto">
-        <table className="ui-location-management-table w-full border-collapse text-left whitespace-nowrap text-[12px] [&_th]:[background:linear-gradient(#fcfdff,#f5f8fc)] [&_th]:p-[14px_18px] [&_th]:text-[10px] [&_th]:font-[650] [&_th]:text-[#7187a9] [&_th]:uppercase [&_th]:tracking-[.2px]! [&_th]:[border-bottom:1px_solid_#e8eff8] [&_td]:p-[10px_18px] [&_td]:[border-bottom:1px_solid_#edf2f9] [&_td]:[vertical-align:middle] [&_td:last-child]:text-center [&_th:last-child]:text-center [&_tbody_tr:hover]:[background:#f8fbff] admin-max-750:[&_td]:pl-[14px] admin-max-750:[&_td]:pr-[14px] admin-max-750:[&_th]:pl-[14px] admin-max-750:[&_th]:pr-[14px]">
+        <table className="w-full border-collapse text-left whitespace-nowrap text-xs">
           <thead>
-            <tr>
+            <tr className="bg-slate-50/75 border-b border-[#edf2fb]">
               {[
                 "Địa điểm",
                 "Cấp độ",
@@ -45,19 +81,23 @@ export function LocationManagementTable({
                 "Cập nhật",
                 "Thao tác",
               ].map((label) => (
-                <th scope="col" key={label}>
+                <th
+                  scope="col"
+                  key={label}
+                  className="px-4.5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#7187a9]"
+                >
                   {label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#edf2fb]">
             {loading
-              ? Array.from({ length: 8 }, (_, index) => (
+              ? Array.from({ length: 10 }, (_, index) => (
                   <tr key={index} aria-hidden="true">
                     {Array.from({ length: 7 }, (_, column) => (
-                      <td key={column}>
-                        <span className="ui-location-management-skeleton block h-[39px] min-w-[35px] [background:linear-gradient(90deg,#f0f5fa,#fafcff,#f0f5fa)] [background-size:200%_100%] rounded-[7px] animate-admin-shimmer motion-reduce:animate-none" />
+                      <td key={column} className="px-4.5 py-3">
+                        <span className="block h-[38px] min-w-[36px] bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 rounded-lg animate-pulse" />
                       </td>
                     ))}
                   </tr>
@@ -68,11 +108,14 @@ export function LocationManagementTable({
                     : null;
                   const validDate = updated && !Number.isNaN(updated.getTime());
                   return (
-                    <tr key={item.location_id}>
-                      <td>
+                    <tr
+                      key={item.location_id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-4.5 py-3">
                         <Link
                           href={`/admin/locations/${item.location_id}`}
-                          className="ui-location-management-locationInfo flex items-center gap-[12px] min-w-[235px] max-w-[390px] [&>div]:min-w-0 [&_strong]:block [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:text-[13px] [&_strong]:font-bold [&_strong]:text-[#192e52] [&_strong]:mb-[4px] [&:hover_strong]:text-[#075bff] [&_span]:block [&_span]:max-w-[290px] [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:text-[#899cba] [&_span]:text-[11px]"
+                          className="group flex items-center gap-3 min-w-[240px] max-w-[400px]"
                         >
                           <ImageWithFallback
                             src={
@@ -81,65 +124,71 @@ export function LocationManagementTable({
                               undefined
                             }
                             alt={item.name}
-                            className="ui-location-management-thumbnail w-[54px] h-[39px] shrink-0 object-cover rounded-[7px] [background:#eaf2fc]"
+                            className="w-[54px] h-[39px] shrink-0 object-cover rounded-lg border border-[#e1edfc] bg-[#eaf2fc]"
                           />
-                          <div>
-                            <strong title={item.name}>{item.name}</strong>
-                            <span title={item.note ?? undefined}>
+                          <div className="min-w-0">
+                            <strong
+                              title={item.name}
+                              className="block overflow-hidden text-ellipsis text-[13px] font-bold text-[#07123e] group-hover:text-[#075bff] transition-colors mb-0.5"
+                            >
+                              {item.name}
+                            </strong>
+                            <span
+                              title={item.note ?? undefined}
+                              className="block max-w-[300px] overflow-hidden text-ellipsis text-[11px] text-[#7187a9]"
+                            >
                               {item.note || "Chưa có mô tả"}
                             </span>
                           </div>
                         </Link>
                       </td>
-                      <td>
-                        <span
-                          className="ui-location-management-level inline-block [border:1px_solid_#e1e8ff] [background:#eef2ff] text-[#6374bb] p-[5px_9px] rounded-[20px] text-[9px] font-[650] uppercase [&[data-level='5']]:[border-color:#d6f2e6] [&[data-level='5']]:[background:#e8fbf2] [&[data-level='5']]:text-[#07906f] [&[data-level='6']]:[border-color:#eadfff] [&[data-level='6']]:[background:#f3ecff] [&[data-level='6']]:text-[#894ad1]"
-                          data-level={item.level_id}
-                        >
-                          {getLocationLevelLabel(
-                            item.level_id,
-                            item.geographic_levels?.name ?? "",
-                          )}
-                        </span>
+                      <td className="px-4.5 py-3">
+                        {getLevelBadge(
+                          item.level_id,
+                          item.geographic_levels?.name ?? "",
+                        )}
                       </td>
-                      <td>
-                        <span className="ui-location-management-parent inline-flex items-center gap-[8px] text-[#6780a4] [&_svg]:text-[#8ea5c5]">
-                          {item.locations?.name && <Layers size={14} />}
+                      <td className="px-4.5 py-3">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-[#526b92]">
+                          {item.locations?.name && (
+                            <Layers size={14} className="text-[#8ea5c5]" />
+                          )}
                           {item.locations?.name || "Không có cấp cha"}
                         </span>
                       </td>
-                      <td>
+                      <td className="px-4.5 py-3">
                         {item.is_featured ? (
-                          <span className="ui-location-management-featured inline-flex items-center gap-[5px] [border:1px_solid_#ffedc3] rounded-[20px] p-[5px_9px] [background:#fff9e9] text-[#dd930b] text-[9px] font-[650] uppercase">
-                            <Star size={11} fill="currentColor" />
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700">
+                            <Star
+                              size={11}
+                              className="text-amber-500 fill-amber-500"
+                            />
                             Nổi bật
                           </span>
                         ) : (
-                          <span className="ui-location-management-dash text-[#bac9de]">
-                            —
-                          </span>
+                          <span className="text-[#bac9de]">—</span>
                         )}
                       </td>
-                      <td>
+                      <td className="px-4.5 py-3">
                         <span
-                          className="ui-location-management-slug block max-w-[180px] overflow-hidden text-ellipsis text-[#7d92b4] text-[11px]"
+                          className="block max-w-[180px] overflow-hidden text-ellipsis text-xs font-mono text-[#7187a9]"
                           title={item.slug}
                         >
                           {item.slug}
                         </span>
                       </td>
-                      <td>
+                      <td className="px-4.5 py-3">
                         {validDate ? (
                           <time
                             dateTime={item.updated_at!}
-                            className="ui-location-management-updated text-[#637ea8] text-[11px] [&_small]:block [&_small]:text-[10px] [&_small]:text-[#8da1bd] [&_small]:mt-[4px]"
+                            className="text-xs text-[#526b92]"
                           >
                             {updated.toLocaleDateString("vi-VN", {
                               day: "2-digit",
                               month: "2-digit",
                               year: "numeric",
                             })}
-                            <small>
+                            <small className="block text-[11px] text-[#8da1bd] mt-0.5">
                               {updated.toLocaleTimeString("vi-VN", {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -147,12 +196,10 @@ export function LocationManagementTable({
                             </small>
                           </time>
                         ) : (
-                          <span className="ui-location-management-dash text-[#bac9de]">
-                            —
-                          </span>
+                          <span className="text-[#bac9de]">—</span>
                         )}
                       </td>
-                      <td>
+                      <td className="px-4.5 py-3 text-center">
                         <AdminRowActions
                           label={`Thao tác với ${item.name}`}
                           disabled={deletingId === item.location_id}
@@ -183,42 +230,27 @@ export function LocationManagementTable({
         </table>
       </div>
       {!loading && !items.length && (
-        <div className="ui-location-management-empty flex flex-col items-center gap-[10px] p-[50px_16px] text-[#8b9db6] text-center [&_strong]:text-[#5d7699] [&_strong]:text-[14px] [&_p]:text-[12px]">
-          <MapPin size={34} />
-          <strong>Không tìm thấy địa điểm phù hợp</strong>
-          <p>Thử thay đổi từ khóa hoặc bộ lọc.</p>
+        <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center">
+          <div className="grid size-12 place-items-center rounded-2xl bg-blue-50 text-[#075bff] shadow-xs">
+            <MapPin size={24} />
+          </div>
+          <strong className="text-sm font-bold text-[#07123e] mt-2">
+            Không tìm thấy địa điểm phù hợp
+          </strong>
+          <p className="text-xs text-[#7187a9]">Thử thay đổi từ khóa hoặc bộ lọc.</p>
         </div>
       )}
       {!loading && (
-        <footer className="ui-location-management-footer flex items-center gap-[16px] pr-[16px] [&>div]:[flex:1] [&>div]:[border-top:0] [&>div]:min-w-0 [&>.ui-location-management-pageSize]:[flex:0_0_auto] admin-max-1250:flex-wrap admin-max-1250:gap-[0] admin-max-1250:pr-[0] admin-max-750:block">
-          <AdminPagination
-            variant="numbered"
-            showSinglePage
-            currentPage={current}
-            totalPages={totalPages}
-            totalItems={items.length}
-            pageSize={pageSize}
-            itemLabel="địa điểm"
-            onPageChange={setPage}
-          />
-          <div className="ui-location-management-pageSize flex items-center gap-[7px] text-[#738aab] text-[11px] whitespace-nowrap [&>div]:flex [&>div]:items-center [&>div]:gap-[7px] [&_label]:m-[0] [&_label]:text-[11px] [&_label]:text-[#738aab] [&_label]:whitespace-nowrap [&>div>div]:w-[160px] [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:[border:1px_solid_#e3ebf9] [&_button[aria-haspopup=listbox]]:[background:white] [&_button[aria-haspopup=listbox]]:text-[#59769d] [&_button[aria-haspopup=listbox]]:rounded-[8px] [&_button[aria-haspopup=listbox]]:p-[7px_9px] [&_button[aria-haspopup=listbox]]:text-[11px] admin-max-1250:ml-[auto] admin-max-1250:p-[0_16px_12px] admin-max-750:justify-end">
-            <CustomDropdown
-              label="Hiển thị"
-              placeholder="Số địa điểm mỗi trang"
-              variant="compact"
-              matchTriggerWidth
-              selectedValue={String(pageSize)}
-              onSelect={(value) => {
-                setPageSize(Number(value));
-                setPage(1);
-              }}
-              options={[8, 15, 30].map((size) => ({
-                value: String(size),
-                label: `${size} / trang`,
-              }))}
-            />
-          </div>
-        </footer>
+        <AdminPagination
+          variant="numbered"
+          showSinglePage
+          currentPage={current}
+          totalPages={totalPages}
+          totalItems={items.length}
+          pageSize={pageSize}
+          itemLabel="địa điểm"
+          onPageChange={setPage}
+        />
       )}
     </section>
   );

@@ -51,6 +51,8 @@ function AdminReviewsContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState<number | "all">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "highest" | "lowest">("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Modals state
   const [selectedDetailReview, setSelectedDetailReview] = useState<AdminReviewItem | null>(null);
@@ -237,8 +239,24 @@ function AdminReviewsContent() {
     return result;
   }, [reviews, activeStatus, ratingFilter, searchQuery, sortBy]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeStatus, ratingFilter, searchQuery, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-3 font-sans text-sm">
       {/* Header */}
       <AdminPageHeader
         title="Quản lý & Duyệt đánh giá"
@@ -248,7 +266,7 @@ function AdminReviewsContent() {
             type="button"
             onClick={() => loadReviews(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw
               size={14}
@@ -280,8 +298,13 @@ function AdminReviewsContent() {
 
       {/* Review List / Table */}
       <ReviewTable
-        items={filteredItems}
+        items={paginatedItems}
         loading={loading}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredItems.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
         onApprove={handleApprove}
         onOpenReject={setRejectingReview}
         onOpenReply={setReplyingReview}

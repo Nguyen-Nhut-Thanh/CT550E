@@ -43,13 +43,13 @@ export function BookingManagementFilters({
     });
   return (
     <form
-      className="ui-booking-management-filters p-[14px_16px] [background:white] [border:1px_solid_#e3ecf8] rounded-[16px] min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:min-h-[40px] [&_button[aria-haspopup=listbox]]:[background:white] [&_button[aria-haspopup=listbox]]:rounded-[10px] [&_button[aria-haspopup=listbox]]:[border-color:#e0e9f7] [&_button[aria-haspopup=listbox]]:text-[12px] admin-max-750:p-[12px]"
+      className="ui-booking-management-filters rounded-[14px] border border-[#e1edfc] bg-white p-4 shadow-2xs min-w-0 [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:min-h-[40px] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-slate-200 [&_button[aria-haspopup=listbox]]:text-[12px] admin-max-750:p-3"
       onSubmit={(event) => {
         event.preventDefault();
         onApply();
       }}
     >
-      <div className="ui-booking-management-filterRow grid grid-cols-[minmax(230px,_1fr)_minmax(180px,_240px)_auto_auto] gap-[12px] items-center [&>*]:min-w-0 [&_input]:text-[12px] [&_input]:[border-color:#e0e9f7] admin-max-1250:grid-cols-[minmax(180px,_1fr)_minmax(155px,_210px)_auto] admin-max-1250:[&>:first-child]:[grid-column:1/-1] admin-max-750:grid-cols-[1fr_auto] admin-max-750:gap-[10px] admin-max-750:[&>:nth-child(2)]:[grid-column:1/-1]">
+      <div className="ui-booking-management-filterRow grid grid-cols-[minmax(220px,_1fr)_minmax(180px,_230px)_auto_auto_auto] gap-2.5 items-center [&>*]:min-w-0 [&_input]:text-[12px] admin-max-1250:grid-cols-[minmax(180px,_1fr)_minmax(155px,_210px)_auto_auto_auto] admin-max-1250:[&>:first-child]:col-span-full admin-max-750:flex admin-max-750:flex-wrap">
         <AdminSearchInput
           value={value.search}
           onChange={(next) => update("search", next)}
@@ -64,20 +64,40 @@ export function BookingManagementFilters({
         />
         <button
           type="button"
-          className="ui-booking-management-advancedButton flex items-center justify-center gap-[8px] [background:#eff5ff] text-[#3568b5] rounded-[10px] p-[11px_13px] text-[12px] whitespace-nowrap [&:hover]:[background:#e0edff] admin-max-750:text-[11px]"
+          className="ui-booking-management-advancedButton inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-[#d3e4ff] bg-white px-3.5 py-2 text-[12px] font-[650] text-[#075bff] transition-colors hover:bg-[#f1f7ff] shrink-0"
           aria-expanded={expanded}
           onClick={() => setExpanded(!expanded)}
         >
-          <SlidersHorizontal size={17} />
-          Lọc nâng cao
+          <SlidersHorizontal size={16} />
+          <span>Lọc nâng cao</span>
         </button>
-        <button type="submit" className="ui-booking-management-primary inline-flex items-center justify-center gap-[8px] [background:#075bff] text-[white] rounded-[10px] p-[11px_17px] text-[12px] font-[650] [&:hover]:[background:#0646ce]">
-          <Filter size={17} />
-          Lọc
+        <button
+          type="submit"
+          className="ui-booking-management-primary inline-flex min-h-10 items-center justify-center gap-1.5 rounded-[12px] border border-[#075bff] bg-[#075bff] px-4 py-2 text-[13px] font-[650] text-white shadow-[0_4px_10px_#075bff15] transition-colors hover:bg-[#064ddd] shrink-0"
+        >
+          <Filter size={16} />
+          <span>Lọc</span>
+        </button>
+        <button
+          type="button"
+          className="ui-booking-management-reset inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#075bff] shrink-0"
+          onClick={onReset}
+          title="Đặt lại toàn bộ bộ lọc về mặc định"
+        >
+          <RotateCcw size={14} />
+          <span>Đặt lại bộ lọc</span>
         </button>
       </div>
+
+      {dirty && (
+        <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-[#627fa9]">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+          <span>Có thay đổi chưa áp dụng. Bấm <strong>Lọc</strong> hoặc nhấn Enter để xem kết quả.</span>
+        </div>
+      )}
+
       {expanded && (
-        <div className="ui-booking-management-advanced [&>*]:min-w-0 grid grid-cols-[repeat(6,_minmax(0,_1fr))] gap-[14px] pt-[16px] mt-[14px] [border-top:1px_solid_#edf2f9] [&>:first-child]:[grid-column:span_3] [&>fieldset]:[grid-column:span_3] [&>fieldset]:m-[0] [&>fieldset]:p-[0] [&>fieldset]:[border:0] [&>:nth-child(n+3)]:[grid-column:span_2] [&_label]:flex [&_label]:items-center [&_label]:gap-[6px] [&_label]:h-[18px] [&_label]:text-[11px] [&_label]:font-medium [&_label]:[text-transform:none] [&_label]:tracking-[normal]! [&_label]:m-[0] [&_label]:text-[#7289af] [&>div]:flex [&>div]:flex-col [&>div]:gap-[7px] [&>fieldset>div]:flex [&>fieldset>div]:flex-col [&>fieldset>div]:gap-[7px] [&>div>*]:my-[0] [&>fieldset>div>*]:my-[0] [&_button[aria-haspopup=listbox]]:h-[40px] [&_input]:min-h-[40px] [&_input]:p-[9px_12px] [&_input]:text-[12px] [&_input]:rounded-[10px] [&_input]:[background:#fff] [&_fieldset:disabled]:opacity-[.55] [&>p]:text-[#d64c62] [&>p]:text-[12px] [&>p_button]:underline admin-max-750:grid-cols-[1fr_1fr] admin-max-750:[&>:first-child]:[grid-column:1/-1] admin-max-750:[&>fieldset]:[grid-column:1/-1] admin-max-750:[&>:nth-child(3)]:[grid-column:1/-1] admin-max-750:[&>:nth-child(4)]:[grid-column:span_1] admin-max-750:[&>:nth-child(5)]:[grid-column:span_1]">
+        <div className="ui-booking-management-advanced [&>*]:min-w-0 grid grid-cols-[repeat(6,_minmax(0,_1fr))] gap-[14px] pt-[16px] mt-[14px] border-t border-[#edf2fb] [&>:first-child]:[grid-column:span_3] [&>fieldset]:[grid-column:span_3] [&>fieldset]:m-[0] [&>fieldset]:p-[0] [&>fieldset]:[border:0] [&>:nth-child(n+3)]:[grid-column:span_2] [&_label]:flex [&_label]:items-center [&_label]:gap-[6px] [&_label]:h-[18px] [&_label]:text-[11px] [&_label]:font-medium [&_label]:[text-transform:none] [&_label]:tracking-[normal]! [&_label]:m-[0] [&_label]:text-[#7289af] [&>div]:flex [&>div]:flex-col [&>div]:gap-[7px] [&>fieldset>div]:flex [&>fieldset>div]:flex-col [&>fieldset>div]:gap-[7px] [&>div>*]:my-[0] [&>fieldset>div>*]:my-[0] [&_button[aria-haspopup=listbox]]:h-[40px] [&_input]:min-h-[40px] [&_input]:p-[9px_12px] [&_input]:text-[12px] [&_input]:rounded-[10px] [&_input]:[background:#fff] [&_fieldset:disabled]:opacity-[.55] [&>p]:text-[#d64c62] [&>p]:text-[12px] [&>p_button]:underline admin-max-750:grid-cols-[1fr_1fr] admin-max-750:[&>:first-child]:[grid-column:1/-1] admin-max-750:[&>fieldset]:[grid-column:1/-1] admin-max-750:[&>:nth-child(3)]:[grid-column:1/-1] admin-max-750:[&>:nth-child(4)]:[grid-column:span_1] admin-max-750:[&>:nth-child(5)]:[grid-column:span_1]">
           <CustomDropdown
             label="Tour"
             variant="compact"
@@ -156,17 +176,6 @@ export function BookingManagementFilters({
           )}
         </div>
       )}
-      <div className="ui-booking-management-filterFoot flex items-center justify-end gap-[12px] mt-[12px] admin-max-750:flex-wrap admin-max-750:[&>.ui-booking-management-reset]:ml-[auto]">
-        {dirty && (
-          <span role="status" className="ui-booking-management-pendingFilters mr-[auto] text-[#627fa9] text-[11px] admin-max-750:w-full admin-max-750:leading-[1.5]">
-            Có thay đổi chưa áp dụng. Bấm Lọc hoặc Enter để xem kết quả.
-          </span>
-        )}
-        <button type="button" className="ui-booking-management-reset flex items-center gap-[5px] text-[11px] text-[#8094b4] [&:hover]:text-[#075bff]" onClick={onReset}>
-          <RotateCcw size={13} />
-          Đặt lại bộ lọc
-        </button>
-      </div>
     </form>
   );
 }

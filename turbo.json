@@ -1,5 +1,11 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": [".env"],
+  "globalEnv": [
+    "NODE_ENV", "DATABASE_URL", "API_*", "FRONTEND_PUBLIC_URL", "CORS_ORIGINS",
+    "HOST", "PORT", "AI_*", "JWT_*", "GOOGLE_*", "NEXT_PUBLIC_*", "NEXT_BUILD_DIR",
+    "OPENAI_API_KEY", "CLOUDINARY_*", "MAIL_*", "APP_URL", "VNP_*"
+  ],
   "tasks": {
     "dev": {
       "cache": false,

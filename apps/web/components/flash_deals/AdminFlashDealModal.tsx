@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog } from "@/components/common/dialogs_and_feedback/dialogs/Dialog";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import { PriceInput } from "@/components/common/form_controls/PriceInput";
 import { previewFlashDealPrice } from "@/lib/flash_deals/admin/forms";
 import { formatVND } from "@/lib/utils/currency";
@@ -11,11 +12,12 @@ import {
   Gift,
   Loader2,
   Save,
+  Sparkles,
   Tag,
   Trash2,
   X,
 } from "lucide-react";
-import { useId } from "react";
+import { useId, useState } from "react";
 import type { FlashDealModalProps } from "shared";
 import { FlashDealPromotion } from "@/components/flash_deals/AdminFlashDealPromotion";
 
@@ -31,6 +33,7 @@ export function FlashDealModal({
   onDelete,
 }: FlashDealModalProps) {
   const id = useId();
+  const [confirmPriorityOpen, setConfirmPriorityOpen] = useState(false);
   if (!open) return null;
 
   const percentage = form.discount_type === "percentage";
@@ -48,7 +51,7 @@ export function FlashDealModal({
       describedBy={`${id}-description`}
       overlayClassName="bg-slate-900/50"
     >
-      <div className="ui-flash-deal-modal-modal w-[min(640px,_calc(100vw_-_48px))] max-w-full max-h-[calc(100dvh_-_32px)] min-[1024px]:w-[min(900px,_calc(100vw_-_48px))] min-[1024px]:grid-cols-[260px_minmax(0,_1fr)] my-auto grid overflow-y-auto rounded-[22px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]">
+      <div className="w-[min(640px,_calc(100vw_-_48px))] max-w-full max-h-[calc(100dvh_-_32px)] min-[1024px]:w-[min(900px,_calc(100vw_-_48px))] min-[1024px]:grid-cols-[260px_minmax(0,_1fr)] my-auto grid overflow-y-auto rounded-[20px] bg-white border border-[#e1edfc] shadow-2xl">
         <FlashDealPromotion />
         <form
           onSubmit={(event) => {
@@ -56,30 +59,24 @@ export function FlashDealModal({
             if (saving || deleting || invalidPercentage || !schedule) return;
 
             if (schedule.schedule_promotions) {
-              const promoTitle = (schedule.schedule_promotions as any).title || (schedule.schedule_promotions as any).promotion_title || "Ưu đãi đợt khởi hành";
-              const confirmed = window.confirm(
-                "XÁC NHẬN ƯU TIÊN SỬ DỤNG FLASH DEAL\n\n" +
-                `Đợt khởi hành này hiện đã có: "${promoTitle}".\n\n` +
-                "Khi kích hoạt Flash Deal, hệ thống sẽ tự động ƯU TIÊN áp dụng giá Flash Deal thay vì ưu đãi đợt khởi hành trong khoảng thời gian diễn ra.\n\n" +
-                "Bạn có xác nhận lưu và ưu tiên Flash Deal không?"
-              );
-              if (!confirmed) return;
+              setConfirmPriorityOpen(true);
+              return;
             }
 
             onSave();
           }}
-          className="ui-flash-deal-modal-form relative flex min-w-0 flex-col gap-2.5 sm:gap-3 p-4 sm:p-5"
+          className="relative flex min-w-0 flex-col gap-2.5 sm:gap-3 p-4 sm:p-5"
         >
           <header className="pr-10">
             <h2
               id={`${id}-title`}
-              className="text-xl font-extrabold tracking-tight text-[#101e3d] sm:text-2xl"
+              className="text-lg sm:text-xl font-extrabold tracking-tight text-[#0b1747]"
             >
               Thiết lập Flash Deal
             </h2>
             <p
               id={`${id}-description`}
-              className="mt-0.5 text-xs text-[#7387aa] sm:text-[13px]"
+              className="mt-0.5 text-xs text-[#637da5] sm:text-[13px]"
             >
               Cấu hình thông tin ưu đãi cho tour này.
             </p>
@@ -89,7 +86,7 @@ export function FlashDealModal({
             onClick={close}
             disabled={saving || deleting}
             aria-label="Đóng thiết lập Flash Deal"
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5fa] text-[#647794] transition hover:bg-slate-200 focus-visible:outline-blue-500 disabled:opacity-50 sm:right-5 sm:top-5"
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5fa] text-[#647794] transition hover:bg-slate-200 focus-visible:outline-blue-500 disabled:opacity-50 cursor-pointer sm:right-5 sm:top-5"
           >
             <X size={18} />
           </button>
@@ -266,13 +263,13 @@ export function FlashDealModal({
             <Gift size={16} className="shrink-0" />
             Sau khi lưu, flash deal sẽ tự động áp dụng cho tour trong thời gian đã đặt trước.
           </p>
-          <footer className="flex flex-wrap items-center justify-between gap-2 pt-0.5 sm:gap-3">
+          <footer className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#edf2fb] sm:gap-3">
             {schedule?.flash_deals && onDelete ? (
               <button
                 type="button"
                 onClick={onDelete}
                 disabled={saving || deleting}
-                className="min-h-9 sm:min-h-9.5 flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-600 shadow-2xs transition hover:bg-rose-100 disabled:opacity-50"
+                className="min-h-9 flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
               >
                 {deleting ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -288,26 +285,41 @@ export function FlashDealModal({
                 type="button"
                 onClick={close}
                 disabled={saving || deleting}
-                className="min-h-9 sm:min-h-9.5 rounded-xl border border-[#e5ebf5] bg-white px-4 py-1 text-xs sm:text-sm font-bold text-[#5e718e] shadow-2xs transition hover:bg-slate-50 disabled:opacity-50"
+                className="min-h-9 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs sm:text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
               >
                 Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={saving || deleting || !schedule || invalidPercentage}
-                className="flex min-h-9 sm:min-h-9.5 items-center justify-center gap-2 rounded-xl bg-[#0e5bff] px-5 py-1 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/15 transition hover:bg-blue-700 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#075bff] px-5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-[#064ecc] focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {saving ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <Save size={16} />
                 )}
-                {saving ? "Đang lưu..." : "Lưu flash deal"}
+                <span>{saving ? "Đang lưu..." : "Lưu flash deal"}</span>
               </button>
             </div>
           </footer>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={confirmPriorityOpen}
+        icon={<Sparkles size={32} className="text-amber-500" />}
+        title="Ưu tiên sử dụng Flash Deal"
+        description={`Đợt khởi hành này hiện đã có ưu đãi: "${(schedule?.schedule_promotions as any)?.title || (schedule?.schedule_promotions as any)?.promotion_title || "Ưu đãi đợt khởi hành"}".\n\nKhi kích hoạt Flash Deal, hệ thống sẽ tự động ƯU TIÊN áp dụng giá Flash Deal trong khoảng thời gian diễn ra.\n\nBạn có xác nhận lưu và ưu tiên Flash Deal không?`}
+        confirmLabel={saving ? "Đang lưu..." : "Xác nhận lưu"}
+        cancelLabel="Quay lại"
+        confirmClassName="bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+        onConfirm={() => {
+          setConfirmPriorityOpen(false);
+          onSave();
+        }}
+        onCancel={() => setConfirmPriorityOpen(false)}
+      />
     </Dialog>
   );
 }

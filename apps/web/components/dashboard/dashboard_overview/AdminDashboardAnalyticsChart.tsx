@@ -10,15 +10,16 @@ export function DashboardAnalyticsChart({
   title = "Xu Hướng Tăng Trưởng",
   description = "Biểu đồ diễn biến doanh thu và lượng đặt theo các mốc thời gian đã chọn.",
   bookingsLabel = "Lượt đặt",
-}: DashboardAnalyticsChartProps & { title?: string; description?: string; bookingsLabel?: string }) {
+  appearance = "default",
+}: DashboardAnalyticsChartProps & { title?: string; description?: string; bookingsLabel?: string; appearance?: "default" | "workforce" }) {
   const [activeTab, setActiveTab] = useState<"revenue" | "bookings">("revenue");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (!chart || chart.length === 0) {
     return (
-      <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
+      <div className={appearance === "workforce" ? "flex h-full min-h-80 flex-col items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-4" : "flex h-full min-h-80 flex-col items-center justify-center rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm"}>
         <BarChart2 className="h-10 w-10 text-slate-300" />
-        <p className="mt-2 text-sm font-semibold text-slate-500">Chưa có dữ liệu biểu đồ trong khoảng thời gian này.</p>
+        <p className={appearance === "workforce" ? "mt-2 text-[13px] text-[#7387aa]" : "mt-2 text-sm font-semibold text-slate-500"}>Chưa có dữ liệu biểu đồ trong khoảng thời gian này.</p>
       </div>
     );
   }
@@ -67,36 +68,37 @@ export function DashboardAnalyticsChart({
   const hoveredItem = hoveredIndex !== null ? points[hoveredIndex] ?? null : null;
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm">
+    <div className={appearance === "workforce" ? "flex h-full min-w-0 flex-col rounded-[14px] border border-[#e1edfc] bg-white p-4" : "flex h-full min-w-0 flex-col rounded-2xl border border-blue-100/80 bg-white p-4 shadow-sm"}>
       {/* Chart Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-1">
+      <div className={appearance === "workforce" ? "flex flex-wrap items-start justify-between gap-3 pb-1" : "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-1"}>
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div className={appearance === "workforce" ? "flex h-5.5 w-5.5 shrink-0 items-center justify-center text-[#075bff] [&_svg]:h-5.5 [&_svg]:w-5.5" : "flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600"}>
               <TrendingUp size={18} />
             </div>
-            <h2 className="text-base font-black tracking-tight text-slate-900">
+            <h2 className={appearance === "workforce" ? "text-[16px] font-[750] leading-[1.5] text-[#0b1747]" : "text-base font-black tracking-tight text-slate-900"}>
               {title}
             </h2>
           </div>
-          <p className="mt-1 text-xs font-medium text-slate-500">
+          <p className={appearance === "workforce" ? "mt-[3px] text-[12px] leading-[1.5] text-[#7387aa]" : "mt-1 text-xs font-medium text-slate-500"}>
             {description}
           </p>
         </div>
 
         {/* Tab switcher & Metric Summary */}
         <div className="flex items-center gap-3">
-          <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+          <div className={appearance === "workforce" ? "inline-flex max-w-full gap-1 rounded-[14px] border border-blue-100/80 bg-white p-1" : "inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1"}>
             <button
               type="button"
+              aria-pressed={activeTab === "revenue"}
               onClick={() => {
                 setActiveTab("revenue");
                 setHoveredIndex(null);
               }}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+              className={`${appearance === "workforce" ? "flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-[650] transition-colors duration-180 motion-reduce:transition-none" : "flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all"} ${
                 activeTab === "revenue"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? (appearance === "workforce" ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-[0_4px_10px_#075bff20]" : "bg-blue-600 text-white shadow-xs")
+                  : (appearance === "workforce" ? "text-[#5d7299] hover:bg-blue-50 hover:text-blue-600" : "text-slate-600 hover:text-slate-900")
               }`}
             >
               <DollarSign size={14} />
@@ -104,14 +106,15 @@ export function DashboardAnalyticsChart({
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === "bookings"}
               onClick={() => {
                 setActiveTab("bookings");
                 setHoveredIndex(null);
               }}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+              className={`${appearance === "workforce" ? "flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-[650] transition-colors duration-180 motion-reduce:transition-none" : "flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all"} ${
                 activeTab === "bookings"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? (appearance === "workforce" ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-[0_4px_10px_#075bff20]" : "bg-blue-600 text-white shadow-xs")
+                  : (appearance === "workforce" ? "text-[#5d7299] hover:bg-blue-50 hover:text-blue-600" : "text-slate-600 hover:text-slate-900")
               }`}
             >
               <BarChart2 size={14} />
@@ -122,15 +125,15 @@ export function DashboardAnalyticsChart({
       </div>
 
       {/* Mini summary badges */}
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs">
-        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 font-medium text-slate-600">
-          <span className="text-slate-400">Trung bình:</span>
-          <span className="font-bold text-slate-900">
+      <div className={appearance === "workforce" ? "mt-3 flex flex-wrap items-center gap-3 text-[12px]" : "mt-4 flex flex-wrap items-center gap-4 text-xs"}>
+        <div className={appearance === "workforce" ? "flex items-center gap-2 rounded-lg bg-[#f4f8fd] px-3 py-1.5 font-medium text-slate-600" : "flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 font-medium text-slate-600"}>
+          <span className={appearance === "workforce" ? "text-[#7387aa]" : "text-slate-400"}>Trung bình:</span>
+          <span className={appearance === "workforce" ? "font-bold text-[#0b1747]" : "font-bold text-slate-900"}>
             {activeTab === "revenue" ? formatVND(avgValue) : `${avgValue} đơn/mốc`}
           </span>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 font-medium text-slate-600">
-          <span className="text-slate-400">Đỉnh điểm:</span>
+        <div className={appearance === "workforce" ? "flex items-center gap-2 rounded-lg bg-[#f4f8fd] px-3 py-1.5 font-medium text-slate-600" : "flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 font-medium text-slate-600"}>
+          <span className={appearance === "workforce" ? "text-[#7387aa]" : "text-slate-400"}>Đỉnh điểm:</span>
           <span className="font-bold text-blue-600">
             {activeTab === "revenue" ? formatVND(maxValue) : `${maxValue} đơn`}
           </span>
@@ -280,17 +283,17 @@ export function DashboardAnalyticsChart({
         {/* Floating tooltip box */}
         {hoveredItem && (
           <div
-            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full transform rounded-2xl border border-slate-200 bg-slate-900/95 p-3 text-white shadow-xl backdrop-blur-md"
+            className={appearance === "workforce" ? "pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full transform rounded-[12px] border border-[#e1edfc] bg-[#0b1747]/95 p-3 text-white shadow-xl backdrop-blur-md" : "pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full transform rounded-2xl border border-slate-200 bg-slate-900/95 p-3 text-white shadow-xl backdrop-blur-md"}
             style={{
               left: `${(hoveredItem.x / svgWidth) * 100}%`,
               top: `${(hoveredItem.y / svgHeight) * 100}%`,
             }}
           >
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+            <div className={appearance === "workforce" ? "flex items-center gap-1.5 text-[11px] font-semibold text-[#7387aa]" : "flex items-center gap-1.5 text-[11px] font-semibold text-slate-400"}>
               <Calendar size={12} />
               {hoveredItem.point.label}
             </div>
-            <div className="mt-1 text-sm font-black text-white">
+            <div className={appearance === "workforce" ? "mt-1 text-[13px] font-bold text-white" : "mt-1 text-sm font-black text-white"}>
               {activeTab === "revenue"
                 ? formatVND(hoveredItem.point.revenue)
                 : `${hoveredItem.point.bookings} đơn đặt`}

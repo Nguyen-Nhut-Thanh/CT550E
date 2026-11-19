@@ -39,9 +39,9 @@ export function AdminRejectModalContent({
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start p-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start p-4.5 sm:p-5">
       {/* CỘT TRÁI: Thẻ tóm tắt tour + Đếm ngược thời gian & Bảng quy định hoàn hủy tour */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <BookingTourSummaryCard
           booking={booking}
           totalAmount={totalAmount}
@@ -70,7 +70,7 @@ export function AdminRejectModalContent({
       </div>
 
       {/* CỘT PHẢI: Chi tiết yêu cầu hủy của khách & Form lý do từ chối */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <BookingCancelRequestCard
           booking={booking}
           cancelDetails={cancelDetails}
@@ -87,7 +87,7 @@ export function AdminRejectModalContent({
         />
 
         {/* Form Nhập Lý Do Từ Chối */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4.5 space-y-3.5 shadow-2xs">
+        <div className="rounded-[14px] border border-[#e1edfc] bg-white p-4.5 space-y-3.5 shadow-2xs">
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -132,7 +132,7 @@ export function AdminRejectModalContent({
               onChange={(event) => setActionNote(event.target.value)}
               rows={4}
               placeholder="Nhập chi tiết lý do từ chối yêu cầu hủy..."
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-900 outline-none transition focus:border-rose-500 shadow-2xs"
+              className="w-full rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-900 outline-none transition focus:border-rose-500 shadow-2xs"
             />
             <div className="flex items-center justify-between text-[11px] text-slate-400 px-0.5">
               <span>Nội dung này là bắt buộc khi từ chối</span>

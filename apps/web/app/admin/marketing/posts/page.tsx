@@ -1,11 +1,14 @@
 "use client";
 
+import { AdminStatGrid } from "@/components/common/admin_shared/cards/AdminStatGrid";
+
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CustomDropdown from "@/components/common/form_controls/CustomDropdown";
 import { PostCategoriesModal } from "@/components/posts/post_management/AdminPostCategoriesModal";
 import { PostLayoutManager } from "@/components/posts/post_editor/AdminPostLayoutManager";
 import { PostManagementTable } from "@/components/posts/post_management/AdminPostManagementTable";
+import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import { AdminPageHeader } from "@/components/common/admin_shared/layout/AdminPageHeader";
 import { AdminSearchInput } from "@/components/common/admin_shared/tables/AdminSearchInput";
 import {
@@ -16,7 +19,7 @@ import {
 } from "@/lib/posts/admin/api";
 import { createDefaultPostCategoryDraft, matchesPostSearch } from "@/lib/posts/admin/forms";
 import { useToast } from "@/lib/notifications/useToast";
-import { FileText, LayoutGrid, Plus, Settings2 } from "lucide-react";
+import { CheckCircle2, FileEdit, FileText, LayoutGrid, Plus, Settings2, Trash2 } from "lucide-react";
 import type { PostCategory, PostCategoryDraft, PostItem } from "shared";
 
 type PostsTab = "list" | "layout";
@@ -25,7 +28,7 @@ export default function AdminPostsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-8">
+        <div className="flex min-h-[300px] items-center justify-center rounded-[14px] border border-[#e1edfc] bg-white p-6 shadow-2xs">
           <div className="text-sm font-medium text-slate-500">Đang tải quản lý bài viết…</div>
         </div>
       }
@@ -53,6 +56,8 @@ function AdminPostsContent() {
     createDefaultPostCategoryDraft
   );
   const [savingCategory, setSavingCategory] = useState(false);
+  const [pendingDeletePostId, setPendingDeletePostId] = useState<number | null>(null);
+  const [deletingPost, setDeletingPost] = useState(false);
 
   const { success, error: showError } = useToast();
 
@@ -128,22 +133,23 @@ function AdminPostsContent() {
     }
   };
 
-  const handleDelete = async (postId: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
-      return;
-    }
-
+  const executeDelete = async () => {
+    if (!pendingDeletePostId) return;
+    setDeletingPost(true);
     try {
-      await deleteAdminPost(postId);
+      await deleteAdminPost(pendingDeletePostId);
       success("Đã xóa bài viết");
+      setPendingDeletePostId(null);
       void loadData();
     } catch {
       showError("Lỗi khi xóa");
+    } finally {
+      setDeletingPost(false);
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3.5">
       <AdminPageHeader
         title="Quản lý Bài viết &amp; Bố cục"
         description="Viết bài, phân loại danh mục và thiết lập bố cục hiển thị trang bài viết cẩm nang."
@@ -151,9 +157,9 @@ function AdminPostsContent() {
           <button
             type="button"
             onClick={() => setShowCategoryModal(true)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-xs transition-all hover:bg-slate-50 cursor-pointer"
+            className="flex items-center gap-2 rounded-lg border border-[#e1edfc] bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 cursor-pointer"
           >
-            <Settings2 size={18} /> Danh mục
+            <Settings2 size={16} /> Danh mục
           </button>
         }
         primaryAction={
@@ -161,20 +167,20 @@ function AdminPostsContent() {
             ? {
                 label: "Viết bài mới",
                 onClick: () => router.push("/admin/marketing/posts/new"),
-                icon: <Plus size={18} />,
+                icon: <Plus size={16} />,
               }
             : undefined
         }
       />
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-[#e1edfc]">
         <button
           type="button"
           onClick={() => handleTabChange("list")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "list"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -185,9 +191,9 @@ function AdminPostsContent() {
         <button
           type="button"
           onClick={() => handleTabChange("layout")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === "layout"
-              ? "border-blue-600 text-blue-600"
+              ? "border-blue-600 text-blue-600 font-bold"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
           }`}
         >
@@ -198,21 +204,25 @@ function AdminPostsContent() {
 
       {/* Tab Content */}
       {activeTab === "list" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { name: "Tất cả bài viết", value: posts.length },
-              { name: "Đã xuất bản", value: posts.filter((post) => post.status === 1).length },
-              { name: "Bản nháp", value: posts.filter((post) => post.status === 0).length },
-            ].map((item) => (
-              <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-xs text-slate-500">{item.name}</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{item.value}</p>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-3.5">
+          <AdminStatGrid
+            label="Thống kê bài viết"
+            loading={loading}
+            items={[
+              { id: "total", title: "Tất cả bài viết", value: posts.length, icon: FileText, tone: "blue" },
+              { id: "published", title: "Đã xuất bản", value: posts.filter((post) => post.status === 1).length, icon: CheckCircle2, tone: "green" },
+              { id: "draft", title: "Bản nháp", value: posts.filter((post) => post.status === 0).length, icon: FileEdit, tone: "amber" },
+            ]}
+          />
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <AdminSearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Tìm tiêu đề bài viết..."
+              />
+            </div>
             <CustomDropdown
               ariaLabel="Lọc theo trạng thái xuất bản"
               variant="compact"
@@ -224,6 +234,7 @@ function AdminPostsContent() {
                 { value: "1", label: "Đã xuất bản" },
                 { value: "0", label: "Bản nháp" },
               ]}
+              className="w-full sm:w-[175px] shrink-0"
             />
             <CustomDropdown
               ariaLabel="Lọc theo danh mục bài viết"
@@ -238,20 +249,14 @@ function AdminPostsContent() {
                   label: item.name,
                 })),
               ]}
+              className="w-full sm:w-[195px] shrink-0"
             />
-            <span className="text-xs text-slate-500">{filteredPosts.length} bài viết</span>
           </div>
-
-          <AdminSearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Tìm tiêu đề bài viết..."
-          />
 
           <PostManagementTable
             posts={filteredPosts}
             loading={loading}
-            onDelete={(id) => void handleDelete(id)}
+            onDelete={(id) => setPendingDeletePostId(id)}
           />
         </div>
       )}
@@ -266,6 +271,17 @@ function AdminPostsContent() {
         onClose={() => setShowCategoryModal(false)}
         onCreate={handleCreateCategory}
         onDraftChange={setNewCategory}
+      />
+
+      <ConfirmDialog
+        open={pendingDeletePostId !== null}
+        icon={<Trash2 size={32} className="text-rose-600" />}
+        title="Xóa bài viết?"
+        description="Bạn có chắc chắn muốn xóa bài viết này khỏi hệ thống? Hành động này không thể hoàn tác."
+        confirmLabel={deletingPost ? "Đang xóa..." : "Xác nhận xóa"}
+        cancelLabel="Hủy bỏ"
+        onConfirm={() => void executeDelete()}
+        onCancel={() => !deletingPost && setPendingDeletePostId(null)}
       />
     </div>
   );

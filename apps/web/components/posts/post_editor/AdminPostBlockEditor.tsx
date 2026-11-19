@@ -63,7 +63,7 @@ export function PostBlockEditor({
             if (value.blocks.length) setTemplateConfirm(true);
             else onChange(createDestinationTemplate());
           }}
-          className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700"
+          className="rounded-lg border border-[#e1edfc] bg-blue-50/70 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-2xs hover:bg-blue-100 cursor-pointer"
         >
           Dùng mẫu giới thiệu điểm đến
         </button>
@@ -71,7 +71,7 @@ export function PostBlockEditor({
       {templateConfirm && (
         <div
           role="alert"
-          className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+          className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900"
         >
           <p>
             Áp dụng mẫu sẽ thay nội dung các khối đang soạn. Thông tin đầu bài
@@ -85,14 +85,14 @@ export function PostBlockEditor({
                 setCollapsed([]);
                 setTemplateConfirm(false);
               }}
-              className="font-bold underline"
+              className="font-bold underline cursor-pointer"
             >
               Thay bằng mẫu
             </button>
             <button
               type="button"
               onClick={() => setTemplateConfirm(false)}
-              className="underline"
+              className="underline cursor-pointer"
             >
               Giữ nội dung hiện tại
             </button>
@@ -102,9 +102,9 @@ export function PostBlockEditor({
       {value.blocks.map((block, index) => (
         <section
           key={block.id}
-          className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          className="overflow-hidden rounded-xl border border-[#e1edfc] bg-white shadow-2xs"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e1edfc] bg-slate-50/70 px-3.5 py-2.5">
             <button
               type="button"
               aria-expanded={!collapsed.includes(block.id)}
@@ -115,16 +115,16 @@ export function PostBlockEditor({
                     : [...previous, block.id],
                 )
               }
-              className="flex items-center gap-2 text-sm font-bold text-slate-700"
+              className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 cursor-pointer"
             >
-              <span className="rounded-lg bg-blue-100 px-2 py-1 text-xs text-blue-700">
+              <span className="rounded-md bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
                 {String(index + 1).padStart(2, "0")}
               </span>
               {names[block.type]}
               {collapsed.includes(block.id) ? (
-                <ChevronDown size={15} />
+                <ChevronDown size={14} />
               ) : (
-                <ChevronUp size={15} />
+                <ChevronUp size={14} />
               )}
             </button>
             <div className="flex gap-1">
@@ -172,15 +172,15 @@ export function PostBlockEditor({
                   title={action.label}
                   disabled={action.disabled}
                   onClick={action.action}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-white hover:text-blue-600 disabled:opacity-25"
+                  className="rounded-md p-1.5 text-slate-500 hover:bg-white hover:text-blue-600 disabled:opacity-25 cursor-pointer"
                 >
-                  <action.Icon size={15} />
+                  <action.Icon size={14} />
                 </button>
               ))}
             </div>
           </div>
           {!collapsed.includes(block.id) && (
-            <div className="p-4 sm:p-5">
+            <div className="p-3.5 sm:p-4">
               <PostBlockFields
                 block={block}
                 onChange={(next) =>
@@ -195,9 +195,9 @@ export function PostBlockEditor({
           )}
         </section>
       ))}
-      <div className="space-y-3 rounded-2xl border-2 border-dashed border-slate-200 bg-white p-5">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Plus size={16} />
+      <div className="space-y-2.5 rounded-xl border-2 border-dashed border-[#e1edfc] bg-[#f8fbff] p-4">
+        <h3 className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800">
+          <Plus size={15} className="text-blue-600" />
           Thêm khối nội dung
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -212,13 +212,13 @@ export function PostBlockEditor({
                   createArticleBlock(type, crypto.randomUUID()),
                 ])
               }
-              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-30"
+              className="rounded-lg border border-[#e1edfc] bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-30 cursor-pointer"
             >
               + {names[type]}
             </button>
           ))}
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-[11px] text-slate-400">
           {value.blocks.length}/80 khối ·{" "}
           {articleText(value).trim()
             ? articleText(value).trim().split(/\s+/).length

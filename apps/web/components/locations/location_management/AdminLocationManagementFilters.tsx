@@ -28,8 +28,11 @@ export function LocationManagementFilters({
       next !== DEFAULT_LOCATION_FILTERS[key as keyof LocationFilters],
   );
   return (
-    <section aria-label="Bộ lọc địa điểm">
-      <div className="ui-location-management-filters grid grid-cols-[minmax(250px,2.6fr)_repeat(3,minmax(150px,1fr))] gap-[12px] [&>*]:min-w-0 [&_input]:text-[12px] [&_input]:[border-color:#e2eaf7] [&_input]:rounded-[10px] [&_button[aria-haspopup=listbox]]:min-w-0 [&_button[aria-haspopup=listbox]]:text-[12px] [&_button[aria-haspopup=listbox]]:[background:white] [&_button[aria-haspopup=listbox]]:[border-color:#e2eaf7] [&_button[aria-haspopup=listbox]]:rounded-[10px] [&_button[aria-haspopup=listbox]]:min-h-[40px] admin-max-1250:grid-cols-[repeat(3,minmax(0,1fr))] admin-max-1250:[&>:first-child]:[grid-column:1/-1] admin-max-750:grid-cols-[repeat(2,minmax(0,1fr))] admin-max-750:gap-[10px] admin-max-750:[&>:last-child]:[grid-column:1/-1] admin-max-750:[&_button[aria-haspopup=listbox]]:text-[11px]">
+    <section
+      aria-label="Bộ lọc địa điểm"
+      className="ui-location-management-filters rounded-[14px] border border-[#e1edfc] bg-white p-3.5 shadow-2xs"
+    >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,2.2fr)_repeat(3,minmax(160px,1fr))] [&_input]:rounded-lg [&_input]:border-[#e1edfc] [&_input]:text-xs [&_button[aria-haspopup=listbox]]:rounded-lg [&_button[aria-haspopup=listbox]]:border-[#e1edfc] [&_button[aria-haspopup=listbox]]:bg-white [&_button[aria-haspopup=listbox]]:text-xs [&_button[aria-haspopup=listbox]]:min-h-[38px]">
         <AdminSearchInput
           value={value.search}
           onChange={(next) => update("search", next)}
@@ -78,14 +81,16 @@ export function LocationManagementFilters({
         />
       </div>
       {active && (
-        <button
-          type="button"
-          className="ui-location-management-reset flex items-center gap-[6px] mt-[8px] text-[#6481ae] text-[11px] p-[3px] [&:hover]:text-[#075bff]"
-          onClick={() => onChange({ ...DEFAULT_LOCATION_FILTERS })}
-        >
-          <RotateCcw size={13} />
-          Đặt lại bộ lọc
-        </button>
+        <div className="mt-2.5 flex items-center pt-2 border-t border-[#edf2fb]">
+          <button
+            type="button"
+            className="ui-location-management-reset inline-flex items-center gap-1.5 text-xs text-[#6481ae] hover:text-[#075bff] transition-colors font-medium cursor-pointer"
+            onClick={() => onChange({ ...DEFAULT_LOCATION_FILTERS })}
+          >
+            <RotateCcw size={13} />
+            <span>Đặt lại bộ lọc</span>
+          </button>
+        </div>
       )}
     </section>
   );

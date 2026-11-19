@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminStatCard } from "@/components/common/admin_shared/cards/AdminStatCard";
+
 import {
   Award,
   Briefcase,
@@ -32,131 +34,43 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
     totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 100;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Workforce Summary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-              <Users size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Tổng nhân sự hệ thống
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                {workforce.totalStaff} Nhân viên
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            Bao gồm HDV, tài xế và điều hành tour
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <UserCheck size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Đang trực / Sẵn sàng
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                {workforce.activeStaff} Nhân sự
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            Tỷ lệ sẵn sàng làm việc{" "}
-            <span className="font-bold text-emerald-600">
-              {workforce.totalStaff > 0
-                ? Math.round((workforce.activeStaff / workforce.totalStaff) * 100)
-                : 100}
-              %
-            </span>
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Briefcase size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Lượt phân công kíp tour
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                {totalAssigned} Lượt
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            Đã hoàn thành xuất sắc {totalCompleted} chuyến
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-amber-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Award size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Tỷ lệ hoàn thành tour
-              </p>
-              <h4 className="text-xl font-black text-slate-900">
-                {avgCompletionRate}%
-              </h4>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">Đạt chỉ tiêu KPI vận hành</p>
-        </div>
+      <div className="grid grid-cols-4 gap-3 @max-[1180px]/analytics:grid-cols-2 @max-[650px]/analytics:grid-cols-1">
+        <AdminStatCard title="Tổng nhân sự hệ thống" value={`${workforce.totalStaff} Nhân viên`} description="Bao gồm HDV, tài xế và điều hành tour" icon={Users} tone="indigo" />
+        <AdminStatCard title="Đang trực / Sẵn sàng" value={`${workforce.activeStaff} Nhân sự`} description={`Tỷ lệ sẵn sàng làm việc ${workforce.totalStaff > 0 ? Math.round((workforce.activeStaff / workforce.totalStaff) * 100) : 100}%`} icon={UserCheck} tone="green" />
+        <AdminStatCard title="Lượt phân công kíp tour" value={`${totalAssigned} Lượt`} description={`Đã hoàn thành xuất sắc ${totalCompleted} chuyến`} icon={Briefcase} />
+        <AdminStatCard title="Tỷ lệ hoàn thành tour" value={`${avgCompletionRate}%`} description="Đạt chỉ tiêu KPI vận hành" icon={Award} tone="amber" />
       </div>
 
       {/* Roles Breakdown */}
       <div>
-        <h4 className="text-sm font-bold text-slate-900 mb-3">
+        <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747] mb-3">
           Cơ Cấu Đội Ngũ Theo Vai Trò Chuyên Môn
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-3 @max-[1180px]/analytics:grid-cols-2 @max-[650px]/analytics:grid-cols-1">
           {workforce.byRole.map((roleItem) => (
-            <div
-              key={roleItem.role}
-              className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs flex items-center justify-between"
-            >
-              <div>
-                <p className="text-xs font-semibold text-slate-500">{roleItem.label}</p>
-                <h5 className="mt-1 text-lg font-black text-slate-900">
-                  {roleItem.count} nhân sự
-                </h5>
-              </div>
-              <span className="rounded-xl bg-slate-100 p-2.5 text-slate-600">
-                <Shield size={20} />
-              </span>
-            </div>
+            <AdminStatCard key={roleItem.role} title={roleItem.label} value={`${roleItem.count} nhân sự`} icon={Shield} tone="indigo" />
           ))}
         </div>
       </div>
 
       {/* Workforce Performance Table */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="min-w-0 rounded-[14px] border border-[#e1edfc] bg-white overflow-hidden">
+        <div className="p-4 border-b border-[#edf2fb] flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-slate-900">
+            <h4 className="text-[16px] font-[750] leading-[1.5] text-[#0b1747]">
               Bảng Theo Dõi Hiệu Suất & Phân Công Lịch Trình Nhân Sự
             </h4>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7387aa]">
               Đánh giá khối lượng công việc, tỷ lệ hoàn thành chuyến đi của từng nhân viên
             </p>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 border-b border-slate-200/70 font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-[13px]">
+            <thead className="bg-[#f4f8fd] text-[12px] text-[#657b9f] border-b border-[#e1edfc] font-semibold ">
               <tr>
                 <th className="py-3 px-4">Nhân sự</th>
                 <th className="py-3 px-4">Thông tin liên hệ</th>
@@ -167,10 +81,10 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                 <th className="py-3 px-4 text-center">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-[#edf2fb] font-medium text-slate-700">
               {workforce.topStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="h-60 p-6 text-center text-[#7387aa]">
                     Chưa có dữ liệu phân công nhân sự trong kỳ này
                   </td>
                 </tr>
@@ -191,8 +105,8 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                             {staff.fullName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">{staff.fullName}</p>
-                            <span className="font-mono text-[10px] text-slate-400">
+                            <p className="font-bold text-[#0b1747]">{staff.fullName}</p>
+                            <span className="font-mono text-[10px] text-[#7387aa]">
                               ID: #{staff.userId}
                             </span>
                           </div>
@@ -202,12 +116,12 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                         <div className="space-y-0.5">
                           {staff.phone && (
                             <div className="flex items-center gap-1.5 text-slate-600">
-                              <Phone size={11} className="text-slate-400" />
+                              <Phone size={11} className="text-[#7387aa]" />
                               <span>{staff.phone}</span>
                             </div>
                           )}
                           {staff.email && (
-                            <div className="flex items-center gap-1.5 text-slate-400">
+                            <div className="flex items-center gap-1.5 text-[#7387aa]">
                               <Mail size={11} />
                               <span className="truncate max-w-44">{staff.email}</span>
                             </div>
@@ -235,7 +149,7 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className="font-bold text-slate-900">
+                        <span className="font-bold text-[#0b1747]">
                           {staff.assignedCount}
                         </span>
                       </td>
@@ -246,8 +160,8 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <span className="font-bold text-slate-800">{rate}%</span>
-                          <div className="h-1.5 w-14 rounded-full bg-slate-100 overflow-hidden">
+                          <span className="font-bold text-[#0b1747]">{rate}%</span>
+                          <div className="h-2 w-14 rounded-[20px] bg-[#e1eaf7] overflow-hidden">
                             <div
                               className="h-full bg-emerald-500 rounded-full"
                               style={{ width: `${Math.min(rate, 100)}%` }}
@@ -256,7 +170,7 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-[650] text-emerald-700">
                           <CheckCircle size={10} />
                           {staff.status === "active" ? "Đang trực" : "Sẵn sàng"}
                         </span>
