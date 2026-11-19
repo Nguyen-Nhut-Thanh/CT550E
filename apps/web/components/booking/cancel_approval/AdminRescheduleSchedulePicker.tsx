@@ -31,7 +31,7 @@ export interface AdminRescheduleSchedulePickerProps {
   currentScheduleId?: number;
   totalGuests: number;
   selectedScheduleId?: number;
-  onSelectSchedule: (scheduleId: number) => void;
+  onSelectSchedule: (scheduleId: number, schedule?: ScheduleItem) => void;
   disabled?: boolean;
 }
 
@@ -74,7 +74,7 @@ export function AdminRescheduleSchedulePicker({
               ((s.quota ?? s.capacity ?? 0) - (s.booked_count || 0)) >= totalGuests,
           );
           if (firstEligible) {
-            onSelectSchedule(firstEligible.tour_schedule_id);
+            onSelectSchedule(firstEligible.tour_schedule_id, firstEligible);
           }
         }
       } catch (err) {
@@ -163,7 +163,7 @@ export function AdminRescheduleSchedulePicker({
               key={schedule.tour_schedule_id}
               type="button"
               disabled={disabled || isFull}
-              onClick={() => onSelectSchedule(schedule.tour_schedule_id)}
+              onClick={() => onSelectSchedule(schedule.tour_schedule_id, schedule)}
               className={`w-full text-left p-3 rounded-xl border transition cursor-pointer relative ${
                 isSelected
                   ? "border-blue-500 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/30"

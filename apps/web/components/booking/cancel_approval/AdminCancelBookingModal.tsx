@@ -48,7 +48,9 @@ export interface AdminCancelBookingModalProps {
     note?: string;
     cancelType?: AdminCancelSourceType;
     resolutionOption?: AdminCancelResolution;
+    allowedOptions?: AdminCancelResolution[];
     newScheduleId?: number;
+    waiveDifference?: boolean;
   }) => Promise<void> | void;
 }
 
@@ -78,9 +80,11 @@ export function AdminCancelBookingModal({
 
   const [cancelType, setCancelType] =
     useState<AdminCancelSourceType>("operator_fault");
-  const [resolutionOption, setResolutionOption] =
-    useState<AdminCancelResolution>("full_refund");
+  const [allowedOptions, setAllowedOptions] =
+    useState<AdminCancelResolution[]>(["full_refund", "reschedule"]);
   const [newScheduleId, setNewScheduleId] = useState<number | undefined>();
+  const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
+  const [waiveDifference, setWaiveDifference] = useState<boolean>(true);
 
   const totalGuests =
     (booking?.adult_count || 0) +
@@ -140,6 +144,26 @@ export function AdminCancelBookingModal({
     };
   }, [booking]);
 
+  const priceDifference = useMemo(() => {
+    if (!selectedSchedule || !booking) return null;
+    const currentAmount = Number(booking.total_amount || 0);
+    const adultCount = Number(booking.adult_count || 0);
+    const childCount = Number(booking.child_count || 0);
+    const infantCount = Number(booking.infant_count || 0);
+    const adultPrice = Number(
+      selectedSchedule.price_adult || selectedSchedule.price || 0,
+    );
+    const childPrice = Number(
+      selectedSchedule.price_child || Math.round(adultPrice * 0.7),
+    );
+    const infantPrice = Number(selectedSchedule.price_infant || 0);
+    const newTotal =
+      adultCount * adultPrice +
+      childCount * childPrice +
+      infantCount * infantPrice;
+    return newTotal - currentAmount;
+  }, [selectedSchedule, booking]);
+
   // Cập nhật giá trị mặc định khi đổi loại hủy hoặc mở modal
   useEffect(() => {
     if (open && booking) {
@@ -152,13 +176,8 @@ export function AdminCancelBookingModal({
         if (cancelType === "operator_fault") {
           setSelectedReason(ADMIN_OPERATOR_CANCEL_REASONS[0]);
           setCustomReason("");
-          if (resolutionOption === "full_refund") {
-            setRefundAmount(String(totalAmount));
-            setAdminNote("Công ty hoàn tiền 100% do sự cố vận hành / thời tiết bất khả kháng");
-          } else {
-            setRefundAmount("0");
-            setAdminNote("Chuyển lịch khởi hành sang đợt mới, bảo lưu 100% quyền lợi khách hàng");
-          }
+          setRefundAmount(String(totalAmount));
+          setAdminNote("Đề xuất phương án giải quyết do sự cố vận hành / thời tiết bất khả kháng");
         } else {
           setSelectedReason(ADMIN_CUSTOMER_CANCEL_REASONS[0]);
           setCustomReason("");
@@ -174,7 +193,6 @@ export function AdminCancelBookingModal({
     isPaid,
     isPendingHold,
     cancelType,
-    resolutionOption,
     totalAmount,
     estimate.refundAmount,
   ]);
@@ -204,16 +222,20 @@ export function AdminCancelBookingModal({
     if (
       !isPendingHold &&
       cancelType === "operator_fault" &&
-      resolutionOption === "reschedule" &&
+      allowedOptions.includes("reschedule") &&
       !newScheduleId
     ) {
+      return;
+    }
+
+    if (!isPendingHold && cancelType === "operator_fault" && allowedOptions.length === 0) {
       return;
     }
 
     const defaultFallback = isPendingHold
       ? "Nhân viên hủy đơn giữ chỗ theo quy định"
       : cancelType === "operator_fault"
-        ? "Hủy do sự cố công ty / thời tiết"
+        ? "Đề xuất giải quyết do sự cố công ty / thời tiết"
         : "Khách hàng yêu cầu hủy tour";
 
     const finalReason =
@@ -222,7 +244,7 @@ export function AdminCancelBookingModal({
         : selectedReason;
 
     const numericRefund =
-      !isPendingHold && resolutionOption !== "reschedule" && refundAmount.trim()
+      !isPendingHold && cancelType === "customer_request" && refundAmount.trim()
         ? Number(refundAmount.replace(/[^\d]/g, ""))
         : undefined;
 
@@ -231,16 +253,21 @@ export function AdminCancelBookingModal({
       refundAmount: isPendingHold ? undefined : numericRefund,
       note: adminNote.trim() || finalReason,
       cancelType: isPendingHold ? undefined : cancelType,
-      resolutionOption: isPendingHold
+      resolutionOption: allowedOptions[0],
+      allowedOptions: isPendingHold
         ? undefined
         : cancelType === "operator_fault"
-          ? resolutionOption
-          : "full_refund",
+          ? allowedOptions
+          : ["full_refund"],
       newScheduleId:
         !isPendingHold &&
         cancelType === "operator_fault" &&
-        resolutionOption === "reschedule"
+        allowedOptions.includes("reschedule")
           ? newScheduleId
+          : undefined,
+      waiveDifference:
+        !isPendingHold && cancelType === "operator_fault"
+          ? waiveDifference
           : undefined,
     });
   };
@@ -282,11 +309,9 @@ export function AdminCancelBookingModal({
           className={`relative isolate shrink-0 pt-6 pb-5 px-6 sm:px-7 overflow-hidden border-b ${
             isPendingHold
               ? "border-sky-200 bg-[linear-gradient(135deg,#f0f7ff_0%,#e8f3ff_60%,#dcecff_100%)]"
-              : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                ? "border-blue-200 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_60%,#bfdbfe_100%)]"
-                : cancelType === "operator_fault"
-                  ? "border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4_0%,#dcfce7_60%,#bbf7d0_100%)]"
-                  : "border-rose-200 bg-[linear-gradient(135deg,#fff1f2_0%,#ffe4e6_60%,#fecdd3_100%)]"
+              : cancelType === "operator_fault"
+                ? "border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4_0%,#ecfeff_60%,#dbeafe_100%)]"
+                : "border-rose-200 bg-[linear-gradient(135deg,#fff1f2_0%,#ffe4e6_60%,#fecdd3_100%)]"
           }`}
         >
           <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
@@ -294,17 +319,13 @@ export function AdminCancelBookingModal({
               className={`flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-xs ${
                 isPendingHold
                   ? "bg-sky-600"
-                  : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                    ? "bg-blue-600"
-                    : cancelType === "operator_fault"
-                      ? "bg-emerald-600"
-                      : "bg-rose-600"
+                  : cancelType === "operator_fault"
+                    ? "bg-emerald-600"
+                    : "bg-rose-600"
               }`}
             >
               {isPendingHold ? (
                 <Trash2 size={18} />
-              ) : cancelType === "operator_fault" && resolutionOption === "reschedule" ? (
-                <CalendarSync size={18} />
               ) : cancelType === "operator_fault" ? (
                 <ShieldCheck size={18} />
               ) : (
@@ -315,20 +336,16 @@ export function AdminCancelBookingModal({
               className={`uppercase text-[11px] tracking-wider font-extrabold px-3 py-1 rounded-full border shadow-2xs ${
                 isPendingHold
                   ? "bg-white/95 text-sky-800 border-sky-300"
-                  : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                    ? "bg-white/95 text-blue-800 border-blue-300"
-                    : cancelType === "operator_fault"
-                      ? "bg-white/95 text-emerald-800 border-emerald-300"
-                      : "bg-white/95 text-rose-800 border-rose-300"
+                  : cancelType === "operator_fault"
+                    ? "bg-white/95 text-emerald-800 border-emerald-300"
+                    : "bg-white/95 text-rose-800 border-rose-300"
               }`}
             >
               {isPendingHold
                 ? "HỦY ĐƠN GIỮ CHỖ"
-                : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                  ? "DỜI LỊCH TOUR (SỰ CỐ VẬN HÀNH)"
-                  : cancelType === "operator_fault"
-                    ? "HỦY TOUR & HOÀN TIỀN 100% (SỰ CỐ VẬN HÀNH)"
-                    : "HỦY ĐƠN TOUR THEO YÊU CẦU KHÁCH"}
+                : cancelType === "operator_fault"
+                  ? "ĐỀ XUẤT PHƯƠNG ÁN GIẢI QUYẾT (SỰ CỐ VẬN HÀNH)"
+                  : "HỦY ĐƠN TOUR THEO YÊU CẦU KHÁCH"}
             </span>
             <span className="text-xs font-semibold text-slate-500">
               #{booking.booking_id || booking.id}
@@ -394,54 +411,61 @@ export function AdminCancelBookingModal({
                 isPaid={isPaid}
               />
 
-              {/* Nếu hủy do công ty / sự cố và chọn Hoàn tiền 100% */}
-              {!isPendingHold &&
-              cancelType === "operator_fault" &&
-              resolutionOption === "full_refund" ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4.5 space-y-3 shadow-2xs">
-                  <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
-                    <ShieldCheck size={17} className="text-emerald-600" />
-                    <span>Chính sách hoàn tiền sự cố / thiên tai</span>
-                  </div>
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    Do chuyến đi bị gián đoạn vì lý do khách quan (thời tiết bão
-                    lũ, sự cố phương tiện hoặc vận hành), khách hàng được{" "}
-                    <strong>bảo lưu và hoàn trả 100%</strong> toàn bộ số tiền đã
-                    thanh toán.
-                  </p>
-                  <div className="pt-2 border-t border-emerald-200/80 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Phí phạt hủy:</span>
-                      <strong className="text-emerald-700 font-bold">
-                        0 đ (Miễn phạt 100%)
-                      </strong>
+              {/* Nếu hủy do công ty / sự cố */}
+              {!isPendingHold && cancelType === "operator_fault" ? (
+                allowedOptions.length === 2 ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4_0%,#eff6ff_100%)] p-4.5 space-y-3 shadow-2xs">
+                    <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+                      <ShieldCheck size={17} className="text-emerald-600" />
+                      <span>Đề xuất giải quyết linh hoạt</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Số tiền hoàn trả:</span>
-                      <strong className="text-emerald-900 text-sm font-black">
-                        {formatVND(totalAmount)}
-                      </strong>
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      Do chuyến đi có sự cố khách quan / thời tiết, hệ thống sẽ gửi thông báo và cho phép khách hàng <strong>tự chọn 1 trong 2 phương án</strong>:
+                    </p>
+                    <ul className="text-xs space-y-1.5 text-slate-700 list-disc list-inside">
+                      <li>
+                        <strong>Hoàn tiền 100%:</strong> Hoàn đủ{" "}
+                        <strong className="text-emerald-700">{formatVND(totalAmount)}</strong> về tài khoản ngân hàng của khách.
+                      </li>
+                      <li>
+                        <strong>Dời sang đợt khác:</strong> Chuyển danh sách hành khách sang ngày khởi hành mới.
+                      </li>
+                    </ul>
+                  </div>
+                ) : allowedOptions.includes("full_refund") ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4.5 space-y-3 shadow-2xs">
+                    <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+                      <ShieldCheck size={17} className="text-emerald-600" />
+                      <span>Chính sách hoàn tiền sự cố / thiên tai</span>
+                    </div>
+                    <p className="text-xs text-emerald-800 leading-relaxed">
+                      Do chuyến đi bị gián đoạn vì lý do khách quan (thời tiết bão lũ, sự cố phương tiện hoặc vận hành), khách hàng được{" "}
+                      <strong>bảo lưu và hoàn trả 100%</strong> toàn bộ số tiền đã thanh toán.
+                    </p>
+                    <div className="pt-2 border-t border-emerald-200/80 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-600">Phí phạt hủy:</span>
+                        <strong className="text-emerald-700 font-bold">0 đ (Miễn phạt 100%)</strong>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-600">Số tiền hoàn trả:</span>
+                        <strong className="text-emerald-900 text-sm font-black">
+                          {formatVND(totalAmount)}
+                        </strong>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
-
-              {/* Nếu hủy do công ty / sự cố và chọn Dời lịch */}
-              {!isPendingHold &&
-              cancelType === "operator_fault" &&
-              resolutionOption === "reschedule" ? (
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4.5 space-y-3 shadow-2xs">
-                  <div className="flex items-center gap-2 text-blue-900 font-bold text-xs uppercase tracking-wider">
-                    <CalendarSync size={17} className="text-blue-600" />
-                    <span>Chính sách dời lịch khởi hành</span>
+                ) : (
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4.5 space-y-3 shadow-2xs">
+                    <div className="flex items-center gap-2 text-blue-900 font-bold text-xs uppercase tracking-wider">
+                      <CalendarSync size={17} className="text-blue-600" />
+                      <span>Chính sách dời lịch khởi hành</span>
+                    </div>
+                    <p className="text-xs text-blue-800 leading-relaxed">
+                      Toàn bộ danh sách <strong>{totalGuests} khách hàng</strong> và số tiền đã thanh toán ({formatVND(totalAmount)}) sẽ được đề xuất chuyển sang đợt khởi hành mới.
+                    </p>
                   </div>
-                  <p className="text-xs text-blue-800 leading-relaxed">
-                    Toàn bộ danh sách <strong>{totalGuests} khách hàng</strong>{" "}
-                    và số tiền đã thanh toán ({formatVND(totalAmount)}) sẽ được
-                    chuyển sang đợt khởi hành mới. Khách hàng{" "}
-                    <strong>không phải bù thêm bất kỳ chi phí nào</strong>.
-                  </p>
-                </div>
+                )
               ) : null}
 
               {/* Nếu hủy theo yêu cầu khách hoặc đơn giữ chỗ: Áp dụng bảng chính sách hoàn hủy tiêu chuẩn */}
@@ -482,24 +506,68 @@ export function AdminCancelBookingModal({
               {/* 2. Phương án giải quyết (Nếu chọn Do công ty) */}
               {!isPendingHold && cancelType === "operator_fault" && (
                 <AdminCancelResolutionSelector
-                  value={resolutionOption}
-                  onChange={setResolutionOption}
+                  allowedOptions={allowedOptions}
+                  onChange={setAllowedOptions}
                   disabled={disabledOrLoading(loading, isDeparted)}
                 />
               )}
 
-              {/* 3. Dropdown chọn đợt khởi hành mới (Nếu chọn Dời lịch) */}
+              {/* 3. Dropdown chọn đợt khởi hành mới (Nếu phương án có Dời lịch) */}
               {!isPendingHold &&
               cancelType === "operator_fault" &&
-              resolutionOption === "reschedule" ? (
-                <AdminRescheduleSchedulePicker
-                  tourId={tourId}
-                  currentScheduleId={currentScheduleId}
-                  totalGuests={totalGuests}
-                  selectedScheduleId={newScheduleId}
-                  onSelectSchedule={setNewScheduleId}
-                  disabled={disabledOrLoading(loading, isDeparted)}
-                />
+              allowedOptions.includes("reschedule") ? (
+                <div className="space-y-3">
+                  <AdminRescheduleSchedulePicker
+                    tourId={tourId}
+                    currentScheduleId={currentScheduleId}
+                    totalGuests={totalGuests}
+                    selectedScheduleId={newScheduleId}
+                    onSelectSchedule={(id, s) => {
+                      setNewScheduleId(id);
+                      setSelectedSchedule(s || null);
+                    }}
+                    disabled={disabledOrLoading(loading, isDeparted)}
+                  />
+
+                  {priceDifference !== null && (
+                    <div className="space-y-2">
+                      {priceDifference > 0 ? (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-amber-900 font-bold">Chênh lệch giá đợt mới:</span>
+                            <strong className="text-rose-600 font-extrabold">+{formatVND(priceDifference)}</strong>
+                          </div>
+                          <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={waiveDifference}
+                              onChange={(e) => setWaiveDifference(e.target.checked)}
+                              className="mt-0.5 rounded border-amber-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11.5px] text-amber-950 leading-snug">
+                              <strong>Miễn phí phụ thu chênh lệch cho khách hàng</strong> (Công ty hỗ trợ khoản chênh lệch này do sự cố từ phía công ty)
+                            </span>
+                          </label>
+                        </div>
+                      ) : priceDifference < 0 ? (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-emerald-900 font-bold">Chênh lệch giá đợt mới:</span>
+                            <strong className="text-emerald-700 font-extrabold">−{formatVND(Math.abs(priceDifference))}</strong>
+                          </div>
+                          <p className="text-[11.5px] text-emerald-800 leading-snug">
+                            Đợt mới có giá thấp hơn. Khoản chênh lệch thừa này sẽ được hoàn lại vào tài khoản ngân hàng của khách sau khi khách xác nhận dời lịch.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs flex items-center justify-between">
+                          <span className="text-blue-900 font-medium">Chênh lệch giá đợt mới:</span>
+                          <strong className="text-blue-700 font-bold">0 đ (Giá tương đương)</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : null}
 
               {/* 4. Chọn lý do hủy / dời lịch */}
@@ -512,8 +580,8 @@ export function AdminCancelBookingModal({
                 label={
                   isPendingHold
                     ? "Lý do hủy đơn giữ chỗ"
-                    : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                      ? "Lý do dời lịch khởi hành"
+                    : cancelType === "operator_fault"
+                      ? "Lý do hủy / đề xuất đổi lịch"
                       : "Lý do hủy đơn booking"
                 }
                 placeholder={
@@ -525,8 +593,8 @@ export function AdminCancelBookingModal({
                 }
               />
 
-              {/* 5. Số tiền hoàn lại (Chỉ hiển thị khi KHÔNG phải dời lịch và không phải pending) */}
-              {!isPendingHold && resolutionOption !== "reschedule" && (
+              {/* 5. Số tiền hoàn lại (Chỉ hiển thị khi hủy theo yêu cầu khách) */}
+              {!isPendingHold && cancelType === "customer_request" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-700">
@@ -555,25 +623,15 @@ export function AdminCancelBookingModal({
                   {/* Nút bấm áp dụng nhanh mức tiền hoàn */}
                   {isPaid && (
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      {cancelType === "operator_fault" ? (
-                        <button
-                          type="button"
-                          onClick={() => setRefundAmount(String(totalAmount))}
-                          className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
-                        >
-                          Hoàn 100% ({formatVND(totalAmount)})
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRefundAmount(String(estimate.refundAmount))
-                          }
-                          className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
-                        >
-                          Theo quy định ({formatVND(estimate.refundAmount)})
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRefundAmount(String(estimate.refundAmount))
+                        }
+                        className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+                      >
+                        Theo quy định ({formatVND(estimate.refundAmount)})
+                      </button>
                       <button
                         type="button"
                         onClick={() => setRefundAmount("0")}
@@ -588,7 +646,7 @@ export function AdminCancelBookingModal({
 
               {/* Thông tin tài khoản nhận tiền hoàn của khách nếu có */}
               {customerCancelInfo?.bankAccountNumber &&
-                resolutionOption !== "reschedule" && (
+                cancelType === "customer_request" && (
                   <div className="rounded-xl border border-blue-200/80 bg-blue-50/50 p-3 space-y-1.5 text-xs">
                     <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
                       <Building2 size={14} className="text-blue-600" />
@@ -676,17 +734,18 @@ export function AdminCancelBookingModal({
                 isDeparted ||
                 (!isPendingHold &&
                   cancelType === "operator_fault" &&
-                  resolutionOption === "reschedule" &&
+                  allowedOptions.length === 0) ||
+                (!isPendingHold &&
+                  cancelType === "operator_fault" &&
+                  allowedOptions.includes("reschedule") &&
                   !newScheduleId)
               }
               className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white transition shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 isPendingHold
                   ? "bg-sky-600 hover:bg-sky-700"
-                  : cancelType === "operator_fault" && resolutionOption === "reschedule"
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : cancelType === "operator_fault"
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-rose-600 hover:bg-rose-700"
+                  : cancelType === "operator_fault"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700"
               }`}
             >
               {loading ? (
@@ -698,10 +757,8 @@ export function AdminCancelBookingModal({
                 <span>Đã khóa (Tour đã/đang khởi hành)</span>
               ) : isPendingHold ? (
                 <span>Xác nhận hủy đơn giữ chỗ</span>
-              ) : cancelType === "operator_fault" && resolutionOption === "reschedule" ? (
-                <span>Xác nhận dời lịch khởi hành</span>
               ) : cancelType === "operator_fault" ? (
-                <span>Xác nhận hủy & Hoàn tiền 100%</span>
+                <span>Gửi đề xuất giải quyết cho khách hàng</span>
               ) : (
                 <span>Xác nhận hủy theo yêu cầu khách</span>
               )}

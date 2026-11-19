@@ -3,8 +3,15 @@ import { Prisma } from '@prisma/client';
 import type { BestSellerStat, PublicItineraryRecord, PublicListParams, PublicScheduleRecord } from 'shared';
 import { calculateSchedulePricing } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { getBestSellerTourIds, queryBestSellerStats } from './best-seller.helper';
-import { buildCardSelect, filterAndPriceSchedules, fixMojibakeText, formatTourCard, parseMoney } from "./public-tour.mapper";
+import {
+  buildCardSelect,
+  filterAndPriceSchedules,
+  fixMojibakeText,
+  formatTourCard,
+  getBestSellerTourIds,
+  parseMoney,
+  queryBestSellerStats,
+} from "./helpers";
 @Injectable()
 export class ToursPublicService {
     constructor(private readonly prisma: PrismaService) { }
@@ -302,6 +309,7 @@ export class ToursPublicService {
                         start_date: true,
                         end_date: true,
                         price: true,
+                        single_room_surcharge: true,
                         quota: true,
                         booked_count: true,
                         tour_schedule_transports: {
@@ -439,6 +447,7 @@ export class ToursPublicService {
         const processedSchedules = filterAndPriceSchedules(
             tour.tour_schedules as PublicScheduleRecord[],
             tour.cut_off_hours,
+            { includeSoldOut: true },
         ).map((s: any) => ({
             ...s,
             tour_itineraries: s.tour_itineraries?.map((item: PublicItineraryRecord) => ({

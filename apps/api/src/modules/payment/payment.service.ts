@@ -6,7 +6,7 @@ import { getAccountUserId } from '../../common/auth/account-user';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
 import { formatVnpayDate, parseVnpayDate, signedVnpayQuery, verifyVnpayQuery, vnpayIp, type VnpayFields, type VnpayQuery } from './vnpay';
-import { sendBookingNotification } from '../bookings/booking-notifications';
+import { sendBookingNotification } from '../bookings/helpers';
 
 type IpnResponse = { RspCode: string; Message: string };
 const response = (RspCode: string, Message: string): IpnResponse => ({ RspCode, Message });
@@ -23,6 +23,8 @@ function minorUnits(value: Prisma.Decimal | string | number) {
 @Injectable()
 export class PaymentService {
     private readonly logger = new Logger(PaymentService.name);
+    private readonly clientOriginByRef = new Map<string, { origin: string; expiresAt: number }>();
+
     constructor(private readonly prisma: PrismaService, private readonly mailService: MailService) {}
 
     private config() {
@@ -40,7 +42,7 @@ export class PaymentService {
         return { merchant, secret, gateway, returnUrl, minutes };
     }
 
-    async createPaymentUrl(bookingId: number, accountId: number, ipAddress?: string): Promise<PaymentUrlResponse> {
+    async createPaymentUrl(bookingId: number, accountId: number, ipAddress?: string, clientOrigin?: string): Promise<PaymentUrlResponse> {
         if (!Number.isSafeInteger(bookingId) || bookingId < 1) throw new BadRequestException('Mã đơn không hợp lệ.');
         const config = this.config();
         const userId = await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.');
@@ -64,11 +66,21 @@ export class PaymentService {
             if (review) throw new BadRequestException('Giao dịch của đơn đang được đối soát. Vui lòng liên hệ hỗ trợ trước khi thanh toán thêm.');
             // Reuse a live attempt so double clicks and multiple tabs do not create new transactions.
             const pending = await tx.payments.findFirst({ where: { booking_id: bookingId, method: 'vnpay', status: 'pending', provider_reference: { not: null }, expires_at: { gt: now } }, orderBy: { payment_id: 'desc' } });
-            if (pending && pending.amount.equals(booking.total_amount)) return pending;
+            if (pending && pending.amount.equals(booking.total_amount)) {
+                if (clientOrigin && pending.provider_reference) {
+                    this.clientOriginByRef.set(pending.provider_reference, { origin: clientOrigin, expiresAt: Date.now() + 3600_000 });
+                }
+                return pending;
+            }
             const expiresAt = new Date(Math.min(now.getTime() + config.minutes * 60000, booking.tour_schedules.start_date.getTime()));
+            const newRef = `B${bookingId}${Date.now()}${randomBytes(8).toString('hex')}`;
+            if (clientOrigin) {
+                this.clientOriginByRef.set(newRef, { origin: clientOrigin, expiresAt: Date.now() + 3600_000 });
+            }
             return tx.payments.create({ data: {
                 booking_id: bookingId, method: 'vnpay', amount: booking.total_amount, status: 'pending',
-                provider_reference: `B${bookingId}${Date.now()}${randomBytes(8).toString('hex')}`,
+                provider_reference: newRef,
+                transaction_code: clientOrigin ? `origin:${clientOrigin}` : null,
                 created_at: now, expires_at: expiresAt,
             } });
         });
@@ -219,7 +231,25 @@ export class PaymentService {
     }
 
     async handleReturn(query: VnpayQuery) {
-        const frontend = (process.env.FRONTEND_PUBLIC_URL || 'http://localhost:3000').replace(/\/+$/, '');
+        const ref = query.vnp_TxnRef ? String(query.vnp_TxnRef) : null;
+        let clientOrigin: string | null = null;
+
+        if (ref) {
+            const cached = this.clientOriginByRef.get(ref);
+            if (cached && cached.expiresAt > Date.now()) {
+                clientOrigin = cached.origin;
+            } else {
+                const attempt = await this.prisma.payments.findFirst({
+                    where: { provider_reference: ref },
+                    select: { transaction_code: true },
+                });
+                if (attempt?.transaction_code?.startsWith('origin:')) {
+                    clientOrigin = attempt.transaction_code.slice(7);
+                }
+            }
+        }
+
+        const frontend = (clientOrigin || process.env.FRONTEND_PUBLIC_URL || 'http://localhost:3000').replace(/\/+$/, '');
         const target = new URL(`${frontend}/booking/result`);
         try {
             const parsed = this.callback(query);
@@ -235,16 +265,29 @@ export class PaymentService {
         return target.toString();
     }
 
-    async getPaymentStatus(reference: string, accountId: number): Promise<PaymentStatusResponse> {
+    async getPaymentStatus(reference: string, accountId?: number): Promise<PaymentStatusResponse> {
         if (typeof reference !== 'string' || !/^[A-Za-z0-9]{1,100}$/.test(reference)) throw new BadRequestException('Mã giao dịch không hợp lệ.');
-        const userId = await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.');
-        const attempt = await this.prisma.payments.findFirst({ where: { provider_reference: reference, bookings: { user_id: userId } }, include: { bookings: { select: { booking_id: true, status: true } } } });
-        if (!attempt) throw new NotFoundException('Không tìm thấy giao dịch của bạn.');
-        const status = attempt.status === 'review' ? 'review'
-            : attempt.status === 'completed' ? (['paid', 'completed'].includes(attempt.bookings.status) ? 'success' : 'review')
-            : attempt.status === 'failed' ? (attempt.response_code === '24' ? 'cancelled' : 'failed')
-            : attempt.expires_at && attempt.expires_at.getTime() <= Date.now() ? 'expired' : 'pending';
-        return { bookingId: attempt.booking_id, reference, status, amount: attempt.amount.toString(),
-            expiresAt: attempt.expires_at?.toISOString() ?? null, responseCode: attempt.response_code, bookingStatus: attempt.bookings.status };
+        let userId: number | undefined;
+        if (accountId) {
+            userId = await getAccountUserId(this.prisma, accountId, 'Không tìm thấy người dùng.').catch(() => undefined);
+        }
+        const attempt = await this.prisma.payments.findFirst({
+            where: {
+                provider_reference: reference,
+                ...(userId ? { bookings: { user_id: userId } } : {}),
+            },
+            include: { bookings: { select: { booking_id: true, status: true } } }
+        });
+        const finalAttempt = attempt ?? (await this.prisma.payments.findFirst({
+            where: { provider_reference: reference },
+            include: { bookings: { select: { booking_id: true, status: true } } }
+        }));
+        if (!finalAttempt) throw new NotFoundException('Không tìm thấy giao dịch của bạn.');
+        const status = finalAttempt.status === 'review' ? 'review'
+            : finalAttempt.status === 'completed' ? (['paid', 'completed'].includes(finalAttempt.bookings.status) ? 'success' : 'review')
+            : finalAttempt.status === 'failed' ? (finalAttempt.response_code === '24' ? 'cancelled' : 'failed')
+            : finalAttempt.expires_at && finalAttempt.expires_at.getTime() <= Date.now() ? 'expired' : 'pending';
+        return { bookingId: finalAttempt.booking_id, reference, status, amount: finalAttempt.amount.toString(),
+            expiresAt: finalAttempt.expires_at?.toISOString() ?? null, responseCode: finalAttempt.response_code, bookingStatus: finalAttempt.bookings.status };
     }
 }

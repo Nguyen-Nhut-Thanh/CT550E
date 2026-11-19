@@ -4,6 +4,7 @@ import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
 import { buildTourBookingHref, resolvePickupPoint } from '@/lib/booking/client/departure';
+import { getActiveSchedulePromotion } from "@/lib/booking/client/pricing";
 import { Calendar, Clock, CreditCard, Hash, MapPin, MessageCircle, RefreshCw, ShieldCheck, Users, } from "lucide-react";
 import Link from "next/link";
 import type { TourBookingCardProps } from 'shared';
@@ -15,6 +16,7 @@ export default function TourBookingCard({
 }: TourBookingCardProps) {
 
   const displayPrice = Number(selectedSchedule?.price ?? tour.base_price);
+  const promoInfo = getActiveSchedulePromotion(selectedSchedule);
   const remainingSeats = selectedSchedule
     ? Math.max(
         Number(selectedSchedule.quota || 0) -
@@ -22,6 +24,7 @@ export default function TourBookingCard({
         0,
       )
     : null;
+  const isSoldOut = selectedSchedule ? remainingSeats === 0 : false;
 
   const bookingHref = selectedSchedule
     ? buildTourBookingHref(tour.tour_id, selectedSchedule, selectedPickupPointId)
@@ -46,38 +49,38 @@ export default function TourBookingCard({
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           {selectedSchedule ? "Giá chuyến đã chọn" : "Giá từ"}
         </span>
-        <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+        <div className="flex items-baseline gap-2 mt-0.5">
           <span className="text-3xl font-black text-[#ef3b2d] sm:text-4xl">
             {formatVND(displayPrice)}
           </span>
           <span className="text-sm font-semibold text-slate-500">/ khách</span>
-          {selectedSchedule?.original_price && selectedSchedule.original_price > displayPrice && (
-            <span className="text-sm font-semibold text-slate-400 line-through">
-              {formatVND(selectedSchedule.original_price)}
-            </span>
-          )}
         </div>
-        {(selectedSchedule?.schedule_promotion || selectedSchedule?.schedule_promotions?.is_active) && (
-          <div className="mt-2 flex flex-col gap-1">
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 border border-amber-300 px-2.5 py-1 text-xs font-bold text-amber-900 shadow-2xs self-start">
-              <span>🎁</span>
-              <span>
-                {selectedSchedule.schedule_promotion?.promotion_title ||
-                  selectedSchedule.schedule_promotions?.title ||
-                  "Ưu đãi đợt khởi hành"}
-              </span>
-              <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] text-white font-extrabold">
-                {selectedSchedule.schedule_promotion?.discount_type === "percentage" ||
-                selectedSchedule.schedule_promotions?.discount_type === "percentage"
-                  ? `-${selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value}%`
-                  : `-${formatVND(selectedSchedule.schedule_promotion?.discount_value ?? selectedSchedule.schedule_promotions?.discount_value)}`}
-              </span>
-            </div>
-            {(selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description) && (
-              <span className="text-[11px] font-semibold text-amber-800">
-                ✨ Quà tặng: {selectedSchedule.schedule_promotion?.gift_description || selectedSchedule.schedule_promotions?.gift_description}
+
+        {/* Hàng giá gốc bị gạch & tag ưu đãi/flash deal nằm cùng hàng */}
+        {((selectedSchedule?.original_price && selectedSchedule.original_price > displayPrice) || promoInfo) && (
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            {selectedSchedule?.original_price && selectedSchedule.original_price > displayPrice && (
+              <span className="text-sm font-semibold text-slate-400 line-through">
+                {formatVND(selectedSchedule.original_price)}
               </span>
             )}
+            {promoInfo && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 border border-amber-300 px-2 py-0.5 text-xs font-bold text-amber-900 shadow-2xs">
+                <span>🎁</span>
+                <span>{promoInfo.title}</span>
+                <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] text-white font-extrabold">
+                  {promoInfo.discountLabel}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {promoInfo?.giftDescription && (
+          <div className="mt-1">
+            <span className="text-[11px] font-semibold text-amber-800">
+              ✨ Quà tặng: {promoInfo.giftDescription}
+            </span>
           </div>
         )}
       </div>
@@ -132,7 +135,13 @@ export default function TourBookingCard({
               <Users className="h-4 w-4 text-sky-500" />
               <span>Số chỗ còn lại:</span>
             </div>
-            <span className="font-bold text-slate-900">{remainingSeats} chỗ</span>
+            {isSoldOut ? (
+              <span className="font-extrabold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs">
+                Đã hết chỗ (0 chỗ)
+              </span>
+            ) : (
+              <span className="font-bold text-slate-900">{remainingSeats} chỗ</span>
+            )}
           </div>
         </div>
       ) : (
@@ -149,7 +158,13 @@ export default function TourBookingCard({
 
       {/* Action Buttons */}
       <div className="space-y-2.5">
-        {bookingHref ? (
+        {isSoldOut ? (
+          <div className="rounded-2xl bg-rose-50 border border-rose-200/80 p-3 text-center">
+            <p className="text-xs text-rose-700 font-semibold leading-relaxed">
+              Chuyến khởi hành này hiện đã nhận đủ khách. Quý khách có thể theo dõi lại nếu có khách hủy hoặc liên hệ <strong>Chat tư vấn</strong> bên dưới.
+            </p>
+          </div>
+        ) : bookingHref ? (
           <Link
             href={bookingHref}
             className="flex w-full items-center justify-center rounded-2xl bg-[#0b63b6] py-3.5 text-center text-sm sm:text-base font-extrabold text-white shadow-lg shadow-sky-500/20 transition-all hover:bg-[#09559c] active:scale-[0.98]"
@@ -177,20 +192,23 @@ export default function TourBookingCard({
       </div>
 
       {/* Trust Badges */}
-      <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-[11px] font-medium text-slate-600">
-        <div className="flex flex-col items-center gap-1 p-1">
-          <RefreshCw className="h-4 w-4 text-emerald-600" />
-          <span className="leading-tight">Hủy miễn phí <br /><span className="text-slate-400 font-normal">Trước 7 ngày</span></span>
+      <div className="pt-3 border-t border-slate-100 -mx-3 px-1 grid grid-cols-3 gap-0.5 text-center text-[10.5px] leading-tight text-slate-600">
+        <div className="flex flex-col items-center gap-1 px-0.5 py-1 min-w-0">
+          <RefreshCw className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span className="font-bold text-slate-700 whitespace-nowrap tracking-tight">Hủy miễn phí</span>
+          <span className="text-slate-400 font-normal whitespace-nowrap text-[10px]">Trước 7 ngày</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 p-1 border-x border-slate-100">
-          <CreditCard className="h-4 w-4 text-sky-600" />
-          <span className="leading-tight">Thanh toán linh hoạt <br /><span className="text-slate-400 font-normal">Nhiều hình thức</span></span>
+        <div className="flex flex-col items-center gap-1 px-0.5 py-1 border-x border-slate-100 min-w-0">
+          <CreditCard className="h-4 w-4 text-sky-600 shrink-0" />
+          <span className="font-bold text-slate-700 whitespace-nowrap tracking-tight">Thanh toán linh hoạt</span>
+          <span className="text-slate-400 font-normal whitespace-nowrap text-[10px]">Nhiều hình thức</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 p-1">
-          <ShieldCheck className="h-4 w-4 text-indigo-600" />
-          <span className="leading-tight">Cam kết chất lượng <br /><span className="text-slate-400 font-normal">Hoàn tiền 100%</span></span>
+        <div className="flex flex-col items-center gap-1 px-0.5 py-1 min-w-0">
+          <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
+          <span className="font-bold text-slate-700 whitespace-nowrap tracking-tight">Cam kết chất lượng</span>
+          <span className="text-slate-400 font-normal whitespace-nowrap text-[10px]">Hoàn tiền 100%</span>
         </div>
       </div>
     </div>

@@ -12,3 +12,15 @@ export function markMembershipNotificationsRead() {
     { method: "POST" },
   );
 }
+
+export function redeemMembershipReward(rewardId: string) {
+  return requestWithToken<{
+    success: boolean;
+    voucherCode: string;
+    remainingPoints: number;
+  }>("/membership/rewards/redeem", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rewardId }),
+  });
+}

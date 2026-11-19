@@ -1,7 +1,18 @@
 import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
-import { BadgeCheck, Loader2, Luggage } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarDays,
+  Clock3,
+  Coins,
+  Gift,
+  Loader2,
+  Sparkles,
+  Tag,
+  Ticket,
+  UsersRound,
+} from "lucide-react";
 import type { BookingOrderSummaryProps } from "shared";
 
 export function BookingOrderSummary({
@@ -16,91 +27,168 @@ export function BookingOrderSummary({
   onSubmitBooking,
 }: BookingOrderSummaryProps) {
   return (
-    <aside className="relative lg:sticky lg:top-24 lg:self-start">
+    <aside className="relative lg:sticky lg:top-20 lg:self-start">
       <div>
         <div className="flex flex-col rounded-2xl border border-blue-100/60 bg-white p-4 shadow-[0_4px_24px_rgba(37,99,235,0.04)]">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-              <Luggage className="h-5 w-5 text-blue-700" />
-              Tóm tắt đơn hàng
-            </h2>
-            <a
-              href="#booking-passengers"
-              className="text-xs font-semibold text-blue-600"
-            >
-              Chỉnh sửa
-            </a>
-          </div>
           <ImageWithFallback
             src={tour.tour_images?.[0]?.image_url || undefined}
             fallback="/images/shared/travel-cover.png"
             alt={tour.name}
-            className="mt-3 h-20 w-full shrink-0 rounded-xl object-cover"
+            className="h-24 w-full shrink-0 rounded-xl object-cover"
           />
           <p className="mt-2 text-sm font-bold text-slate-900">{tour.name}</p>
-          <p className="mt-1 text-xs text-slate-500">
-            {tour.duration_days} ngày {tour.duration_nights} đêm
-          </p>
-          <div className="mt-3 space-y-2.5 [&_span:first-child]:font-medium">
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-sm text-slate-500">Khởi hành</span>
-              <span className="text-right text-sm font-semibold text-blue-700">
+          <div className="mt-3 grid grid-cols-3 divide-x divide-blue-100 rounded-xl bg-blue-50/70 px-2 py-2.5">
+            <div className="flex min-w-0 items-center gap-1.5 pr-2">
+              <CalendarDays className="h-4 w-4 shrink-0 text-blue-600" />
+              <span className="truncate text-[11px] font-semibold text-slate-800">
                 {formatDate(selectedSchedule.start_date)}
               </span>
             </div>
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-sm text-slate-500">Số khách</span>
-              <span className="text-right text-sm font-semibold text-slate-900">
-                {totalGuests}
+            <div className="flex min-w-0 items-center gap-1.5 px-2">
+              <Clock3 className="h-4 w-4 shrink-0 text-blue-600" />
+              <span className="truncate text-[11px] font-semibold text-slate-800">
+                {tour.duration_days} ngày {tour.duration_nights} đêm
               </span>
             </div>
-
-            <div className="rounded-xl bg-slate-50 p-3">
-              <div className="space-y-1.5 text-sm">
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Người lớn x {adultCount}</span>
-                  <span className="font-semibold text-[#ef3b2d]">
+            <div className="flex min-w-0 items-center gap-1.5 pl-2">
+              <UsersRound className="h-4 w-4 shrink-0 text-blue-600" />
+              <span className="truncate text-[11px] font-semibold text-blue-700">
+                {totalGuests} khách
+              </span>
+            </div>
+          </div>
+          <div className="mt-3.5 space-y-3">
+            {/* Passenger Breakdown Card */}
+            <div className="rounded-2xl bg-[#f4f7fe] p-3.5">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 shrink-0 fill-blue-600 text-blue-600" />
+                    <span className="text-slate-800">Người lớn x {adultCount}</span>
+                  </div>
+                  <span
+                    className={
+                      pricing.adultUnitPrice * adultCount > 0
+                        ? "font-bold text-blue-700"
+                        : "font-semibold text-slate-800"
+                    }
+                  >
                     {formatVND(pricing.adultUnitPrice * adultCount)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Trẻ em x {childCount}</span>
-                  <span className="font-semibold text-[#ef3b2d]">
+
+                <div className="flex items-center justify-between">
+                  <span className="pl-6 text-slate-800">Trẻ em x {childCount}</span>
+                  <span
+                    className={
+                      pricing.childUnitPrice * childCount > 0
+                        ? "font-bold text-blue-700"
+                        : "font-semibold text-slate-800"
+                    }
+                  >
                     {formatVND(pricing.childUnitPrice * childCount)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Em bé x {infantCount}</span>
-                  <span className="font-semibold text-[#ef3b2d]">
+
+                <div className="flex items-center justify-between">
+                  <span className="pl-6 text-slate-800">Em bé x {infantCount}</span>
+                  <span
+                    className={
+                      pricing.infantUnitPrice * infantCount > 0
+                        ? "font-bold text-blue-700"
+                        : "font-semibold text-slate-800"
+                    }
+                  >
                     {formatVND(pricing.infantUnitPrice * infantCount)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Phụ thu phòng đơn x {pricing.singleRoomCount}</span>
-                  <span className="font-semibold text-[#ef3b2d]">
+
+                <div className="flex items-center justify-between">
+                  <span className="pl-6 text-slate-800">
+                    Phụ thu phòng đơn x {pricing.singleRoomCount}
+                  </span>
+                  <span
+                    className={
+                      pricing.singleRoomSurcharge > 0
+                        ? "font-bold text-blue-700"
+                        : "font-semibold text-slate-800"
+                    }
+                  >
                     {formatVND(pricing.singleRoomSurcharge)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-1.5 border-t border-slate-100 pt-2.5 text-sm">
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Tạm tính</span>
-                <span className="font-semibold text-[#ef3b2d]">
+            {/* Pricing Summary List */}
+            <div className="space-y-2.5 px-0.5 text-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-800">
+                  <Coins className="h-4 w-4 shrink-0 text-blue-600" />
+                  <span>Tạm tính</span>
+                </div>
+                <span className="font-bold text-blue-700">
                   {formatVND(pricing.subtotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Dịch vụ bổ sung</span>
-                <span className="font-semibold text-[#ef3b2d]">
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-800">
+                  <Tag className="h-4 w-4 shrink-0 fill-blue-600 text-blue-600" />
+                  <span>Dịch vụ bổ sung</span>
+                </div>
+                <span
+                  className={
+                    pricing.servicesTotal > 0
+                      ? "font-bold text-blue-700"
+                      : "font-semibold text-slate-800"
+                  }
+                >
                   {formatVND(pricing.servicesTotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-emerald-600"><span>Voucher</span><span className="font-semibold">− {formatVND(pricing.voucherDiscount ?? pricing.discount)}</span></div>
-              {!!pricing.tourDiscount && <div className="flex items-center justify-between gap-3 text-emerald-600"><span>Ưu đãi hạng {pricing.membershipName}</span><span className="font-semibold">− {formatVND(pricing.tourDiscount)}</span></div>}
-              {!!pricing.serviceDiscount && <div className="flex items-center justify-between gap-3 text-emerald-600"><span>Ưu đãi dịch vụ</span><span className="font-semibold">− {formatVND(pricing.serviceDiscount)}</span></div>}
-              {!!pricing.tourDiscount && <p className="text-[10px] leading-4 text-slate-400">Giảm theo hạng trên tiền tour sau khi trừ voucher.</p>}
+
+              {!!(pricing.voucherDiscount ?? pricing.discount) && (
+                <div className="flex items-center justify-between text-emerald-600">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Ticket className="h-4 w-4 shrink-0 fill-emerald-600 text-emerald-600" />
+                    <span>Voucher</span>
+                  </div>
+                  <span className="font-bold">
+                    – {formatVND(pricing.voucherDiscount ?? pricing.discount)}
+                  </span>
+                </div>
+              )}
+
+              {!!pricing.tourDiscount && (
+                <div className="flex items-center justify-between text-emerald-600">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Gift className="h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>Ưu đãi hạng {pricing.membershipName || "thành viên"}</span>
+                  </div>
+                  <span className="font-bold">
+                    – {formatVND(pricing.tourDiscount)}
+                  </span>
+                </div>
+              )}
+
+              {!!pricing.serviceDiscount && (
+                <div className="flex items-center justify-between text-emerald-600">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>Ưu đãi dịch vụ</span>
+                  </div>
+                  <span className="font-bold">
+                    – {formatVND(pricing.serviceDiscount)}
+                  </span>
+                </div>
+              )}
+
+              {!!pricing.tourDiscount && (
+                <p className="text-[10px] leading-4 text-slate-400 pl-6">
+                  Giảm theo hạng trên tiền tour sau khi trừ voucher.
+                </p>
+              )}
             </div>
           </div>
 

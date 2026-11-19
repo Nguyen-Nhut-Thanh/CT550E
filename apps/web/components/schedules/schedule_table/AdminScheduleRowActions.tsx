@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Compass, Eye, EyeOff, Gift, MoreHorizontal, Pencil, Trash2, UsersRound } from "lucide-react";
+import { Compass, Eye, EyeOff, Gift, MoreHorizontal, Pencil, Trash2, UsersRound, Zap } from "lucide-react";
 import { Popover } from "@/components/common/dialogs_and_feedback/dialogs/Popover";
 import { useDismiss } from "@/lib/ui/useDismiss";
 import { getScheduleBookedCount } from "@/lib/schedules/admin/status";
@@ -18,10 +18,12 @@ export function ScheduleRowActions({
   onToggleStatus,
   onViewManifest,
   onConfigurePromotion,
+  onConfigureFlashDeal,
 }: Pick<ScheduleTablePanelProps, "onEdit" | "onDelete" | "onToggleStatus" | "onViewManifest"> & {
   schedule: AdminSchedule;
   busy: boolean;
   onConfigurePromotion?: (schedule: AdminSchedule) => void;
+  onConfigureFlashDeal?: (schedule: AdminSchedule) => void;
 }) {
   const [open, setOpen] = useState(false);
   const readOnly = useAdminContentReadOnly();
@@ -80,6 +82,18 @@ export function ScheduleRowActions({
             >
               <Gift size={16} className="text-amber-500" />
               <span>Ưu đãi đợt khởi hành</span>
+            </button>
+            <button
+              type="button"
+              disabled={readOnly}
+              title={readOnly ? ADMIN_CONTENT_DENIED : undefined}
+              onClick={() => {
+                setOpen(false);
+                onConfigureFlashDeal?.(schedule);
+              }}
+            >
+              <Zap size={16} className="text-amber-500" />
+              <span>Flash Deal</span>
             </button>
             <button
               type="button"

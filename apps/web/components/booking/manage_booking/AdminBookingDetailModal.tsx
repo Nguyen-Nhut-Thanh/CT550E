@@ -2,7 +2,8 @@
 
 import { ImageWithFallback } from "@/components/common/dialogs_and_feedback/media/ImageWithFallback";
 import { BookingReceiptModal } from "@/components/booking/view_booking/UserBookingReceiptModal";
-import { getAdminBookingDetail } from "@/lib/booking/admin/api";
+import { confirmRefundTransfer, getAdminBookingDetail } from "@/lib/booking/admin/api";
+import { useToast } from "@/lib/notifications/useToast";
 import { formatVND } from "@/lib/utils/currency";
 import {
   AlertCircle,
@@ -10,8 +11,10 @@ import {
   BedDouble,
   Building2,
   CalendarDays,
+  CalendarSync,
   Check,
   CheckCircle2,
+  CircleDollarSign,
   Clock3,
   Copy,
   FileText,
@@ -43,28 +46,49 @@ function date(value?: string | null, withTime = false) {
   });
 }
 
-export function bookingStatus(value?: string | null) {
+export function bookingStatus(
+  value?: string | null,
+  schedule?: { start_date?: string | null; end_date?: string | null } | null,
+) {
   const status = (value || "").toLowerCase();
   if (["cancelled", "canceled", "đã hủy"].includes(status)) return { label: "Đã hủy", tone: "cancelled" };
-  if (status === "cancel_requested") return { label: "Yêu cầu hủy", tone: "cancel_requested" };
+  if (status === "cancel_requested") {
+    const isDeparted = Boolean(schedule?.start_date && new Date(schedule.start_date).getTime() <= Date.now());
+    return {
+      label: isDeparted ? "Yêu cầu hủy (Quá hạn)" : "Yêu cầu hủy",
+      tone: "cancel_requested",
+    };
+  }
+  if (status === "cancel_proposed") return { label: "Chờ khách chọn phương án", tone: "cancel_proposed" };
+  if (status === "refund_pending") return { label: "Chờ chuyển tiền hoàn", tone: "refund_pending" };
   if (["completed", "đã hoàn thành"].includes(status)) return { label: "Đã hoàn thành", tone: "success" };
   if (status === "paid") return { label: "Đã thanh toán", tone: "success" };
   if (status === "pending") return { label: "Chờ thanh toán", tone: "pending" };
   return { label: value || "Chưa cập nhật", tone: "pending" };
 }
 
-function StatusBadge({ value }: { value?: string | null }) {
-  const status = bookingStatus(value);
+function StatusBadge({
+  value,
+  schedule,
+}: {
+  value?: string | null;
+  schedule?: { start_date?: string | null; end_date?: string | null } | null;
+}) {
+  const status = bookingStatus(value, schedule);
   return (
     <span
       className={`inline-flex items-center justify-center rounded-[30px] text-[12px] font-[750] whitespace-nowrap px-[13px] py-[6px] gap-[6px] ${
         status.tone === "cancelled"
           ? "bg-[#ffe6ec] text-[#f32750]"
           : status.tone === "cancel_requested"
-            ? "bg-rose-100 text-rose-700 border border-rose-300"
-            : status.tone === "success"
-              ? "bg-[#def8ec] text-[#087e57]"
-              : "bg-[#fff1cf] text-[#97600b]"
+            ? "bg-[#fff1cf] text-[#97600b] border border-amber-300"
+            : status.tone === "cancel_proposed"
+              ? "bg-purple-50 text-purple-800 border border-purple-300"
+              : status.tone === "refund_pending"
+                ? "bg-amber-50 text-amber-900 border border-amber-300"
+                : status.tone === "success"
+                  ? "bg-[#def8ec] text-[#087e57]"
+                  : "bg-[#fff1cf] text-[#97600b]"
       }`}
     >
       <CalendarDays size={14} />
@@ -127,23 +151,58 @@ export function BookingDetailModal({
   onAction,
 }: BookingDetailModalProps) {
   const [fetchedBooking, setFetchedBooking] = useState<AdminBooking | null>(null);
+  const [localUpdatedBooking, setLocalUpdatedBooking] = useState<AdminBooking | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
 
-  const b = (initialBooking || fetchedBooking) as (AdminBooking & Record<string, any>) | null;
+  // Trạng thái cho dialog / form xác nhận đã chuyển tiền hoàn
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transCode, setTransCode] = useState("");
+  const [transNote, setTransNote] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+  const toast = useToast();
+
+  const b = (localUpdatedBooking || initialBooking || fetchedBooking) as (AdminBooking & Record<string, any>) | null;
   const activeId = initialBooking?.booking_id ?? bookingId;
+
+  const handleTransferRefund = async () => {
+    if (!b) return;
+    try {
+      setIsTransferring(true);
+      const proposal = (b.cancellation_meta as any)?.resolutionProposal;
+      const amount = proposal?.refundAmount || Number(b.total_amount) || 0;
+      await confirmRefundTransfer(b.booking_id, {
+        transactionCode: transCode.trim() || undefined,
+        note: transNote.trim() || undefined,
+        amount,
+      });
+      toast.success("Xác nhận đã chuyển tiền hoàn thành công!");
+      const updated = await getAdminBookingDetail<AdminBooking>(b.booking_id);
+      if (updated) setLocalUpdatedBooking(updated);
+      setTransferModalOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Thao tác xác nhận hoàn tiền thất bại.");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
       setFetchedBooking(null);
+      setLocalUpdatedBooking(null);
+      setTransferModalOpen(false);
+      setTransCode("");
+      setTransNote("");
       setError(null);
       return;
     }
 
     if (initialBooking) {
       setFetchedBooking(null);
+      setLocalUpdatedBooking(null);
       return;
     }
 
@@ -290,7 +349,7 @@ export function BookingDetailModal({
                     <h2 className="text-xl sm:text-2xl font-black tracking-[-.025em] text-[#092448] leading-[1.3]">
                       {tourName}
                     </h2>
-                    <StatusBadge value={b.status} />
+                    <StatusBadge value={b.status} schedule={b.tour_schedules} />
                     {["paid", "completed"].includes(b.status) && (
                       <button
                         type="button"
@@ -581,7 +640,7 @@ export function BookingDetailModal({
                         <dl className="space-y-1 text-[11px] text-[#5c7aa2]">
                           <div className="flex justify-between">
                             <dt>Trạng thái:</dt>
-                            <dd><StatusBadge value={b.status} /></dd>
+                            <dd><StatusBadge value={b.status} schedule={b.tour_schedules} /></dd>
                           </div>
                           <div className="flex justify-between">
                             <dt>Ngày đặt:</dt>
@@ -607,7 +666,7 @@ export function BookingDetailModal({
               </div>
 
               {/* Ghi chú, Loại phòng & Thông tin hủy */}
-              {(b.note || b.cancellation_meta || b.room_selection) && (() => {
+              {Boolean(b.note || b.cancellation_meta || b.room_selection) && (() => {
                 const parsed = parseBookingNote(b.note, b);
                 const hasCancellation =
                   b.status === "cancel_requested" ||
@@ -635,32 +694,50 @@ export function BookingDetailModal({
                     )}
 
                     {/* Khối Yêu cầu hủy tour & Hoàn tiền đang chờ xử lý */}
-                    {b.status === "cancel_requested" && (
-                      <div className="rounded-[18px] bg-rose-50/90 border border-rose-200 p-4.5 space-y-3 text-xs">
-                        <div className="flex items-center justify-between border-b border-rose-200/70 pb-2.5">
-                          <div className="flex items-center gap-2 text-rose-800 font-extrabold text-xs uppercase tracking-wider">
-                            <AlertTriangle size={16} className="text-rose-600 shrink-0" />
-                            <span>Khách hàng yêu cầu hủy tour & hoàn tiền</span>
-                          </div>
-                          <span className="rounded-full bg-rose-200/80 px-2.5 py-0.5 text-[11px] font-bold text-rose-900">
-                            Chờ duyệt
-                          </span>
-                        </div>
+                    {b.status === "cancel_requested" && (() => {
+                      const isDeparted = Boolean(
+                        b.tour_schedules?.start_date &&
+                        new Date(b.tour_schedules.start_date).getTime() <= Date.now()
+                      );
 
-                        <div className="space-y-1">
-                          <p>
-                            <span className="text-slate-600 font-medium">Lý do hủy tour:</span>{" "}
-                            <strong className="text-slate-900 font-bold">
-                              {parsed.cancellationReason || parsed.cancelRequest?.reason || "Không nêu rõ"}
-                            </strong>
-                          </p>
-                          {(parsed.cancellationTime || parsed.cancelRequest?.requestedAt) && (
-                            <p className="text-[11px] text-slate-500">
-                              Thời gian gửi yêu cầu:{" "}
-                              {parsed.cancellationTime || parsed.cancelRequest?.requestedAt}
-                            </p>
+                      return (
+                        <div className="rounded-[18px] bg-rose-50/90 border border-rose-200 p-4.5 space-y-3 text-xs">
+                          <div className="flex items-center justify-between border-b border-rose-200/70 pb-2.5">
+                            <div className="flex items-center gap-2 text-rose-800 font-extrabold text-xs uppercase tracking-wider">
+                              <AlertTriangle size={16} className="text-rose-600 shrink-0" />
+                              <span>Khách hàng yêu cầu hủy tour & hoàn tiền</span>
+                            </div>
+                            <span className="rounded-full bg-rose-200/80 px-2.5 py-0.5 text-[11px] font-bold text-rose-900">
+                              {isDeparted ? "Quá hạn xử lý" : "Chờ duyệt"}
+                            </span>
+                          </div>
+
+                          {isDeparted && (
+                            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-900 text-xs flex items-start gap-2">
+                              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                              <div>
+                                <span className="font-bold">Chuyến đi đã khởi hành (quá thời hạn xử lý hủy):</span>
+                                <p className="mt-0.5 text-amber-800 leading-relaxed">
+                                  Tour đã đến ngày khởi hành mà yêu cầu hủy chưa được xác nhận. Theo chính sách lữ hành, vé tour vẫn có hiệu lực hoặc tính vắng mặt (no-show), không tự động hoàn tiền.
+                                </p>
+                              </div>
+                            </div>
                           )}
-                        </div>
+
+                          <div className="space-y-1">
+                            <p>
+                              <span className="text-slate-600 font-medium">Lý do hủy tour:</span>{" "}
+                              <strong className="text-slate-900 font-bold">
+                                {parsed.cancellationReason || parsed.cancelRequest?.reason || "Không nêu rõ"}
+                              </strong>
+                            </p>
+                            {(parsed.cancellationTime || parsed.cancelRequest?.requestedAt) && (
+                              <p className="text-[11px] text-slate-500">
+                                Thời gian gửi yêu cầu:{" "}
+                                {parsed.cancellationTime || parsed.cancelRequest?.requestedAt}
+                              </p>
+                            )}
+                          </div>
 
                         {/* Chi tiết tính toán hoàn tiền */}
                         {parsed.cancelRequest && (
@@ -736,7 +813,256 @@ export function BookingDetailModal({
                           </div>
                         )}
                       </div>
-                    )}
+                    ); })()}
+
+                    {/* Khối Đề xuất giải quyết sự cố từ Admin (resolutionProposal) */}
+                    {Boolean((b.cancellation_meta as any)?.resolutionProposal) && (() => {
+                      const proposal = (b.cancellation_meta as any).resolutionProposal;
+                      const isRefundChoice = proposal.status === "accepted_refund" || b.status === "refund_pending";
+                      const isRescheduleChoice = proposal.status === "accepted_reschedule";
+                      const isSupportChoice = proposal.status === "contact_support";
+                      const isPendingCustomer = proposal.status === "pending_customer";
+
+                      return (
+                        <div className="rounded-[16px] border border-blue-200 bg-blue-50/50 p-4 space-y-3 text-xs">
+                          <div className="flex items-center justify-between border-b border-blue-200/80 pb-2">
+                            <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                              <CalendarSync size={16} className="text-blue-600" />
+                              <span>Phương án giải quyết sự cố / hủy tour</span>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold border ${
+                              isPendingCustomer
+                                ? "bg-amber-100 text-amber-800 border-amber-300"
+                                : isRefundChoice
+                                  ? proposal.refundTransfer
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                    : "bg-amber-100 text-amber-900 border-amber-300"
+                                  : isRescheduleChoice
+                                    ? "bg-blue-100 text-blue-800 border-blue-300"
+                                    : "bg-purple-100 text-purple-800 border-purple-300"
+                            }`}>
+                              {isPendingCustomer
+                                ? "Chờ khách chọn phương án"
+                                : isRefundChoice
+                                  ? proposal.refundTransfer
+                                    ? "Đã chuyển tiền hoàn"
+                                    : "Chờ chuyển tiền hoàn"
+                                  : isRescheduleChoice
+                                    ? "Khách đồng ý dời lịch"
+                                    : "Khách yêu cầu hỗ trợ khác"}
+                            </span>
+                          </div>
+
+                          {/* Thông tin phương án Admin đã gửi */}
+                          <div className="space-y-1.5 text-slate-700">
+                            <div>
+                              <span className="font-semibold text-slate-500">Các phương án đã đề xuất:</span>{" "}
+                              <strong>
+                                {proposal.allowedOptions?.map((opt: string) => opt === "full_refund" ? "Hoàn tiền 100%" : "Dời sang đợt khác").join(" & ")}
+                              </strong>
+                            </div>
+                            {proposal.newScheduleStart && (
+                              <div>
+                                <span className="font-semibold text-slate-500">Đợt khởi hành thay thế:</span>{" "}
+                                <strong>{date(proposal.newScheduleStart)} – {date(proposal.newScheduleEnd)}</strong>
+                                {proposal.waiveDifference ? (
+                                  <span className="ml-1.5 text-emerald-700 font-bold">(Công ty miễn phí chênh lệch)</span>
+                                ) : proposal.priceDifference ? (
+                                  <span className="ml-1.5 text-slate-600">(Chênh lệch: {formatVND(proposal.priceDifference)})</span>
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Trạng thái 1: Đang chờ khách chọn */}
+                          {isPendingCustomer && (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                              <p className="font-medium leading-relaxed">
+                                Hệ thống đã gửi email và thông báo đến khách hàng. Khách hàng sẽ vào trang chi tiết booking để xác nhận lựa chọn phương án của mình.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Trạng thái 2: Khách chọn Hoàn tiền hoặc Hoàn tiền thừa */}
+                          {isRefundChoice && (
+                            <div className="space-y-3 pt-1">
+                              <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] uppercase font-bold text-emerald-900">
+                                    Tài khoản ngân hàng của khách nhận hoàn tiền:
+                                  </span>
+                                  <strong className="text-emerald-800 text-xs font-black">
+                                    Số tiền: {formatVND(proposal.refundAmount || b.total_amount)}
+                                  </strong>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11.5px] pt-1">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Ngân hàng</span>
+                                    <span className="font-bold text-slate-800">{proposal.customerBankInfo?.bankName || "—"}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Số tài khoản</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono font-bold text-blue-700">{proposal.customerBankInfo?.bankAccountNumber || "—"}</span>
+                                      {proposal.customerBankInfo?.bankAccountNumber && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            void navigator.clipboard.writeText(proposal.customerBankInfo!.bankAccountNumber);
+                                            setCopiedAccount(true);
+                                            setTimeout(() => setCopiedAccount(false), 2000);
+                                          }}
+                                          className="text-slate-400 hover:text-slate-700 p-0.5 rounded cursor-pointer"
+                                          title="Sao chép"
+                                        >
+                                          {copiedAccount ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Chủ tài khoản</span>
+                                    <span className="font-bold uppercase text-slate-800">{proposal.customerBankInfo?.bankAccountName || "—"}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Đã hoàn tiền hay Chưa hoàn tiền? */}
+                              {proposal.refundTransfer ? (
+                                <div className="rounded-xl border border-emerald-300 bg-emerald-100/60 p-3 space-y-1 text-emerald-950">
+                                  <div className="flex items-center gap-2 font-bold text-emerald-800 text-xs">
+                                    <CheckCircle2 size={15} className="text-emerald-600" />
+                                    <span>Đã chuyển tiền hoàn thành công</span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11.5px] pt-1">
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">Mã GD ngân hàng</span>
+                                      <span className="font-mono font-bold">{proposal.refundTransfer.transactionCode || "—"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">Thời gian chuyển</span>
+                                      <span>{date(proposal.refundTransfer.transferredAt, true)}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">Người xác nhận</span>
+                                      <span>{proposal.refundTransfer.transferredBy || "Ban quản trị"}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 space-y-3">
+                                  <p className="text-[11.5px] text-amber-900 leading-relaxed">
+                                    Vui lòng chuyển tiền hoàn trả cho khách theo tài khoản ngân hàng ở trên. Sau khi chuyển xong, nhập mã giao dịch và bấm nút bên dưới để hoàn tất đơn.
+                                  </p>
+
+                                  {!transferModalOpen ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setTransferModalOpen(true)}
+                                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer"
+                                    >
+                                      <CircleDollarSign size={15} />
+                                      <span>Xác nhận đã chuyển tiền hoàn</span>
+                                    </button>
+                                  ) : (
+                                    <div className="rounded-xl border border-emerald-300 bg-white p-3.5 space-y-3">
+                                      <span className="block text-xs font-bold text-slate-900">
+                                        Nhập thông tin giao dịch chuyển khoản hoàn tiền:
+                                      </span>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div>
+                                          <label className="text-[10.5px] uppercase font-bold text-slate-500 block mb-1">
+                                            Mã giao dịch ngân hàng <span className="text-rose-500">*</span>
+                                          </label>
+                                          <input
+                                            type="text"
+                                            value={transCode}
+                                            onChange={(e) => setTransCode(e.target.value)}
+                                            placeholder="Ví dụ: FT26019384752..."
+                                            className="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10.5px] uppercase font-bold text-slate-500 block mb-1">
+                                            Ghi chú chuyển tiền
+                                          </label>
+                                          <input
+                                            type="text"
+                                            value={transNote}
+                                            onChange={(e) => setTransNote(e.target.value)}
+                                            placeholder="Ví dụ: Đã chuyển khoản qua Vietcombank..."
+                                            className="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 justify-end pt-1">
+                                        <button
+                                          type="button"
+                                          disabled={isTransferring}
+                                          onClick={() => setTransferModalOpen(false)}
+                                          className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                        >
+                                          Hủy bỏ
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={isTransferring || !transCode.trim()}
+                                          onClick={handleTransferRefund}
+                                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                                        >
+                                          {isTransferring ? (
+                                            <>
+                                              <Loader2 size={13} className="animate-spin" />
+                                              <span>Đang lưu...</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <CheckCircle2 size={13} />
+                                              <span>Xác nhận hoàn tất</span>
+                                            </>
+                                          )}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Trạng thái 3: Khách đồng ý dời lịch */}
+                          {isRescheduleChoice && (
+                            <div className="rounded-xl border border-blue-200 bg-blue-100/60 p-3 text-blue-950 space-y-1">
+                              <div className="flex items-center gap-2 font-bold text-blue-800 text-xs">
+                                <CheckCircle2 size={15} className="text-blue-600" />
+                                <span>Khách hàng đã đồng ý dời lịch sang đợt mới</span>
+                              </div>
+                              <p className="text-[11.5px] text-blue-900 leading-relaxed">
+                                Booking đã được dời sang ngày khởi hành: <strong>{date(proposal.newScheduleStart)} – {date(proposal.newScheduleEnd)}</strong>. Danh sách khách và thông tin booking đã được cập nhật tương ứng.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Trạng thái 4: Khách yêu cầu hỗ trợ khác */}
+                          {isSupportChoice && (
+                            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-950 space-y-1.5">
+                              <div className="flex items-center gap-2 font-bold text-amber-800 text-xs">
+                                <AlertTriangle size={15} className="text-amber-600" />
+                                <span>Khách hàng yêu cầu hỗ trợ phương án khác</span>
+                              </div>
+                              {proposal.supportNote && (
+                                <p className="text-[11.5px] text-amber-900 leading-relaxed bg-white/80 p-2 rounded-lg border border-amber-200">
+                                  Ghi chú từ khách: <em>&ldquo;{proposal.supportNote}&rdquo;</em>
+                                </p>
+                              )}
+                              <p className="text-[11.5px] text-amber-900">
+                                Vui lòng liên hệ số điện thoại của khách hàng: <strong className="text-blue-700">{b.contact_phone}</strong> để tư vấn phương án phù hợp.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Khối đơn đã hủy */}
                     {b.status === "cancelled" && (
@@ -852,6 +1178,17 @@ export function BookingDetailModal({
                   >
                     <AlertTriangle size={14} />
                     <span>Hủy đơn tour (Admin)</span>
+                  </button>
+                )}
+
+                {b.status === "refund_pending" && !(b.cancellation_meta as any)?.resolutionProposal?.refundTransfer && (
+                  <button
+                    type="button"
+                    onClick={() => setTransferModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer"
+                  >
+                    <CircleDollarSign size={14} />
+                    <span>Xác nhận đã chuyển tiền hoàn</span>
                   </button>
                 )}
 

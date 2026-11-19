@@ -43,11 +43,14 @@ export function AccountFavoritesTab({ favorites = [] }: AccountFavoritesTabProps
           schedule?.cover_image_url ||
           t?.tour_images?.[0]?.image_url ||
           "/images/shared/travel-cover.png";
-        const startDate = schedule?.start_date;
+        const startDate = t?.status === 1 && schedule?.start_date
+          ? schedule.start_date
+          : undefined;
         const savedDate = fav.created_at
           ? formatDate(fav.created_at)
           : formatDate(new Date());
-        const seatsLeft = schedule?.quota != null
+        const hasVisibleSchedule = t?.status === 1 && Boolean(schedule);
+        const seatsLeft = hasVisibleSchedule && schedule?.quota != null
           ? Math.max(0, Number(schedule.quota) - Number(schedule.booked_count ?? 0))
           : undefined;
 

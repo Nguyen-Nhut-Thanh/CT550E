@@ -49,6 +49,7 @@ export type ScheduleTablePanelProps = {
     onPageChange: (page: number) => void;
     onViewManifest?: (scheduleId: number) => void;
     onConfigurePromotion?: (schedule: AdminSchedule) => void;
+    onConfigureFlashDeal?: (schedule: AdminSchedule) => void;
     pendingIds?: number[];
 };
 export type TourListPanelProps = {

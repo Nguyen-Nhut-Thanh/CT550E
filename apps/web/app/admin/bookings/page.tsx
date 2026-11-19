@@ -468,7 +468,9 @@ export default function AdminBookingsPage() {
           note,
           cancelType,
           resolutionOption,
+          allowedOptions,
           newScheduleId,
+          waiveDifference,
         }) => {
           if (!modal) return;
           try {
@@ -486,9 +488,15 @@ export default function AdminBookingsPage() {
                 note,
                 cancelType,
                 resolutionOption,
+                allowedOptions,
                 newScheduleId,
+                waiveDifference,
               });
-              if (resolutionOption === "reschedule") {
+              if (cancelType === "operator_fault") {
+                toast.success(
+                  "Đã gửi đề xuất giải quyết cho khách hàng và gửi email thông báo thành công!",
+                );
+              } else if (resolutionOption === "reschedule") {
                 toast.success("Đã dời lịch khởi hành tour thành công!");
               } else {
                 toast.success("Đã hủy đơn đặt tour thành công!");

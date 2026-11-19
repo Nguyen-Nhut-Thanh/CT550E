@@ -5,6 +5,8 @@ import { BlogBody } from "@/components/posts/blog_detail/UserBlogBody";
 import { ArticleBlocks } from "@/components/posts/blog_detail/UserArticleBlocks";
 import { articleText } from "shared";
 import { BlogPromoBanner } from "@/components/posts/blog_listing/UserBlogPromoBanner";
+import { BlogNewsletter } from "@/components/posts/blog_listing/UserBlogNewsletter";
+import { BlogSocialLinks } from "@/components/posts/blog_detail/UserBlogSocialLinks";
 import { postDate, type BlogPost } from "@/lib/posts/client/types";
 
 export function BlogPostLayout({
@@ -17,8 +19,8 @@ export function BlogPostLayout({
   related: BlogPost[];
 }) {
   return (
-    <main className="min-h-screen bg-[#f8fafc] pb-20">
-      <header className="relative flex min-h-[420px] items-end overflow-hidden bg-slate-900 py-16 text-white lg:min-h-[520px]">
+    <main className="min-h-screen bg-white pb-20">
+      <header className="relative flex min-h-[420px] items-end overflow-hidden bg-slate-900 pt-16 pb-10 text-white lg:min-h-[520px]">
         <ImageWithFallback
           src={post.thumbnail || undefined}
           alt={post.title}
@@ -70,9 +72,9 @@ export function BlogPostLayout({
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-12 px-4 pt-5 pb-10 sm:px-6 lg:px-8">
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <article className="min-w-0 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-9">
+          <article className="min-w-0 border-r border-slate-300 bg-white px-6 pt-5 pb-6 sm:px-9 sm:pt-6 sm:pb-9">
             {post.content_blocks?.version === 1 ? (
               <ArticleBlocks document={post.content_blocks} />
             ) : (
@@ -91,7 +93,7 @@ export function BlogPostLayout({
               </div>
             )}
           </article>
-          <aside className="space-y-6 lg:sticky lg:top-24">
+          <aside className="space-y-3 lg:sticky lg:top-24">
             {!!featured.length && (
               <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="font-bold text-slate-900">Bài viết nổi bật</h2>
@@ -119,6 +121,8 @@ export function BlogPostLayout({
               </div>
             )}
             <BlogPromoBanner />
+            <BlogNewsletter />
+            <BlogSocialLinks />
           </aside>
         </div>
         {!!related.length && (

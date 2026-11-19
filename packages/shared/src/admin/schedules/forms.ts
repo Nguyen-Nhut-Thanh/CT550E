@@ -27,6 +27,7 @@ export type ScheduleFormState = {
     end_date: string;
     end_time: string;
     price: number;
+    single_room_surcharge: number;
     quota: number;
     status: number;
     cover_image_url: string;

@@ -23,6 +23,7 @@ export const TourAdminPayloadSchema = z.object({
   duration_days: z.coerce.number().int().min(1, 'Số ngày phải từ 1'),
   duration_nights: z.coerce.number().int().min(0, 'Số đêm không hợp lệ'),
   base_price: z.coerce.number().min(0, 'Giá gốc không được âm'),
+  single_room_surcharge: z.coerce.number().min(0, 'Giá phụ thu không được âm').default(0).optional(),
   tour_type: z.enum(['domestic', 'outbound', 'international']).default('domestic'),
   departure_location_id: z.coerce.number().int().positive('Điểm khởi hành không hợp lệ'),
   destination_ids: z.array(z.number().int()).min(1, 'Phải có ít nhất 1 điểm đến').optional(),

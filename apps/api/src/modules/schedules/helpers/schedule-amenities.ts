@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import type { ScheduleAdminPayload } from "shared";
-import { normalizeAmenities } from "../tours/tour-amenities";
+import { normalizeAmenities } from "../../tours/helpers/tour-amenities";
 
 export async function saveScheduleAmenities(
   tx: Prisma.TransactionClient,

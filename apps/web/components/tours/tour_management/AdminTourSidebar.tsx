@@ -4,6 +4,7 @@ import { ImageUpload } from "@/components/common/form_controls/ImageUpload";
 import { VndPriceInput } from "@/components/common/form_controls/VndPriceInput";
 import {
   ArrowRight,
+  BedDouble,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -236,13 +237,16 @@ export function TourSidebar<T extends TourDetailForm>({
           </p>
         </TourEditorCard>
         <TourEditorCard
-          title="Giá cơ bản"
-          description="Giá áp dụng chưa gồm ưu đãi."
+          title="Giá tour & Phụ thu"
+          description="Giá cơ bản và phụ thu phòng đơn mặc định."
           icon={Coins}
         >
-          <label htmlFor="tour-base-price" className="sr-only">
-            Giá tour (VNĐ)
-          </label>
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="tour-base-price" className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-[#26324e]">
+                <Coins size={14} className="text-[#0868f9]" />
+                Giá cơ bản (Người lớn)
+              </label>
               <VndPriceInput
                 id="tour-base-price"
                 value={tour.base_price ?? 0}
@@ -254,6 +258,25 @@ export function TourSidebar<T extends TourDetailForm>({
                 }
                 placeholder="Ví dụ: 5.000.000"
               />
+            </div>
+            <div>
+              <label htmlFor="tour-single-room-surcharge" className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-[#26324e]">
+                <BedDouble size={14} className="text-[#0868f9]" />
+                + Phòng đơn (mặc định)
+              </label>
+              <VndPriceInput
+                id="tour-single-room-surcharge"
+                value={tour.single_room_surcharge ?? 0}
+                onChange={(value) =>
+                  onTourChange((previous) => ({
+                    ...previous,
+                    single_room_surcharge: Number(value),
+                  }))
+                }
+                placeholder="Ví dụ: 1.000.000"
+              />
+            </div>
+          </div>
         </TourEditorCard>
         <button
           type="button"

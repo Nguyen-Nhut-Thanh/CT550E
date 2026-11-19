@@ -3,14 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { prisma } from 'database';
 import { AppModule } from './app.module';
-import { getCorsOrigins } from './config/cors';
+import { getAllowedOrigins } from './config/urls';
 export async function bootstrap(): Promise<void> {
     const logger = new Logger('Startup');
     let app: INestApplication | undefined;
     try {
         app = await NestFactory.create(AppModule);
         app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-        app.enableCors({ origin: getCorsOrigins(), credentials: true });
+        app.enableCors({ origin: getAllowedOrigins(), credentials: true });
         app.useWebSocketAdapter(new IoAdapter(app));
         app.enableShutdownHooks();
         // Nest initializes database providers before it starts accepting requests.

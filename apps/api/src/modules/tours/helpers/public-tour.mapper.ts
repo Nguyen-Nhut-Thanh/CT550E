@@ -101,11 +101,12 @@ export function buildCardSelect(scheduleFilter: Prisma.tour_schedulesWhereInput 
 export function filterAndPriceSchedules<T extends PublicScheduleRecord>(
     schedules: T[] | undefined | null,
     cutOffHours?: number | null,
-    options?: { now?: Date; onlyFlashDeal?: boolean },
+    options?: { now?: Date; onlyFlashDeal?: boolean; includeSoldOut?: boolean },
 ) {
     const now = options?.now ?? new Date();
     const minHours = cutOffHours ?? 24;
     const onlyFlashDeal = options?.onlyFlashDeal === true;
+    const includeSoldOut = options?.includeSoldOut === true;
     if (!Array.isArray(schedules)) return [];
 
     return schedules
@@ -115,19 +116,46 @@ export function filterAndPriceSchedules<T extends PublicScheduleRecord>(
             const isTimeValid = diffHours >= minHours;
             const hasSpace = (s.quota || 0) > (s.booked_count || 0);
             if (onlyFlashDeal) {
-                return isTimeValid && hasSpace && Boolean(s.flash_deals);
+                return isTimeValid && (hasSpace || includeSoldOut) && Boolean(s.flash_deals);
             }
-            return isTimeValid && hasSpace;
+            return isTimeValid && (hasSpace || includeSoldOut);
         })
         .map((s: T) => {
             const pricing = calculateSchedulePricing(s, now);
+            const promo = pricing.flash_deals
+              ? { type: pricing.flash_deals.discount_type, value: Number(pricing.flash_deals.discount_value) }
+              : pricing.schedule_promotions
+                ? { type: pricing.schedule_promotions.discount_type, value: Number(pricing.schedule_promotions.discount_value) }
+                : null;
+
+            const updatedPrices = promo && Array.isArray((s as any).tour_schedule_prices)
+              ? (s as any).tour_schedule_prices.map((p: any) => {
+                  const pType = String(p.passenger_type || '').toUpperCase();
+                  if (pType === 'ADULT' || pType === 'CHILD') {
+                    const base = Number(p.price || 0);
+                    if (base > 0) {
+                      return {
+                        ...p,
+                        price: applyDiscount(base, promo.type, promo.value),
+                        original_price: base,
+                      };
+                    }
+                  }
+                  return p;
+                })
+              : (s as any).tour_schedule_prices;
+
             return {
                 ...s,
                 price: pricing.effectivePrice,
                 original_price: pricing.originalPrice,
-                flash_deal: pricing.flashDeal,
-                schedule_promotions: s.schedule_promotions || null,
-                schedule_promotion: pricing.schedulePromotion,
+                single_room_surcharge:
+                  (s as any).single_room_surcharge != null
+                    ? Number((s as any).single_room_surcharge)
+                    : 0,
+                flash_deals: pricing.flash_deals,
+                schedule_promotions: pricing.schedule_promotions,
+                ...(updatedPrices ? { tour_schedule_prices: updatedPrices } : {}),
             };
         });
 }

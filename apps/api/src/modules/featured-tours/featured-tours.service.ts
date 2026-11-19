@@ -4,7 +4,7 @@ import { slugify } from "shared";
 import { startOfToday } from "../../common/utils/dates";
 import { toNumber } from "../../common/utils/numbers";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { queryBestSellerStats } from '../tours/best-seller.helper';
+import { queryBestSellerStats } from '../tours/helpers';
 import type { FeaturedTourItem, } from 'shared';
 @Injectable()
 export class FeaturedToursService {

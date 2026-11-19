@@ -1,7 +1,7 @@
 import { publicFetch } from "@/lib/http/publicFetch";
 import { requestWithToken } from "@/lib/http/requestWithToken";
 import { getToken } from "@/lib/auth/client/session";
-import type { BookingExtraService, BookingPayload, PaymentStatusResponse, PaymentUrlResponse, PublicTourDetail, VoucherValidationApiResponse } from "shared";
+import type { BookingExtraService, BookingPayload, PaymentStatusResponse, PaymentUrlResponse, PublicTourDetail, ScheduleConflict, VoucherValidationApiResponse } from "shared";
 
 export function getBookingExtraServices() {
   return publicFetch<BookingExtraService[]>("/public/booking-services", { cache: "no-store" });
@@ -34,14 +34,7 @@ export function checkBookingConflicts(payload: {
 }) {
   return requestWithToken<{
     hasConflict: boolean;
-    conflicts: Array<{
-      travelerName: string;
-      idNumber: string;
-      tourName: string;
-      startDate: string;
-      endDate: string;
-      bookingId: number;
-    }>;
+    conflicts: ScheduleConflict[];
   }>("/bookings/check-conflicts", {
     method: "POST",
     headers: {
@@ -89,6 +82,25 @@ export function requestBookingCancellation(
     message: string;
     estimate?: import("shared").CancellationEstimate;
   }>(`/bookings/${id}/cancel-request`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function resolveBookingProposal(
+  id: number,
+  payload: {
+    decision: "full_refund" | "reschedule" | "contact_support";
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankAccountName?: string;
+    supportNote?: string;
+  },
+) {
+  return requestWithToken<{ success?: boolean }>(`/bookings/${id}/resolve-proposal`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,6 +1,7 @@
 import type { PublicTourDetail, TourSchedule } from "../tours/models";
 import type { VoucherValidationResult } from "../vouchers/models";
 import type { PaymentMethod, PricingSummary, TravelerForm, TravelerType } from "./models";
+import type { MembershipTier } from "../membership/models";
 export interface BookingContactFormProps {
     contactName: string;
     contactPhone: string;
@@ -53,7 +54,7 @@ export interface BookingTravelersListProps {
     singleRoomUnitPrice: number;
     getUnitPrice: (schedule: TourSchedule | null, type: TravelerType) => number;
     onUpdateTraveler: (index: number, field: keyof TravelerForm, value: string) => void;
-    onUpdateSingleRoomSelection: (adultIndex: number, checked: boolean) => void;
+    onUpdateSingleRoomSelection: (travelerIndex: number, checked: boolean) => void;
     travelerErrors?: Record<number, { fullName?: string; idNumber?: string; birthday?: string }>;
 }
 export interface BookingVoucherAndPaymentProps {
@@ -67,4 +68,6 @@ export interface BookingVoucherAndPaymentProps {
     onOpenAvailableVouchers?: () => void;
     availableVouchersOpen?: boolean;
     onPaymentMethodChange: (method: PaymentMethod) => void;
+    memberTier?: MembershipTier | null;
+    pricing?: PricingSummary;
 }

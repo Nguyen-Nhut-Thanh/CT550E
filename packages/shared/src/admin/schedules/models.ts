@@ -15,6 +15,7 @@ export type TourInfo = {
     name?: string | null;
     duration_days?: number | null;
     base_price?: number | string | null;
+    single_room_surcharge?: number | string | null;
     cut_off_hours?: number | null;
 };
 export type HotelItem = {
@@ -69,6 +70,7 @@ export type ScheduleDetailResponse = {
     start_date?: string | null;
     end_date?: string | null;
     price?: number | null;
+    single_room_surcharge?: number | null;
     quota?: number | null;
     booked_count?: number | null;
     status?: number | null;
@@ -96,6 +98,7 @@ export type ScheduleEditorScheduleDetailResponse = Omit<ScheduleDetailResponse, 
 export type ScheduleLike = Pick<AdminSchedule, 'start_date' | 'quota' | 'status'> & {
     booked_count?: number;
     schedule_promotions?: import('./promotions').SchedulePromotion | null;
+    flash_deals?: import('../flash-deals/models').FlashDealRecord | null;
     _count?: {
         bookings?: number;
     };
@@ -108,10 +111,12 @@ export type AdminSchedule = {
     start_date: string;
     end_date: string;
     price: string | number;
+    single_room_surcharge?: string | number;
     quota: number;
     status: number;
     booked_count?: number;
     schedule_promotions?: import('./promotions').SchedulePromotion | null;
+    flash_deals?: import('../flash-deals/models').FlashDealRecord | null;
     _count?: {
         bookings: number;
     };

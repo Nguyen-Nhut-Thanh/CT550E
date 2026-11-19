@@ -1,11 +1,11 @@
-import { Phone, UsersRound } from "lucide-react";
+import { Mail, Phone, UsersRound } from "lucide-react";
 import { CREW_ROLES, type BookingDetail } from "shared";
 
 export function BookingCrewCard({ booking }: { booking: BookingDetail }) {
   if (!["paid", "completed"].includes(booking.status)) return null;
   const snapshot = booking.tour_schedules?.crew_snapshot;
   return (
-    <section className="rounded-2xl border border-[#dfeafb] bg-white p-5">
+    <section className="rounded-2xl border border-[#dfeafb] bg-white p-5 shadow-[0_3px_18px_#c9e9fa08]">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-base font-bold text-[#15264a]">
           <UsersRound size={19} className="text-blue-600" />
@@ -41,9 +41,9 @@ export function BookingCrewCard({ booking }: { booking: BookingDetail }) {
             {snapshot.members.map((member) => (
               <div
                 key={member.user_id}
-                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition hover:bg-slate-50 hover:border-blue-100"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-xs font-bold text-blue-600">
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-xs font-bold text-blue-600 shadow-2xs">
                   {member.full_name
                     .split(" ")
                     .filter(Boolean)
@@ -51,24 +51,48 @@ export function BookingCrewCard({ booking }: { booking: BookingDetail }) {
                     .map((word) => word[0])
                     .join("")}
                 </span>
-                <div className="min-w-0">
-                  <p className="font-semibold text-[#15264a]">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-[#15264a] text-sm">
                     {member.full_name}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs font-medium text-slate-500">
                     {member.roles
                       .map((role) => CREW_ROLES[role])
                       .join(" kiêm ")}
                   </p>
-                  {member.phone && (
-                    <a
-                      href={`tel:${member.phone.replace(/[^\d+]/g, "")}`}
-                      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600"
-                    >
-                      <Phone size={13} />
-                      {member.phone}
-                    </a>
-                  )}
+                  <div className="mt-2.5 flex flex-col gap-1.5 text-xs">
+                    {member.phone ? (
+                      <a
+                        href={`tel:${member.phone.replace(/[^\d+]/g, "")}`}
+                        className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                        title="Gọi điện"
+                      >
+                        <Phone size={13} className="shrink-0 text-blue-500" />
+                        <span>{member.phone}</span>
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-slate-400">
+                        <Phone size={13} className="shrink-0 text-slate-300" />
+                        <span>Chưa cập nhật SĐT</span>
+                      </span>
+                    )}
+
+                    {member.email ? (
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-700 hover:underline truncate"
+                        title="Gửi email"
+                      >
+                        <Mail size={13} className="shrink-0 text-blue-500" />
+                        <span className="truncate">{member.email}</span>
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-slate-400">
+                        <Mail size={13} className="shrink-0 text-slate-300" />
+                        <span>Chưa cập nhật email</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

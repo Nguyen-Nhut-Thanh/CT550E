@@ -20,7 +20,7 @@ import type { ScheduleTablePanelProps } from "shared";
 import { ScheduleRowActions } from "@/components/schedules/schedule_table/AdminScheduleRowActions";
 import { ScheduleTableSkeleton } from "@/components/schedules/schedule_table/AdminScheduleTableSkeleton";
 import { useAdminContentReadOnly } from '@/components/common/admin_shared/guards/AdminContentPermission';
-import { ADMIN_CONTENT_DENIED } from 'shared';
+import { ADMIN_CONTENT_DENIED, applyDiscount } from 'shared';
 
 export function ScheduleTablePanel({
   selectedTourId,
@@ -40,6 +40,7 @@ export function ScheduleTablePanel({
   onPageChange,
   onViewManifest,
   onConfigurePromotion,
+  onConfigureFlashDeal,
   pendingIds = [],
 }: ScheduleTablePanelProps) {
   const readOnly = useAdminContentReadOnly();
@@ -168,6 +169,74 @@ export function ScheduleTablePanel({
                   const status = getScheduleStatusMeta(schedule, {
                     isParentHidden: selectedTour?.status === 0,
                   });
+
+                  // Tính giá khuyến mãi / flash deal nếu có
+                  const originalPrice = Number(schedule.price) || 0;
+                  const flashDeal =
+                    (schedule as any).flash_deals ||
+                    (schedule as any).flash_deal;
+                  const promo =
+                    schedule.schedule_promotions ||
+                    (schedule as any).schedule_promotion;
+
+                  let discountedPrice: number | null = null;
+                  let dealBadge: {
+                    icon: string;
+                    text: string;
+                    title?: string;
+                    active: boolean;
+                  } | null = null;
+
+                  if (
+                    flashDeal &&
+                    (flashDeal.status === 1 || flashDeal.status === undefined) &&
+                    Number(flashDeal.discount_value) > 0
+                  ) {
+                    discountedPrice = applyDiscount(
+                      originalPrice,
+                      flashDeal.discount_type,
+                      Number(flashDeal.discount_value),
+                    );
+                    dealBadge = {
+                      icon: "⚡",
+                      text:
+                        flashDeal.discount_type === "percentage"
+                          ? `-${flashDeal.discount_value}%`
+                          : `-${formatVND(Number(flashDeal.discount_value))}`,
+                      active: true,
+                    };
+                  } else if (
+                    promo &&
+                    promo.is_active &&
+                    Number(promo.discount_value) > 0
+                  ) {
+                    discountedPrice = applyDiscount(
+                      originalPrice,
+                      promo.discount_type,
+                      Number(promo.discount_value),
+                    );
+                    dealBadge = {
+                      icon: "🎁",
+                      text:
+                        promo.discount_type === "percentage"
+                          ? `-${promo.discount_value}%`
+                          : `-${formatVND(Number(promo.discount_value))}`,
+                      title: promo.title,
+                      active: true,
+                    };
+                  } else if (promo && !promo.is_active) {
+                    dealBadge = {
+                      icon: "🎁",
+                      text: `${
+                        promo.discount_type === "percentage"
+                          ? `-${promo.discount_value}%`
+                          : `-${formatVND(Number(promo.discount_value))}`
+                      } (Tắt)`,
+                      title: promo.title,
+                      active: false,
+                    };
+                  }
+
                   return (
                     <tr key={schedule.tour_schedule_id}>
                       <td>
@@ -205,26 +274,40 @@ export function ScheduleTablePanel({
                         </div>
                       </td>
                       <td>
-                        <strong className="ui-schedule-overview-schedulePrice text-[13px] font-[750] text-[#152a4d]">
-                          {formatVND(schedule.price)}
-                        </strong>
-                        <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[4px] text-[11px] text-[#7d93b9]">
-                          / khách
-                        </span>
-                        {schedule.schedule_promotions && (
+                        {discountedPrice !== null && discountedPrice < originalPrice ? (
+                          <div>
+                            <span className="text-[11px] font-medium text-slate-400 line-through block leading-tight">
+                              {formatVND(originalPrice)}
+                            </span>
+                            <strong className="text-[13px] font-extrabold text-rose-600 block mt-0.5 leading-tight">
+                              {formatVND(discountedPrice)}
+                            </strong>
+                            <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[2px] text-[10.5px] text-[#7d93b9]">
+                              / khách
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <strong className="ui-schedule-overview-schedulePrice text-[13px] font-[750] text-[#152a4d] block">
+                              {formatVND(originalPrice)}
+                            </strong>
+                            <span className="ui-schedule-overview-subtext flex items-center gap-[5px] mt-[3px] text-[11px] text-[#7d93b9]">
+                              / khách
+                            </span>
+                          </div>
+                        )}
+
+                        {dealBadge && (
                           <div className="mt-1.5 flex items-center gap-1">
                             <span
                               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold shadow-2xs ${
-                                schedule.schedule_promotions.is_active
+                                dealBadge.active
                                   ? "bg-amber-100 text-amber-900 border border-amber-300"
                                   : "bg-slate-100 text-slate-500 border border-slate-200"
                               }`}
-                              title={schedule.schedule_promotions.title}
+                              title={dealBadge.title}
                             >
-                              🎁 {schedule.schedule_promotions.discount_type === "percentage"
-                                ? `-${schedule.schedule_promotions.discount_value}%`
-                                : `-${formatVND(schedule.schedule_promotions.discount_value)}`}
-                              {!schedule.schedule_promotions.is_active && " (Tắt)"}
+                              {dealBadge.icon} {dealBadge.text}
                             </span>
                           </div>
                         )}
@@ -282,6 +365,7 @@ export function ScheduleTablePanel({
                           onToggleStatus={onToggleStatus}
                           onViewManifest={onViewManifest}
                           onConfigurePromotion={onConfigurePromotion}
+                          onConfigureFlashDeal={onConfigureFlashDeal}
                         />
                       </td>
                     </tr>

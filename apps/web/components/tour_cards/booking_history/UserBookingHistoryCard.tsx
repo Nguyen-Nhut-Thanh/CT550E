@@ -4,7 +4,8 @@ import { openSupportChat } from "@/lib/chat/support";
 import { formatVND } from "@/lib/utils/currency";
 import { normalizeImageSrc, PLACEHOLDER_IMAGE } from "@/lib/utils/images";
 import { AdminRowActions } from "@/components/common/admin_shared/tables/AdminRowActions";
-import { CalendarDays, CheckCircle2, Clock, CreditCard, Eye, Globe2, MapPin, MessageCircle, Plane, RotateCcw, Star, Users, XCircle } from "lucide-react";
+import { Tooltip } from "@/components/common/dialogs_and_feedback/dialogs/Tooltip";
+import { CalendarDays, CheckCircle2, Clock, CreditCard, Eye, Globe2, Info, MapPin, MessageCircle, Plane, RotateCcw, Star, Users, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useId } from "react";
@@ -21,25 +22,34 @@ export function BookingHistoryCard({ item, rawBooking, onReview, onCancelRequest
   const imageSrc = normalizeImageSrc(item.image) || PLACEHOLDER_IMAGE;
   const waveId = `booking-history-wave-${useId().replace(/:/g, "")}`;
   const isCancelRequested = rawBooking?.status === "cancel_requested" || (item.status === "unknown" && item.statusText === "Đang yêu cầu hủy");
-  const isCancellable = item.status !== "cancelled" && item.status !== "completed";
+  const isCancellable = item.status !== "cancelled" && item.status !== "completed" && item.status !== "ongoing";
   const bookingDate = item.createdAt
     ? new Date(item.createdAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
     : null;
   const isInternational = item.tourType === "outbound" || item.tourType === "international";
+  const isYellowTag = Boolean(item.isCancelUnapproved);
   const statusLabel = item.paymentStatus === "unpaid" && item.status === "upcoming" ? "Chờ thanh toán" : item.statusText;
-  const statusClass = item.status === "cancelled"
-    ? "border-rose-200 bg-rose-50 text-rose-700"
-    : item.status === "completed"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : item.status === "ongoing"
-        ? "border-blue-200 bg-blue-50 text-blue-700"
-        : item.paymentStatus === "unpaid"
-          ? "border-amber-200 bg-amber-50 text-amber-800"
-          : "border-sky-200 bg-sky-50 text-sky-700";
-  const StatusIcon = item.status === "cancelled" ? XCircle : item.status === "completed" ? CheckCircle2 : Clock;
+  const statusClass = isYellowTag
+    ? "border-amber-300 bg-amber-50 text-amber-900"
+    : item.status === "cancelled"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : item.status === "completed"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : item.status === "ongoing"
+          ? "border-blue-200 bg-blue-50 text-blue-700"
+          : item.paymentStatus === "unpaid"
+            ? "border-amber-200 bg-amber-50 text-amber-800"
+            : "border-sky-200 bg-sky-50 text-sky-700";
+  const StatusIcon = isYellowTag
+    ? Clock
+    : item.status === "cancelled"
+      ? XCircle
+      : item.status === "completed"
+        ? CheckCircle2
+        : Clock;
 
   return (
-    <article className="group relative flex w-full min-w-0 flex-col gap-3 overflow-visible rounded-[24px] border border-blue-100/80 bg-white p-3 shadow-[0_12px_32px_rgba(30,64,175,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(30,64,175,0.12)] sm:p-3.5 md:flex-row md:gap-3.5">
+    <article className="group relative flex w-full min-w-0 flex-col gap-3 overflow-visible rounded-[24px] border border-blue-100/80 bg-white p-3 shadow-[0_12px_32px_rgba(30,64,175,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(30,64,175,0.12)] hover:z-20 sm:p-3.5 md:flex-row md:gap-3.5">
       <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
         <defs>
           <clipPath id={`${waveId}-main`} clipPathUnits="objectBoundingBox">
@@ -138,11 +148,44 @@ export function BookingHistoryCard({ item, rawBooking, onReview, onCancelRequest
               <span className="block truncate text-base font-extrabold leading-tight tracking-tight text-[#1266f1]">{formatVND(item.price)}</span>
             </span>
           </div>
-          <div className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-bold sm:self-auto ${statusClass}`}>
-            <StatusIcon className="h-3 w-3" />
-            <span>{statusLabel}</span>
-            {item.status === "ongoing" && <Plane className="h-3 w-3 -rotate-12" />}
-          </div>
+          {(() => {
+            const badgeContent = (
+              <div
+                tabIndex={item.statusReason ? 0 : undefined}
+                className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-bold sm:self-auto transition-all select-none ${
+                  item.statusReason ? "cursor-help hover:brightness-95" : ""
+                } ${statusClass}`}
+              >
+                <StatusIcon className="h-3 w-3 shrink-0" />
+                <span>{statusLabel}</span>
+                {item.status === "ongoing" && <Plane className="h-3 w-3 -rotate-12 shrink-0" />}
+                {item.statusReason && <Info className="h-3 w-3 opacity-60 ml-0.5 shrink-0" />}
+              </div>
+            );
+
+            if (!item.statusReason) return badgeContent;
+
+            return (
+              <Tooltip
+                trigger={badgeContent}
+                placement="top"
+                align="right"
+                className="inline-flex shrink-0 sm:self-auto"
+                contentClassName="!min-w-0 w-max max-w-[300px] p-3 text-xs shadow-xl border border-slate-200 bg-white rounded-2xl z-50 text-left pointer-events-none"
+                content={
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-800 text-[13px]">
+                      <Info className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>{isYellowTag ? "Yêu cầu hủy không được duyệt" : "Lý do / Ghi chú"}</span>
+                    </div>
+                    <p className="text-[12.5px] text-slate-700 leading-snug font-medium">
+                      {item.statusReason}
+                    </p>
+                  </div>
+                }
+              />
+            );
+          })()}
         </div>
       </div>
     </article>

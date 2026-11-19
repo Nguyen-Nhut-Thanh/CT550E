@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { finalizeCrewIfReady } from './crew-finalization';
+import { finalizeCrewIfReady } from './helpers';
 
 @Injectable()
 export class CrewFinalizationService implements OnApplicationBootstrap, OnModuleDestroy {

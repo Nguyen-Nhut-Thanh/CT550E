@@ -271,4 +271,105 @@ export class MailService {
         `),
         });
     }
+
+    async sendCancelProposedEmail(params: {
+        email: string;
+        contactName: string;
+        bookingId: number;
+        tourName: string;
+        reason: string;
+        optionsText: string;
+        actionUrl?: string;
+    }) {
+        const infoItems: [string, string][] = [
+            ['Mã booking', `#${params.bookingId}`],
+            ['Tour', params.tourName],
+            ['Lý do hủy/hoãn', params.reason],
+            ['Phương án hỗ trợ', params.optionsText],
+        ];
+
+        await this.sendMail({
+            to: params.email,
+            subject: `[Thông báo quan trọng] Phương án giải quyết booking #${params.bookingId}`,
+            html: renderLayout(
+                `Kính gửi ${params.contactName || 'quý khách'},`,
+                'Chúng tôi vô cùng lấy làm tiếc thông báo chuyến đi của quý khách tạm hoãn do sự cố vận hành/thời tiết. Ban quản lý đã đề xuất phương án giải quyết để quý khách lựa chọn.',
+                `
+          ${renderInfoCard(infoItems, 'warning')}
+          <div style="margin-top: 16px; text-align: center;">
+            <p style="font-size: 14px; color: #475569; margin-bottom: 12px;">Vui lòng truy cập trang chi tiết đơn hàng để xác nhận phương án giải quyết (Hoàn tiền hoặc Dời ngày):</p>
+            <a href="${params.actionUrl || `https://travol.vn/booking/${params.bookingId}`}" style="display: inline-block; padding: 10px 22px; background-color: #0284c7; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">Xem chi tiết & Xác nhận phương án</a>
+          </div>
+          <p style="margin-top: 16px; font-size: 13px; color: #64748b;">Nếu quý khách cần hỗ trợ thêm, vui lòng liên hệ hotline hoặc chat trực tiếp trên hệ thống Travol.</p>
+        `,
+            ),
+        });
+    }
+
+    async sendRefundTransferredEmail(params: {
+        email: string;
+        contactName: string;
+        bookingId: number;
+        tourName: string;
+        refundAmount: number;
+        bankName?: string;
+        accountNumber?: string;
+        transactionCode?: string;
+    }) {
+        const infoItems: [string, string][] = [
+            ['Mã booking', `#${params.bookingId}`],
+            ['Tour', params.tourName],
+            ['Số tiền hoàn', `${formatCurrency(params.refundAmount)}đ`],
+            ...(params.bankName ? [['Ngân hàng thụ hưởng', params.bankName] as [string, string]] : []),
+            ...(params.accountNumber ? [['Số tài khoản', params.accountNumber] as [string, string]] : []),
+            ...(params.transactionCode ? [['Mã giao dịch', params.transactionCode] as [string, string]] : []),
+            ['Thời gian chuyển tiền', formatDateTime(new Date())],
+        ];
+
+        await this.sendMail({
+            to: params.email,
+            subject: `Hoàn tiền thành công cho đơn đặt tour #${params.bookingId}`,
+            html: renderLayout(
+                `Kính gửi ${params.contactName || 'quý khách'},`,
+                'Ban quản lý xin thông báo khoản tiền hoàn cho chuyến đi của quý khách đã được chuyển khoản thành công.',
+                `
+          ${renderInfoCard(infoItems, 'success')}
+          <p style="margin: 0;">Tiền có thể mất vài phút đến 24 giờ để hiển thị tùy thuộc vào ngân hàng thụ hưởng. Cảm ơn quý khách đã tin tưởng Travol!</p>
+        `,
+            ),
+        });
+    }
+
+    async sendRescheduleConfirmedEmail(params: {
+        email: string;
+        contactName: string;
+        bookingId: number;
+        tourName: string;
+        newStartDate?: string | Date | null;
+        newEndDate?: string | Date | null;
+        priceDifference?: number;
+    }) {
+        const infoItems: [string, string][] = [
+            ['Mã booking', `#${params.bookingId}`],
+            ['Tour', params.tourName],
+            ['Khởi hành mới', formatDateTime(params.newStartDate)],
+            ['Kết thúc mới', formatDateTime(params.newEndDate)],
+            ...(typeof params.priceDifference === 'number'
+                ? [['Chênh lệch giá', params.priceDifference === 0 ? '0đ (Bằng giá)' : params.priceDifference > 0 ? `+${formatCurrency(params.priceDifference)}đ` : `-${formatCurrency(Math.abs(params.priceDifference))}đ (Đã ghi nhận hoàn)`] as [string, string]]
+                : []),
+        ];
+
+        await this.sendMail({
+            to: params.email,
+            subject: `Xác nhận dời lịch thành công cho booking #${params.bookingId}`,
+            html: renderLayout(
+                `Kính gửi ${params.contactName || 'quý khách'},`,
+                'Yêu cầu dời lịch khởi hành của quý khách đã được xác nhận thành công trên hệ thống.',
+                `
+          ${renderInfoCard(infoItems, 'success')}
+          <p style="margin: 0;">Chúng tôi rất hân hạnh được đồng hành cùng quý khách trong chuyến đi sắp tới. Chúc quý khách một hành trình tuyệt vời!</p>
+        `,
+            ),
+        });
+    }
 }

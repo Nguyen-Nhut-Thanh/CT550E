@@ -12,6 +12,7 @@ import { parseCalendarDate, startOfDay } from "@/lib/utils/calendar";
 import { formatLocalDate } from "@/lib/utils/dateTime";
 import {
   Baby,
+  BedDouble,
   CalendarDays,
   Clock3,
   Coins,
@@ -186,7 +187,7 @@ export function ScheduleBasicInfoCard({
           Bảng giá chi tiết (VNĐ)
           <span aria-hidden="true" className="ml-2 h-px flex-1 bg-[#dfebf8]" />
         </h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {form.prices.map((item) => {
             const adult = item.passenger_type === "adult";
             const Icon = adult
@@ -203,13 +204,13 @@ export function ScheduleBasicInfoCard({
             return (
               <div
                 key={item.passenger_type}
-                className="min-w-0 rounded-[17px] bg-[linear-gradient(135deg,#f6faff,#edf5ff)] p-3.5"
+                className="min-w-0 rounded-[17px] bg-[linear-gradient(135deg,#f6faff,#edf5ff)] px-3.5 pt-3 pb-2.5"
               >
                 <label
                   htmlFor={inputId}
-                  className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"
+                  className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"
                 >
-                  <Icon size={19} className="text-[#0868f9]" />
+                  <Icon size={19} className="shrink-0 text-[#0868f9]" />
                   {label}
                 </label>
                 <PriceInput
@@ -235,6 +236,31 @@ export function ScheduleBasicInfoCard({
               </div>
             );
           })}
+          <div className="min-w-0 rounded-[17px] bg-[linear-gradient(135deg,#f6faff,#edf5ff)] px-3.5 pt-3 pb-2.5">
+            <label
+              htmlFor="schedule-single-room-surcharge"
+              className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-[#26324e]"
+            >
+              <BedDouble size={19} className="shrink-0 text-[#0868f9]" />
+              + Phòng đơn
+            </label>
+            <PriceInput
+              id="schedule-single-room-surcharge"
+              label=""
+              icon={null}
+              suffix=""
+              value={form.single_room_surcharge ?? 0}
+              disabled={isPast}
+              placeholder="0"
+              inputClassName="min-h-10 w-full min-w-0 rounded-[11px] border border-[#d8e4f4] bg-white/65 px-3 py-2 text-[14px] font-bold text-[#0865e9] outline-none focus:border-[#79a8f5] disabled:cursor-not-allowed disabled:bg-[#f5f8fc] disabled:text-[#9ba7b8]"
+              onChange={(price) =>
+                onFormChange((previous) => ({
+                  ...previous,
+                  single_room_surcharge: price,
+                }))
+              }
+            />
+          </div>
         </div>
       </div>
     </ScheduleEditorCard>

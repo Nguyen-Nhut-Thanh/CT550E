@@ -175,14 +175,14 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                   </td>
                 </tr>
               ) : (
-                workforce.topStaff.map((staff) => {
+                workforce.topStaff.map((staff, idx) => {
                   const rate =
                     staff.assignedCount > 0
                       ? Math.round((staff.completedCount / staff.assignedCount) * 100)
                       : 100;
                   return (
                     <tr
-                      key={staff.userId}
+                      key={`${staff.userId}-${idx}`}
                       className="hover:bg-slate-50/60 transition-colors"
                     >
                       <td className="py-3 px-4">
@@ -216,9 +216,9 @@ export function AnalyticsWorkforceTab({ data }: AnalyticsWorkforceTabProps) {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
-                          {staff.roles.map((r) => (
+                          {staff.roles.map((r, rIdx) => (
                             <span
-                              key={r}
+                              key={`${r}-${rIdx}`}
                               className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
                             >
                               {r === "guide"

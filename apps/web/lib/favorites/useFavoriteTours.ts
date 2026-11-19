@@ -1,6 +1,6 @@
 "use client";
 
-import { getToken } from "@/lib/auth/client/session";
+import { getToken, removeToken } from "@/lib/auth/client/session";
 import { addFavoriteTour, getFavoriteIds, removeFavoriteTour } from "@/lib/favorites/api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToggleFavoriteResult } from "shared";
@@ -166,6 +166,21 @@ export function useFavoriteTours() {
           action: currentlyFavorite ? "removed" : "added",
         };
       } catch(error) {
+        const msg = error instanceof Error ? error.message : "";
+        const isAuthError =
+          msg.toLowerCase().includes("unauthorized") ||
+          msg.toLowerCase().includes("đăng nhập") ||
+          msg.includes("401");
+
+        if (isAuthError) {
+          removeToken();
+          return {
+            ok: false,
+            reason: "unauthenticated",
+            message: "Vui lòng đăng nhập để lưu tour yêu thích.",
+          };
+        }
+
         return {
           ok: false,
           reason: "error",

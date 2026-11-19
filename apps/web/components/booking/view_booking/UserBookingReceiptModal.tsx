@@ -88,11 +88,31 @@ export function BookingReceiptModal({
     ? formatDate(payment.paid_at, true)
     : formatDate(b.created_at, true);
 
+  const origAdultPrice = Number(b.membership_snapshot?.originalAdultPrice) || Number(b.adult_unit_price) || 0;
+  const origChildPrice = Number(b.membership_snapshot?.originalChildPrice) || Number(b.child_unit_price) || 0;
+  const promoDiscount = Number(b.membership_snapshot?.promoDiscount) || 0;
+  const promoTitle = b.membership_snapshot?.promoTitle || (b.membership_snapshot?.promoType === "flash_deal" ? "Flash Deal" : (b.membership_snapshot?.promoType === "schedule_promotion" ? "Ưu đãi đợt" : null));
+
   // Chi tiết giá vé
   const rows = [
-    { label: "Người lớn", quantity: b.adult_count, price: Number(b.adult_unit_price) || 0 },
-    { label: "Trẻ em", quantity: b.child_count, price: Number(b.child_unit_price) || 0 },
-    { label: "Em bé", quantity: b.infant_count, price: Number(b.infant_unit_price) || 0 },
+    {
+      label: "Người lớn",
+      quantity: b.adult_count,
+      price: Number(b.adult_unit_price) || 0,
+      origPrice: origAdultPrice > Number(b.adult_unit_price) ? origAdultPrice : null,
+    },
+    {
+      label: "Trẻ em",
+      quantity: b.child_count,
+      price: Number(b.child_unit_price) || 0,
+      origPrice: origChildPrice > Number(b.child_unit_price) ? origChildPrice : null,
+    },
+    {
+      label: "Em bé",
+      quantity: b.infant_count,
+      price: Number(b.infant_unit_price) || 0,
+      origPrice: null,
+    },
   ];
   const tickets = rows.reduce((sum, row) => sum + row.quantity * row.price, 0);
   const discount = Number(b.discount_amount) || 0;
@@ -102,7 +122,7 @@ export function BookingReceiptModal({
     Math.round((Number(b.total_amount) + discount - tickets - services) * 100) / 100,
   );
   const extras = Array.isArray(b.additional_services) ? b.additional_services : [];
-  const subtotal = tickets + services + surcharge;
+  const subtotal = tickets + promoDiscount + services + surcharge;
 
   // Xử lý hoàn tiền khi hủy
   const cancelReq = parsedNote.cancelRequest;
@@ -459,7 +479,14 @@ export function BookingReceiptModal({
                         <tr key={row.label}>
                           <td className="px-3.5 py-2 font-medium text-slate-800">{row.label}</td>
                           <td className="px-3.5 py-2 text-center text-slate-600">{row.quantity}</td>
-                          <td className="px-3.5 py-2 text-right text-slate-600">{money(row.price)}</td>
+                          <td className="px-3.5 py-2 text-right text-slate-600">
+                            {row.origPrice && (
+                              <span className="block text-[10px] text-slate-400 line-through">
+                                {money(row.origPrice)}
+                              </span>
+                            )}
+                            <span>{money(row.price)}</span>
+                          </td>
                           <td className="px-3.5 py-2 text-right font-bold text-slate-900">
                             {money(row.quantity * row.price)}
                           </td>
@@ -633,15 +660,21 @@ export function BookingReceiptModal({
                     {!isCancelled ? (
                       <>
                         <div className="flex justify-between sm:justify-end gap-4">
-                          <span>Tạm tính:</span>
+                          <span>Tạm tính (giá gốc):</span>
                           <strong className="text-slate-800">{money(subtotal)}</strong>
                         </div>
-                        <div className="flex justify-between sm:justify-end gap-4">
-                          <span>Giảm giá:</span>
-                          <span className="font-semibold text-rose-600">
-                            {discount > 0 ? `-${money(discount)}` : "0 đ"}
-                          </span>
-                        </div>
+                        {promoDiscount > 0 && (
+                          <div className="flex justify-between sm:justify-end gap-4 text-rose-600">
+                            <span>{promoTitle || "Ưu đãi / Flash Deal"}:</span>
+                            <span className="font-semibold">−{money(promoDiscount)}</span>
+                          </div>
+                        )}
+                        {discount > 0 && (
+                          <div className="flex justify-between sm:justify-end gap-4 text-emerald-600">
+                            <span>Giảm giá (Voucher / Thành viên):</span>
+                            <span className="font-semibold">−{money(discount)}</span>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <>

@@ -13,7 +13,7 @@ export const crewDetails = {
       full_name: true,
       phone: true,
       is_staff: true,
-      accounts: { select: { status: true } },
+      accounts: { select: { status: true, email: true } },
       employee_profile: { select: { status: true, regions: true } },
       role_users: { select: { roles: { select: { name: true } } } },
     },
@@ -117,7 +117,7 @@ export async function notifyCrewCustomers(
   const contacts = snapshot.members
     .map(
       (member) =>
-        `${member.full_name} (${member.roles.map((role) => CREW_ROLES[role]).join(" kiêm ")})${member.phone ? ` · ${member.phone}` : ""}`,
+        `${member.full_name} (${member.roles.map((role) => CREW_ROLES[role]).join(" kiêm ")})${member.phone ? ` · ${member.phone}` : ""}${member.email ? ` · ${member.email}` : ""}`,
     )
     .join("; ");
   const result = await tx.membership_notifications.createMany({
@@ -159,7 +159,8 @@ export async function finalizeCrewIfReady(
     .map((item) => ({
       user_id: item.user_id,
       full_name: item.user.full_name,
-      phone: item.user.phone,
+      phone: item.user.phone ?? null,
+      email: item.user.accounts?.email ?? null,
       roles: (Object.keys(CREW_ROLES) as CrewRole[]).filter((role) =>
         item.roles.includes(role),
       ),
@@ -178,6 +179,7 @@ export async function finalizeCrewIfReady(
           member.user_id,
           member.full_name,
           member.phone,
+          member.email ?? null,
           [...member.roles].sort(),
         ]),
     ]);

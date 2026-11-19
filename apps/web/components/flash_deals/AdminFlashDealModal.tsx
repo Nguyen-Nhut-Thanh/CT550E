@@ -12,6 +12,7 @@ import {
   Loader2,
   Save,
   Tag,
+  Trash2,
   X,
 } from "lucide-react";
 import { useId } from "react";
@@ -21,11 +22,13 @@ import { FlashDealPromotion } from "@/components/flash_deals/AdminFlashDealPromo
 export function FlashDealModal({
   open,
   saving,
+  deleting,
   schedule,
   form,
   onClose,
   onChange,
   onSave,
+  onDelete,
 }: FlashDealModalProps) {
   const id = useId();
   if (!open) return null;
@@ -35,7 +38,7 @@ export function FlashDealModal({
   const invalidPercentage = percentage && form.discount_value > 100;
   const hours = Math.max(0, Number(form.hours_before) || 0);
   const close = () => {
-    if (!saving) onClose();
+    if (!saving && !deleting) onClose();
   };
 
   return (
@@ -45,25 +48,38 @@ export function FlashDealModal({
       describedBy={`${id}-description`}
       overlayClassName="bg-slate-900/50"
     >
-      <div className="ui-flash-deal-modal-modal w-[min(640px,_calc(100vw_-_48px))] max-w-full max-h-[calc(100dvh_-_64px)] min-[1024px]:w-[min(920px,_calc(100vw_-_64px))] min-[1024px]:grid-cols-[280px_minmax(0,_1fr)] admin-max-639:w-full admin-max-639:max-h-[calc(100dvh_-_32px)] my-auto grid overflow-y-auto rounded-[24px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]">
+      <div className="ui-flash-deal-modal-modal w-[min(640px,_calc(100vw_-_48px))] max-w-full max-h-[calc(100dvh_-_32px)] min-[1024px]:w-[min(900px,_calc(100vw_-_48px))] min-[1024px]:grid-cols-[260px_minmax(0,_1fr)] my-auto grid overflow-y-auto rounded-[22px] bg-white shadow-[0_30px_100px_rgba(15,23,42,0.3)]">
         <FlashDealPromotion />
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (!saving && !invalidPercentage && schedule) onSave();
+            if (saving || deleting || invalidPercentage || !schedule) return;
+
+            if (schedule.schedule_promotions) {
+              const promoTitle = (schedule.schedule_promotions as any).title || (schedule.schedule_promotions as any).promotion_title || "Ưu đãi đợt khởi hành";
+              const confirmed = window.confirm(
+                "XÁC NHẬN ƯU TIÊN SỬ DỤNG FLASH DEAL\n\n" +
+                `Đợt khởi hành này hiện đã có: "${promoTitle}".\n\n` +
+                "Khi kích hoạt Flash Deal, hệ thống sẽ tự động ƯU TIÊN áp dụng giá Flash Deal thay vì ưu đãi đợt khởi hành trong khoảng thời gian diễn ra.\n\n" +
+                "Bạn có xác nhận lưu và ưu tiên Flash Deal không?"
+              );
+              if (!confirmed) return;
+            }
+
+            onSave();
           }}
-          className="ui-flash-deal-modal-form [&&]:gap-[18px] [&&]:p-[24px] [&_header_h2]:text-[27px] [&_header_h2]:leading-[1.3] [&_header_p]:text-[14px] [&_.ui-flash-deal-modal-panel]:p-[16px] admin-max-639:[&&]:p-[20px] admin-max-639:[&&]:gap-[16px] admin-max-639:[&_header_h2]:text-[23px] admin-short-desktop:[&&]:gap-[10px] admin-short-desktop:[&&]:p-[20px_24px] admin-short-desktop:[&_header_h2]:text-[26px] admin-short-desktop:[&_header_h2]:leading-[34px] admin-short-desktop:[&_header_p]:mt-[4px] admin-short-desktop:[&_header_p]:text-[14px] admin-short-desktop:[&_header_p]:leading-[20px] admin-short-desktop:[&_.ui-flash-deal-modal-panel]:p-[12px_16px] admin-short-desktop:[&_fieldset>div:first-of-type]:mb-[8px] admin-short-desktop:[&_fieldset>div:first-of-type]:text-[13px] admin-short-desktop:[&_fieldset>div:first-of-type]:leading-[20px] admin-short-desktop:[&_fieldset_button]:min-h-[44px] admin-short-desktop:[&_fieldset_button]:py-[6px] admin-short-desktop:[&_fieldset_button]:text-[14px] admin-short-desktop:[&_input]:h-[44px] admin-short-desktop:[&_section>div]:p-[12px_16px] admin-short-desktop:[&>p]:py-[10px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[20px] admin-short-desktop:[&_footer_button]:min-h-[44px] admin-short-desktop:[&_footer_button]:py-[10px] admin-short-desktop:[&_footer_button]:text-[14px] relative flex min-w-0 flex-col gap-5 p-5 sm:p-7 xl:gap-6 xl:p-10"
+          className="ui-flash-deal-modal-form relative flex min-w-0 flex-col gap-2.5 sm:gap-3 p-4 sm:p-5"
         >
-          <header className="pr-12">
+          <header className="pr-10">
             <h2
               id={`${id}-title`}
-              className="text-2xl font-extrabold tracking-tight text-[#101e3d] sm:text-[30px] xl:text-[32px]"
+              className="text-xl font-extrabold tracking-tight text-[#101e3d] sm:text-2xl"
             >
               Thiết lập Flash Deal
             </h2>
             <p
               id={`${id}-description`}
-              className="mt-1.5 text-sm leading-relaxed text-[#7387aa] sm:text-base"
+              className="mt-0.5 text-xs text-[#7387aa] sm:text-[13px]"
             >
               Cấu hình thông tin ưu đãi cho tour này.
             </p>
@@ -71,26 +87,44 @@ export function FlashDealModal({
           <button
             type="button"
             onClick={close}
-            disabled={saving}
+            disabled={saving || deleting}
             aria-label="Đóng thiết lập Flash Deal"
-            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-[#f2f5fa] text-[#647794] transition hover:bg-slate-200 focus-visible:outline-blue-500 disabled:opacity-50 sm:right-7 sm:top-7 xl:right-8 xl:top-8"
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5fa] text-[#647794] transition hover:bg-slate-200 focus-visible:outline-blue-500 disabled:opacity-50 sm:right-5 sm:top-5"
           >
-            <X size={23} />
+            <X size={18} />
           </button>
+
+          {schedule?.schedule_promotions && (
+            <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/90 to-sky-50/70 p-2 px-3 text-[11.5px] leading-snug text-blue-900 shadow-2xs">
+              <div className="flex items-start gap-2">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white mt-0.5">
+                  <Gift size={12} />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="font-bold text-blue-950 text-xs">
+                    Đợt khởi hành này đang có Ưu đãi đợt: &ldquo;{(schedule.schedule_promotions as any).title || (schedule.schedule_promotions as any).promotion_title || "Ưu đãi đợt khởi hành"}&rdquo;
+                  </p>
+                  <p className="text-blue-800">
+                    Lưu ý: Hệ thống luôn <strong>ưu tiên áp dụng Flash Deal trước</strong>. Trong suốt thời gian Flash Deal diễn ra, giá Flash Deal sẽ thay thế ưu đãi đợt này.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <fieldset
             disabled={saving}
-            className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5"
+            className="rounded-xl border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-2.5 sm:p-3"
           >
             <legend className="sr-only">Loại ưu đãi</legend>
             <div
               aria-hidden="true"
-              className="mb-3 flex items-center gap-2.5 text-sm font-bold text-[#526da8] sm:text-base"
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[#526da8] sm:text-[13px]"
             >
-              <Tag size={20} className="fill-[#6d88bc] text-[#6d88bc]" />
+              <Tag size={16} className="fill-[#6d88bc] text-[#6d88bc]" />
               Loại ưu đãi
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 type="button"
                 aria-pressed={percentage}
@@ -100,7 +134,7 @@ export function FlashDealModal({
                     discount_type: "percentage",
                   }))
                 }
-                className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-bold transition ${percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
+                className={`flex min-h-9 sm:min-h-9.5 items-center justify-center rounded-lg border px-3 py-1 text-xs sm:text-[13px] font-bold transition ${percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
               >
                 Giảm theo %
               </button>
@@ -113,18 +147,18 @@ export function FlashDealModal({
                     discount_type: "fixed_amount",
                   }))
                 }
-                className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-bold transition ${!percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
+                className={`flex min-h-9 sm:min-h-9.5 items-center justify-center rounded-lg border px-3 py-1 text-xs sm:text-[13px] font-bold transition ${!percentage ? "border-[#7ea7ff] bg-[#edf5ff] text-[#075bff] ring-1 ring-blue-100/60" : "border-[#e4eaf3] bg-white text-[#566987] hover:border-blue-300"}`}
               >
                 Giảm theo số tiền
               </button>
             </div>
           </fieldset>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="rounded-xl border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-2.5 sm:p-3">
               <label
                 htmlFor={`${id}-discount`}
-                className="mb-3 block text-sm font-bold text-[#667b9b]"
+                className="mb-1 block text-xs font-bold text-[#667b9b] sm:text-[13px]"
               >
                 {percentage ? "Mức giảm giá (%)" : "Mức giảm giá (VND)"}
               </label>
@@ -138,19 +172,19 @@ export function FlashDealModal({
                 placeholder={percentage ? "12" : "500.000"}
                 suffix={percentage ? "%" : "đ"}
                 icon={null}
-                inputClassName="h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60"
+                inputClassName="h-9 sm:h-9.5 w-full rounded-lg border border-[#e2e9f4] bg-white py-1 pl-3 pr-10 text-sm font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-2xs outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-50 disabled:opacity-60"
                 disabled={saving}
                 error={
                   invalidPercentage ? "Mức giảm tối đa là 100%." : undefined
                 }
               />
             </div>
-            <div className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5">
+            <div className="rounded-xl border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-2.5 sm:p-3">
               <label
                 htmlFor={`${id}-hours`}
-                className="mb-3 flex items-center gap-2.5 text-sm font-bold text-[#667b9b]"
+                className="mb-1 flex items-center gap-1.5 text-xs font-bold text-[#667b9b] sm:text-[13px]"
               >
-                <Clock size={20} />
+                <Clock size={16} />
                 Thời gian kích hoạt
               </label>
               <div className="relative">
@@ -169,14 +203,14 @@ export function FlashDealModal({
                       hours_before: Number(event.target.value),
                     }))
                   }
-                  className="h-12 w-full rounded-xl border border-[#e2e9f4] bg-white py-3 pl-4 pr-12 text-base font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-sm shadow-slate-100/60 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 disabled:opacity-60"
-                  style={{ paddingLeft: "1rem" }}
+                  className="h-9 sm:h-9.5 w-full rounded-lg border border-[#e2e9f4] bg-white py-1 pl-3 pr-10 text-sm font-semibold text-[#142344] placeholder:font-medium placeholder:text-slate-400 shadow-2xs outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-50 disabled:opacity-60"
+                  style={{ paddingLeft: "0.75rem" }}
                 />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#7385a2]">
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#7385a2]">
                   giờ
                 </span>
               </div>
-              <p className="mt-2 text-xs italic leading-relaxed text-[#6684ca] sm:text-[13px]">
+              <p className="mt-1 text-[11px] italic leading-tight text-[#6684ca]">
                 Bật trước khởi hành {Math.floor(hours / 24)} ngày {hours % 24}h.
               </p>
             </div>
@@ -184,38 +218,38 @@ export function FlashDealModal({
 
           <section
             aria-label="Xem trước giá tour"
-            className="ui-flash-deal-modal-panel admin-short-desktop:[&_label]:mb-[8px] admin-short-desktop:[&_label]:text-[13px] admin-short-desktop:[&_label]:leading-[20px] admin-short-desktop:[&_h3]:mb-[8px] admin-short-desktop:[&_h3]:text-[13px] admin-short-desktop:[&_h3]:leading-[20px] admin-short-desktop:[&>p]:mt-[4px] admin-short-desktop:[&>p]:text-[12px] admin-short-desktop:[&>p]:leading-[18px] rounded-[20px] border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-4 sm:p-5"
+            className="rounded-xl border border-[#edf1f8] bg-gradient-to-br from-white to-[#f7f9fe] p-2.5 sm:p-3"
           >
-            <h3 className="mb-4 flex items-center gap-2.5 text-sm font-bold text-[#4764ad] sm:text-base">
-              <ChartNoAxesCombined size={21} />
+            <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[#4764ad] sm:text-[13px]">
+              <ChartNoAxesCombined size={16} />
               Xem trước giá tour
             </h3>
             <div
               aria-live="polite"
-              className="grid items-center gap-3 rounded-2xl border border-[#f0f3f9] bg-white px-4 py-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:px-5"
+              className="grid items-center gap-2 rounded-xl border border-[#f0f3f9] bg-white px-3 py-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-3 sm:px-4"
             >
               <div>
-                <p className="text-xs font-medium text-[#7184a3] sm:text-sm">
+                <p className="text-[11px] font-medium text-[#7184a3]">
                   Giá gốc
                 </p>
-                <p className="mt-1 whitespace-nowrap text-lg font-bold italic text-[#99a7c1] line-through decoration-2 xl:text-2xl">
+                <p className="whitespace-nowrap text-sm font-bold italic text-[#99a7c1] line-through decoration-2 sm:text-base">
                   {formatVND(price)}
                 </p>
               </div>
-              <div className="flex items-center gap-2 sm:flex-col">
-                <span className="whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-red-600">
+              <div className="flex items-center gap-1.5 sm:flex-col">
+                <span className="whitespace-nowrap rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-red-600">
                   Giảm{" "}
                   {percentage
                     ? `${form.discount_value}%`
                     : formatVND(form.discount_value)}
                 </span>
-                <ArrowRight size={22} className="text-red-400" />
+                <ArrowRight size={16} className="text-red-400" />
               </div>
               <div className="sm:justify-self-end">
-                <p className="text-xs font-medium text-red-500 sm:text-sm">
+                <p className="text-[11px] font-medium text-red-500">
                   Giá sau giảm
                 </p>
-                <p className="mt-1 whitespace-nowrap text-xl font-extrabold text-red-600 sm:text-2xl">
+                <p className="whitespace-nowrap text-base font-extrabold text-red-600 sm:text-lg">
                   {formatVND(
                     previewFlashDealPrice(
                       price,
@@ -228,32 +262,49 @@ export function FlashDealModal({
             </div>
           </section>
 
-          <p className="flex items-center gap-3 rounded-2xl bg-[#eaf3ff] px-4 py-3 text-xs leading-relaxed text-[#1467ff] sm:text-sm">
-            <Gift size={22} className="shrink-0" />
-            Sau khi lưu, flash deal sẽ tự động áp dụng cho tour trong thời gian
-            đã đặt trước.
+          <p className="flex items-center gap-2 rounded-xl bg-[#eaf3ff] px-3 py-1.5 text-[11px] leading-tight text-[#1467ff] sm:text-xs">
+            <Gift size={16} className="shrink-0" />
+            Sau khi lưu, flash deal sẽ tự động áp dụng cho tour trong thời gian đã đặt trước.
           </p>
-          <footer className="grid grid-cols-[1fr_1.8fr] gap-3 sm:gap-4">
-            <button
-              type="button"
-              onClick={close}
-              disabled={saving}
-              className="min-h-12 rounded-2xl border border-[#e5ebf5] bg-white px-4 py-3 text-sm font-bold text-[#5e718e] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 sm:text-base"
-            >
-              Hủy bỏ
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !schedule || invalidPercentage}
-              className="flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-[#0e5bff] px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/15 transition hover:bg-blue-700 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
-            >
-              {saving ? (
-                <Loader2 size={21} className="animate-spin" />
-              ) : (
-                <Save size={21} />
-              )}
-              {saving ? "Đang lưu..." : "Lưu flash deal"}
-            </button>
+          <footer className="flex flex-wrap items-center justify-between gap-2 pt-0.5 sm:gap-3">
+            {schedule?.flash_deals && onDelete ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={saving || deleting}
+                className="min-h-9 sm:min-h-9.5 flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-600 shadow-2xs transition hover:bg-rose-100 disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <Trash2 size={15} />
+                )}
+                <span>Xóa Flash Deal</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={close}
+                disabled={saving || deleting}
+                className="min-h-9 sm:min-h-9.5 rounded-xl border border-[#e5ebf5] bg-white px-4 py-1 text-xs sm:text-sm font-bold text-[#5e718e] shadow-2xs transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                disabled={saving || deleting || !schedule || invalidPercentage}
+                className="flex min-h-9 sm:min-h-9.5 items-center justify-center gap-2 rounded-xl bg-[#0e5bff] px-5 py-1 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/15 transition hover:bg-blue-700 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {saving ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Save size={16} />
+                )}
+                {saving ? "Đang lưu..." : "Lưu flash deal"}
+              </button>
+            </div>
           </footer>
         </form>
       </div>

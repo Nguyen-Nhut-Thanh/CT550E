@@ -52,7 +52,7 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
         const rawSummary = tour?.summary || tour?.description || "";
         const summary = rawSummary ? rawSummary.replace(/<[^>]*>/g, "").trim() : "";
 
-        const { status, statusText } = getBookingTripStatus(b, now);
+        const { status, statusText, statusReason, isCancelUnapproved } = getBookingTripStatus(b, now);
         const { paymentStatus, paymentStatusText } = getBookingPaymentStatus(b);
 
         const price = b.total_amount ? Number(b.total_amount) : 2890000;
@@ -86,6 +86,8 @@ export function AccountBookingsTab({ bookings = [] }: AccountBookingsTabProps) {
           passengers,
           status,
           statusText,
+          statusReason,
+          isCancelUnapproved,
           paymentStatus,
           paymentStatusText,
           price,

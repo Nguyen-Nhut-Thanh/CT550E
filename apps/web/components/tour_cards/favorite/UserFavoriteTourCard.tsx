@@ -137,11 +137,12 @@ export function FavoriteTourCard({
           <h3 className="h-12 line-clamp-2 text-[17px] font-extrabold leading-6 tracking-tight text-[#0f172a] transition-colors group-hover:text-[#1266f1] md:text-lg">
             {item.name}
           </h3>
-          <p className="mt-1 h-4 truncate text-[11px] leading-4 text-slate-500">
-            {item.summary || " "}
-          </p>
+          <div className="mt-3 space-y-3">
+            <p className="h-4 truncate text-[11px] leading-4 text-slate-500">
+              {item.summary || " "}
+            </p>
 
-          <div className="my-2.5 grid grid-cols-1 gap-2 rounded-2xl bg-blue-50/80 p-2.5 sm:grid-cols-3 xl:my-2 xl:gap-1 xl:bg-transparent xl:p-0">
+            <div className="grid grid-cols-1 gap-2 rounded-2xl bg-blue-50/80 p-2.5 sm:grid-cols-3 xl:gap-1 xl:bg-transparent xl:p-0">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#2563eb]">
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -183,9 +184,9 @@ export function FavoriteTourCard({
                 </span>
               </span>
             </div>
-          </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm">
               <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
               {item.reviewsCount > 0 ? (
@@ -201,11 +202,11 @@ export function FavoriteTourCard({
                 <span className="text-xs text-slate-400">Chưa có đánh giá</span>
               )}
             </div>
-            {item.seatsLeft != null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#eff6ff] px-2.5 py-1 text-[11px] font-semibold text-[#1d74f5]">
-                <Users className="h-3.5 w-3.5" /> Còn {item.seatsLeft} chỗ
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#eff6ff] px-2.5 py-1 text-[11px] font-semibold text-[#1d74f5]">
+              <Users className="h-3.5 w-3.5" />
+              {item.seatsLeft != null ? `Còn ${item.seatsLeft} chỗ` : "Chỗ: Đang cập nhật"}
+            </span>
+            </div>
           </div>
         </div>
 

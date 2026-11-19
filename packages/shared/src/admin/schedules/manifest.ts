@@ -41,6 +41,36 @@ export interface BookingRescheduleDetails {
   rescheduledAt?: string;
 }
 
+export interface BookingResolutionProposal {
+  proposedAt: string;
+  reason: string;
+  adminNote?: string;
+  allowedOptions: ("full_refund" | "reschedule")[];
+  suggestedScheduleId?: number;
+  suggestedScheduleStartDate?: string;
+  suggestedScheduleEndDate?: string;
+  suggestedScheduleTitle?: string;
+  priceDifference?: number; // >0: khách cần trả thêm; <0: hoàn lại tiền thừa cho khách; 0: bằng giá
+  waiveDifference?: boolean; // Admin hỗ trợ miễn phí chênh lệch
+  status: "pending_customer" | "accepted_refund" | "accepted_reschedule" | "contact_support";
+  customerDecision?: {
+    selectedOption: "full_refund" | "reschedule" | "contact_support";
+    decidedAt: string;
+    bankAccount?: {
+      bankName: string;
+      accountNumber: string;
+      accountHolder: string;
+    };
+    supportNote?: string;
+  };
+  refundTransfer?: {
+    transferredAt: string;
+    transactionCode?: string;
+    adminNote?: string;
+    amount: number;
+  };
+}
+
 export interface BookingCancellationMeta {
   type?:
     | "expired_15m"
@@ -64,6 +94,7 @@ export interface BookingCancellationMeta {
   adminRejection?: BookingAdminRejectionDetails;
   adminAction?: BookingAdminActionDetails;
   reschedule?: BookingRescheduleDetails;
+  resolutionProposal?: BookingResolutionProposal;
   [key: string]: unknown;
 }
 
@@ -172,7 +203,7 @@ function getCancellationTitle(type?: string): string {
     case "expired_15m":
       return "Hủy tự động do hết hạn thanh toán (quá 15 phút)";
     case "expired_departure":
-      return "Hủy tự động do tour đã đến thời gian khởi hành";
+      return "Hủy tự động do chưa thanh toán trước giờ khởi hành";
     case "customer_cancel_request":
       return "Yêu cầu hủy từ khách hàng";
     case "customer_request_approved":
@@ -491,7 +522,7 @@ export function parseBookingNote(
       } else if (text.includes("[AUTO_CANCELLED_DEPARTED]")) {
         cancellation = {
           type: "expired_departure",
-          title: "Hủy tự động do tour đã đến thời gian khởi hành",
+          title: "Hủy tự động do chưa thanh toán trước giờ khởi hành",
           actor: "Hệ thống tự động",
           reason: "Tour đã đến/qua ngày khởi hành mà đơn chưa hoàn tất thanh toán. Hệ thống tự động hủy đơn.",
         };
@@ -580,6 +611,7 @@ export function parseBookingNote(
           "",
         )
         .replace(/\[CCCD_LIEN_HE\]:[^\n\r]*/gi, "")
+        .replace(/\[ƯU ĐÃI ĐỢT KHỞI HÀNH\]:[^\n\r]*/gi, "")
         // Xóa bất kỳ tag dạng [ABC_XYZ] đơn lập còn sót lại
         .replace(/\[[A-Z0-9_]+\]/g, "")
         // Xóa các câu giải thích hệ thống
@@ -610,12 +642,35 @@ export function parseBookingNote(
 
 export const CANCELLATION_STATUS_LABELS: Record<string, string> = {
   expired_15m: "Đã hủy (Hết hạn 15p)",
-  expired_departure: "Đã hủy (Quá giờ đi)",
+  expired_departure: "Đã hủy (Chưa thanh toán)",
   customer_request_approved: "Đã hủy (Theo yêu cầu)",
-  admin_cancelled: "Đã hủy (Admin)",
-  staff_cancelled_pending: "Đã hủy (Admin)",
+  admin_cancelled: "Đã hủy (Ban quản trị / Nhân viên)",
+  staff_cancelled_pending: "Đã hủy (Ban quản trị / Nhân viên)",
   customer_cancelled_pending: "Đã hủy (Khách hủy)",
 };
+
+export const CANCELLATION_DETAIL_REASONS: Record<string, string> = {
+  expired_15m: "Hết hạn thanh toán 15 phút",
+  expired_departure: "Chưa thanh toán trước giờ khởi hành",
+  customer_request_approved: "Hủy theo yêu cầu của khách hàng",
+  admin_cancelled: "Ban quản trị / Nhân viên hủy",
+  staff_cancelled_pending: "Ban quản trị / Nhân viên hủy",
+  customer_cancelled_pending: "Khách hàng chủ động hủy giữ chỗ",
+};
+
+export function getCancelledBookingReason(
+  rawNoteOrBooking?: string | null | BookingMetadataSource,
+  metaContainer?: BookingMetadataSource | null,
+): string | null {
+  const parsed = parseBookingNote(rawNoteOrBooking, metaContainer);
+  if (parsed.cancellation?.type && CANCELLATION_DETAIL_REASONS[parsed.cancellation.type]) {
+    return CANCELLATION_DETAIL_REASONS[parsed.cancellation.type];
+  }
+  if (parsed.cancellation?.reason) {
+    return parsed.cancellation.reason;
+  }
+  return null;
+}
 
 export function getCancelledBookingLabel(
   rawNoteOrBooking?: string | null | BookingMetadataSource,

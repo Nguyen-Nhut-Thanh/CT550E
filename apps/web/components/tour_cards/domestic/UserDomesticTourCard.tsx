@@ -30,7 +30,7 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
     !!item.original_price && item.original_price > (item.sale_price || 0);
 
   return (
-    <article className="group relative flex h-[240px] w-full max-w-[560px] min-w-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[300px] max-sm:flex-col">
+    <article className="group relative flex h-[250px] w-full max-w-[560px] min-w-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[310px] max-sm:flex-col">
       <div className="relative h-full w-[36%] shrink-0 overflow-hidden max-sm:h-32 max-sm:min-h-0 max-sm:w-full">
         <img
           src={imageUrl}
@@ -60,7 +60,7 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
         </div>
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_100%_20%,#e7f0ff_0%,transparent_35%),linear-gradient(135deg,#fff_40%,#f8fbff_100%)] p-2.5 sm:p-3">
+      <div className="relative flex min-w-0 flex-1 flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_100%_20%,#e7f0ff_0%,transparent_35%),linear-gradient(135deg,#fff_40%,#f8fbff_100%)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3 sm:pt-2">
         <div
           className="pointer-events-none absolute -right-4 bottom-3 select-none text-[64px] font-black leading-none text-blue-100/35"
           aria-hidden="true"
@@ -68,8 +68,8 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
           ✦
         </div>
         <div className="relative">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 ring-1 ring-blue-100">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-100">
               <MapPin className="h-3 w-3" /> Trong nước
             </span>
             <Link
@@ -81,16 +81,14 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
             </Link>
           </div>
           <h3
-            className="line-clamp-2 text-[15px] font-black leading-tight text-[#183567]"
+            className="h-10 line-clamp-2 text-[15px] font-black leading-tight text-[#183567]"
             title={item.name}
           >
             {item.name}
           </h3>
-          {item.summary && (
-            <p className="mt-1 line-clamp-1 text-xs leading-4 text-slate-500">
-              {item.summary}
-            </p>
-          )}
+          <p className="mt-1 h-4 line-clamp-1 text-xs leading-4 text-slate-500">
+            {item.summary || ""}
+          </p>
 
           <div className="mt-2 grid grid-cols-3 divide-x divide-blue-100 rounded-xl bg-blue-50/70 px-1 py-1.5">
             <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] grid-rows-2 items-center px-1.5 sm:px-2.5">

@@ -11,7 +11,10 @@ export type BookingNotificationType =
     | 'cancel_rejected'
     | 'admin_cancelled'
     | 'staff_cancelled_pending'
-    | 'rescheduled';
+    | 'rescheduled'
+    | 'cancel_proposed'
+    | 'refund_transferred'
+    | 'rescheduled_confirmed';
 
 export interface BookingNotificationParams {
     type: BookingNotificationType;
@@ -101,6 +104,27 @@ export function buildBookingNotificationContent(params: BookingNotificationParam
                 title: `Lịch khởi hành tour #${bookingId} đã được dời lịch`,
                 message: `Đơn đặt tour "${tourName}" (#${bookingId}) đã được ban quản trị hỗ trợ dời sang đợt khởi hành mới.${note ? ` Chi tiết: ${note}.` : ''} Quý khách có thể kiểm tra vé và lịch trình mới tại mục Chi tiết booking.`,
                 eventKey: `booking:rescheduled:${bookingId}:${Date.now()}`,
+            };
+
+        case 'cancel_proposed':
+            return {
+                title: `[Quan trọng] Đề xuất phương án giải quyết cho booking #${bookingId}`,
+                message: `Chuyến đi tour "${tourName}" (#${bookingId}) bị tạm hoãn do sự cố vận hành.${reason ? ` Lý do: ${reason}.` : ''} Ban quản lý đã gửi phương án hỗ trợ (Hoàn tiền hoặc Dời ngày). Vui lòng vào Chi tiết booking để xác nhận lựa chọn của bạn.`,
+                eventKey: `booking:cancel_proposed:${bookingId}:${Date.now()}`,
+            };
+
+        case 'refund_transferred':
+            return {
+                title: `Hoàn tiền thành công cho tour #${bookingId}`,
+                message: `Khoản tiền hoàn ${refundAmount ? `${formatCurrency(refundAmount)}đ ` : ''}cho đơn đặt tour "${tourName}" (#${bookingId}) đã được chuyển khoản thành công vào tài khoản ngân hàng của bạn.${note ? ` Mã giao dịch: ${note}.` : ''}`,
+                eventKey: `booking:refund_transferred:${bookingId}:${Date.now()}`,
+            };
+
+        case 'rescheduled_confirmed':
+            return {
+                title: `Xác nhận dời lịch thành công cho tour #${bookingId}`,
+                message: `Đơn đặt tour "${tourName}" (#${bookingId}) đã được chuyển thành công sang đợt khởi hành mới theo lựa chọn của bạn. Chúc bạn có một chuyến đi trọn vẹn!`,
+                eventKey: `booking:rescheduled_confirmed:${bookingId}:${Date.now()}`,
             };
 
         default:

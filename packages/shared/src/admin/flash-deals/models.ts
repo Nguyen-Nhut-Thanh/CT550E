@@ -26,4 +26,5 @@ export type FlashDealSchedule = {
         bookings?: number;
     } | null;
     flash_deals?: FlashDealRecord | null;
+    schedule_promotions?: import('../schedules/promotions').SchedulePromotion | null;
 };

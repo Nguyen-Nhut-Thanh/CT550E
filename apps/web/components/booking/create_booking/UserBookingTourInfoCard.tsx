@@ -4,6 +4,8 @@ import { formatDate } from "@/lib/utils/dateTime";
 import { Clock, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import type { BookingTourInfoCardProps } from "shared";
+import { getActiveSchedulePromotion } from "@/lib/booking/client/pricing";
+
 export function BookingTourInfoCard({
   tour,
   selectedSchedule,
@@ -17,6 +19,9 @@ export function BookingTourInfoCard({
         ? tour.reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
           tour.reviews.length
         : 0;
+
+  const promoInfo = getActiveSchedulePromotion(selectedSchedule);
+
   return (
     <section className="rounded-2xl border border-blue-100/60 bg-white p-4 shadow-[0_4px_24px_rgba(37,99,235,0.04)] sm:p-5">
       <div className="grid items-center gap-5 sm:grid-cols-[210px_minmax(0,1fr)]">
@@ -57,13 +62,38 @@ export function BookingTourInfoCard({
             </span>
             <span className="text-blue-700">Còn {seatsLeft} chỗ</span>
           </div>
-          <p className="mt-3 text-xs text-slate-500">
-            Từ{" "}
-            <span className="text-xl font-extrabold text-rose-600">
-              {formatVND(adultUnitPrice)}
-            </span>{" "}
-            /khách
-          </p>
+
+          <div className="mt-3 flex flex-wrap items-baseline gap-2">
+            <p className="text-xs text-slate-500">
+              Từ{" "}
+              <span className="text-xl font-extrabold text-[#ef3b2d]">
+                {formatVND(adultUnitPrice)}
+              </span>{" "}
+              /khách
+            </p>
+            {promoInfo && promoInfo.originalPrice > adultUnitPrice && (
+              <span className="text-xs text-slate-400 line-through">
+                {formatVND(promoInfo.originalPrice)}
+              </span>
+            )}
+          </div>
+
+          {promoInfo && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 border border-amber-300 px-2 py-0.5 text-[11px] font-bold text-amber-900 shadow-2xs">
+                🎁 {promoInfo.title}
+                <span className="rounded bg-amber-500 px-1 text-[10px] text-white font-extrabold">
+                  {promoInfo.discountLabel}
+                </span>
+              </span>
+              {promoInfo.giftDescription && (
+                <span className="text-[11px] font-semibold text-amber-800">
+                  ✨ Quà tặng: {promoInfo.giftDescription}
+                </span>
+              )}
+            </div>
+          )}
+
           <p className="mt-1 text-xs text-slate-400">
             Khởi hành {formatDate(selectedSchedule.start_date)} · Kết thúc{" "}
             {formatDate(selectedSchedule.end_date)}

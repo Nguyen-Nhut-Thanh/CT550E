@@ -1,14 +1,14 @@
 "use client";
 
 import { Bus, ChevronDown, CloudSun, Droplet, Hotel, ShieldCheck, Sparkles, Ticket, UserCheck, Users, Utensils } from 'lucide-react';
-import type { TourAmenity, TourSchedule } from 'shared';
+import type { TourAmenity } from 'shared';
 import { getTourAmenities } from '@/lib/tours/client/amenities';
 import { Tooltip } from '@/components/common/dialogs_and_feedback/dialogs/Tooltip';
 
 const ICONS = { transport: Bus, hotel: Hotel, cuisine: Utensils, guide: UserCheck, insurance: ShieldCheck, water: Droplet, best_time: CloudSun, best_for: Users, promotion: Ticket };
 
-export default function TourAmenities({ amenities, schedule }: { amenities: TourAmenity[]; schedule?: TourSchedule | null }) {
-  const items = getTourAmenities(amenities, schedule);
+export default function TourAmenities({ amenities }: { amenities: TourAmenity[] }) {
+  const items = getTourAmenities(amenities);
   if (!items.length) return null;
 
   return (
@@ -21,8 +21,7 @@ export default function TourAmenities({ amenities, schedule }: { amenities: Tour
         {items.map(item => {
           const Icon = ICONS[item.kind] || Sparkles;
           const content = <>
-            {schedule && <p className="mb-2 text-xs text-sky-700">Chuyến khởi hành {new Date(schedule.start_date).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>}
-            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.content || 'Thông tin chi tiết đang được cập nhật cho chuyến đi này.'}</p>
+            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.content}</p>
           </>;
           return (
             <Tooltip key={item.kind} className="min-w-0 rounded-2xl border border-slate-100 bg-slate-50/70 transition hover:z-20 hover:border-sky-200 hover:bg-white hover:shadow-sm" contentClassName="max-w-[min(22rem,80vw)]" trigger={<button type="button" className="flex w-full cursor-pointer items-center gap-3 rounded-2xl p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500">

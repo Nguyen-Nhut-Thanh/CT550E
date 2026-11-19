@@ -14,6 +14,9 @@ export const BaseVoucherPayloadSchema = z.object({
   code: z
     .string({ message: 'Mã voucher không được để trống.' })
     .regex(VoucherCodeRegex, 'Mã voucher cần 1–50 ký tự chữ, số, gạch ngang hoặc gạch dưới.'),
+  name: z.string().trim().max(255).optional().nullable(),
+  short_description: z.string().trim().max(1000).optional().nullable(),
+  image_url: z.string().trim().max(1000).optional().nullable(),
   discount_type: VoucherDiscountTypeEnum,
   discount_value: z
     .number({ message: 'Mức giảm giá không được để trống.' })

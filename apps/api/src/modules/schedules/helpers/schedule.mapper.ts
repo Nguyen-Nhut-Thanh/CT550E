@@ -1,5 +1,5 @@
 import type { ScheduleItineraryPayload, SchedulePricePayload } from "shared";
-import { validatePrice } from "../../common/validation/payload";
+import { validatePrice } from "../../../common/validation/payload";
 export function mapSchedulePrice(price: SchedulePricePayload) {
   return {
     passenger_type: price.passenger_type,
@@ -44,6 +44,7 @@ export function mapScheduleHotel(
 export function mapScheduleResponse(
   schedule: {
     price?: unknown;
+    single_room_surcharge?: unknown;
     tour_schedule_prices?: Array<
       {
         price?: unknown;
@@ -55,6 +56,10 @@ export function mapScheduleResponse(
   return {
     ...schedule,
     price: schedule.price ? Number(schedule.price) : 0,
+    single_room_surcharge:
+      schedule.single_room_surcharge != null
+        ? Number(schedule.single_room_surcharge)
+        : 0,
     tour_schedule_prices:
       schedule.tour_schedule_prices?.map((price) => ({
         ...price,

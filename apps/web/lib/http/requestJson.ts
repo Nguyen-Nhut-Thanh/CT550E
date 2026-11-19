@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/client/session";
+import { getToken, removeToken } from "@/lib/auth/client/session";
 import { API_BASE } from "@/lib/http/config";
 
 export type RequestAuthMode = "public" | "auth" | "admin";
@@ -16,10 +16,23 @@ function parseErrorMessage(
   status: number,
   fallback = "Yêu cầu không thành công",
 ): string {
+  if (status === 401) {
+    return "Vui lòng đăng nhập để tiếp tục.";
+  }
+  if (status === 403) {
+    return "Bạn không có quyền thực hiện hành động này.";
+  }
   if (data && typeof data === "object" && "message" in data) {
     const message = (data as { message: unknown }).message;
     if (typeof message === "string" && message.trim()) {
-      return message.trim();
+      const trimmed = message.trim();
+      if (trimmed.toLowerCase() === "unauthorized") {
+        return "Vui lòng đăng nhập để tiếp tục.";
+      }
+      if (trimmed.toLowerCase().includes("forbidden")) {
+        return "Bạn không có quyền thực hiện hành động này.";
+      }
+      return trimmed;
     }
     if (Array.isArray(message) && message.length > 0) {
       return message.filter(Boolean).map(String).join(", ");
@@ -84,6 +97,9 @@ export async function requestJson<T>(
     | null;
 
   if (!response.ok) {
+    if (response.status === 401 && (needsAuth || getToken())) {
+      removeToken();
+    }
     throw new Error(parseErrorMessage(data, response.status, fallbackMessage));
   }
 

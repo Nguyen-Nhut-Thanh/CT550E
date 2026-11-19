@@ -149,6 +149,7 @@ export default function AdminScheduleDetailPage() {
           if (isNew) {
             const initial = { ...createDefaultScheduleForm(), departure_location_id: tourData.tour.departure_location || "" as const,
               tour_schedule_amenities: copyTourAmenities(tourData.tour.tour_amenities || []),
+              single_room_surcharge: Number(tourData.tour.single_room_surcharge || 0),
             };
             const next = savedTemplate?.template ? applyScheduleTemplate(initial, savedTemplate.template, Number(tourData.tour.duration_days) || 1) : initial;
             await Promise.all([...new Set(next.itinerary.map(day => Number(day.hotel_id)).filter(Boolean))].map(fetchRoomTypes));

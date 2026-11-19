@@ -15,22 +15,20 @@ import { requireFields, validatePrice } from "../../common/validation/payload";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
 import {
+  departureId,
   mapScheduleHotel,
   mapSchedulePrice,
   mapScheduleResponse,
-} from "./schedule.mapper";
-import {
-  departureId,
   normalizePickupPoints,
+  normalizeScheduleTemplate,
   pickupPointsEqual,
-} from "./schedule-departure";
-import { saveItineraryDays } from "./itinerary-activities";
-import { saveScheduleAttractions } from "./schedule-attractions";
-import { saveScheduleAmenities } from "./schedule-amenities";
-import { saveDayTransports } from "./schedule-transports";
-import { normalizeScheduleTemplate } from "./schedule-template";
+  saveDayTransports,
+  saveItineraryDays,
+  saveScheduleAmenities,
+  saveScheduleAttractions,
+} from "./helpers";
 import type { Prisma } from "@prisma/client";
-import { inferOperatingRegion } from "../workforce/operating-region";
+import { inferOperatingRegion } from "../workforce/helpers";
 @Injectable()
 export class SchedulesAdminService {
   private readonly logger = new Logger(SchedulesAdminService.name);
@@ -69,21 +67,35 @@ export class SchedulesAdminService {
         departure_location: true,
         pickup_points: { orderBy: { sort_order: "asc" } },
         schedule_promotions: true,
+        flash_deals: true,
         _count: { select: { bookings: true } },
       },
     });
-    return items.map((item) => ({
-      ...item,
-      price: Number(item.price),
-      schedule_promotions: item.schedule_promotions
-        ? {
-            ...item.schedule_promotions,
-            discount_value: Number(item.schedule_promotions.discount_value),
-            start_date: item.schedule_promotions.start_date.toISOString(),
-            end_date: item.schedule_promotions.end_date.toISOString(),
-          }
-        : null,
-    }));
+    return items.map((item) => {
+      const promo = item.schedule_promotions;
+      const deal = item.flash_deals;
+      return {
+        ...item,
+        price: Number(item.price),
+        single_room_surcharge: Number(item.single_room_surcharge ?? 0),
+        schedule_promotions: promo
+          ? {
+              ...promo,
+              discount_value: Number(promo.discount_value),
+              start_date: promo.start_date.toISOString(),
+              end_date: promo.end_date.toISOString(),
+            }
+          : null,
+        flash_deals: deal
+          ? {
+              ...deal,
+              discount_value: Number(deal.discount_value),
+              start_date: deal.start_date.toISOString(),
+              end_date: deal.end_date.toISOString(),
+            }
+          : null,
+      };
+    });
   }
   async findOneSchedule(scheduleId: number) {
     const schedule = await this.prisma.tour_schedules.findUnique({
@@ -108,22 +120,33 @@ export class SchedulesAdminService {
           include: { activities: { orderBy: { sort_order: "asc" } } },
         },
         schedule_promotions: true,
+        flash_deals: true,
       },
     });
     if (!schedule) {
       throw new NotFoundException("Không tìm thấy lịch khởi hành");
     }
+    const promo = schedule.schedule_promotions;
+    const deal = schedule.flash_deals;
     return {
       ...schedule,
       duration_days: schedule.tours.duration_days,
       hasBookings: schedule._count.bookings > 0,
       price: Number(schedule.price),
-      schedule_promotions: schedule.schedule_promotions
+      schedule_promotions: promo
         ? {
-            ...schedule.schedule_promotions,
-            discount_value: Number(schedule.schedule_promotions.discount_value),
-            start_date: schedule.schedule_promotions.start_date.toISOString(),
-            end_date: schedule.schedule_promotions.end_date.toISOString(),
+            ...promo,
+            discount_value: Number(promo.discount_value),
+            start_date: promo.start_date.toISOString(),
+            end_date: promo.end_date.toISOString(),
+          }
+        : null,
+      flash_deals: deal
+        ? {
+            ...deal,
+            discount_value: Number(deal.discount_value),
+            start_date: deal.start_date.toISOString(),
+            end_date: deal.end_date.toISOString(),
           }
         : null,
       tour_schedule_prices: schedule.tour_schedule_prices.map((price) => ({
@@ -150,7 +173,27 @@ export class SchedulesAdminService {
     const promo = await this.prisma.schedule_promotions.findUnique({
       where: { tour_schedule_id: scheduleId },
     });
-    if (!promo) return null;
+    const flashDeal = await this.prisma.flash_deals.findUnique({
+      where: { tour_schedule_id: scheduleId },
+    });
+    const mappedFlashDeal = flashDeal
+      ? {
+          ...flashDeal,
+          discount_value: Number(flashDeal.discount_value),
+          start_date: flashDeal.start_date.toISOString(),
+          end_date: flashDeal.end_date.toISOString(),
+        }
+      : null;
+
+    if (!promo) {
+      if (mappedFlashDeal) {
+        return {
+          has_flash_deal: true,
+          flash_deal: mappedFlashDeal,
+        } as any;
+      }
+      return null;
+    }
     return {
       ...promo,
       discount_value: Number(promo.discount_value),
@@ -158,6 +201,7 @@ export class SchedulesAdminService {
       end_date: promo.end_date.toISOString(),
       created_at: promo.created_at.toISOString(),
       updated_at: promo.updated_at.toISOString(),
+      flash_deal: mappedFlashDeal,
     };
   }
   async saveSchedulePromotion(scheduleId: number, body: any) {
@@ -298,6 +342,10 @@ export class SchedulesAdminService {
             start_date: new Date(body.start_date!),
             end_date: new Date(body.end_date!),
             price: validatePrice(body.price),
+            single_room_surcharge:
+              body.single_room_surcharge !== undefined
+                ? validatePrice(body.single_room_surcharge)
+                : 0,
             quota: Number(body.quota),
             status: body.status != null ? Number(body.status) : 1,
             cover_image_url: body.cover_image_url || null,
@@ -580,6 +628,10 @@ export class SchedulesAdminService {
             start_date: body.start_date ? new Date(body.start_date) : undefined,
             end_date: body.end_date ? new Date(body.end_date) : undefined,
             price: body.price != null ? validatePrice(body.price) : undefined,
+            single_room_surcharge:
+              body.single_room_surcharge != null
+                ? validatePrice(body.single_room_surcharge)
+                : undefined,
             quota: body.quota != null ? Number(body.quota) : undefined,
             status: body.status != null ? Number(body.status) : undefined,
             cover_image_url: body.cover_image_url ?? undefined,

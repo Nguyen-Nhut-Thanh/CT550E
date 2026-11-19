@@ -1,5 +1,5 @@
 import type { BestSellerStat } from 'shared';
-import type { PrismaService } from '../../infrastructure/database/prisma.service';
+import type { PrismaService } from '../../../infrastructure/database/prisma.service';
 
 /**
  * Lấy danh sách thống kê lượt đặt và hành khách cho từng tour để xếp hạng Best Seller

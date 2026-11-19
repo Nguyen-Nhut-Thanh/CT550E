@@ -22,8 +22,11 @@ export class BookingsController {
       tour_schedule_id: number;
       travelers: Array<{ fullName: string; idNumber?: string }>;
     },
+    @Req()
+    req: any,
   ) {
-    return this.service.checkScheduleConflicts(
+    return this.service.checkScheduleConflictsForAccount(
+      req.user?.accountId,
       dto.tour_schedule_id,
       dto.travelers || [],
     );
@@ -68,6 +71,24 @@ export class BookingsController {
   ) {
     return this.service.cancelForAccount(id, req.user.accountId, dto);
   }
+  @Post(":id/resolve-proposal")
+  resolveProposal(
+    @Param("id", ParseIntPipe)
+    id: number,
+    @Body()
+    dto: {
+      decision: "full_refund" | "reschedule" | "contact_support";
+      bankName?: string;
+      bankAccountNumber?: string;
+      bankAccountName?: string;
+      supportNote?: string;
+    },
+    @Req()
+    req: any,
+  ) {
+    return this.service.resolveProposalForAccount(id, req.user.accountId, dto);
+  }
+
   @Get(":id")
   detail(
     @Param("id", ParseIntPipe)

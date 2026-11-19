@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import type { PostAdminQuery, PostCategoryPayload, PostPayload } from "shared";
 import { articleText, hasArticleContent, slugify, isArticleUrl } from "shared";
-import { parseArticleDocument } from "./article-input";
+import { parseArticleDocument } from "./helpers";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 @Injectable()
 export class PostsService {

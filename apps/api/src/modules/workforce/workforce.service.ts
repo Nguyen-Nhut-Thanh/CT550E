@@ -26,9 +26,9 @@ import {
   crewDetails,
   crewReadiness,
   finalizeCrewIfReady,
+  inferOperatingRegion,
   readCrewSnapshot,
-} from "./crew-finalization";
-import { inferOperatingRegion } from "./operating-region";
+} from "./helpers";
 
 const rosterInclude = { user: { select: { full_name: true, phone: true } } };
 const crewInclude = crewDetails;

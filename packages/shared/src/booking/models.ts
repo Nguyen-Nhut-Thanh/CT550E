@@ -9,11 +9,24 @@ export type TravelerForm = {
 };
 export type ScheduleConflict = {
     travelerName: string;
+    gender?: string | null;
+    birthday?: string | Date | null;
     idNumber: string;
     tourName: string;
     startDate: string;
     endDate: string;
     bookingId: number;
+    tourCode?: string;
+    destinationName?: string;
+    tourType?: string;
+    durationDays?: number;
+    durationNights?: number;
+    transportName?: string;
+    imageUrl?: string;
+    ratingAvg?: number;
+    ratingCount?: number;
+    price?: number;
+    isSameAccount?: boolean;
 };
 export type BookingExtraService = {
     id: string;
@@ -68,6 +81,23 @@ export interface BookingDetail {
   booking_travelers?: { traveler_id: number; full_name: string; dob?: string | null; gender: string; id_number?: string | null; traveler_type: string }[];
   payments?: { payment_id: number; method: string; status: string; transaction_code?: string | null; created_at: string; paid_at?: string | null }[];
   tour_schedules?: {
+    price?: number | string;
+    tour_schedule_prices?: Array<{
+      passenger_type: string;
+      price: number | string;
+    }>;
+    flash_deals?: {
+      discount_type: string;
+      discount_value: number | string;
+      title?: string | null;
+    } | null;
+    schedule_promotions?: {
+      promotion_id: number;
+      title: string;
+      discount_type: string;
+      discount_value: number | string;
+      gift_description?: string | null;
+    } | null;
     crew_snapshot?: import('../workforce/models').CrewContactSnapshot | null;
     crew_locked_at?: string | null;
     departure_location?: { name: string } | null;

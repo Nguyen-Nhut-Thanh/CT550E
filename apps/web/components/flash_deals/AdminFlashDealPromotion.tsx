@@ -36,19 +36,19 @@ export function FlashDealPromotion() {
           strokeLinecap="round"
         />
       </svg>
-      <div className="ui-flash-deal-modal-promotionCopy p-[32px_26px_0] [&>p]:text-[14px] relative">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#2c94ff] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-400/15">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white">
-            <Zap size={15} className="fill-[#2c94ff] text-[#2c94ff]" />
+      <div className="ui-flash-deal-modal-promotionCopy p-[22px_20px_0] [&>p]:text-[13px] relative">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#2c94ff] px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-sky-400/15">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white">
+            <Zap size={12} className="fill-[#2c94ff] text-[#2c94ff]" />
           </span>
           FLASH DEAL
         </div>
-        <h2 className="mt-7 text-[clamp(2.6rem,4vw,4rem)] font-extrabold leading-[1.13] tracking-[-0.045em] text-[#0c2249]">
+        <h2 className="mt-4 text-[26px] sm:text-[30px] font-extrabold leading-[1.15] tracking-[-0.03em] text-[#0c2249]">
           Thiết lập
           <br />
           <span className="text-[#0960ff]">Flash Deal</span>
         </h2>
-        <p className="mt-5 max-w-[320px] text-base font-medium leading-relaxed text-[#577cc1] xl:text-lg">
+        <p className="mt-2.5 max-w-[260px] text-xs sm:text-[13px] font-medium leading-relaxed text-[#577cc1]">
           Tạo ưu đãi giới hạn thời gian để thu hút khách hàng và tăng lượt đặt
           tour.
         </p>

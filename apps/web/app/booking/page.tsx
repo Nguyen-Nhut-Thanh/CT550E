@@ -7,7 +7,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { BookingMemberVouchers } from "@/components/vouchers/checkout_vouchers/UserBookingMemberVouchers";
 import { getMembership } from "@/lib/membership/client/api";
 import { getMemberDetails } from "@/lib/membership/admin/api";
-import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
+import { BookingConflictModal } from "@/components/booking/create_booking/UserBookingConflictModal";
 import { isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipPrice, type MembershipTier, type ScheduleConflict } from "shared";
 import type { PaymentMethod, TravelerForm, TravelerType, UserProfileLite, VoucherValidationResult, } from "shared";
 
@@ -25,7 +25,7 @@ import { fetchMe, getToken } from "@/lib/auth/client/session";
 import { useToast } from "@/lib/notifications/useToast";
 import { getStaffBookingCustomer, createBooking, createPaymentUrl, getBookingExtraServices, validatePublicVoucher, checkBookingConflicts } from "@/lib/booking/client/api";
 import { getPublicTourDetail } from "@/lib/tours/client/api";
-import { parseBirthday } from "@/lib/booking/client/birthday";
+import { parseBirthday, validateTravelerAge } from "@/lib/booking/client/birthday";
 import { getSingleRoomSurchargeTotal, getUnitPrice } from "@/lib/booking/client/pricing";
 import { resolveBookingDeparture, resolvePickupPoint } from '@/lib/booking/client/departure';
 import { buildTravelers, syncTravelers } from "@/lib/booking/client/travelers";
@@ -166,10 +166,11 @@ function BookingContent() {
   }, [adultCount, childCount, infantCount]);
 
   useEffect(() => {
+    const totalAllowed = adultCount + childCount;
     setSingleRoomSelections((current) =>
-      Array.from({ length: adultCount }, (_, index) => current[index] ?? false),
+      Array.from({ length: totalAllowed }, (_, index) => current[index] ?? false),
     );
-  }, [adultCount]);
+  }, [adultCount, childCount]);
 
   const pricing = useMemo(() => {
     const adultUnitPrice = getUnitPrice(selectedSchedule, "adult");
@@ -499,11 +500,16 @@ function BookingContent() {
         }
       }
 
-      if (parseBirthday(traveler.birthday) === null) {
-        tErrors.birthday = "Ngày sinh không hợp lệ (dd/mm/yyyy).";
+      const ageValidation = validateTravelerAge(
+        traveler.birthday,
+        traveler.type,
+        selectedSchedule?.start_date,
+      );
+      if (!ageValidation.valid) {
+        tErrors.birthday = ageValidation.message || "Ngày sinh không phù hợp với độ tuổi.";
         if (!firstTravelerError) {
           firstTravelerError = {
-            message: `Ngày sinh hành khách ${index + 1} không hợp lệ. Vui lòng nhập dd/mm/yyyy.`,
+            message: `Hành khách ${index + 1} (${traveler.fullName || (traveler.type === "adult" ? "Người lớn" : traveler.type === "child" ? "Trẻ em" : "Em bé")}): ${ageValidation.message}`,
             targetId: `traveler-${index}-birthday`,
           };
         }
@@ -740,6 +746,8 @@ function BookingContent() {
               onOpenAvailableVouchers={getToken() && !customerId ? () => { setVoucherError(null); setVoucherPickerOpen(true); } : undefined}
               availableVouchersOpen={voucherPickerOpen}
               onPaymentMethodChange={setPaymentMethod}
+              memberTier={memberTier}
+              pricing={pricing}
             />
           </section>
 
@@ -758,27 +766,24 @@ function BookingContent() {
       </div>
       </div>
 
-      <ConfirmDialog
+      <BookingConflictModal
         open={conflictModalOpen}
-        icon={<AlertTriangle className="h-8 w-8 text-amber-500" />}
-        title="Xác nhận trùng lịch trình tour"
-        description={
-          (conflictList || [])
-            .map(
-              (c) =>
-                `• Hành khách ${c.travelerName} (CCCD: ${c.idNumber}) hiện đang có chuyến đi "${c.tourName}" từ ngày ${c.startDate} đến ngày ${c.endDate}.`,
-            )
-            .join("\n") +
-          "\n\nLịch trình tour này trùng với tour đã đặt trước đó. Bạn có xác nhận vẫn muốn tiếp tục đặt tour không?"
-        }
-        confirmLabel="Xác nhận vẫn muốn đặt"
-        cancelLabel="Kiểm tra lại"
-        confirmClassName="bg-amber-600 hover:bg-amber-700 shadow-amber-200"
-        onCancel={() => setConflictModalOpen(false)}
+        onClose={() => {
+          setConflictModalOpen(false);
+          const el = document.getElementById("booking-passengers");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+          }
+          toast.info("Đã quay lại trang thông tin hành khách để kiểm tra.");
+        }}
         onConfirm={async () => {
           setConflictModalOpen(false);
           await executeBooking(true);
         }}
+        conflicts={conflictList || []}
+        currentTour={tour}
+        currentSchedule={selectedSchedule}
+        unitPrice={pricing.adultUnitPrice}
       />
     </main>
   );

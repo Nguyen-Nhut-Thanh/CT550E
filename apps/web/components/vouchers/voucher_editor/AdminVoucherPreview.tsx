@@ -96,8 +96,6 @@ export function VoucherPreview({ form }: { form: VoucherForm }) {
           />
         </dl>
       </div>
-      {form.short_description.trim() && <p className="mt-3 text-xs leading-5 text-slate-600">{form.short_description}</p>}
-      {form.image_url.trim() && <img src={form.image_url} alt={form.name || "Hình ảnh voucher"} className="mt-3 max-h-36 w-full rounded-xl border border-blue-100 object-cover" />}
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[#7183a3]">
         <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
           👤 {form.usage_limit_per_user ? `${form.usage_limit_per_user} lần/khách` : "1 lần/khách"}

@@ -18,7 +18,8 @@
     "db:import:provinces": "tsx scripts/import-data/import-provinces.ts",
     "db:import:seasonal": "tsx scripts/import-data/import-seasonal-showcase.ts",
     "db:backfill:booking-metadata": "tsx scripts/backfill-booking-metadata.ts",
-    "grant-admin": "tsx scripts/grant-admin.ts"
+    "grant-admin": "tsx scripts/grant-admin.ts",
+    "seed:diamond": "tsx scripts/seed-diamond-member.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

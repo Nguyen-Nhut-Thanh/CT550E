@@ -43,7 +43,9 @@ export interface AdminCancelBookingPayload {
   note?: string;
   cancelType?: "operator_fault" | "customer_request";
   resolutionOption?: "full_refund" | "reschedule";
+  allowedOptions?: ("full_refund" | "reschedule")[];
   newScheduleId?: number;
+  waiveDifference?: boolean;
 }
 
 export function adminCancelBooking<T = unknown>(
@@ -51,6 +53,23 @@ export function adminCancelBooking<T = unknown>(
   payload: AdminCancelBookingPayload,
 ) {
   return requestWithToken<T>(`/bookings/admin/${bookingId}/cancel-booking`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function confirmRefundTransfer<T = unknown>(
+  bookingId: number,
+  payload: {
+    transactionCode?: string;
+    note?: string;
+    amount?: number;
+  },
+) {
+  return requestWithToken<T>(`/bookings/admin/${bookingId}/confirm-refund-transfer`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

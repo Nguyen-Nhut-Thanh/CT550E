@@ -56,6 +56,7 @@ export type TourScheduleHotel = {
 export type TourSchedulePrice = {
     passenger_type: string;
     price: number;
+    original_price?: number;
     currency: string;
     note?: string | null;
 };
@@ -67,6 +68,12 @@ export type TourScheduleTransport = {
     note: string | null;
     transports: { name: string; transport_type: string; description: string | null };
 };
+export type ScheduleFlashDealSummary = {
+    deal_id: number;
+    discount_type: "percentage" | "fixed" | string;
+    discount_value: number;
+};
+
 export type TourSchedule = {
     tour_schedule_attractions?: Array<{ location_id: number; sort_order: number; location?: ItineraryActivity['location'] }>;
     tour_schedule_amenities?: import('./amenities').ScheduleAmenity[];
@@ -78,6 +85,7 @@ export type TourSchedule = {
     end_date: string;
     price: number;
     original_price?: number;
+    single_room_surcharge?: number;
     quota: number;
     booked_count: number;
     cover_image_url?: string | null;
@@ -85,8 +93,8 @@ export type TourSchedule = {
     tour_schedule_prices?: TourSchedulePrice[];
     tour_schedule_hotels?: TourScheduleHotel[];
     tour_schedule_transports?: TourScheduleTransport[];
-    schedule_promotions?: import('../admin/schedules/promotions').SchedulePromotion | null;
-    schedule_promotion?: import('../admin/schedules/promotions').SchedulePromotionSummary | null;
+    schedule_promotions?: import('../admin/schedules/promotions').SchedulePromotionSummary | null;
+    flash_deals?: ScheduleFlashDealSummary | null;
 };
 export type SchedulePickupPoint = {
     pickup_point_id: number;
@@ -153,6 +161,7 @@ export type PublicTourCard = {
     duration_days: number;
     duration_nights: number;
     base_price: number;
+    single_room_surcharge?: number;
     tour_type: string;
     updated_at: string;
     cover_image: string | null;
@@ -176,6 +185,7 @@ export type PublicTourDetail = {
     duration_days: number;
     duration_nights: number;
     base_price: number;
+    single_room_surcharge?: number;
     tour_type: string;
     tour_amenities: import('./amenities').TourAmenity[];
     transports?: {

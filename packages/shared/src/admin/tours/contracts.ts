@@ -11,6 +11,7 @@ export type TourAdminPayload = {
     duration_days?: number | string;
     duration_nights?: number | string;
     base_price?: number | string;
+    single_room_surcharge?: number | string;
     cut_off_hours?: number | string;
     tour_type?: string;
     departure_location?: number | string;

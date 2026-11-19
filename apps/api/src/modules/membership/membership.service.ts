@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -8,15 +9,20 @@ import {
 import { randomBytes } from "node:crypto";
 import {
   MEMBERSHIP_TIERS,
+  DEFAULT_MEMBERSHIP_REWARDS,
   type MembershipSummary,
   type MembershipTier,
   type MembershipAdminList,
   type MembershipTierId,
 } from "shared";
-import { normalizeMembershipTiers } from "./membership.settings";
+import {
+  birthdayWindow,
+  calculateMembership,
+  creditForBooking,
+  normalizeMembershipTiers,
+} from "./helpers";
 import { getAccountUserId } from "../../common/auth/account-user";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { birthdayWindow, calculateMembership, creditForBooking } from "./membership.rules";
 
 @Injectable()
 export class MembershipService
@@ -220,13 +226,34 @@ export class MembershipService
           tiers[tiers.findIndex((tier) => tier.id === state.tier.id) + 1] ??
           null;
         const target = nextTier?.threshold ?? state.tier.threshold;
+        const totalPoints = state.history.reduce(
+          (sum, credit) =>
+            sum + (credit.points ?? Math.floor(credit.amount / 100_000)),
+          0,
+        );
+        const spentPoints = vouchers
+          .filter(
+            (v) =>
+              v.owner_user_id === userId &&
+              v.reward_key?.startsWith(`redeemed:${userId}:`),
+          )
+          .reduce((sum, v) => {
+            const parts = v.reward_key?.split(":");
+            const cost =
+              parts && parts.length >= 4 ? parseInt(parts[3], 10) : 0;
+            return sum + (Number.isFinite(cost) ? cost : 0);
+          }, 0);
+        const pointsBalance = Math.max(0, totalPoints - spentPoints);
+
         return {
           tier: state.tier,
           tiers,
           cycleStart: state.start?.toISOString() ?? null,
           cycleEnd: state.end?.toISOString() ?? null,
           spending: state.spending,
-          points: state.history.reduce((sum, credit) => sum + (credit.points ?? Math.floor(credit.amount / 100_000)), 0),
+          points: totalPoints,
+          pointsBalance,
+          rewards: DEFAULT_MEMBERSHIP_REWARDS,
           nextTier,
           toNextTier: nextTier
             ? Math.max(0, nextTier.threshold - state.spending)
@@ -286,6 +313,102 @@ export class MembershipService
       data: { read_at: new Date() },
     });
     return { success: true };
+  }
+
+  async redeemReward(accountId: number, rewardId: string) {
+    const userId = await getAccountUserId(
+      this.prisma,
+      accountId,
+      "Không tìm thấy người dùng.",
+    );
+    const reward = DEFAULT_MEMBERSHIP_REWARDS.find((r) => r.id === rewardId);
+    if (!reward) throw new NotFoundException("Phần thưởng không tồn tại.");
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(73129, ${userId}::integer)`;
+        const now = new Date();
+        const bookings = await tx.bookings.findMany({
+          where: {
+            user_id: userId,
+            tour_schedules: { end_date: { lte: now } },
+          },
+          include: {
+            payments: true,
+            tour_schedules: { include: { tours: { select: { name: true } } } },
+          },
+        });
+        const credits = bookings.flatMap((booking) => {
+          const credit = creditForBooking(booking, now);
+          return credit ? [credit] : [];
+        });
+        const totalEarnedPoints = credits.reduce(
+          (sum, credit) =>
+            sum + (credit.points ?? Math.floor(credit.amount / 100_000)),
+          0,
+        );
+
+        const redeemedVouchers = await tx.vouchers.findMany({
+          where: {
+            owner_user_id: userId,
+            reward_key: { startsWith: `redeemed:${userId}:` },
+          },
+          select: { reward_key: true },
+        });
+        const spentPoints = redeemedVouchers.reduce((sum, v) => {
+          const parts = v.reward_key?.split(":");
+          const cost = parts && parts.length >= 4 ? parseInt(parts[3], 10) : 0;
+          return sum + (Number.isFinite(cost) ? cost : 0);
+        }, 0);
+
+        const pointsBalance = Math.max(0, totalEarnedPoints - spentPoints);
+        if (pointsBalance < reward.pointsCost) {
+          throw new BadRequestException(
+            `Số điểm khả dụng (${pointsBalance.toLocaleString("vi-VN")} điểm) không đủ để đổi phần thưởng này (${reward.pointsCost.toLocaleString("vi-VN")} điểm).`,
+          );
+        }
+
+        const code = `VIP-${randomBytes(4).toString("hex").toUpperCase()}`;
+        const rewardKey = `redeemed:${userId}:${reward.id}:${reward.pointsCost}:${Date.now()}`;
+        const voucher = await tx.vouchers.create({
+          data: {
+            owner_user_id: userId,
+            reward_key: rewardKey,
+            code,
+            name: reward.title,
+            short_description: reward.description,
+            image_url: reward.imageUrl,
+            discount_type: "fixed",
+            discount_value: reward.valueVnd ?? reward.pointsCost * 1000,
+            min_order_value: 0,
+            max_discount_amount: reward.valueVnd ?? reward.pointsCost * 1000,
+            usage_limit: 1,
+            start_date: now,
+            expiry_date: new Date(now.getTime() + 365 * 86400_000),
+            status: 1,
+          },
+        });
+
+        await tx.membership_notifications.create({
+          data: {
+            user_id: userId,
+            voucher_id: voucher.voucher_id,
+            event_key: `notify:${rewardKey}`,
+            title: "Đổi thưởng thành công!",
+            message: `Bạn đã đổi ${reward.pointsCost.toLocaleString("vi-VN")} điểm lấy: "${reward.title}". Mã voucher: ${code}`,
+            created_at: now,
+          },
+        });
+
+        const newBalance = pointsBalance - reward.pointsCost;
+        return {
+          success: true,
+          voucherCode: code,
+          remainingPoints: newBalance,
+        };
+      },
+      { timeout: 20_000 },
+    );
   }
 
   async updateSettings(value: unknown): Promise<MembershipTier[]> {

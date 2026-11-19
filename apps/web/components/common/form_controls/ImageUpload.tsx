@@ -136,8 +136,10 @@ export const ImageUpload = ({
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                 <UploadCloud size={24} />
               </div>
-              <p className="text-sm font-bold text-slate-700">{label}</p>
-              <p className="mt-1 text-xs text-slate-500">Hỗ trợ JPG, PNG, WEBP. Tối đa 5MB/ảnh.</p>
+              <p className="text-sm font-bold text-slate-700">{disabled ? "Chưa có hình ảnh" : label}</p>
+              {!disabled && (
+                <p className="mt-1 text-xs text-slate-500">Hỗ trợ JPG, PNG, WEBP. Tối đa 5MB/ảnh.</p>
+              )}
             </div>
           )}
         </div>
@@ -152,26 +154,28 @@ export const ImageUpload = ({
           <div className="flex-1 aspect-[4/3] min-h-[140px] max-h-[260px] w-full overflow-hidden rounded-2xl border border-[#dce9f7] bg-slate-50 mx-auto">
             <img src={images[0]} alt="Ảnh đã chọn" className="size-full object-cover" />
           </div>
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <button
-              type="button"
-              disabled={disabled || isUploading}
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isUploading ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}
-              Thay ảnh
-            </button>
-            <button
-              type="button"
-              disabled={disabled || isUploading}
-              onClick={() => removeImage(0)}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <X size={15} />
-              Xóa ảnh
-            </button>
-          </div>
+          {!disabled && (
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                disabled={disabled || isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isUploading ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}
+                Thay ảnh
+              </button>
+              <button
+                type="button"
+                disabled={disabled || isUploading}
+                onClick={() => removeImage(0)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <X size={15} />
+                Xóa ảnh
+              </button>
+            </div>
+          )}
         </div>
       ) : images.length > 0 && multiple && previewLayout === 'carousel' ? <ImagePreviewCarousel images={images} disabled={disabled || isUploading} onRemove={removeImage} /> : images.length > 0 && (
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">

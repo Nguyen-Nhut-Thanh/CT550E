@@ -15,7 +15,7 @@ import type {
     VoucherAnalytics,
 } from 'shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { escapeCsv, escapeXml, getSectionTableData } from './dashboard-export.helper';
+import { escapeCsv, escapeXml, getSectionTableData } from './helpers';
 
 const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
 
@@ -692,7 +692,6 @@ export class DashboardService {
                     fullName: string | null;
                     phone: string | null;
                     email: string | null;
-                    roles: string[];
                     status: string;
                     assignedCount: number;
                     completedCount: number;
@@ -703,15 +702,15 @@ export class DashboardService {
                     COALESCE(u.full_name, 'Chưa đặt tên') AS "fullName",
                     u.phone,
                     a.email,
-                    COALESCE(sc.roles, ARRAY[]::varchar[]) AS "roles",
-                    sc.status,
+                    COALESCE(ep.status, 'active') AS "status",
                     COUNT(sc.assignment_id)::int AS "assignedCount",
                     COUNT(CASE WHEN sc.status = 'confirmed' OR (ts.end_date IS NOT NULL AND ts.end_date <= ${now}) THEN 1 END)::int AS "completedCount"
                 FROM schedule_crew sc
                 INNER JOIN users u ON u.user_id = sc.user_id
                 LEFT JOIN accounts a ON a.account_id = u.account_id
+                LEFT JOIN employee_profiles ep ON ep.user_id = u.user_id
                 LEFT JOIN tour_schedules ts ON ts.tour_schedule_id = sc.tour_schedule_id
-                GROUP BY u.user_id, u.full_name, u.phone, a.email, sc.roles, sc.status
+                GROUP BY u.user_id, u.full_name, u.phone, a.email, ep.status
                 ORDER BY "completedCount" DESC, "assignedCount" DESC
                 LIMIT 15;
             `,
@@ -865,12 +864,29 @@ export class DashboardService {
         }));
 
         // Hiệu suất nhân sự (Top Staff từ SQL aggregation)
+        const topUserIds = topStaffRaw.map((s) => s.userId);
+        const crewRolesByUser = new Map<number, Set<string>>();
+        if (topUserIds.length > 0) {
+            const crewAssignments = await this.prisma.schedule_crew.findMany({
+                where: { user_id: { in: topUserIds } },
+                select: { user_id: true, roles: true },
+            });
+            for (const c of crewAssignments) {
+                if (!crewRolesByUser.has(c.user_id)) {
+                    crewRolesByUser.set(c.user_id, new Set());
+                }
+                for (const r of c.roles || []) {
+                    crewRolesByUser.get(c.user_id)!.add(r);
+                }
+            }
+        }
+
         const topStaff: StaffPerformanceItem[] = topStaffRaw.map((s) => ({
             userId: s.userId,
             fullName: s.fullName || 'Chưa đặt tên',
             phone: s.phone,
             email: s.email,
-            roles: s.roles || [],
+            roles: Array.from(crewRolesByUser.get(s.userId) || []),
             assignedCount: Number(s.assignedCount || 0),
             completedCount: Number(s.completedCount || 0),
             status: s.status,

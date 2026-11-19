@@ -2,10 +2,19 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { TourAdminPayload, TourListParams, TourScheduleTemplate } from 'shared';
 import { requireFields } from "../../common/validation/payload";
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { ensureMutableFieldChangeAllowed, normalizeDestinationIds, normalizePolicyEntries, normalizeTourSummary, normalizeCutOffHours, normalizeTourDuration, normalizeTourImages } from "./tour-input";
-import { getTourCountries, tourCountrySelect } from './tour-list';
 import type { Prisma } from '@prisma/client';
-import { normalizeAmenities } from './tour-amenities';
+import {
+  ensureMutableFieldChangeAllowed,
+  getTourCountries,
+  normalizeAmenities,
+  normalizeCutOffHours,
+  normalizeDestinationIds,
+  normalizePolicyEntries,
+  normalizeTourDuration,
+  normalizeTourImages,
+  normalizeTourSummary,
+  tourCountrySelect,
+} from "./helpers";
 @Injectable()
 export class ToursAdminService {
     constructor(private readonly prisma: PrismaService) { }
@@ -81,7 +90,13 @@ export class ToursAdminService {
     }
     async detail(id: number) {
         const tour = await this.getTourWithAdminRelationsOrThrow(id);
-        return { tour };
+        return {
+            tour: {
+                ...tour,
+                base_price: Number(tour.base_price),
+                single_room_surcharge: Number(tour.single_room_surcharge ?? 0),
+            },
+        };
     }
     async list(params: TourListParams) {
         const where: Record<string, unknown> = {};
@@ -104,6 +119,7 @@ export class ToursAdminService {
                 duration_days: true,
                 tour_type: true,
                 base_price: true,
+                single_room_surcharge: true,
                 status: true,
                 updated_at: true,
                 duration_nights: true,
@@ -156,6 +172,7 @@ export class ToursAdminService {
                         duration_days: duration.days,
                         duration_nights: duration.nights,
                         base_price: Number(body.base_price ?? 0),
+                        single_room_surcharge: Number(body.single_room_surcharge ?? 0),
                         cut_off_hours: cutOffHours ?? 24,
                         tour_type: body.tour_type ?? 'domestic',
                         departure_location: Number(body.departure_location),
@@ -270,6 +287,7 @@ export class ToursAdminService {
                         duration_days: duration?.days,
                         duration_nights: duration?.nights,
                         base_price: body.base_price != null ? Number(body.base_price) : undefined,
+                        single_room_surcharge: body.single_room_surcharge != null ? Number(body.single_room_surcharge) : undefined,
                         cut_off_hours: cutOffHours,
                         tour_type: body.tour_type ?? undefined,
                         departure_location: body.departure_location != null

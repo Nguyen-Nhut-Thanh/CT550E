@@ -33,6 +33,7 @@ export default function AdminTourCreatePage() {
     duration_days: 1,
     duration_nights: 0,
     base_price: 0,
+    single_room_surcharge: 0,
     departure_location: 0,
     transport_id: 0,
     tour_type: "domestic",

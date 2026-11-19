@@ -22,6 +22,7 @@ import {
   Trash2,
   Users,
   X,
+  Zap,
 } from "lucide-react";
 import type { AdminSchedule, SaveSchedulePromotionPayload, SchedulePromotion } from "shared";
 
@@ -46,6 +47,7 @@ export function SchedulePromotionModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [existingPromotion, setExistingPromotion] = useState<SchedulePromotion | null>(null);
+  const [activeFlashDeal, setActiveFlashDeal] = useState<any>(schedule?.flash_deals ?? null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -68,9 +70,12 @@ export function SchedulePromotionModal({
     setLoading(true);
 
     getSchedulePromotion(schedule.tour_schedule_id)
-      .then((promo) => {
+      .then((data: any) => {
         if (!active) return;
+        const promo = data && "title" in data ? (data as SchedulePromotion) : null;
+        const deal = data?.flash_deal ?? schedule.flash_deals ?? null;
         setExistingPromotion(promo);
+        setActiveFlashDeal(deal);
         if (promo) {
           setTitle(promo.title);
           setDiscountType(promo.discount_type === "fixed_amount" ? "fixed_amount" : "percentage");
@@ -163,6 +168,15 @@ export function SchedulePromotionModal({
     if (endDate <= startDate) {
       showError("Thời gian kết thúc phải sau thời gian bắt đầu.");
       return;
+    }
+
+    if (activeFlashDeal) {
+      const confirmSave = window.confirm(
+        "THÔNG BÁO FLASH DEAL ĐANG ÁP DỤNG:\n\n" +
+        "Đợt khởi hành này hiện đang áp dụng Flash Deal nên ưu đãi đợt khởi hành sẽ không được áp dụng trong cùng thời gian Flash Deal đang diễn ra (hệ thống luôn ưu tiên Flash Deal trước).\n\n" +
+        "Bạn có xác nhận tiếp tục lưu ưu đãi đợt khởi hành này không?"
+      );
+      if (!confirmSave) return;
     }
 
     const payload: SaveSchedulePromotionPayload = {
@@ -279,6 +293,24 @@ export function SchedulePromotionModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+            {activeFlashDeal && (
+              <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-amber-900 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white mt-0.5">
+                    <Zap size={16} />
+                  </div>
+                  <div className="text-xs leading-relaxed space-y-1">
+                    <p className="font-bold text-amber-950 text-sm">
+                      Đợt khởi hành đang áp dụng Flash Deal ({activeFlashDeal.discount_type === 'percentage' ? `-${activeFlashDeal.discount_value}%` : `-${formatVND(activeFlashDeal.discount_value)}`})
+                    </p>
+                    <p className="text-amber-800">
+                      Đợt khởi hành này đang áp dụng Flash Deal nên hệ thống sẽ <strong>ưu tiên áp dụng giá Flash Deal trước</strong> và <strong>không áp dụng thêm ưu đãi đợt khởi hành trong cùng thời gian</strong> (ưu đãi đợt này sẽ chỉ có hiệu lực với khách hàng khi Flash Deal kết thúc hoặc hết hạn).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Live Pricing Preview Box */}
             <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-sky-50/80 p-4 shadow-2xs">
               <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-2">

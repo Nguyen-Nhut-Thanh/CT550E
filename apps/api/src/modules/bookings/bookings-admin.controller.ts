@@ -89,7 +89,9 @@ export class BookingsAdminController {
             note?: string;
             cancelType?: 'operator_fault' | 'customer_request';
             resolutionOption?: 'full_refund' | 'reschedule';
+            allowedOptions?: ('full_refund' | 'reschedule')[];
             newScheduleId?: number;
+            waiveDifference?: boolean;
         },
         @Req()
         req: any,
@@ -103,6 +105,31 @@ export class BookingsAdminController {
             dto.cancelType,
             dto.resolutionOption,
             dto.newScheduleId,
+            dto.allowedOptions,
+            dto.waiveDifference,
+        );
+    }
+
+    @Post("admin/:id/confirm-refund-transfer")
+    @UseGuards(AdminAuthGuard)
+    confirmRefundTransfer(
+        @Param("id", ParseIntPipe)
+        id: number,
+        @Body()
+        dto: {
+            transactionCode?: string;
+            note?: string;
+            amount?: number;
+        },
+        @Req()
+        req: any,
+    ) {
+        return this.service.confirmRefundTransfer(
+            id,
+            Boolean(req.workforce.isManager || req.workforce.isAdmin),
+            dto.transactionCode,
+            dto.note,
+            dto.amount,
         );
     }
 }

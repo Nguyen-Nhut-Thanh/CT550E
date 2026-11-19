@@ -3,6 +3,14 @@
 @source "../components";
 @source "./admin";
 
+@theme {
+  --font-serif: var(--font-serif), "Playfair Display", Georgia, serif;
+}
+
+.font-serif {
+  font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+}
+
 .font-handwriting {
   font-family: 'Caveat', cursive;
 }

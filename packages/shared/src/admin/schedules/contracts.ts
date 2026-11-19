@@ -27,6 +27,7 @@ export type ScheduleAdminPayload = {
     start_date?: string;
     end_date?: string;
     price?: number | string;
+    single_room_surcharge?: number | string;
     quota?: number | string;
     status?: number | string | null;
     cover_image_url?: string | null;

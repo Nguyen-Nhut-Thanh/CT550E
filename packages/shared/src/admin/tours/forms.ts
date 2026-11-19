@@ -17,6 +17,7 @@ export type TourDetailForm = {
     policy_contents?: TourPolicyContentMap;
     cut_off_hours?: number;
     base_price?: number | string;
+    single_room_surcharge?: number | string;
     tour_schedules?: TourScheduleSummary[];
     tour_destinations?: {
         location_id: number;

@@ -16,11 +16,11 @@ export type CrewRole = keyof typeof CREW_ROLES;
 export type CrewPayload = { crew_required_count?: number; override_reason?: string; assignments: Array<{ roles: CrewRole[]; user_id: number; report_at: string; release_at: string; note?: string }> };
 export type CrewContactSnapshot = {
   revision: number; published_at: string; operating_region: RegionCode;
-  members: Array<{ user_id: number; full_name: string; phone: string | null; roles: CrewRole[] }>;
+  members: Array<{ user_id: number; full_name: string; phone: string | null; email?: string | null; roles: CrewRole[] }>;
 };
 export type CrewAssignment = {
   assignment_id: number; tour_schedule_id: number; user_id: number; roles: CrewRole[]; status: 'pending' | 'confirmed' | 'declined' | 'completed';
-  report_at: string; release_at: string; note?: string | null; response_note?: string | null; user: { full_name: string; phone?: string | null };
+  report_at: string; release_at: string; note?: string | null; response_note?: string | null; user: { full_name: string; phone?: string | null; email?: string | null };
 };
 export type WorkforceSchedule = {
   tour_schedule_id: number; code: string | null; start_date: string; end_date: string; status: number; booked_count: number;

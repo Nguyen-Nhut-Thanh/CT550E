@@ -1,7 +1,9 @@
 "use client";
-import { ResourceContext } from "@/lib/users/account/resource-context";
+import {
+  ResourceContext,
+  type AccountResourceCache as Cache,
+} from "@/lib/users/account/resource-context";
 import { useEffect, useState, type ReactNode } from "react";
-import type { AccountResourceCache as Cache } from "shared";
 
 export function AccountResourceProvider({ children }: { children: ReactNode }) {
   const [cache] = useState<Cache>(() => new Map());

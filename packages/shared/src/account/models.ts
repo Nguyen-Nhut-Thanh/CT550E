@@ -1,3 +1,11 @@
+export type AccountResourceEntry = {
+    data: unknown;
+    loaded: boolean;
+    updatedAt: number;
+    pending?: Promise<unknown>;
+};
+export type AccountResourceCache = Map<string, AccountResourceEntry>;
+
 export type UserProfile = {
     user_id?: number;
     full_name?: string | null;
@@ -89,6 +97,8 @@ export type BookingItemUI = {
     passengers: string;
     status: "completed" | "upcoming" | "ongoing" | "cancelled" | "unknown";
     statusText: string;
+    statusReason?: string;
+    isCancelUnapproved?: boolean;
     paymentStatus: "paid" | "unpaid" | "refunded";
     paymentStatusText: string;
     price: number;

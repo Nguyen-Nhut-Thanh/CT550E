@@ -642,6 +642,7 @@ model tour_schedules {
   start_date               DateTime                   @db.Timestamp(6)
   end_date                 DateTime                   @db.Timestamp(6)
   price                    Decimal                    @default(0) @db.Decimal(20, 2)
+  single_room_surcharge    Decimal                    @default(0) @db.Decimal(20, 2)
   quota                    Int                        @default(0)
   booked_count             Int                        @default(0)
   cover_image_url          String?                    @db.VarChar(255)
@@ -697,6 +698,7 @@ model tours {
   duration_days       Int
   duration_nights     Int                 @default(0)
   base_price          Decimal             @default(0) @db.Decimal(20, 2)
+  single_room_surcharge Decimal           @default(0) @db.Decimal(20, 2)
   tour_type           String              @default("domestic") @db.VarChar(50)
   departure_location  Int
   transport_id        Int

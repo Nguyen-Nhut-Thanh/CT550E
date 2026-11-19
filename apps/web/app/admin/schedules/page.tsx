@@ -6,6 +6,7 @@ import { SchedulePageHeader } from "@/components/schedules/schedule_table/AdminS
 import { ScheduleTablePanel } from "@/components/schedules/schedule_table/AdminScheduleTablePanel";
 import { ScheduleManifestModal } from "@/components/schedules/schedule_modals/AdminScheduleManifestModal";
 import { SchedulePromotionModal } from "@/components/schedules/schedule_modals/AdminSchedulePromotionModal";
+import { FlashDealModal } from "@/components/flash_deals/AdminFlashDealModal";
 import { TourListPanel } from "@/components/schedules/tour_selector/AdminScheduleTourListPanel";
 import { ConfirmDialog } from "@/components/common/dialogs_and_feedback/dialogs/ConfirmDialog";
 import {
@@ -13,6 +14,15 @@ import {
   getTourSchedules,
   updateAdminScheduleStatus,
 } from "@/lib/schedules/admin/api";
+import {
+  deleteAdminFlashDeal,
+  saveAdminFlashDeal,
+} from "@/lib/flash_deals/admin/api";
+import {
+  buildFlashDealForm,
+  buildFlashDealPayload,
+  createDefaultFlashDealForm,
+} from "@/lib/flash_deals/admin/forms";
 import { matchesScheduleStatusFilter } from "@/lib/schedules/admin/status";
 import { getAdminTours } from "@/lib/tours/admin/api";
 import {
@@ -25,6 +35,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type {
   AdminSchedule as Schedule,
+  FlashDealForm,
+  FlashDealSchedule,
   ScheduleOverviewTour as Tour,
 } from "shared";
 
@@ -54,6 +66,10 @@ export default function AdminSchedulesPage() {
   >(null);
   const [manifestScheduleId, setManifestScheduleId] = useState<number | null>(null);
   const [promotionSchedule, setPromotionSchedule] = useState<Schedule | null>(null);
+  const [flashDealSchedule, setFlashDealSchedule] = useState<Schedule | null>(null);
+  const [flashDealForm, setFlashDealForm] = useState<FlashDealForm>(createDefaultFlashDealForm);
+  const [savingFlashDeal, setSavingFlashDeal] = useState(false);
+  const [deletingFlashDeal, setDeletingFlashDeal] = useState(false);
 
   const selectedTour = tours.find((tour) => tour.tour_id === selectedTourId);
 
@@ -127,6 +143,82 @@ export default function AdminSchedulesPage() {
     } finally {
       mutations.current.delete(scheduleId);
       setPendingIds([...mutations.current]);
+    }
+  };
+
+  const handleOpenFlashDeal = (schedule: Schedule) => {
+    setFlashDealSchedule(schedule);
+    const flashDealItem: FlashDealSchedule = {
+      ...schedule,
+      tours: selectedTour
+        ? {
+            tour_id: selectedTour.tour_id,
+            name: selectedTour.name,
+            code: selectedTour.code,
+          }
+        : null,
+      flash_deals: schedule.flash_deals ?? null,
+      schedule_promotions: schedule.schedule_promotions ?? null,
+    };
+    setFlashDealForm(buildFlashDealForm(flashDealItem));
+  };
+
+  const handleSaveFlashDeal = async () => {
+    if (!flashDealSchedule) return;
+    if (
+      !Number.isFinite(flashDealForm.discount_value) ||
+      flashDealForm.discount_value <= 0 ||
+      (flashDealForm.discount_type === "percentage"
+        ? flashDealForm.discount_value > 100
+        : flashDealForm.discount_value > Number(flashDealSchedule.price))
+    ) {
+      showError("Mức giảm cần lớn hơn 0 và không vượt quá giá gốc hoặc 100%.");
+      return;
+    }
+    setSavingFlashDeal(true);
+    try {
+      const deal = flashDealSchedule.flash_deals;
+      const flashDealItem: FlashDealSchedule = {
+        ...flashDealSchedule,
+        tours: selectedTour
+          ? {
+              tour_id: selectedTour.tour_id,
+              name: selectedTour.name,
+              code: selectedTour.code,
+            }
+          : null,
+        flash_deals: deal ?? null,
+        schedule_promotions: flashDealSchedule.schedule_promotions ?? null,
+      };
+      await saveAdminFlashDeal(
+        deal ? `/admin/marketing/flash-deals/${deal.deal_id}` : "/admin/marketing/flash-deals",
+        deal ? "PATCH" : "POST",
+        buildFlashDealPayload(flashDealItem, flashDealForm),
+      );
+      success(deal ? "Đã cập nhật flash deal thành công" : "Đã tạo flash deal thành công");
+      setFlashDealSchedule(null);
+      setScheduleRetry((c) => c + 1);
+    } catch (cause) {
+      showError(cause instanceof Error ? cause.message : "Không thể lưu flash deal.");
+    } finally {
+      setSavingFlashDeal(false);
+    }
+  };
+
+  const handleDeleteFlashDeal = async () => {
+    const deal = flashDealSchedule?.flash_deals;
+    if (!deal || deletingFlashDeal) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa Flash Deal của đợt khởi hành này?")) return;
+    setDeletingFlashDeal(true);
+    try {
+      await deleteAdminFlashDeal(deal.deal_id);
+      success("Đã xóa flash deal thành công");
+      setFlashDealSchedule(null);
+      setScheduleRetry((c) => c + 1);
+    } catch (cause) {
+      showError(cause instanceof Error ? cause.message : "Không thể xóa flash deal.");
+    } finally {
+      setDeletingFlashDeal(false);
     }
   };
 
@@ -300,6 +392,7 @@ export default function AdminSchedulesPage() {
               onPageChange={setSchedulePage}
               onViewManifest={setManifestScheduleId}
               onConfigurePromotion={setPromotionSchedule}
+              onConfigureFlashDeal={handleOpenFlashDeal}
               pendingIds={pendingIds}
             />
           )}
@@ -319,6 +412,33 @@ export default function AdminSchedulesPage() {
         open={promotionSchedule !== null}
         onClose={() => setPromotionSchedule(null)}
         onSaved={() => setScheduleRetry((c) => c + 1)}
+      />
+
+      <FlashDealModal
+        open={flashDealSchedule !== null}
+        saving={savingFlashDeal}
+        deleting={deletingFlashDeal}
+        schedule={
+          flashDealSchedule
+            ? {
+                ...flashDealSchedule,
+                tours: selectedTour
+                  ? {
+                      tour_id: selectedTour.tour_id,
+                      name: selectedTour.name,
+                      code: selectedTour.code,
+                    }
+                  : null,
+                flash_deals: flashDealSchedule.flash_deals ?? null,
+                schedule_promotions: flashDealSchedule.schedule_promotions ?? null,
+              }
+            : null
+        }
+        form={flashDealForm}
+        onClose={() => setFlashDealSchedule(null)}
+        onChange={(updater) => setFlashDealForm((cur) => updater(cur))}
+        onSave={handleSaveFlashDeal}
+        onDelete={handleDeleteFlashDeal}
       />
 
       <ConfirmDialog

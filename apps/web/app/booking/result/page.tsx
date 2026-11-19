@@ -93,12 +93,6 @@ function ResultContent() {
       setLoading(false);
       return;
     }
-    if (!getToken()) {
-      router.replace(
-        `/login?callbackUrl=${encodeURIComponent(`/booking/result?reference=${encodeURIComponent(reference)}`)}`,
-      );
-      return;
-    }
     const poll = async () => {
       try {
         const result = await getPaymentStatus(reference, controller.signal);

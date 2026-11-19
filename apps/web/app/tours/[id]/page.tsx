@@ -69,7 +69,10 @@ export default function TourDetailPage({
     selectedScheduleId != null && tour?.tour_schedules
       ? tour.tour_schedules.find((s) => s.tour_schedule_id === selectedScheduleId) ?? null
       : null;
-  const displaySchedule = selectedSchedule || tour?.tour_schedules?.[0];
+  const displaySchedule =
+    selectedSchedule ||
+    tour?.tour_schedules?.find((s) => (s.quota || 0) > (s.booked_count || 0)) ||
+    tour?.tour_schedules?.[0];
 
   const formattedReviews: ReviewItem[] = useMemo(() => {
     return (tour?.reviews || []).map((r: any) => ({
@@ -177,7 +180,7 @@ export default function TourDetailPage({
             />
 
             {/* 4. Tiện ích nổi bật (Amenities) */}
-            <TourAmenities key={`amenities-${tourId}-${displaySchedule?.tour_schedule_id ?? 'none'}`} amenities={tour.tour_amenities || []} schedule={displaySchedule} />
+            <TourAmenities key={`amenities-${tourId}`} amenities={tour.tour_amenities || []} />
 
             {/* 5. Điểm nổi bật của chương trình (Tour Highlights) */}
             <TourHighlightsList />

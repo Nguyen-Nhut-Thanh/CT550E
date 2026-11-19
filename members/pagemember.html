@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA Privilege | Chương Trình Hạng Thành Viên Du Lịch & Nghỉ Dưỡng Cao Cấp</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#050B14',
+                            900: '#0A1424',
+                            800: '#122238',
+                        },
+                        gold: {
+                            300: '#F3E5AB',
+                            400: '#E5C158',
+                            500: '#D4AF37',
+                            600: '#AA820A',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050B14;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050B14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D4AF37;
+        }
+
+        /* 3D Card Effect */
+        .perspective-container {
+            perspective: 1200px;
+        }
+        .member-card-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.6s ease, box-shadow 0.6s ease;
+        }
+        .member-card-shine {
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.28) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(18, 34, 56, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-gold {
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.12) 0%, rgba(10, 20, 36, 0.65) 100%);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #1E293B;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 100%);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -9px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            border: 2px solid #050B14;
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Shimmer Text */
+        .text-gold-gradient {
+            background: linear-gradient(135deg, #FFF5D6 0%, #E5C158 50%, #C59B27 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Card Pattern Overlay */
+        .card-mesh {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-gold-500 selection:text-navy-950">
+
+    <!-- Ambient Background Glows -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[130px]"></div>
+        <div class="absolute top-1/3 right-0 w-[30rem] h-[30rem] bg-teal-500/10 rounded-full blur-[150px]"></div>
+        <div class="absolute bottom-0 left-1/4 w-[28rem] h-[28rem] bg-blue-600/10 rounded-full blur-[150px]"></div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24 space-y-24">
+
+        <!-- 2. HERO / MEMBER STATUS DASHBOARD -->
+        <section id="dashboard" class="pt-2">
+            <!-- Top Badge & Title -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/10 border border-gold-500/20 text-gold-400 text-xs font-medium mb-3">
+                        <i class="ph-fill ph-sparkle"></i>
+                        <span>Không Gian Đặc Quyền Hội Viên</span>
+                    </div>
+                    <h1 class="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white">
+                        Hành trình thượng lưu, <span class="text-gold-gradient italic">đặc quyền xứng tầm.</span>
+                    </h1>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md">
+                    Trải nghiệm dịch vụ cá nhân hóa tại hơn 1,200 khu nghỉ dưỡng 5 sao, hãng hàng không đối tác và du thuyền hạng sang trên toàn cầu.
+                </p>
+            </div>
+
+            <!-- Interactive Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Left Column: Interactive 3D Membership Card & Tier Previewer (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col items-center">
+                    <div class="w-full perspective-container">
+                        <div id="interactiveCard" class="member-card-3d relative w-full aspect-[1.586/1] rounded-3xl p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl border border-white/20 cursor-grab active:cursor-grabbing select-none"
+                             style="background: linear-gradient(135deg, #2A2112 0%, #8A6421 48%, #D4AF37 100%); box-shadow: 0 25px 50px -12px rgba(212, 175, 55, 0.28);">
+                            
+                            <!-- Dynamic Shine & Mesh -->
+                            <div id="cardShine" class="member-card-shine absolute inset-0"></div>
+                            <div class="card-mesh absolute inset-0 opacity-30 pointer-events-none"></div>
+                            <div class="absolute -right-12 -bottom-12 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+
+                            <!-- Card Top Row -->
+                            <div class="relative z-10 flex items-start justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 rounded-lg bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
+                                        <i class="ph-fill ph-compass text-xl text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-serif font-bold tracking-widest text-sm text-white leading-none">AURA</p>
+                                        <p class="text-[9px] tracking-[0.22em] text-white/75 uppercase mt-0.5">Privilege</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span id="cardStatusBadge" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-black/30 text-amber-200 border border-white/20 backdrop-blur-md">
+                                        Hạng Hiện Tại
+                                    </span>
+                                    <h3 id="cardTierName" class="font-serif text-xl sm:text-2xl font-bold text-white mt-1 tracking-wide">VOYAGER GOLD</h3>
+                                </div>
+                            </div>
+
+                            <!-- Card Middle Row: Chip & Contactless -->
+                            <div class="relative z-10 flex items-center justify-between my-auto py-2">
+                                <div class="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200 via-yellow-400 to-amber-600 border border-black/20 flex items-center justify-center shadow-inner">
+                                    <div class="w-8 h-6 border border-black/20 rounded-sm grid grid-cols-2">
+                                        <div class="border-r border-b border-black/20"></div>
+                                        <div class="border-b border-black/20"></div>
+                                    </div>
+                                </div>
+                                <i class="ph ph-contactless-payment text-2xl text-white/70"></i>
+                            </div>
+
+                            <!-- Card Bottom Row: Member Info -->
+                            <div class="relative z-10 flex items-end justify-between pt-2 border-t border-white/15">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest text-white/70">Chủ Thẻ Thành Viên</p>
+                                    <p class="text-sm sm:text-base font-bold tracking-wider text-white uppercase mt-0.5">NGUYỄN MINH QUÂN</p>
+                                    <p class="text-[11px] font-mono text-white/80 mt-0.5">ID: 8849 • 2026 • 0918</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] uppercase tracking-widest text-white/70">Tích lũy</p>
+                                    <p id="cardMultiplierText" class="text-base sm:text-lg font-extrabold text-white">1.5x Điểm</p>
+                                    <p class="text-[10px] text-white/75">Hiệu lực: 12/2028</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Tier Switcher Pills (Preview different cards) -->
+                    <div class="mt-5 w-full">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2 px-1">
+                            <span><i class="ph-fill ph-hand-tap text-gold-400 mr-1"></i>Nhấn để xem thử thiết kế các hạng thẻ:</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 p-1.5 rounded-2xl bg-navy-900/90 border border-white/10">
+                            <button onclick="previewCardTier('explorer')" id="btnPreview-explorer" class="tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">
+                                Explorer
+                            </button>
+                            <button onclick="previewCardTier('voyager')" id="btnPreview-voyager" class="tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all bg-gold-500 text-navy-950 shadow-md">
+                                Voyager ★
+                            </button>
+                            <button onclick="previewCardTier('elite')" id="btnPreview-elite" class="tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">
+                                Elite
+                            </button>
+                            <button onclick="previewCardTier('signature')" id="btnPreview-signature" class="tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">
+                                Signature
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Member Progress & Metrics (7 cols) -->
+                <div class="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+                        <div>
+                            <span class="text-xs uppercase tracking-wider text-slate-400">Trạng thái tài khoản</span>
+                            <div class="flex items-center gap-3 mt-1">
+                                <h2 class="text-2xl font-bold text-white">Hạng Voyager (Vàng)</h2>
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-gold-300 border border-gold-500/30">
+                                    Top 15% Hội viên
+                                </span>
+                            </div>
+                        </div>
+                    </div>   
+
+                    <!-- Progress Bars to Next Tier (Elite Platinum) -->
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                                <i class="ph-fill ph-trend-up text-emerald-400 text-lg"></i>
+                                Tiến trình nâng hạng lên <span class="text-cyan-300 font-bold">ELITE (Bạch Kim)</span>
+                            </h3>
+                            <span class="text-xs text-slate-400">Đạt 1 trong 2 điều kiện</span>
+                        </div>
+
+                        <!-- Progress 1: Points -->
+                        <div class="bg-navy-950/60 p-4 rounded-2xl border border-white/5 space-y-2.5">
+                            <div class="flex justify-between text-xs sm:text-sm">
+                                <span class="font-medium text-slate-300">Điểm xét hạng tích lũy trong năm</span>
+                                <span class="font-bold text-white">24,500 <span class="text-slate-400 font-normal">/ 30,000 Điểm</span></span>
+                            </div>
+                            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                                <div class="h-full bg-gradient-to-r from-gold-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-1000" style="width: 82%"></div>
+                            </div>
+                            <p class="text-xs text-slate-400 flex items-center justify-between">
+                                <span>Chỉ còn thiếu <strong class="text-gold-300">5,500 điểm</strong> để lên hạng Elite</span>
+                                <span class="text-emerald-400 font-semibold">82% hoàn thành</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2B. INTERACTIVE POINTS SIMULATOR (BỘ MÔ PHỎNG TÍNH ĐIỂM) -->
+        <section id="simulator" class="glass-panel-gold rounded-3xl p-6 sm:p-10 relative overflow-hidden">
+            <div class="max-w-3xl mb-8">
+                <span class="text-xs font-bold uppercase tracking-widest text-gold-400">Công cụ ước tính quyền lợi</span>
+                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-white mt-1">Bộ Mô Phỏng Tích Điểm & Hoàn Tiền</h2>
+                <p class="text-slate-300 text-sm mt-1">
+                    Kéo thanh trượt để chọn mức chi tiêu du lịch dự kiến của bạn và khám phá số điểm thưởng nhận được ở từng hạng thẻ.
+                </p>
+            </div>
+
+            <!-- Slider Control Area -->
+            <div class="bg-navy-950/80 p-6 rounded-2xl border border-white/10 mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <label for="spendRange" class="text-sm font-medium text-slate-300">
+                        Mức chi tiêu du lịch & nghỉ dưỡng dự kiến:
+                    </label>
+                    <div class="flex items-baseline gap-2">
+                        <span id="spendAmountDisplay" class="text-2xl sm:text-3xl font-extrabold text-gold-400">50.000.000 ₫</span>
+                        <span class="text-xs text-slate-400">/ năm hoặc chuyến đi</span>
+                    </div>
+                </div>
+
+                <input id="spendRange" type="range" min="5" max="300" step="5" value="50" class="w-full my-2" oninput="updateSimulator(this.value)">
+
+                <div class="flex justify-between text-[11px] text-slate-400 mt-2 font-medium">
+                    <span>5 Triệu ₫</span>
+                    <span>50 Triệu ₫</span>
+                    <span>150 Triệu ₫</span>
+                    <span>300 Triệu ₫</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Results Across 4 Tiers -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Explorer Result -->
+                <div class="bg-navy-950/75 border border-white/10 rounded-2xl p-5 transition-all hover:border-slate-400/50">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Explorer (Bạc)</span>
+                        <span class="px-2 py-0.5 text-[11px] rounded bg-slate-700/60 text-slate-200 font-semibold">1.0x Điểm</span>
+                    </div>
+                    <div id="simPoints-explorer" class="text-2xl font-extrabold text-white">5,000 <span class="text-xs font-normal text-slate-400">Pts</span></div>
+                    <div class="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs">
+                        <span class="text-slate-400">Giá trị quy đổi:</span>
+                        <span id="simCash-explorer" class="text-slate-200 font-semibold">~ 1.000.000 ₫</span>
+                    </div>
+                </div>
+
+                <!-- Voyager Result (Current Tier Highlight) -->
+                <div class="bg-gradient-to-b from-amber-500/15 to-navy-950/90 border-2 border-gold-500/60 rounded-2xl p-5 relative shadow-lg shadow-gold-500/10">
+                    <span class="absolute -top-2.5 right-4 px-2 py-0.5 bg-gold-500 text-navy-950 font-bold text-[10px] rounded-full uppercase">Hạng của bạn</span>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gold-300">Voyager (Vàng)</span>
+                        <span class="px-2 py-0.5 text-[11px] rounded bg-gold-500/20 text-gold-300 font-semibold">1.5x Điểm</span>
+                    </div>
+                    <div id="simPoints-voyager" class="text-2xl font-extrabold text-gold-400">7,500 <span class="text-xs font-normal text-slate-300">Pts</span></div>
+                    <div class="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs">
+                        <span class="text-slate-300">Giá trị quy đổi:</span>
+                        <span id="simCash-voyager" class="text-gold-300 font-bold">~ 2.500.000 ₫</span>
+                    </div>
+                </div>
+
+                <!-- Elite Result -->
+                <div class="bg-navy-950/75 border border-cyan-500/30 rounded-2xl p-5 transition-all hover:border-cyan-400">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">Elite (Bạch Kim)</span>
+                        <span class="px-2 py-0.5 text-[11px] rounded bg-cyan-500/20 text-cyan-300 font-semibold">2.2x Điểm</span>
+                    </div>
+                    <div id="simPoints-elite" class="text-2xl font-extrabold text-white">11,000 <span class="text-xs font-normal text-slate-400">Pts</span></div>
+                    <div class="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs">
+                        <span class="text-slate-400">Giá trị quy đổi:</span>
+                        <span id="simCash-elite" class="text-cyan-300 font-semibold">~ 4.000.000 ₫</span>
+                    </div>
+                </div>
+
+                <!-- Signature Result -->
+                <div class="bg-navy-950/75 border border-emerald-500/30 rounded-2xl p-5 transition-all hover:border-emerald-400">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Signature (Kim Cương)</span>
+                        <span class="px-2 py-0.5 text-[11px] rounded bg-emerald-500/20 text-emerald-300 font-semibold">3.0x Điểm</span>
+                    </div>
+                    <div id="simPoints-signature" class="text-2xl font-extrabold text-emerald-400">15,000 <span class="text-xs font-normal text-slate-400">Pts</span></div>
+                    <div class="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs">
+                        <span class="text-slate-400">Giá trị quy đổi:</span>
+                        <span id="simCash-signature" class="text-emerald-300 font-semibold">~ 6.000.000 ₫</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. MEMBERSHIP TIERS CARDS (CÁC HẠNG THÀNH VIÊN) -->
+        <section id="tiers" class="space-y-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <span class="text-xs uppercase tracking-widest text-gold-400 font-semibold">Hệ thống phân hạng</span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-bold text-white mt-1">Bốn Cấp Độ Đặc Quyền</h2>
+                </div>
+
+                <!-- Perk Highlight Filter Buttons -->
+                <div class="flex flex-wrap gap-2 bg-navy-900 p-1.5 rounded-2xl border border-white/10">
+                    <button onclick="filterTierHighlight('all')" data-highlight="all" class="perk-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-gold-500 text-navy-950 transition-all">
+                        Tất cả đặc quyền
+                    </button>
+                    <button onclick="filterTierHighlight('lounge')" data-highlight="lounge" class="perk-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all">
+                        <i class="ph-fill ph-airplane-tilt mr-1"></i>Phòng chờ & Đưa đón
+                    </button>
+                    <button onclick="filterTierHighlight('hotel')" data-highlight="hotel" class="perk-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all">
+                        <i class="ph-fill ph-buildings mr-1"></i>Nâng phòng & Trả muộn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Tier Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                
+                <!-- Tier 1: Explorer (Silver) -->
+                <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between border border-slate-700/60 hover:border-slate-400 transition-all duration-300 group">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-600">Hạng Bạc</span>
+                            <i class="ph-fill ph-compass text-2xl text-slate-400 group-hover:rotate-45 transition-transform"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl font-bold text-white">Explorer</h3>
+                        <p class="text-xs text-slate-400 mt-1">Khởi đầu hành trình khám phá</p>
+                        
+                        <div class="my-5 py-4 border-y border-white/10">
+                            <div class="text-xs text-slate-400">Điều kiện đạt hạng</div>
+                            <div class="text-lg font-bold text-white mt-0.5">Đăng ký miễn phí</div>
+                            <div class="text-xs text-emerald-400 mt-1">Tích lũy 1.0x điểm cơ bản</div>
+                        </div>
+
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li class="perk-item flex items-start gap-2.5" data-type="all">
+                                <i class="ph-fill ph-check-circle text-slate-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Hoàn tiền <strong>2%</strong> vào ví điểm thưởng</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-slate-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Ưu đãi giá nội bộ giảm tới 10% tại 500+ khách sạn</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-slate-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Thức uống chào mừng khi nhận phòng</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5 opacity-45" data-type="lounge">
+                                <i class="ph ph-minus-circle text-slate-500 text-lg shrink-0 mt-0.5"></i>
+                                <span>Ưu tiên mua vé phòng chờ giảm 20%</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="previewCardTier('explorer'); document.getElementById('dashboard').scrollIntoView();" class="mt-8 w-full py-3 rounded-xl border border-white/15 text-xs font-semibold text-slate-300 hover:bg-white/10 transition-colors">
+                        Xem thiết kế thẻ Explorer
+                    </button>
+                </div>
+
+                <!-- Tier 2: Voyager (Gold - Current User Tier) -->
+                <div class="glass-panel-gold rounded-3xl p-6 flex flex-col justify-between relative shadow-xl shadow-gold-500/10 transform xl:-translate-y-2 transition-all duration-300">
+                    <div class="absolute -top-3 left-6 px-3 py-1 rounded-full bg-gradient-to-r from-gold-400 to-amber-500 text-navy-950 font-extrabold text-[10px] uppercase tracking-wider shadow">
+                        Hạng Hiện Tại Của Bạn
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4 mt-1">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gold-500/20 text-gold-300 border border-gold-500/40">Hạng Vàng</span>
+                            <i class="ph-fill ph-star text-2xl text-gold-400"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl font-bold text-gold-300">Voyager</h3>
+                        <p class="text-xs text-slate-300 mt-1">Tận hưởng tiện nghi nâng tầm</p>
+                        
+                        <div class="my-5 py-4 border-y border-gold-500/20">
+                            <div class="text-xs text-slate-300">Điều kiện đạt hạng</div>
+                            <div class="text-lg font-bold text-white mt-0.5">10,000 Điểm / 5 Đêm</div>
+                            <div class="text-xs text-gold-400 mt-1 font-medium">Nhân 1.5x điểm thưởng mọi giao dịch</div>
+                        </div>
+
+                        <ul class="space-y-3 text-sm text-slate-200">
+                            <li class="perk-item flex items-start gap-2.5" data-type="all">
+                                <i class="ph-fill ph-check-circle text-gold-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Hoàn tiền <strong>5%</strong> tích lũy chuyến bay & resort</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-gold-400 text-lg shrink-0 mt-0.5"></i>
+                                <span><strong>Nâng hạng phòng miễn phí</strong> (tùy tình trạng phòng)</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-gold-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Trả phòng muộn miễn phí đến <strong>14:00</strong></span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="lounge">
+                                <i class="ph-fill ph-check-circle text-gold-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Tặng <strong>4 lượt/năm</strong> sử dụng Phòng chờ Thương gia</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="previewCardTier('voyager'); document.getElementById('dashboard').scrollIntoView();" class="mt-8 w-full py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 text-navy-950 text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-gold-500/20">
+                        Đang kích hoạt đặc quyền
+                    </button>
+                </div>
+
+                <!-- Tier 3: Elite (Platinum) -->
+                <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between border border-cyan-500/30 hover:border-cyan-400 transition-all duration-300 group">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Hạng Bạch Kim</span>
+                            <i class="ph-fill ph-crown text-2xl text-cyan-400"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl font-bold text-white">Elite</h3>
+                        <p class="text-xs text-slate-400 mt-1">Đặc quyền ưu tiên toàn cầu</p>
+                        
+                        <div class="my-5 py-4 border-y border-white/10">
+                            <div class="text-xs text-slate-400">Điều kiện đạt hạng</div>
+                            <div class="text-lg font-bold text-white mt-0.5">30,000 Điểm / 20 Đêm</div>
+                            <div class="text-xs text-cyan-400 mt-1">Nhân 2.2x điểm thưởng mọi giao dịch</div>
+                        </div>
+
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li class="perk-item flex items-start gap-2.5" data-type="all">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Hoàn tiền <strong>8%</strong> + Bữa sáng miễn phí cho 2 khách</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Đảm bảo nâng lên <strong>Junior Suite</strong> & trả phòng <strong>16:00</strong></span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="lounge">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Phòng chờ Thương gia <strong>Không giới hạn</strong> + 1 khách đi kèm</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="lounge">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Xe Limousine đưa đón sân bay <strong>4 chuyến/năm</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="previewCardTier('elite'); document.getElementById('dashboard').scrollIntoView();" class="mt-8 w-full py-3 rounded-xl border border-cyan-500/40 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/15 transition-colors">
+                        Xem thử thẻ Elite
+                    </button>
+                </div>
+
+                <!-- Tier 4: Signature (Diamond) -->
+                <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between border border-emerald-500/40 hover:border-emerald-400 transition-all duration-300 group bg-gradient-to-b from-emerald-950/30 to-navy-950/90">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Hạng Kim Cương</span>
+                            <i class="ph-fill ph-diamond text-2xl text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl font-bold text-white">Signature</h3>
+                        <p class="text-xs text-emerald-300/80 mt-1">Đỉnh cao xa hoa & Quản gia riêng</p>
+                        
+                        <div class="my-5 py-4 border-y border-white/10">
+                            <div class="text-xs text-slate-400">Điều kiện đạt hạng</div>
+                            <div class="text-lg font-bold text-white mt-0.5">75,000 Điểm / 45 Đêm</div>
+                            <div class="text-xs text-emerald-400 mt-1">Nhân 3.0x điểm thưởng mọi giao dịch</div>
+                        </div>
+
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li class="perk-item flex items-start gap-2.5" data-type="all">
+                                <i class="ph-fill ph-check-circle text-emerald-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Hoàn tiền <strong>12%</strong> & Quản gia Concierge 24/7 riêng biệt</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="hotel">
+                                <i class="ph-fill ph-check-circle text-emerald-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Nâng hạng <strong>Presidential / Villa</strong> & Linh hoạt giờ nhận/trả 24h</span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="lounge">
+                                <i class="ph-fill ph-check-circle text-emerald-400 text-lg shrink-0 mt-0.5"></i>
+                                <span>Phòng chờ First Class toàn cầu + <strong>2 khách mời</strong></span>
+                            </li>
+                            <li class="perk-item flex items-start gap-2.5" data-type="lounge">
+                                <i class="ph-fill ph-check-circle text-emerald-400 text-lg shrink-0 mt-0.5"></i>
+                                <span><strong>Đưa đón sân bay Mercedes S-Class</strong> mọi chuyến đi</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="previewCardTier('signature'); document.getElementById('dashboard').scrollIntoView();" class="mt-8 w-full py-3 rounded-xl border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/15 transition-colors">
+                        Xem thử thẻ Signature
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 5. REWARDS REDEMPTION SHOWCASE (ĐỔI ĐIỂM THƯỞNG) -->
+        <section id="rewards" class="space-y-8">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs uppercase tracking-widest text-gold-400 font-semibold">Aura Boutique</span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-bold text-white mt-1">Đổi Điểm Lấy Trải Nghiệm Độc Bản</h2>
+                </div>
+                <div class="flex items-center gap-3 bg-navy-900 px-4 py-2.5 rounded-2xl border border-gold-500/30">
+                    <i class="ph-fill ph-wallet text-gold-400 text-xl"></i>
+                    <span class="text-xs text-slate-300">Điểm khả dụng của bạn:</span>
+                    <span id="rewardsPointsDisplay" class="text-base font-extrabold text-gold-400">24,500 Pts</span>
+                </div>
+            </div>
+
+            <!-- Rewards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Reward Item 1 -->
+                <div class="glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-gold-500/50 transition-all">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80" 
+                                 onerror="this.src='https://placehold.co/600x400/122238/D4AF37?text=Six+Senses+Resort'"
+                                 alt="Resort" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-navy-950/80 text-gold-300 border border-gold-500/30 backdrop-blur-md">
+                                Nghỉ dưỡng
+                            </span>
+                            <span class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-extrabold bg-gold-500 text-navy-950 shadow-lg">
+                                12,000 Pts
+                            </span>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-white text-base leading-snug group-hover:text-gold-300 transition-colors">
+                                01 Đêm Pool Villa tại Amanoi / Six Senses Ninh Vân Bay
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-2">
+                                Bao gồm bữa sáng tự chọn, trà chiều hoàng hôn và đưa đón bằng tàu cao tốc cho 02 người.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <button onclick="openRedeemModal('01 Đêm Pool Villa tại Six Senses Ninh Vân Bay', 12000, 'Voucher Nghỉ Dưỡng 5 Sao')" 
+                                class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-gold-500 hover:text-navy-950 text-white text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <span>Đổi ngay</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reward Item 2 -->
+                <div class="glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-gold-500/50 transition-all">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1540339832862-474599807836?auto=format&fit=crop&w=800&q=80" 
+                                 onerror="this.src='https://placehold.co/600x400/122238/D4AF37?text=Business+Class'"
+                                 alt="Business Class" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-navy-950/80 text-cyan-300 border border-cyan-500/30 backdrop-blur-md">
+                                Hàng không
+                            </span>
+                            <span class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-extrabold bg-gold-500 text-navy-950 shadow-lg">
+                                8,500 Pts
+                            </span>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-white text-base leading-snug group-hover:text-gold-300 transition-colors">
+                                Nâng Hạng Thương Gia (Business Class) Chặng Đông Nam Á
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-2">
+                                Áp dụng cho Vietnam Airlines, Singapore Airlines hoặc Qatar Airways kèm phòng chờ VIP.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <button onclick="openRedeemModal('Nâng Hạng Thương Gia (Business Class)', 8500, 'Đặc Quyền Hàng Không')" 
+                                class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-gold-500 hover:text-navy-950 text-white text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <span>Đổi ngay</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reward Item 3 -->
+                <div class="glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-gold-500/50 transition-all">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80" 
+                                 onerror="this.src='https://placehold.co/600x400/122238/D4AF37?text=Luxury+Spa'"
+                                 alt="Spa & Dining" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-navy-950/80 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
+                                Wellness & Ẩm thực
+                            </span>
+                            <span class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-extrabold bg-gold-500 text-navy-950 shadow-lg">
+                                4,500 Pts
+                            </span>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-white text-base leading-snug group-hover:text-gold-300 transition-colors">
+                                Bữa Tối Fine Dining Michelin & Liệu Trình Spa 120 Phút
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-2">
+                                Thực đơn Tasting Menu 7 món kết hợp rượu vang Pháp và gói trị liệu thảo mộc hoàng gia.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <button onclick="openRedeemModal('Bữa Tối Fine Dining Michelin & Spa 120 Phút', 4500, 'Trải Nghiệm Ẩm Thực & Spa')" 
+                                class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-gold-500 hover:text-navy-950 text-white text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <span>Đổi ngay</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reward Item 4 -->
+                <div class="glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-gold-500/50 transition-all">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80" 
+                                 onerror="this.src='https://placehold.co/600x400/122238/D4AF37?text=Private+Yacht'"
+                                 alt="Private Yacht" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-navy-950/80 text-amber-300 border border-amber-500/30 backdrop-blur-md">
+                                Du thuyền riêng
+                            </span>
+                            <span class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-extrabold bg-gold-500 text-navy-950 shadow-lg">
+                                18,000 Pts
+                            </span>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-white text-base leading-snug group-hover:text-gold-300 transition-colors">
+                                Du Thuyền Hoàng Hôn Riêng Tư Tại Vịnh Hạ Long / Phú Quốc
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-2">
+                                Trải nghiệm 4 giờ trên du thuyền Catamaran hạng sang cùng Champagne Dom Pérignon & đầu bếp riêng.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <button onclick="openRedeemModal('Du Thuyền Hoàng Hôn Riêng Tư Catamaran', 18000, 'Trải Nghiệm Du Thuyền Độc Bản')" 
+                                class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-gold-500 hover:text-navy-950 text-white text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <span>Đổi ngay</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- REDEMPTION CONFIRMATION MODAL -->
+    <div id="redeemModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+        <div class="glass-panel-gold bg-navy-900 rounded-3xl max-w-md w-full p-6 sm:p-8 border border-gold-500/40 shadow-2xl relative animate-fadeIn">
+            <button onclick="closeRedeemModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300 hover:text-white">
+                <i class="ph-bold ph-x"></i>
+            </button>
+
+            <!-- Confirmation View -->
+            <div id="modalConfirmContent">
+                <div class="w-12 h-12 rounded-2xl bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 mb-4">
+                    <i class="ph-fill ph-gift text-2xl"></i>
+                </div>
+                <span id="modalRewardCategory" class="text-[11px] font-bold uppercase tracking-widest text-gold-400">Xác nhận đổi điểm</span>
+                <h3 id="modalRewardTitle" class="font-serif text-xl font-bold text-white mt-1">Tên phần thưởng</h3>
+
+                <div class="my-6 p-4 rounded-2xl bg-navy-950/90 border border-white/10 space-y-2.5 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Số điểm hiện tại:</span>
+                        <span id="modalCurrentPts" class="font-bold text-white">24,500 Pts</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Điểm cần quy đổi:</span>
+                        <span id="modalCostPts" class="font-bold text-gold-400">-12,000 Pts</span>
+                    </div>
+                    <div class="border-t border-white/10 pt-2.5 flex justify-between text-sm">
+                        <span class="text-slate-300 font-medium">Số dư còn lại:</span>
+                        <span id="modalRemainingPts" class="font-extrabold text-emerald-400">12,500 Pts</span>
+                    </div>
+                </div>
+
+                <p id="modalErrorMsg" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-4">
+                    Số điểm khả dụng của bạn không đủ để đổi phần thưởng này.
+                </p>
+
+                <div class="flex gap-3">
+                    <button onclick="closeRedeemModal()" class="flex-1 py-3 rounded-xl border border-white/15 text-xs font-semibold text-slate-300 hover:bg-white/5">
+                        Để sau
+                    </button>
+                    <button id="btnConfirmRedeem" onclick="confirmRedemption()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-amber-500 text-navy-950 text-xs font-extrabold hover:brightness-110 shadow-lg shadow-gold-500/20">
+                        Xác nhận đổi ngay
+                    </button>
+                </div>
+            </div>
+
+            <!-- Success View -->
+            <div id="modalSuccessContent" class="hidden text-center py-4">
+                <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mx-auto mb-4">
+                    <i class="ph-fill ph-check-circle text-4xl"></i>
+                </div>
+                <h3 class="font-serif text-2xl font-bold text-white">Đổi Thưởng Thành Công!</h3>
+                <p class="text-xs text-slate-300 mt-2">
+                    Mã E-Voucher đặc quyền đã được gửi vào email hội viên và ví AURA của bạn.
+                </p>
+                <div class="my-5 p-3 rounded-xl bg-navy-950 border border-dashed border-gold-500/40 font-mono text-sm font-bold text-gold-300 tracking-widest">
+                    AURA-VIP-9824X
+                </div>
+                <button onclick="closeRedeemModal()" class="w-full py-3 rounded-xl bg-emerald-500 text-navy-950 text-xs font-bold hover:brightness-110">
+                    Hoàn tất
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- STATE ---
+        let userPoints = 24500;
+        let selectedRewardCost = 0;
+
+        // Tier visual definitions for the 3D Card
+        const cardTiers = {
+            explorer: {
+                name: 'EXPLORER SILVER',
+                badge: 'Hạng Bạc',
+                multiplier: '1.0x Điểm',
+                gradient: 'linear-gradient(135deg, #1E293B 0%, #475569 50%, #94A3B8 100%)',
+                shadow: '0 25px 50px -12px rgba(148, 163, 184, 0.25)'
+            },
+            voyager: {
+                name: 'VOYAGER GOLD',
+                badge: 'Hạng Hiện Tại',
+                multiplier: '1.5x Điểm',
+                gradient: 'linear-gradient(135deg, #2A2112 0%, #8A6421 48%, #D4AF37 100%)',
+                shadow: '0 25px 50px -12px rgba(212, 175, 55, 0.28)'
+            },
+            elite: {
+                name: 'ELITE PLATINUM',
+                badge: 'Hạng Bạch Kim',
+                multiplier: '2.2x Điểm',
+                gradient: 'linear-gradient(135deg, #082F49 0%, #0E7490 50%, #38BDF8 100%)',
+                shadow: '0 25px 50px -12px rgba(56, 189, 248, 0.28)'
+            },
+            signature: {
+                name: 'SIGNATURE DIAMOND',
+                badge: 'Hạng Kim Cương',
+                multiplier: '3.0x Điểm',
+                gradient: 'linear-gradient(135deg, #022C22 0%, #065F46 45%, #10B981 100%)',
+                shadow: '0 25px 50px -12px rgba(16, 185, 129, 0.3)'
+            }
+        };
+
+        // --- 1. 3D CARD TILT INTERACTION ---
+        const card = document.getElementById('interactiveCard');
+        const shine = document.getElementById('cardShine');
+
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            shine.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(255,255,255,0.32) 0%, transparent 60%)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            shine.style.background = 'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.25) 0%, transparent 65%)';
+        });
+
+        // Switch 3D Card Tier Design
+        function previewCardTier(tierKey) {
+            const tier = cardTiers[tierKey];
+            if (!tier) return;
+
+            card.style.background = tier.gradient;
+            card.style.boxShadow = tier.shadow;
+            document.getElementById('cardTierName').textContent = tier.name;
+            document.getElementById('cardStatusBadge').textContent = tier.badge;
+            document.getElementById('cardMultiplierText').textContent = tier.multiplier;
+
+            // Update active button state
+            document.querySelectorAll('.tier-preview-btn').forEach(btn => {
+                btn.className = 'tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white';
+            });
+            const activeBtn = document.getElementById(`btnPreview-${tierKey}`);
+            if (activeBtn) {
+                activeBtn.className = 'tier-preview-btn py-2 px-2 rounded-xl text-xs font-semibold transition-all bg-gold-500 text-navy-950 shadow-md';
+            }
+        }
+
+        // --- 2. POINTS SIMULATOR ---
+        function formatVND(millions) {
+            return (millions * 1000000).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function updateSimulator(millionValue) {
+            const spendMillions = parseInt(millionValue, 10);
+            document.getElementById('spendAmountDisplay').textContent = formatVND(spendMillions);
+
+            // Base: 100 points per 1 Million VND
+            const basePoints = spendMillions * 100;
+
+            const tiersCalc = [
+                { id: 'explorer', mult: 1.0, cashbackRate: 0.02 },
+                { id: 'voyager', mult: 1.5, cashbackRate: 0.05 },
+                { id: 'elite', mult: 2.2, cashbackRate: 0.08 },
+                { id: 'signature', mult: 3.0, cashbackRate: 0.12 }
+            ];
+
+            tiersCalc.forEach(t => {
+                const pts = Math.round(basePoints * t.mult);
+                const cashVal = Math.round(spendMillions * t.cashbackRate * 1000000);
+                document.getElementById(`simPoints-${t.id}`).innerHTML = `${pts.toLocaleString('en-US')} <span class="text-xs font-normal text-slate-400">Pts</span>`;
+                document.getElementById(`simCash-${t.id}`).textContent = `~ ${cashVal.toLocaleString('vi-VN')} ₫`;
+            });
+        }
+
+        // --- 3. PERK HIGHLIGHT FILTER ON TIER CARDS ---
+        function filterTierHighlight(type) {
+            document.querySelectorAll('.perk-filter-btn').forEach(btn => {
+                if (btn.dataset.highlight === type) {
+                    btn.className = 'perk-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-gold-500 text-navy-950 transition-all';
+                } else {
+                    btn.className = 'perk-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all';
+                }
+            });
+
+            document.querySelectorAll('.perk-item').forEach(item => {
+                if (type === 'all' || item.dataset.type === type) {
+                    item.classList.remove('opacity-25');
+                    item.classList.add('opacity-100');
+                } else {
+                    item.classList.remove('opacity-100');
+                    item.classList.add('opacity-25');
+                }
+            });
+        }
+
+        // --- 4. COMPARISON TABLE CATEGORY FILTER ---
+        function filterComparisonTable(category) {
+            document.querySelectorAll('.table-cat-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'table-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-navy-950 transition-all';
+                } else {
+                    btn.className = 'table-cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-navy-900 text-slate-300 border border-white/10 hover:border-gold-500/40 transition-all';
+                }
+            });
+
+            const rows = document.querySelectorAll('#comparisonTableBody tr');
+            rows.forEach(row => {
+                if (category === 'all' || row.dataset.category === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // --- 5. REWARDS REDEMPTION MODAL ---
+        function openRedeemModal(title, cost, category) {
+            selectedRewardCost = cost;
+            const modal = document.getElementById('redeemModal');
+            document.getElementById('modalConfirmContent').classList.remove('hidden');
+            document.getElementById('modalSuccessContent').classList.add('hidden');
+
+            document.getElementById('modalRewardCategory').textContent = category;
+            document.getElementById('modalRewardTitle').textContent = title;
+            document.getElementById('modalCurrentPts').textContent = `${userPoints.toLocaleString('en-US')} Pts`;
+            document.getElementById('modalCostPts').textContent = `-${cost.toLocaleString('en-US')} Pts`;
+
+            const remaining = userPoints - cost;
+            const remainingEl = document.getElementById('modalRemainingPts');
+            const errorMsg = document.getElementById('modalErrorMsg');
+            const confirmBtn = document.getElementById('btnConfirmRedeem');
+
+            if (remaining >= 0) {
+                remainingEl.textContent = `${remaining.toLocaleString('en-US')} Pts`;
+                remainingEl.className = 'font-extrabold text-emerald-400';
+                errorMsg.classList.add('hidden');
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            } else {
+                remainingEl.textContent = `Thiếu ${Math.abs(remaining).toLocaleString('en-US')} Pts`;
+                remainingEl.className = 'font-extrabold text-rose-400';
+                errorMsg.classList.remove('hidden');
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-40', 'cursor-not-allowed');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function confirmRedemption() {
+            if (userPoints < selectedRewardCost) return;
+            userPoints -= selectedRewardCost;
+
+            // Update all point displays on page
+            const formatted = userPoints.toLocaleString('en-US');
+            document.getElementById('headerPointsDisplay').textContent = `${formatted} Pts`;
+            document.getElementById('dashboardPointsDisplay').textContent = formatted;
+            document.getElementById('rewardsPointsDisplay').textContent = `${formatted} Pts`;
+
+            document.getElementById('modalConfirmContent').classList.add('hidden');
+            document.getElementById('modalSuccessContent').classList.remove('hidden');
+        }
+
+        function closeRedeemModal() {
+            const modal = document.getElementById('redeemModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

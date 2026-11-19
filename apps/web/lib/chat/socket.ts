@@ -4,6 +4,16 @@ let socket: Socket | null = null;
 let currentToken: string | null = null;
 
 const getBackendUrl = () => {
+  if (typeof window !== "undefined") {
+    // Nếu chạy trên domain production nhutthanh.id.vn:
+    if (window.location.hostname.includes("nhutthanh.id.vn")) {
+      return "https://api.nhutthanh.id.vn";
+    }
+    // Nếu chạy local (localhost hoặc 127.0.0.1):
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return `http://${window.location.hostname}:4000`;
+    }
+  }
   const url = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:4000";
   return url.replace(/\/+$/, "");
 };

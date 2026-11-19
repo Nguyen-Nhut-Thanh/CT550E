@@ -62,6 +62,7 @@ export class FlashDealsService {
                     },
                 },
                 flash_deals: true,
+                schedule_promotions: true,
                 _count: {
                     select: { bookings: true },
                 },
