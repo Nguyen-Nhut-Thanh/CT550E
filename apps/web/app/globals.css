@@ -4,6 +4,27 @@
 @source "./admin";
 
 @theme {
+  --animate-why-aurora-drift: why-aurora-drift 14s ease-in-out infinite alternate;
+  --animate-why-aurora-rays: why-aurora-rays 9s ease-in-out infinite alternate;
+  --animate-why-star: why-star var(--star-duration, 3s) ease-in-out infinite alternate;
+
+  @keyframes why-aurora-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-14px, 10px, 0) scale(1.025); }
+  }
+
+  @keyframes why-aurora-rays {
+    from { opacity: 0.78; transform: translate3d(0, 0, 0); }
+    to { opacity: 1; transform: translate3d(-8px, 6px, 0); }
+  }
+
+  @keyframes why-star {
+    from { opacity: 0.2; transform: scale(0.85); }
+    to { opacity: 0.95; transform: scale(1.15); }
+  }
+}
+
+@theme {
   --font-serif: var(--font-serif), "Playfair Display", Georgia, serif;
 }
 

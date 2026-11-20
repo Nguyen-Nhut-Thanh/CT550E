@@ -30,7 +30,12 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
     !!item.original_price && item.original_price > (item.sale_price || 0);
 
   return (
-    <article className="group relative flex h-[250px] w-full max-w-[560px] min-w-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[310px] max-sm:flex-col">
+    <article className="group relative isolate flex h-[250px] w-full max-w-[560px] min-w-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[310px] max-sm:flex-col">
+      <Link
+        href={item.link || `/tours/${item.tour_id}`}
+        aria-label={`Đặt tour ${item.name}`}
+        className="absolute inset-0 z-10 rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+      />
       <div className="relative h-full w-[36%] shrink-0 overflow-hidden max-sm:h-32 max-sm:min-h-0 max-sm:w-full">
         <img
           src={imageUrl}
@@ -51,7 +56,7 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
           active={favorite}
           loading={pending}
           onClick={handleFavoriteClick}
-          className={`absolute right-4 top-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-lg transition hover:scale-105 ${favorite ? "bg-rose-500/70 text-white" : "bg-white/45 text-rose-500 hover:bg-white/60"}`}
+          className={`absolute right-4 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-lg transition hover:scale-105 ${favorite ? "bg-rose-500/70 text-white" : "bg-white/45 text-rose-500 hover:bg-white/60"}`}
           iconClassName="h-4 w-4"
           label={favorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
         />
@@ -75,7 +80,7 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
             <Link
               href={item.link || `/tours/${item.tour_id}`}
               aria-label={`Xem chi tiết ${item.name}`}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-slate-500 transition hover:bg-blue-100 hover:text-blue-700"
+              className="relative z-20 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-slate-500 transition hover:bg-blue-100 hover:text-blue-700"
             >
               <MoreHorizontal className="h-4 w-4" />
             </Link>
@@ -155,7 +160,7 @@ export function DomesticTourCard({ item }: { item: FlashDealItem }) {
             )}
             <Link
               href={item.link || `/tours/${item.tour_id}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 text-xs font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[.98]"
+              className="relative z-20 inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 text-xs font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[.98]"
             >
               Đặt ngay <ArrowRight className="h-3.5 w-3.5" />
             </Link>

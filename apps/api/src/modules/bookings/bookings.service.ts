@@ -1,3 +1,4 @@
+import { calculateBookingTourPrice } from "./helpers/booking-tour-price";
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import type { BookingCancellationMeta, BookingPayload, CancelBookingPayload } from "shared";
 import { BOOKING_EXTRAS, applyDiscount, calculateCancellationEstimate, isValidCitizenId, isValidEmail, isValidVietnamesePhone, membershipDiscount, membershipPrice, voucherAudienceAllows, voucherAudienceLabel } from "shared";
@@ -477,57 +478,14 @@ export class BookingsService implements OnModuleInit, OnModuleDestroy {
             if (schedule.quota - schedule.booked_count < totalGuests) {
                 throw new BadRequestException('Không đủ chỗ cho số khách yêu cầu. Có thể vừa có người khác đặt trước chỗ cuối. Vui lòng chọn lịch khác.');
             }
-            let adultPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'ADULT')
-                ?.price ?? schedule.price);
-            let childPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'CHILD')
-                ?.price ?? 0);
-            const infantPrice = Number(schedule.tour_schedule_prices.find((p: any) => p.passenger_type === 'INFANT')
-                ?.price ?? 0);
-
-            const baseAdultPrice = adultPrice;
-            const baseChildPrice = childPrice;
-
-            // Xử lý ưu đãi: Ưu tiên Flash Deal nếu có, kế tiếp đến Ưu đãi riêng của đợt khởi hành
-            const flashDeal = schedule.flash_deals;
-            let activeSchedulePromo = false;
-            let appliedPromoType: 'flash_deal' | 'schedule_promotion' | null = null;
-            let appliedPromoTitle = '';
-            let appliedGiftDescription: string | null = null;
-
-            if (flashDeal) {
-                appliedPromoType = 'flash_deal';
-                const fDiscount = Number(flashDeal.discount_value);
-                const discountText = flashDeal.discount_type === 'percent' ? `-${fDiscount}%` : `-${fDiscount.toLocaleString('vi-VN')}đ`;
-                appliedPromoTitle = flashDeal.title ? `${flashDeal.title} (${discountText})` : `Flash Deal (${discountText})`;
-                adultPrice = applyDiscount(adultPrice, flashDeal.discount_type, fDiscount);
-                if (childPrice > 0) childPrice = applyDiscount(childPrice, flashDeal.discount_type, fDiscount);
-            } else {
-                const promo = schedule.schedule_promotions;
-                if (promo && promo.is_active) {
-                    const now = new Date();
-                    const pStart = new Date(promo.start_date);
-                    const pEnd = new Date(promo.end_date);
-                    const promoGuests = dto.adult_count + dto.child_count;
-                    const hasPromoSlot = promo.max_slots === null || promo.max_slots === undefined || (promo.used_slots + promoGuests <= promo.max_slots);
-
-                    if (pStart <= now && pEnd >= now && hasPromoSlot) {
-                        activeSchedulePromo = true;
-                        appliedPromoType = 'schedule_promotion';
-                        appliedGiftDescription = promo.gift_description;
-                        const pDiscount = Number(promo.discount_value);
-                        const discountText = promo.discount_type === 'percent' ? `-${pDiscount}%` : `-${pDiscount.toLocaleString('vi-VN')}đ`;
-                        appliedPromoTitle = promo.title ? `${promo.title} (${discountText})` : `Ưu đãi đợt khởi hành (${discountText})`;
-                        adultPrice = applyDiscount(adultPrice, promo.discount_type, pDiscount);
-                        if (childPrice > 0) childPrice = applyDiscount(childPrice, promo.discount_type, pDiscount);
-                    }
-                }
-            }
-
-            const promoDiscount = Math.max(0, (baseAdultPrice - adultPrice) * dto.adult_count + (baseChildPrice - childPrice) * dto.child_count);
-
-            const subtotal = dto.adult_count * adultPrice +
-                dto.child_count * childPrice +
-                dto.infant_count * infantPrice;
+            const {
+                adultPrice, childPrice, infantPrice, baseAdultPrice, baseChildPrice, subtotal, promoDiscount,
+                activeSchedulePromo, appliedPromoType, appliedPromoTitle, appliedGiftDescription,
+            } = calculateBookingTourPrice(schedule, {
+                adults: dto.adult_count,
+                children: dto.child_count,
+                infants: dto.infant_count,
+            });
             const singleRoomCount = dto.single_room_count ?? (dto.room_type === "single" ? 1 : 0);
             const maxSingleRooms = (dto.adult_count || 0) + (dto.child_count || 0);
             if (!Number.isInteger(singleRoomCount) || singleRoomCount < 0 || singleRoomCount > maxSingleRooms) {

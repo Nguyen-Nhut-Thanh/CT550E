@@ -118,13 +118,15 @@ export function ChatTimeline({
             key={message.client_message_id || message.message_id}
             className={`flex min-w-0 items-start gap-3 ${index === 0 ? "" : !continuesGroup ? "mt-3" : changesType ? "mt-[5px]" : "mt-0.5"} ${own ? "justify-end" : "justify-start"}`}
           >
-            {!own && <span aria-hidden="true" className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e1e8f1] font-semibold text-[#6b829f] ${continuesGroup ? "invisible" : ""}`}>
-              {sender?.avatar_url ? (
-                <img src={resolveAvatar(sender.avatar_url)} alt="" className="h-full w-full object-cover" onError={event => {
-                  if (!event.currentTarget.src.endsWith(DEFAULT_AVATAR)) event.currentTarget.src = DEFAULT_AVATAR;
-                }} />
-              ) : sender?.full_name ? sender.full_name.trim().charAt(0).toUpperCase() : <UserRound size={18} />}
-            </span>}
+            {!own && isStaff && (
+              <span aria-hidden="true" className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e1e8f1] font-semibold text-[#6b829f] ${continuesGroup ? "invisible" : ""}`}>
+                {sender?.avatar_url ? (
+                  <img src={resolveAvatar(sender.avatar_url)} alt="" className="h-full w-full object-cover" onError={event => {
+                    if (!event.currentTarget.src.endsWith(DEFAULT_AVATAR)) event.currentTarget.src = DEFAULT_AVATAR;
+                  }} />
+                ) : sender?.full_name ? sender.full_name.trim().charAt(0).toUpperCase() : <UserRound size={18} />}
+              </span>
+            )}
             <div className={`flex min-w-0 flex-col ${message.context?.kind === "tour" ? "w-full max-w-[420px]" : "max-w-[80%]"} ${own ? "items-end" : "items-start"}`}>
             <div
               className={`${message.context?.kind === "tour" ? "w-full min-w-0" : "w-fit max-w-full"} rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${(message.message_type === "IMAGE" || message.context?.kind === "tour") ? "!border-0 !bg-transparent !p-0 !shadow-none" : own && isStaff ? "bg-blue-500 text-white" : `${own ? "rounded-br-md" : "rounded-bl-md"} border border-[#e8eef4] bg-white text-slate-800 shadow-[0_1px_3px_rgba(50,75,100,0.1)]`}`}

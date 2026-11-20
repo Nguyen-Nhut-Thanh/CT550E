@@ -1,0 +1,12 @@
+{
+  "name": "ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "setup": "node run.mjs setup",
+    "dev": "node run.mjs dev",
+    "start": "node run.mjs start",
+    "index": "node run.mjs index",
+    "test": "node run.mjs test"
+  }
+}

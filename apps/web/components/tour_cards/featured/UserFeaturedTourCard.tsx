@@ -22,15 +22,17 @@ export default function FeaturedTourCard({ item }: FeaturedTourCardProps) {
     normalizeImageSrc(item.cover_image_url || item.image_url) ||
     PLACEHOLDER_IMAGE;
 
+  const bookingHref = `/booking?tourId=${item.tour_id}${item.schedule_id ? `&scheduleId=${item.schedule_id}` : ""}`;
+
   return (
     <div className="group block h-[250px] w-full bg-transparent [perspective:1200px]">
       <div className="relative h-full w-full rounded-[18px] transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
         {/* Mặt trước của Card */}
         <div className="absolute inset-0 flex h-full w-full flex-col justify-between overflow-hidden rounded-[18px] border border-white/70 bg-white p-5 text-left shadow-[0_14px_34px_rgba(15,23,42,0.10)] [backface-visibility:hidden]">
           <Link
-            href={item.link || `/tours/${item.tour_id}`}
-            className="absolute inset-0 z-0"
-            aria-label={item.route_text || item.name}
+            href={bookingHref}
+            className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+            aria-label={`Đặt tour ${item.name}`}
           />
 
           <div className="relative z-10 flex items-start justify-between gap-3 pointer-events-none">
@@ -121,15 +123,15 @@ export default function FeaturedTourCard({ item }: FeaturedTourCardProps) {
           {/* Lớp phủ dốc tối để làm nổi bật thông tin và nút ở dưới đáy */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20" />
 
-          {/* Link toàn card để click vào vùng ảnh vẫn mở chi tiết tour */}
+          {/* Link toàn card dẫn đến cùng trang với nút Đặt ngay. */}
           <Link
-            href={item.link || `/tours/${item.tour_id}`}
-            className="absolute inset-0 z-0"
-            aria-label={item.name}
+            href={bookingHref}
+            className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+            aria-label={`Đặt tour ${item.name}`}
           />
 
           {/* Nội dung thông tin & hành động ở dưới đáy mặt sau */}
-          <div className="relative z-10 p-4 sm:p-5">
+          <div className="pointer-events-none relative z-10 p-4 sm:p-5">
             <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-white/90">
               KHÁM PHÁ TOUR
             </span>
@@ -145,14 +147,14 @@ export default function FeaturedTourCard({ item }: FeaturedTourCardProps) {
             <div className="flex items-center justify-between">
               <Link
                 href={item.link || `/tours/${item.tour_id}`}
-                className="text-xs font-semibold text-white/95 transition-colors hover:text-white hover:underline sm:text-sm"
+                className="pointer-events-auto text-xs font-semibold text-white/95 transition-colors hover:text-white hover:underline sm:text-sm"
               >
                 Xem chi tiết
               </Link>
 
               <Link
-                href={`/booking?tourId=${item.tour_id}${item.schedule_id ? `&scheduleId=${item.schedule_id}` : ""}`}
-                className="inline-flex items-center justify-center rounded-full bg-neutral-800/85 px-4 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-neutral-900 hover:shadow-md active:scale-95 border border-white/10 sm:text-sm"
+                href={bookingHref}
+                className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-neutral-800/85 px-4 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-neutral-900 hover:shadow-md active:scale-95 border border-white/10 sm:text-sm"
               >
                 Đặt ngay
               </Link>

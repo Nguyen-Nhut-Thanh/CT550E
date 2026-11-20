@@ -54,12 +54,11 @@ export function FavoriteTourCard({
   };
 
   return (
-    <article className="group relative mx-auto flex w-full max-w-[620px] min-w-0 flex-col gap-3 overflow-hidden rounded-[22px] border border-white bg-white p-3 shadow-[0_12px_34px_rgba(30,64,175,0.08)] transition-all duration-300 hover:shadow-[0_18px_42px_rgba(30,64,175,0.13)] xl:h-[250px] xl:flex-row xl:gap-3 xl:p-3">
+    <article className="group relative isolate mx-auto flex w-full max-w-[620px] min-w-0 flex-col gap-3 overflow-hidden rounded-[22px] border border-white bg-white p-3 shadow-[0_12px_34px_rgba(30,64,175,0.08)] transition-all duration-300 hover:shadow-[0_18px_42px_rgba(30,64,175,0.13)] xl:h-[250px] xl:flex-row xl:gap-3 xl:p-3">
       <Link
         href={`/tours/${item.tour_id}`}
-        className="absolute inset-0 z-0"
-        tabIndex={-1}
-        aria-hidden="true"
+        className="absolute inset-0 z-0 rounded-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+        aria-label={`Xem chi tiết ${item.name}`}
       />
 
       <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
@@ -73,7 +72,7 @@ export function FavoriteTourCard({
         </defs>
       </svg>
 
-      <div className="relative z-[1] h-[180px] w-full shrink-0 sm:h-[200px] xl:h-full xl:min-h-0 xl:w-[34%]">
+      <div className="pointer-events-none relative z-[1] h-[180px] w-full shrink-0 sm:h-[200px] xl:h-full xl:min-h-0 xl:w-[34%]">
         <div
           className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-100/80 to-sky-200/70"
           style={{
@@ -112,7 +111,7 @@ export function FavoriteTourCard({
             disabled={isRemoving}
             aria-label="Bỏ khỏi yêu thích"
             title="Bỏ khỏi yêu thích"
-            className="absolute right-3.5 top-3.5 z-[2] flex h-9 w-9 items-center justify-center rounded-full bg-white/65 ring-2 ring-white/40 shadow-md backdrop-blur-lg transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50"
+            className="pointer-events-auto absolute right-3.5 top-3.5 z-[2] flex h-9 w-9 items-center justify-center rounded-full bg-white/65 ring-2 ring-white/40 shadow-md backdrop-blur-lg transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50"
           >
             {isRemoving ? (
               <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
@@ -127,7 +126,7 @@ export function FavoriteTourCard({
         </div>
       </div>
 
-      <div className="relative z-[1] flex min-w-0 flex-1 flex-col justify-between px-1 py-1 xl:py-0.5 xl:pr-1">
+      <div className="pointer-events-none relative z-[1] flex min-w-0 flex-1 flex-col justify-between px-1 py-1 xl:py-0.5 xl:pr-1">
         <div>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] font-medium text-slate-400">
@@ -234,7 +233,7 @@ export function FavoriteTourCard({
             )}
             <Link
               href={`/tours/${item.tour_id}`}
-              className="group/btn inline-flex items-center gap-1 rounded-full bg-[#1266f1] px-2.5 py-2.5 text-[11px] font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-[#0d53c9] active:scale-[.98] md:px-3"
+              className="group/btn pointer-events-auto inline-flex items-center gap-1 rounded-full bg-[#1266f1] px-2.5 py-2.5 text-[11px] font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-[#0d53c9] active:scale-[.98] md:px-3"
             >
               <span>Xem chi tiết</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-1" />

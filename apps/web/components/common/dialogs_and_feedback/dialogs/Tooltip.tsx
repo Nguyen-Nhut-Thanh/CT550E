@@ -111,13 +111,13 @@ export function Tooltip({
     <div
       ref={containerRef}
       onMouseEnter={updatePosition}
-      className={`group relative ${open ? "z-30" : ""} ${className}`}
+      className={`group/tooltip relative ${open ? "z-30" : ""} ${className}`}
     >
       {enhancedTrigger}
       <div
         id={id}
         role="tooltip"
-        className={`absolute ${alignClass} ${placementClass} z-40 hidden w-max min-w-full max-w-[min(22rem,85vw)] rounded-xl border border-sky-100 bg-white p-3.5 text-left shadow-xl group-hover:block group-focus-within:block ${
+        className={`absolute ${alignClass} ${placementClass} z-40 hidden w-max min-w-full max-w-[min(22rem,85vw)] rounded-xl border border-sky-100 bg-white p-3.5 text-left shadow-xl group-hover/tooltip:block group-focus-within/tooltip:block ${
           open ? "!block" : ""
         } ${contentClassName}`}
       >

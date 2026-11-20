@@ -7,6 +7,8 @@ import { BannersModule } from './modules/banners/banners.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { CatalogsModule } from './modules/catalogs/catalogs.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { AiChatModule } from './modules/ai-chat/ai-chat.module';
+import { AiModule } from './modules/ai/ai.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { FeaturedToursModule } from './modules/featured-tours/featured-tours.module';
@@ -41,6 +43,8 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
         VouchersModule,
         DashboardModule,
         ChatModule,
+        AiChatModule,
+        AiModule,
     ],
 })
 export class AppModule {

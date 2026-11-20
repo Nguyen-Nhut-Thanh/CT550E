@@ -10,6 +10,8 @@
     "dev": "turbo run dev",
     "dev:web": "npm run dev --workspace=web",
     "dev:api": "npm run dev --workspace=api",
+    "dev:ai": "npm run dev --workspace=ai",
+    "ai:index": "npm run index --workspace=ai",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

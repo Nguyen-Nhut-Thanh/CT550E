@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
-          <SupportChat />
+          <SupportChat aiEnabled={Boolean(process.env.AI_SERVICE_URL?.trim() && process.env.AI_SERVICE_TOKEN?.trim())} />
         </ToastProvider>
       </body>
     </html>

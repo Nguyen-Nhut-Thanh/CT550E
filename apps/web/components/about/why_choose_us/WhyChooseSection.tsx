@@ -1,90 +1,84 @@
-import WhyChooseCard from "@/components/about/why_choose_us/WhyChooseCard";
-import { Sparkles } from "lucide-react";
+import { Gem, ShieldCheck, TicketPercent } from "lucide-react";
+import { TopWaveDivider, BottomWaveDivider } from "@/components/common/dividers";
+import WhyChooseBackdrop from "./WhyChooseBackdrop";
+import WhyChooseCard from "./WhyChooseCard";
 
 const WHY_CHOOSE_ITEMS = [
   {
     title: "An Toàn Tuyệt Đối",
-    description:
-      "Chúng tôi cam kết tiêu chuẩn an toàn cao nhất, đảm bảo mọi hành trình của bạn luôn được bảo vệ và hỗ trợ kịp thời.",
-    icon: "/images/home/why-choose-safety.png",
-    rotate: "-rotate-[15deg]",
+    description: "Chúng tôi cam kết tiêu chuẩn an toàn cao nhất, đảm bảo mọi hành trình của bạn luôn được bảo vệ và hỗ trợ kịp thời.",
+    icon: ShieldCheck,
+    theme: "teal",
+    tag: "HỖ TRỢ 24/7",
+    benefits: [
+      "Bảo hiểm du lịch toàn diện",
+      "Đội ngũ cứu hộ & hỗ trợ 24/7",
+      "Đối tác vận chuyển kiểm định nghiêm ngặt",
+    ],
   },
   {
     title: "Dịch Vụ Đẳng Cấp",
-    description:
-      "Tận hưởng những dịch vụ cao cấp được thiết kế riêng biệt, mang lại sự thoải mái và hài lòng tối đa cho du khách.",
-    icon: "/images/home/why-choose-premium-service.png",
-    rotate: "rotate-[10deg]",
+    description: "Tận hưởng những dịch vụ cao cấp được thiết kế riêng biệt, mang lại sự thoải mái và hài lòng tối đa cho du khách.",
+    icon: Gem,
+    theme: "blue",
+    tag: "CHUẨN 5 SAO",
+    benefits: [
+      "Lịch trình cá nhân hóa 1-1",
+      "Lưu trú resort & khách sạn cao cấp",
+      "Hướng dẫn viên bản địa chuyên nghiệp",
+    ],
   },
   {
     title: "Tiết Kiệm Chi Phí",
-    description:
-      "Cung cấp mức giá cạnh tranh nhất cùng nhiều ưu đãi hấp dẫn giúp bạn có chuyến đi trong mơ với chi phí hợp lý.",
-    icon: "/images/home/why-choose-savings.png",
-    rotate: "",
+    description: "Cung cấp mức giá cạnh tranh nhất cùng nhiều ưu đãi hấp dẫn giúp bạn có chuyến đi trong mơ với chi phí hợp lý.",
+    icon: TicketPercent,
+    theme: "gold",
+    tag: "TIẾT KIỆM TỚI 30%",
+    benefits: [
+      "Cam kết giá tốt nhất thị trường",
+      "Không phụ phí ẩn phát sinh",
+      "Tích điểm & ưu đãi thành viên VIP",
+    ],
   },
-];
+] as const;
 
 export default function WhyChooseSection() {
   return (
     <section
-      className="relative overflow-hidden bg-[#f7fcff] px-4 py-20 sm:px-6 lg:px-10 xl:px-20"
-      style={{
-        backgroundImage: "url('/images/home/why-choose-background.png')",
-        backgroundRepeat: "no-repeat",
-
-        // Cắt phần trời phía trên,
-        // kéo phần phong cảnh phía dưới lên gần nội dung hơn
-        backgroundSize: "100% 145%",
-        backgroundPosition: "center 72%",
-      }}
+      aria-labelledby="why-choose-heading"
+      className="relative isolate overflow-hidden bg-[radial-gradient(ellipse_at_72%_12%,#0d325c_0%,#071933_48%,#040b18_100%)] px-4 py-10 text-white sm:px-8 lg:px-14 lg:py-12"
     >
-      {/* Làm nền dịu hơn */}
-      <div className="pointer-events-none absolute inset-0 bg-white/40" />
-
-      <div className="relative z-10 mx-auto max-w-[1440px]">
-        {/* Heading */}
-        <div className="mb-14 max-w-3xl text-left">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-100/70 px-5 py-2">
-            <Sparkles className="h-4 w-4 text-amber-400" />
-
-            <span className="text-xs font-black uppercase tracking-[0.16em] text-sky-500">
-              Tại sao nên chọn JourniTrip
-            </span>
-          </div>
-
-          <h2 className="text-3xl font-black tracking-tight text-[#123d78] md:text-4xl">
+      <TopWaveDivider
+        fillColor="#f7fcff"
+        heightClassName="h-6 w-full sm:h-8 lg:h-10"
+      />
+      <WhyChooseBackdrop />
+      <div className="relative z-10 mx-auto w-full max-w-7xl">
+        <header className="mb-10 sm:mb-12">
+          <h2
+            id="why-choose-heading"
+            className="max-w-2xl text-3xl sm:text-4xl lg:text-[44px] font-bold tracking-tight leading-tight text-white"
+          >
             Những lý do khiến bạn{" "}
-            <span className="relative inline-block font-serif italic text-sky-500">
-              tin tưởng chúng tôi
-
-              <span className="absolute -bottom-2 left-0 h-[3px] w-full rotate-[-1deg] rounded-full bg-amber-400" />
+            <span className="relative inline-block mt-1 sm:mt-0">
+              <span className="font-serif italic bg-[linear-gradient(90deg,#5eead4_0%,#93c5fd_42%,#fcd34d_78%,#f59e0b_100%)] bg-clip-text text-transparent font-bold pr-1">
+                tin tưởng chúng tôi
+              </span>
+              <span className="block w-full h-[3px] rounded-full bg-[linear-gradient(90deg,#2dd4bf_0%,#60a5fa_45%,#fbbf24_85%,#f59e0b_100%)] shadow-[0_0_12px_rgba(251,191,36,0.55)] mt-1"></span>
             </span>
           </h2>
+        </header>
 
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-slate-500 md:text-base">
-            Chúng tôi cam kết mang đến trải nghiệm du lịch an toàn, tiện lợi và
-            đáng nhớ với những dịch vụ chất lượng nhất.
-          </p>
-        </div>
-
-        {/* 3 ITEMS - KHÔNG CÓ CARD BACKGROUND */}
-        <div className="relative grid grid-cols-1 gap-10 pb-10 md:grid-cols-3 md:gap-12">
-          {WHY_CHOOSE_ITEMS.map((item, index) => (
-            <div
-              key={index}
-              className="flex justify-center"
-            >
-              <WhyChooseCard
-                title={item.title}
-                description={item.description}
-                icon={item.icon}
-                rotate={item.rotate}
-              />
-            </div>
+        <div className="grid grid-cols-1 gap-12 pt-4 md:grid-cols-3 md:gap-6 lg:gap-8">
+          {WHY_CHOOSE_ITEMS.map((item) => (
+            <WhyChooseCard key={item.theme} {...item} />
           ))}
         </div>
       </div>
+      <BottomWaveDivider
+        fillColor="#eef8ff"
+        heightClassName="h-6 w-full sm:h-8 lg:h-10"
+      />
     </section>
   );
 }

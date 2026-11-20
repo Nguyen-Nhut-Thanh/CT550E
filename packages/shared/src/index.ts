@@ -98,6 +98,7 @@ export type { BookingBasePayload, BookingPayload } from "./booking/contracts";
 export type { BookingExtraService, PaymentMethod, PricingSummary, ScheduleConflict, TravelerForm, TravelerType } from "./booking/models";
 export type { BookingContactFormProps, BookingOrderSummaryProps, BookingPassengerCountsProps, BookingTourInfoCardProps, BookingTravelersListProps, BookingVoucherAndPaymentProps } from "./booking/props";
 export type { ChatAck, ChatContextInput, ChatManageInput, ChatMessagePage, ChatTypingEvent, ChatUpdate, JoinPayload, ReadPayload, SendPayload, TypingPayload } from "./chat/contracts";
+export type { AiChatCriteria } from "./ai/chatbot/contracts";
 export type { ChatActor, ChatContextCard, ChatStaff, Conversation, RealtimeMessage } from "./chat/models";
 export type { ChatComposerProps, ChatTimelineProps } from "./chat/props";
 export type { AuthenticatedRequest, JwtChatPayload } from "./chat/server";
@@ -147,3 +148,6 @@ export { getDayTransport } from "./admin/schedules/transports";
 export { getScheduleEditRestriction, getSchedulePickupTimeError } from "./admin/schedules/timing";
 export type { TourScheduleTemplate, TourScheduleTemplateResponse } from "./admin/schedules/template";
 export { ADMIN_CONTENT_DENIED, canAccessAdminContent, canManageWorkforceRegion } from './workforce/permissions';
+
+export type { AiChatRequest, AiChatResponse, AiChatTour, AiChatTourReference, TourIntent } from "./chat/ai-contracts";
+export { tourIntentSchema } from "./chat/ai-contracts";

@@ -43,7 +43,7 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
   const accentHover = "hover:bg-red-600 hover:shadow-red-100";
 
   return (
-    <article className="group w-[280px] flex-shrink-0 overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)] sm:w-[300px] lg:w-[310px]">
+    <article className="group relative isolate w-[280px] flex-shrink-0 overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)] sm:w-[300px] lg:w-[310px]">
       <div className="relative h-48 overflow-hidden">
         <img
           src={imageUrl}
@@ -55,7 +55,7 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
           active={favorite}
           loading={pending}
           onClick={handleFavoriteClick}
-          className={`absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all hover:scale-110 ${
+          className={`absolute left-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all hover:scale-110 ${
             favorite
               ? "bg-rose-500 text-white"
               : "bg-black/20 text-white hover:bg-white/25"
@@ -91,7 +91,7 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
           {item.name}
         </h3>
 
-        <div className="space-y-3 text-[14px] text-slate-700">
+        <div className="space-y-2.5 text-[14px] text-slate-700">
           <div className="flex items-center gap-x-2 overflow-hidden whitespace-nowrap">
             <Hash className="h-4 w-4 shrink-0 text-slate-400" />
             <span className="shrink-0 font-semibold text-slate-800">Mã:</span>
@@ -170,7 +170,8 @@ export default function FlashDealCard({ item }: { item: FlashDealItem }) {
           <div className="flex flex-shrink-0 items-center pl-2">
             <Link
               href={item.link || `/tours/${item.tour_id}`}
-              className={`flex h-[40px] items-center justify-center rounded-xl border-2 ${accentBorder} ${accentText} bg-transparent px-4 text-center text-[12px] font-bold transition-all ${accentHover} hover:text-white hover:shadow-lg active:scale-95`}
+              aria-label={`Đặt tour ${item.name}`}
+              className={`flex h-[40px] items-center justify-center rounded-xl border-2 ${accentBorder} ${accentText} bg-transparent px-4 text-center text-[12px] font-bold transition-all ${accentHover} hover:text-white hover:shadow-lg after:absolute after:inset-0 after:z-10 after:rounded-2xl after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-red-600`}
             >
               Đặt ngay
             </Link>
