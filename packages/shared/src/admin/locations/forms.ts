@@ -9,4 +9,5 @@ export type LocationDetailForm = {
     image_url: string;
     is_featured: boolean;
     featured_order: number | null;
+    tags?: string | null;
 };

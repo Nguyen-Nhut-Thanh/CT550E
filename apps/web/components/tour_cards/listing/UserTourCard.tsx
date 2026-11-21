@@ -1,6 +1,7 @@
 "use client";
 
 import FavoriteButton from "@/components/tour_cards/elements/UserFavoriteButton";
+import { TourCardMenu } from "@/components/tour_cards/elements/UserTourCardMenu";
 import TransportIcon from "@/components/tour_cards/elements/UserTransportIcon";
 import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { getTransportLabel } from "@/lib/tours/client/display";
@@ -66,6 +67,20 @@ export default function TourCard({ tour, onTourClick }: TourCardProps) {
                 : "Thêm vào yêu thích"
             }
           />
+
+          <div className="absolute right-3 top-3 z-20">
+            <TourCardMenu
+              tour={{
+                tour_id: tour.tour_id,
+                name: tour.name,
+                code: tour.code,
+                image_url: imageSrc,
+                price: tourPrice,
+                duration: `${tour.duration_days}N${tour.duration_nights}Đ`,
+                departure: tour.departure_location?.name,
+              }}
+            />
+          </div>
         </div>
 
         {/* Thông tin chi tiết Tour */}

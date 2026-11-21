@@ -6,6 +6,7 @@ import TourFilterSidebar from "@/components/tours/tour_listing/UserTourFilterSid
 import TourListSkeleton from "@/components/tours/tour_listing/UserTourListSkeleton";
 import TourSortControl from "@/components/tours/tour_listing/UserTourSortControl";
 import { trackRecommendationEvent } from "@/lib/recommendations/events";
+import { trackTourSearch } from "@/lib/hooks/userBehaviorSignals";
 import { getPublicTours } from "@/lib/tours/client/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -91,6 +92,17 @@ function ToursContent() {
         : "nearest",
     );
   }, [searchParams]);
+
+  useEffect(() => {
+    const amount = (value: string) => value.trim() && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : undefined;
+    const departure = Number(query.departure_location);
+    trackTourSearch(query.search || query.destination, {
+      destination: query.destination || undefined,
+      price_range: { min: amount(query.min_price), max: amount(query.max_price) },
+      departure_location_id: Number.isInteger(departure) && departure > 0 ? departure : undefined,
+      tour_type: query.tour_type || undefined,
+    });
+  }, [query]);
 
   useEffect(() => {
     let isMounted = true;

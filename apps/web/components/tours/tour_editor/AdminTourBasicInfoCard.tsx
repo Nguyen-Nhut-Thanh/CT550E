@@ -7,6 +7,21 @@ import type { TourBasicInfoCardProps, TourDetailForm } from 'shared';
 import { TourDestinationPicker } from "@/components/tours/tour_editor/AdminTourDestinationPicker";
 import { TourEditorCard } from "@/components/tours/tour_editor/AdminTourEditorCard";
 
+const SUGGESTED_TOUR_VIBES = [
+  "Săn mây",
+  "Nghỉ dưỡng",
+  "Chữa lành",
+  "Biển đảo",
+  "Văn hóa",
+  "Ẩm thực",
+  "Khám phá",
+  "Mạo hiểm",
+  "Check-in",
+  "Gia đình",
+  "Cặp đôi",
+  "Thiên nhiên",
+];
+
 export function TourBasicInfoCard<T extends TourDetailForm>({
   tour, locations, transports, mode = 'edit', lockCoreFields = false, onTourChange,
 }: TourBasicInfoCardProps<T>) {
@@ -75,6 +90,60 @@ export function TourBasicInfoCard<T extends TourDetailForm>({
         <label htmlFor="tour-description" className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">Mô tả hành trình <span className="text-[#ed5f6c]">*</span></label>
         <textarea id="tour-description" rows={5} className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[11px] text-[14px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff] min-h-[90px] resize-y" placeholder="Giới thiệu sơ lược về lộ trình, các điểm tham quan chính, hoạt động nổi bật..." value={tour.description || ''} onChange={event => onTourChange(previous => ({ ...previous, description: event.target.value }))} />
         <div className="flex justify-between gap-3 text-[12px] text-[#929cb0]"><span>Giới thiệu đầy đủ về chuyến đi của bạn.</span><span>{(tour.description || '').length.toLocaleString('vi-VN')} ký tự</span></div>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-[7px]">
+        <label className="flex items-center gap-[6px] text-[13px] leading-[1.5] font-bold text-[#26324e]">
+          Phong cách & Trải nghiệm (Vibes / Tags)
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {SUGGESTED_TOUR_VIBES.map((vibe) => {
+            const currentVibes = tour.vibes || [];
+            const active = currentVibes.some(
+              (v) => v.toLowerCase() === vibe.toLowerCase(),
+            );
+            return (
+              <button
+                key={vibe}
+                type="button"
+                onClick={() => {
+                  const nextVibes = active
+                    ? currentVibes.filter(
+                        (v) => v.toLowerCase() !== vibe.toLowerCase(),
+                      )
+                    : [...currentVibes, vibe];
+                  onTourChange((previous) => ({
+                    ...previous,
+                    vibes: nextVibes,
+                  }));
+                }}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-blue-600 text-white shadow-2xs"
+                    : "bg-[#f1f5fb] text-[#4b5b76] hover:bg-blue-50 hover:text-blue-700"
+                }`}
+              >
+                {active && <span className="font-bold">✓</span>}
+                <span>{vibe}</span>
+              </button>
+            );
+          })}
+        </div>
+        <input
+          className="w-full rounded-[11px] border border-[#dfe6f1] bg-[#f8faff] px-3 py-[9px] text-[13px] leading-[1.5] text-[#233455] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94a0b4] focus:border-[#79a8f5] focus:bg-white focus:shadow-[0_0_0_3px_#e8f1ff]"
+          placeholder="Nhập thêm tag khác (ngăn cách bằng dấu phẩy)..."
+          value={(tour.vibes || []).join(", ")}
+          onChange={(event) => {
+            const parsed = event.target.value
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean);
+            onTourChange((previous) => ({ ...previous, vibes: parsed }));
+          }}
+        />
+        <p className="text-[12px] leading-[1.65] text-[#8490a5]">
+          Các tag này sẽ hiển thị trên thẻ gợi ý và giúp AI nhận diện gu của tour. Nếu để trống, hệ thống sẽ tự động kế thừa từ các điểm đến trong hành trình.
+        </p>
       </div>
     </div>
   </TourEditorCard>;

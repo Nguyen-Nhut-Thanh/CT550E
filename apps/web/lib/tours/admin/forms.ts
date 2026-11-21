@@ -19,6 +19,7 @@ export function normalizeTourDetailForm(tourData: TourDetailForm | null | undefi
     destinations:
       tourData.tour_destinations?.map((destination) => destination.location_id) || [],
     images: tourData.tour_images?.map((image) => image.image_url) || [],
+    vibes: (tourData as any).ai_metadata?.vibes || tourData.vibes || [],
   };
 }
 

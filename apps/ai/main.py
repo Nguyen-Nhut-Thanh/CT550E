@@ -120,6 +120,163 @@ def health():
     return {"status": "ok"}
 
 
+class TourInputForCompare(BaseModel):
+    tour_id: int
+    name: str
+    code: str
+    price: float
+    duration: str
+    departure: str
+    summary: str = ""
+    description: str = ""
+    itinerary_summary: list[str] = Field(default_factory=list)
+    transport: str = ""
+    hotel: str = ""
+    included: list[str] = Field(default_factory=list)
+    excluded: list[str] = Field(default_factory=list)
+
+
+class TourCompareBestFor(BaseModel):
+    tour_id: int
+    tour_name: str
+    recommendation: str
+
+
+class TourCompareVerdict(BaseModel):
+    summary: str
+    best_for: list[TourCompareBestFor]
+
+
+class TourCompareMatrixRow(BaseModel):
+    criterion: str
+    values: dict[str, str]
+
+
+class TourCompareResponse(BaseModel):
+    verdict: TourCompareVerdict
+    criteria_matrix: list[TourCompareMatrixRow]
+    key_tradeoff: str
+
+
+class TourCompareRequest(BaseModel):
+    tours: list[TourInputForCompare] = Field(min_length=2, max_length=4)
+
+
+def fallback_compare(tours: list[TourInputForCompare]) -> TourCompareResponse:
+    tour_names = " và ".join(f'"{t.name}" ({t.duration})' for t in tours)
+    summary = f"So sánh giữa {tour_names}. Mỗi tour có điểm đặc sắc riêng về lịch trình, thời lượng và mức ngân sách dự kiến."
+    
+    sorted_by_price = sorted(tours, key=lambda x: x.price)
+    cheapest = sorted_by_price[0]
+    priciest = sorted_by_price[-1]
+
+    best_for = []
+    for t in tours:
+        if t.tour_id == cheapest.tour_id and cheapest.price < priciest.price:
+            recom = f"Phù hợp cho khách hàng muốn tối ưu ngân sách với mức giá hợp lý ({int(t.price):,} VNĐ), lịch trình vừa vặn và dịch vụ đầy đủ."
+        elif t.tour_id == priciest.tour_id and cheapest.price < priciest.price:
+            recom = f"Phù hợp cho khách ưu tiên trải nghiệm nghỉ dưỡng tiện nghi, thời gian thoải mái và có nhiều điểm nhấn đặc biệt."
+        else:
+            recom = f"Lựa chọn cân bằng hài hòa giữa chi phí ({int(t.price):,} VNĐ) và thời lượng khám phá ({t.duration})."
+        best_for.append(TourCompareBestFor(
+            tour_id=t.tour_id,
+            tour_name=t.name,
+            recommendation=recom,
+        ))
+
+    matrix = [
+        TourCompareMatrixRow(
+            criterion="Thời lượng & Lịch trình",
+            values={str(t.tour_id): f"{t.duration} • Khởi hành từ {t.departure}" for t in tours},
+        ),
+        TourCompareMatrixRow(
+            criterion="Phương tiện di chuyển",
+            values={str(t.tour_id): t.transport or "Xe du lịch đời mới" for t in tours},
+        ),
+        TourCompareMatrixRow(
+            criterion="Tiêu chuẩn lưu trú",
+            values={str(t.tour_id): t.hotel or "Khách sạn tiêu chuẩn" for t in tours},
+        ),
+        TourCompareMatrixRow(
+            criterion="Chi phí tham khảo",
+            values={str(t.tour_id): f"Từ {int(t.price):,} VNĐ / khách" for t in tours},
+        ),
+    ]
+
+    key_tradeoff = f"Nếu bạn ưu tiên tiết kiệm chi phí, '{cheapest.name}' là lựa chọn hàng đầu. Nếu bạn hướng đến trải nghiệm thong thả và nhiều tiện ích hơn, '{priciest.name}' sẽ đáng giá từng đồng."
+
+    return TourCompareResponse(
+        verdict=TourCompareVerdict(summary=summary, best_for=best_for),
+        criteria_matrix=matrix,
+        key_tradeoff=key_tradeoff,
+    )
+
+
+COMPARE_SYSTEM_PROMPT = """
+Bạn là chuyên gia tư vấn du lịch cao cấp của JourniTrip. Nhiệm vụ của bạn là so sánh 2-3 tour du lịch dựa trên dữ liệu thật của từng tour (giá, thời gian, lịch trình, lưu trú, phương tiện, dịch vụ bao gồm và không bao gồm).
+Hãy đưa ra nhận định khách quan, trung thực, giúp khách hàng chọn được tour phù hợp nhất với nhu cầu của họ.
+1. verdict:
+   - summary: Nhận xét tổng quan súc tích về điểm khác biệt chính giữa các tour (2-3 câu).
+   - best_for: Lời khuyên cụ thể cho từng tour (ví dụ: tour này phù hợp với đối tượng nào, gia đình, cặp đôi hay thích khám phá, tiết kiệm hay nghỉ dưỡng sang trọng).
+2. criteria_matrix: Bảng ma trận đối chiếu 4-5 tiêu chí quan trọng nhất:
+   - Nhịp độ di chuyển (ví dụ: nhẹ nhàng, trung bình hay dày đặc)
+   - Lưu trú & Ẩm thực (khách sạn mấy sao, số bữa ăn)
+   - Điểm nhấn trải nghiệm đặc sắc nhất
+   - Chi phí phát sinh / dịch vụ chưa bao gồm
+3. key_tradeoff: Đánh đổi lớn nhất giữa các tour (1-2 câu chốt hạ về sự cân nhắc chi phí vs tiện ích).
+""".strip()
+
+
+@lru_cache(maxsize=1)
+def compare_model():
+    base_url = os.getenv("OPENAI_BASE_URL", "").strip() or settings.OPENAI_BASE_URL
+    api_key = os.getenv("OPENAI_API_KEY", "").strip() or settings.OPENAI_API_KEY.get_secret_value()
+    chat_model = os.getenv("OPENAI_CHAT_MODEL", "").strip() or settings.AI_CHAT_MODEL or "gpt-6-luna"
+    llm = ChatOpenAI(
+        model=chat_model,
+        api_key=api_key or "sk-dummy",
+        base_url=base_url or None,
+        use_responses_api=False,
+        timeout=18,
+        max_retries=0,
+    )
+    if base_url:
+        schema = dumps(TourCompareResponse.model_json_schema(), ensure_ascii=False)
+        prompt = f"{COMPARE_SYSTEM_PROMPT}\n\nTrả về đúng một JSON object theo JSON Schema dưới đây. Có mặt tất cả các trường.\n{schema}"
+        return llm.with_structured_output(TourCompareResponse, method="json_mode"), prompt
+    return llm.with_structured_output(TourCompareResponse, method="json_schema", strict=True), COMPARE_SYSTEM_PROMPT
+
+
+@app.post("/internal/compare-tours", response_model=TourCompareResponse)
+async def compare_tours_endpoint(
+    body: TourCompareRequest,
+    authorization: str = Header(default=""),
+):
+    token = os.getenv("AI_SERVICE_TOKEN", "").strip()
+    if not token or not compare_digest(authorization.encode(), f"Bearer {token}".encode()):
+        raise HTTPException(401, "Unauthorized")
+
+    api_key = os.getenv("OPENAI_API_KEY", "").strip() or settings.OPENAI_API_KEY.get_secret_value()
+    if not api_key:
+        return fallback_compare(body.tours)
+
+    try:
+        async with capacity:
+            model, prompt = compare_model()
+            result = await model.ainvoke(
+                [
+                    ("system", prompt),
+                    ("human", dumps([t.model_dump() for t in body.tours], ensure_ascii=False)),
+                ]
+            )
+        if isinstance(result, TourCompareResponse):
+            return result
+        return fallback_compare(body.tours)
+    except Exception as exc:
+        logger.warning("AI compare error: %s, using fallback", exc)
+        return fallback_compare(body.tours)
+
+
 @app.post("/internal/interpret", response_model=TourIntent)
 async def interpret(
     body: InterpretRequest,

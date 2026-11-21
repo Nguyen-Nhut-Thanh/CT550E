@@ -1,6 +1,7 @@
 "use client";
 
 import FavoriteButton from "@/components/tour_cards/elements/UserFavoriteButton";
+import { TourCardMenu } from "@/components/tour_cards/elements/UserTourCardMenu";
 import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { formatVND } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/dateTime";
@@ -39,7 +40,7 @@ export function OutboundTourCard({ tour }: { tour: PublicTourCard }) {
   const href = `/tours/${tour.tour_id}`;
 
   return (
-    <article className="group relative isolate flex h-[240px] w-full max-w-[560px] min-w-0 shrink-0 overflow-hidden rounded-[20px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-[300px] max-sm:flex-col">
+    <article className="group relative isolate flex h-[260px] w-full max-w-[560px] min-w-0 shrink-0 gap-3 overflow-hidden rounded-[20px] border border-blue-100 bg-[radial-gradient(ellipse_at_100%_20%,#e7f0ff_0%,transparent_35%),linear-gradient(135deg,#fff_40%,#f8fbff_100%)] p-3 shadow-[0_10px_28px_rgba(29,78,216,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(29,78,216,0.15)] max-sm:h-auto max-sm:flex-col">
       <Link
         href={href}
         aria-label={`Đặt tour ${tour.name}`}
@@ -56,7 +57,7 @@ export function OutboundTourCard({ tour }: { tour: PublicTourCard }) {
         </defs>
       </svg>
 
-      <div className="pointer-events-none relative z-20 h-full w-[36%] shrink-0 max-sm:h-32 max-sm:w-full">
+      <div className="pointer-events-none relative z-20 h-full w-[36%] shrink-0 max-sm:aspect-[16/10] max-sm:h-auto max-sm:w-full">
         <div
           className="tour-wave-backdrop absolute -inset-x-1 -inset-y-1 bg-gradient-to-br from-sky-100 via-blue-50 to-sky-100"
           style={{
@@ -74,35 +75,79 @@ export function OutboundTourCard({ tour }: { tour: PublicTourCard }) {
           <img
             src={imageUrl}
             alt={tour.name}
-            className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+            className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 motion-reduce:transition-none"
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-900/50 via-slate-900/15 to-transparent" />
+          {hasDiscount ? (
+            <span className="absolute left-3.5 top-3.5 inline-flex max-w-[calc(100%-70px)] items-center gap-1 truncate rounded-full border border-rose-500/80 bg-white/40 px-2.5 py-1 text-[11px] font-extrabold text-rose-600 shadow-lg shadow-rose-900/10 backdrop-blur-lg">
+              −{discountPercent}%
+            </span>
+          ) : (
+            <span className="absolute left-3.5 top-3.5 max-w-[calc(100%-70px)] truncate rounded-full bg-[#2563eb]/65 px-2.5 py-1 text-[10px] font-semibold text-white shadow-md shadow-blue-950/20 backdrop-blur-lg">
+              Tour nổi bật
+            </span>
+          )}
           <FavoriteButton
             active={favorite}
             loading={pending}
             onClick={handleFavoriteClick}
-            className={`pointer-events-auto absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all hover:scale-110 ${favorite ? "text-rose-500" : "text-slate-500"}`}
-            iconClassName="h-5 w-5"
+            className={`pointer-events-auto absolute right-3.5 top-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/65 shadow-md ring-2 ring-white/40 backdrop-blur-lg transition hover:scale-105 hover:bg-white/90 disabled:opacity-50 ${favorite ? "text-red-500" : "text-slate-500"}`}
+            iconClassName="h-4 w-4"
             label={favorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
           />
-          <span className="absolute bottom-6 left-4 inline-flex max-w-[82%] items-center gap-1.5 truncate rounded-full border border-white/15 bg-slate-900/45 px-3.5 py-1.5 text-sm font-medium text-white backdrop-blur-md">
-            <MapPin className="h-4 w-4 shrink-0" /> {destination}
+          <span className="absolute bottom-5 left-3.5 inline-flex max-w-[calc(100%-28px)] items-center gap-1.5 rounded-full border border-white/15 bg-slate-900/50 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-md">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{destination}</span>
           </span>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_100%_20%,#e7f0ff_0%,transparent_35%),linear-gradient(135deg,#fff_40%,#f8fbff_100%)] p-2.5 sm:p-3">
+      <div className="relative flex min-w-0 flex-1 flex-col justify-between overflow-hidden">
+        <svg
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full select-none"
+          viewBox="0 0 340 234"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMaxYMax slice"
+          aria-hidden="true"
+          focusable="false"
+        >
+          {/* Địa cầu ở phía trên, đường bay ở khoảng trống cạnh dòng đánh giá. */}
+          <g stroke="#8FA5C1" strokeWidth="1.1" opacity=".24">
+            <circle cx="226" cy="15" r="18" />
+            <ellipse cx="226" cy="15" rx="8" ry="18" />
+            <path d="M208 15h36M210 6q16 7 32 0M210 24q16-7 32 0" />
+          </g>
+          <g stroke="#8FA5C1" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity=".36">
+            <path d="M153 178c22-29 49 27 76-2s36-3 48-18" strokeDasharray="3 5" opacity=".65" />
+            <circle cx="153" cy="178" r="2" fill="#8FA5C1" fillOpacity=".3" />
+            <path d="m0 9 8-2 5-7 3 1-2 6 6 3-1 2-7-1-3 5-2-1 1-5-6 1Z" transform="translate(281 146) rotate(-18)" fill="#8FA5C1" fillOpacity=".25" />
+          </g>
+        </svg>
         <div>
-          <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700 ring-1 ring-blue-100">
-            <Globe2 className="h-3.5 w-3.5" /> Tour nước ngoài
-          </span>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-100">
+              <Globe2 className="h-3 w-3" /> Tour nước ngoài
+            </span>
+            <TourCardMenu
+              tour={{
+                tour_id: tour.tour_id,
+                name: tour.name,
+                code: tour.code,
+                image_url: imageUrl,
+                price: Number(tour.base_price || 0),
+                duration: `${tour.duration_days}N${tour.duration_nights}Đ`,
+                departure: tour.departure_location?.name,
+              }}
+            />
+          </div>
           <h3
-            className="line-clamp-2 text-[15px] font-black leading-tight text-[#183567]"
+            className="h-10 line-clamp-2 text-[15px] font-black leading-tight text-[#183567]"
             title={tour.name}
           >
             {tour.name}
           </h3>
-          <p className="mt-1 line-clamp-1 text-xs leading-4 text-slate-500">
+          <p className="mt-1 h-4 line-clamp-1 text-xs leading-4 text-slate-500">
             {tour.summary || `Khám phá ${destination} với hành trình đáng nhớ.`}
           </p>
 
@@ -161,17 +206,17 @@ export function OutboundTourCard({ tour }: { tour: PublicTourCard }) {
         <div className="relative mt-2 flex flex-wrap items-end justify-between gap-2 border-t border-blue-100/80 pt-2">
           <div>
             {hasDiscount && (
-              <p className="mb-0.5 text-[10px] font-semibold text-slate-400 line-through">
+              <p className="mb-0.5 text-xs font-semibold text-slate-400 line-through">
                 {formatVND(originalPrice)}
               </p>
             )}
-            <p className="text-base font-black tracking-tight text-blue-700">
+            <p className="mt-0.5 text-base font-black tracking-tight text-blue-700">
               {formatVND(price)}
             </p>
           </div>
           <div className="flex items-center gap-2">
             {hasDiscount && (
-              <span className="hidden rounded-full bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-700 sm:inline-flex">
+              <span className="hidden rounded-full bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-700 sm:inline-flex">
                 Tiết kiệm {discountPercent}%
               </span>
             )}

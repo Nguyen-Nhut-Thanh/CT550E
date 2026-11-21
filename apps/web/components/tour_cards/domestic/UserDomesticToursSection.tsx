@@ -160,7 +160,7 @@ export default function DomesticToursSection() {
         </div>
 
         {loading ? (
-          <div className="grid auto-cols-[560px] grid-flow-col grid-rows-2 gap-4 overflow-hidden">
+          <div className="grid auto-cols-[100%] grid-flow-col grid-rows-2 gap-4 overflow-hidden sm:auto-cols-[560px]">
             {Array.from({ length: 8 }).map((_, index) => (
               <DomesticTourCardSkeleton key={index} />
             ))}
@@ -176,7 +176,7 @@ export default function DomesticToursSection() {
         ) : (
           <div
             ref={sliderRef}
-            className="grid auto-cols-[560px] grid-flow-col grid-rows-2 gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="grid auto-cols-[100%] grid-flow-col grid-rows-2 gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:auto-cols-[560px]"
           >
             {items.map((item) => (
               <DomesticTourCard key={item.schedule_id} item={item} />

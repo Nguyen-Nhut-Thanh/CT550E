@@ -1,4 +1,5 @@
 import { SupportChat } from "@/components/chat/customer_chat/UserSupportChat";
+import { FloatingCompareBar } from "@/components/tours/compare/UserFloatingCompareBar";
 import Footer from "@/components/common/navigation_layout/Footer";
 import Header from "@/components/common/navigation_layout/Header";
 import { ToastProvider } from "@/components/common/dialogs_and_feedback/toast/ToastProvider";
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <FloatingCompareBar />
           <SupportChat aiEnabled={Boolean(process.env.AI_SERVICE_URL?.trim() && process.env.AI_SERVICE_TOKEN?.trim())} />
         </ToastProvider>
       </body>

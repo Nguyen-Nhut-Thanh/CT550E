@@ -97,6 +97,7 @@ export default function AdminLocationDetailPage() {
             image_url?: string;
             is_featured?: boolean;
             featured_order?: number | null;
+            tags?: string;
             usage_summary?: AdminLocationItem["usage_summary"];
           }>(String(id));
 
@@ -111,6 +112,7 @@ export default function AdminLocationDetailPage() {
             image_url: data.image_url || "",
             is_featured: data.is_featured || false,
             featured_order: data.featured_order || null,
+            tags: data.tags || "",
           });
           setUsageSummary(data.usage_summary || null);
 

@@ -5,8 +5,35 @@ import type { LocationDetailsCardProps } from "shared";
 
 const inputClass = "w-full rounded-lg border border-[#dce5f3] bg-white px-3 py-2 text-xs text-[#192e52] outline-none placeholder:text-[#9aa8be] focus:border-[#075bff] focus:ring-2 focus:ring-blue-100 transition-colors";
 
+const SUGGESTED_LOCATION_TAGS = [
+  "Biển đảo",
+  "Săn mây",
+  "Nghỉ dưỡng",
+  "Chữa lành",
+  "Di sản",
+  "Văn hóa",
+  "Ẩm thực",
+  "Sinh thái",
+  "Check-in",
+  "Mạo hiểm",
+  "Núi rừng",
+  "Thành phố",
+];
+
 export function LocationDetailsCard({ form, isNew, level3Id, level3List, onFormChange }: LocationDetailsCardProps) {
   const country = level3List.find(item => String(item.location_id) === level3Id)?.name;
+  const currentTags = (form.tags || "")
+    .split(",")
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  const toggleTag = (tag: string) => {
+    const exists = currentTags.some(t => t.toLowerCase() === tag.toLowerCase());
+    const nextTags = exists
+      ? currentTags.filter(t => t.toLowerCase() !== tag.toLowerCase())
+      : [...currentTags, tag];
+    onFormChange(prev => ({ ...prev, tags: nextTags.join(", ") }));
+  };
   return (
     <section className="rounded-[14px] border border-[#e1edfc] bg-white p-4.5 sm:p-5 shadow-2xs">
       <div className="mb-4 flex items-start gap-3">
@@ -34,6 +61,41 @@ export function LocationDetailsCard({ form, isNew, level3Id, level3List, onFormC
           <label htmlFor="location-note" className="text-xs font-semibold text-[#07123e]">Mô tả ngắn</label>
           <textarea id="location-note" rows={3} className={`${inputClass} block min-h-20 resize-y`} value={form.note} onChange={event => onFormChange(prev => ({ ...prev, note: event.target.value }))} placeholder="Giới thiệu ngắn gọn về cảnh quan, đặc trưng của địa điểm..." />
           <p className="text-[11px] text-[#7187a9]">Thông tin giới thiệu ngắn về địa điểm.</p>
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="location-tags" className="text-xs font-semibold text-[#07123e]">
+            Thẻ đặc trưng & phong cách (Tags / Vibes)
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {SUGGESTED_LOCATION_TAGS.map(tag => {
+              const active = currentTags.some(t => t.toLowerCase() === tag.toLowerCase());
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    active
+                      ? "bg-blue-600 text-white shadow-2xs"
+                      : "bg-[#f1f5fb] text-[#4b5b76] hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+                >
+                  {active && <span className="font-bold">✓</span>}
+                  <span>{tag}</span>
+                </button>
+              );
+            })}
+          </div>
+          <input
+            id="location-tags"
+            className={inputClass}
+            value={form.tags || ""}
+            onChange={event => onFormChange(prev => ({ ...prev, tags: event.target.value }))}
+            placeholder="Các thẻ ngăn cách bằng dấu phẩy, VD: biển đảo, nghỉ dưỡng, săn mây..."
+          />
+          <p className="text-[11px] text-[#7187a9]">
+            Nhấp tag gợi ý ở trên hoặc gõ tag tùy chỉnh ngăn cách bởi dấu phẩy. Tour đi qua địa điểm này sẽ tự động kế thừa các tag trên.
+          </p>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex items-center gap-3 rounded-xl border border-[#e1edfc] bg-slate-50/70 p-3">

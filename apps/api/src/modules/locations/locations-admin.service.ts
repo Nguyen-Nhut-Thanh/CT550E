@@ -179,6 +179,7 @@ export class LocationsAdminService {
                     where: { is_cover: 1 },
                     take: 1,
                 },
+                destinations_detail: true,
             },
         });
         if (!item) {
@@ -188,6 +189,7 @@ export class LocationsAdminService {
         return {
             ...item,
             image_url: item.location_images?.[0]?.image_url || null,
+            tags: item.destinations_detail?.tags || '',
             usage_summary,
         };
     }
@@ -272,6 +274,14 @@ export class LocationsAdminService {
                             image_url: body.image_url,
                             is_cover: 1,
                             sort_order: 1,
+                        },
+                    });
+                }
+                if (body.tags) {
+                    await tx.destinations_detail.create({
+                        data: {
+                            location_id: location.location_id,
+                            tags: String(body.tags).trim(),
                         },
                     });
                 }
@@ -361,6 +371,19 @@ export class LocationsAdminService {
                             },
                         });
                     }
+                }
+                if (body.tags !== undefined) {
+                    const cleanTags = body.tags ? String(body.tags).trim() : null;
+                    await tx.destinations_detail.upsert({
+                        where: { location_id: id },
+                        create: {
+                            location_id: id,
+                            tags: cleanTags,
+                        },
+                        update: {
+                            tags: cleanTags,
+                        },
+                    });
                 }
                 return updatedLocation;
             });

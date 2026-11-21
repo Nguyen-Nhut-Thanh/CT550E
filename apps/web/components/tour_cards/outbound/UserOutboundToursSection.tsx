@@ -87,7 +87,7 @@ export default function OutboundToursSection() {
         </div>
 
         {loading ? (
-          <div className="grid auto-cols-[560px] grid-flow-col grid-rows-2 gap-4 overflow-hidden">
+          <div className="grid auto-cols-[100%] grid-flow-col grid-rows-2 gap-4 overflow-hidden sm:auto-cols-[560px]">
             {Array.from({ length: 10 }, (_, index) => <OutboundTourCardSkeleton key={index} />)}
           </div>
         ) : error ? (
@@ -95,7 +95,7 @@ export default function OutboundToursSection() {
         ) : items.length === 0 ? (
           <div className="rounded-2xl border border-blue-100 bg-white px-5 py-6 text-center text-slate-600 shadow-sm">Hiện chưa có tour nước ngoài khả dụng.</div>
         ) : (
-          <div ref={sliderRef} className="grid auto-cols-[560px] grid-flow-col grid-rows-2 gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div ref={sliderRef} className="grid auto-cols-[100%] grid-flow-col grid-rows-2 gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:auto-cols-[560px]">
             {items.map(tour => <OutboundTourCard key={tour.next_schedule?.tour_schedule_id ?? tour.tour_id} tour={tour} />)}
           </div>
         )}

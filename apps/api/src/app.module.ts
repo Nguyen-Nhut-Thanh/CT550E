@@ -9,6 +9,7 @@ import { CatalogsModule } from './modules/catalogs/catalogs.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { AiChatModule } from './modules/ai-chat/ai-chat.module';
 import { AiModule } from './modules/ai/ai.module';
+import { TourAiModule } from './modules/tour-ai/tour-ai.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { FeaturedToursModule } from './modules/featured-tours/featured-tours.module';
@@ -45,6 +46,7 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
         ChatModule,
         AiChatModule,
         AiModule,
+        TourAiModule,
     ],
 })
 export class AppModule {

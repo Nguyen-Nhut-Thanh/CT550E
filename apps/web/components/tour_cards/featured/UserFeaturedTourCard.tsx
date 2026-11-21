@@ -1,6 +1,7 @@
 "use client";
 
 import FavoriteButton from "@/components/tour_cards/elements/UserFavoriteButton";
+import { TourCardMenu } from "@/components/tour_cards/elements/UserTourCardMenu";
 import TransportIcon from "@/components/tour_cards/elements/UserTransportIcon";
 import { useTourFavorite } from "@/lib/hooks/useTourFavorite";
 import { getTransportLabel } from "@/lib/tours/client/display";
@@ -40,7 +41,17 @@ export default function FeaturedTourCard({ item }: FeaturedTourCardProps) {
               {item.route_text}
             </h3>
 
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto flex items-center gap-1.5">
+              <TourCardMenu
+                tour={{
+                  tour_id: item.tour_id,
+                  name: item.name,
+                  code: item.code,
+                  image_url: imageUrl,
+                  price: Number(item.price || 0),
+                  duration: formatDate(item.start_date),
+                }}
+              />
               <FavoriteButton
                 active={favorite}
                 loading={pending}

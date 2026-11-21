@@ -73,6 +73,7 @@ export class ToursAdminService {
                 tour_policies: {
                     orderBy: { policy_id: 'asc' },
                 },
+                ai_metadata: true,
             },
         });
         if (!tour) {
@@ -212,6 +213,14 @@ export class ToursAdminService {
                         })),
                     });
                 }
+                if (body.vibes && Array.isArray(body.vibes) && body.vibes.length > 0) {
+                    await tx.tour_ai_metadata.create({
+                        data: {
+                            tour_id: tour.tour_id,
+                            vibes: body.vibes.map((v) => String(v).trim()).filter(Boolean),
+                        },
+                    });
+                }
                 return tour;
             });
         }
@@ -336,6 +345,19 @@ export class ToursAdminService {
                             is_cover: index === 0 ? 1 : 0,
                             sort_order: index + 1,
                         })),
+                    });
+                }
+                if (body.vibes !== undefined && Array.isArray(body.vibes)) {
+                    const cleanVibes = body.vibes.map((v) => String(v).trim()).filter(Boolean);
+                    await tx.tour_ai_metadata.upsert({
+                        where: { tour_id: id },
+                        create: {
+                            tour_id: id,
+                            vibes: cleanVibes,
+                        },
+                        update: {
+                            vibes: cleanVibes,
+                        },
                     });
                 }
                 return updatedTour;

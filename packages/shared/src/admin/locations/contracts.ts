@@ -31,4 +31,5 @@ export type LocationAdminPayload = {
     is_featured?: boolean;
     featured_order?: number | string | null;
     featured_image?: string | null;
+    tags?: string | null;
 };

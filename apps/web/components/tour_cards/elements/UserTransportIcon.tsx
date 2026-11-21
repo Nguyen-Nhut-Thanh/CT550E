@@ -1,7 +1,7 @@
 "use client";
 
 import { getTransportCategory } from "@/lib/tours/client/display";
-import { Bus, Plane, Train } from "lucide-react";
+import { Bus, Plane, Ship, Train } from "lucide-react";
 import type { TransportIconProps as Props } from 'shared';
 
 /** Hiển thị biểu tượng tương ứng với loại phương tiện di chuyển. */
@@ -14,6 +14,10 @@ export default function TransportIcon({ type, className }: Props) {
 
   if (category === "train") {
     return <Train className={className} />;
+  }
+
+  if (category === "ship") {
+    return <Ship className={className} />;
   }
 
   return <Bus className={className} />;

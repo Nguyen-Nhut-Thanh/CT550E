@@ -117,7 +117,17 @@ export type { FlashDealTourRecord, RankedTourCandidate } from "./home/records";
 export { LOCATION_TYPE_BY_LEVEL } from "./locations/constants";
 export type { LocationDetailLite, LocationLite } from "./locations/models";
 export type { NavItem, NavLocationData, NavigationItemWithIcon } from "./navigation/types";
-export type { RecommendationEventPayload } from "./recommendations/contracts";
+export type {
+  RecommendationEventPayload,
+  TourCompareVerdict,
+  TourCompareMatrixRow,
+  TourCompareItemSummary,
+  TourCompareResult,
+  TourCompareRequest,
+  UserBehaviorSignals,
+  TourRecommendationItem,
+  TourRecommendationsResponse,
+} from "./recommendations/contracts";
 export type { CreateReplyPayload, CreateReviewPayload } from "./reviews/contracts";
 export type { RatingBreakdownItem, ReviewItem } from "./reviews/models";
 export type { TourReviewsSectionProps } from "./reviews/props";

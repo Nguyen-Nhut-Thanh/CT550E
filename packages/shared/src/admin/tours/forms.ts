@@ -26,4 +26,9 @@ export type TourDetailForm = {
         image_url: string;
     }[];
     tour_policies?: TourPolicy[];
+    vibes?: string[];
+    ai_metadata?: {
+        vibes?: string[];
+        ai_summary_pitch?: string | null;
+    } | null;
 };

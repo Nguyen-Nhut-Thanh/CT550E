@@ -1,6 +1,7 @@
 "use client";
 
 import { BUDGET_OPTIONS } from "@/lib/search/budgets";
+import { trackTourSearch } from "@/lib/hooks/userBehaviorSignals";
 import { fromDateValue, startOfDay, toDateValue } from "@/lib/utils/calendar";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -43,6 +44,13 @@ export function useSearchBar() {
     });
     if(budget.minPrice) params.set("min_price", budget.minPrice);
     if(budget.maxPrice) params.set("max_price", budget.maxPrice);
+    trackTourSearch(keyword, {
+      destination: keyword.trim(),
+      price_range: {
+        min: budget.minPrice ? Number(budget.minPrice) : undefined,
+        max: budget.maxPrice ? Number(budget.maxPrice) : undefined,
+      },
+    });
     router.push(`/tours?${params.toString()}`);
   };
 

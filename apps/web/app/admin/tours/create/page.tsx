@@ -42,6 +42,7 @@ export default function AdminTourCreatePage() {
     tour_amenities: [] as TourAmenity[],
     policy_contents: {},
     cut_off_hours: 24 as number | undefined,
+    vibes: [] as string[],
   });
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import SearchBar from "@/components/common/form_controls/SearchBar";
+import { TourRecommendationsSection } from "@/components/tours/recommendations/UserTourRecommendationsSection";
 import AboutUsSection from "@/components/about/about_us/AboutUsSection";
 import DomesticToursSection from "@/components/tour_cards/domestic/UserDomesticToursSection";
 import FavoriteDestinationsSection from "@/components/locations/destinations/UserFavoriteDestinationsSection";
@@ -28,6 +29,7 @@ export default async function HomePage() {
       <HomeVoucherSection initialData={homeVouchersData} />
       <DomesticToursSection />
       <AboutUsSection />
+      <TourRecommendationsSection />
       <WhyChooseSection />
       <FlashDealsSection />
       <OutboundToursSection />

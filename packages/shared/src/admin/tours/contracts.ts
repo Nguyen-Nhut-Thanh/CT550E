@@ -21,4 +21,5 @@ export type TourAdminPayload = {
     policy_contents?: PolicyContentsPayload;
     destinations?: Array<number | string>;
     images?: string[];
+    vibes?: string[];
 };

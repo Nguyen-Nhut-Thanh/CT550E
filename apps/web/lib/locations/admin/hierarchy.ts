@@ -31,6 +31,7 @@ export function createDefaultLocationDetailForm(): LocationDetailForm {
     image_url: "",
     is_featured: false,
     featured_order: null,
+    tags: "",
   };
 }
 

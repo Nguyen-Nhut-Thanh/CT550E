@@ -721,10 +721,35 @@ model tours {
   tour_amenities      tour_amenities[]
   tour_schedules      tour_schedules[]
   schedule_template   tour_schedule_templates?
+  ai_metadata         tour_ai_metadata?
   departure_locations locations           @relation("tours_departure_location_idTolocations", fields: [departure_location], references: [location_id], onDelete: NoAction, onUpdate: NoAction)
   transports          transports          @relation(fields: [transport_id], references: [transport_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([status, tour_type], map: "idx_tours_status_type")
+}
+
+model tour_ai_metadata {
+  metadata_id       Int      @id @default(autoincrement())
+  tour_id           Int      @unique
+  vibes             String[] @default([])
+  target_audience   String[] @default([])
+  pace              String   @default("trung bình") @db.VarChar(50)
+  best_seasons      Int[]    @default([])
+  ai_summary_pitch  String?  @db.VarChar(255)
+  highlights        String[] @default([])
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @updatedAt @db.Timestamp(6)
+  tour              tours    @relation(fields: [tour_id], references: [tour_id], onDelete: Cascade)
+}
+
+model tour_comparison_caches {
+  cache_id    Int      @id @default(autoincrement())
+  cache_key   String   @unique @db.VarChar(100)
+  result      Json
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
+
+  @@index([cache_key], map: "idx_tour_comparison_cache_key")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
